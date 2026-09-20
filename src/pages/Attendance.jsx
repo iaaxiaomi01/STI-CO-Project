@@ -8,28 +8,32 @@ import EmptyState from '../components/EmptyState.jsx'
    sa hugis ng pagkuha ng totoong data mula sa Supabase. */
 function Attendance() {
   const { role } = useAuth()
-  const { canManage } = getRoleConfig(role)
+  const { can } = getRoleConfig(role)
+
+  /* Malaki ang pinagkaiba dito:
+       Member  — SARILI niyang record lang
+       Officer — siya ang kumukuha ng attendance
+       Adviser — tinitingnan ang pagdalo ng LAHAT  */
+  let subtitle = 'Talaan ng iyong pagdalo sa mga aktibidad.'
+  if (can.create) {
+    subtitle = 'Kumuha at suriin ang pagdalo sa mga aktibidad.'
+  } else if (can.review) {
+    subtitle = 'Tingnan ang pagdalo ng buong organisasyon.'
+  }
 
   return (
     <>
       <PageHeader
         title="Attendance"
-        /* Malaki ang pinagkaiba dito: ang Member ay tumitingin
-           ng SARILI niyang record. Ang Officer ay kumukuha ng
-           attendance ng LAHAT. */
-        subtitle={
-          canManage
-            ? 'Kumuha at suriin ang pagdalo sa mga aktibidad.'
-            : 'Talaan ng iyong pagdalo sa mga aktibidad.'
-        }
-        action={canManage && <ActionButton>+ Kumuha ng Attendance</ActionButton>}
+        subtitle={subtitle}
+        action={can.create && <ActionButton>+ Kumuha ng Attendance</ActionButton>}
       />
 
       <EmptyState
         icon="✓"
         title="Wala pang attendance record"
         message={
-          canManage
+          can.review
             ? 'Kapag may natapos nang event, dito lalabas ang talaan ng dumalo at hindi dumalo.'
             : 'Kapag nakadalo ka na sa isang event, dito lalabas ang talaan — anong event, kailan, at kung present o absent ka.'
         }

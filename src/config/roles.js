@@ -1,8 +1,8 @@
 /* ============================================================
    ROLES CONFIG — ANG SENTRO NG BUONG SISTEMA
 
-   Isang file ang naglalatag kung ano ang nakikita ng bawat
-   role: anong sidebar items, at anong laman ng dashboard.
+   Isang file ang naglalatag kung ano ang nakikita at kayang
+   gawin ng bawat role.
 
    BAKIT ISANG FILE LANG:
    Ang sidebar AT ang mga route ay parehong galing dito. Kaya
@@ -14,22 +14,23 @@
    │  ITO ANG LINYANG BABAGUHIN MO                          │
    │                                                        │
    │  Kung sino man ang naka-login, ito ang role niya.      │
-   │  Kapag tapos ka na sa Officer, palitan mo ng 'adviser'  │
-   │  at Adviser ka na sa susunod mong refresh.             │
+   │  Palitan ng 'member', 'officer', o 'adviser' at        │
+   │  iyon ka na sa susunod mong refresh.                   │
    │                                                        │
    │  ⚠️  PANSAMANTALA ITO. Walang database pa, kaya walang │
-   │  paraan para malaman kung sino talaga ang Officer.      │
+   │  paraan para malaman kung sino talaga ang Adviser.      │
    │  Kapag may profiles table na, ang isang linyang ito     │
    │  ang papalitan ng totoong role galing doon — at wala    │
    │  nang ibang file na gagalawin.                         │
    └────────────────────────────────────────────────────────┘ */
-export const DEV_ROLE = 'officer'
+export const DEV_ROLE = 'adviser'
 
 /* Ang mga susi dito ay magiging role values sa database
    mamaya. Tandaan ang pagbabaybay. */
 export const ROLE_KEYS = {
   MEMBER: 'member',
   OFFICER: 'officer',
+  ADVISER: 'adviser',
 }
 
 /* Mga karaniwang sidebar item, para hindi paulit-ulit isulat */
@@ -41,15 +42,39 @@ const MEMBERS = { label: 'Members', to: '/members', icon: '▲' }
 const REQUESTS = { label: 'Requests', to: '/requests', icon: '✉' }
 const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
 
+/* ============================================================
+   MGA KAKAYAHAN (capabilities)
+
+   Dati ay isang "canManage" lang ito. Hinati ko na sa dalawa
+   dahil ang Officer at Adviser ay may PAREHONG sidebar pero
+   MAGKAIBANG trabaho:
+
+     create — kaya niyang gumawa: may "+ Gumawa ng Event" at
+              iba pang button siya sa kanang itaas
+
+     review — siya ang umaaksyon sa mga kahilingan: nakikita
+              niya ang Requests at may Aprubahan/Tanggihan
+
+   Member  : tumitingin lang        → wala
+   Officer : hindi gumagawa — sumusuri at umaaksyon sa mga
+             kahilingan             → review lang
+   Adviser : gumagawa ng events at announcements, at sumusuri
+             rin                    → create + review
+
+   DITO KA MAGDAGDAG kapag nagkaroon na ng totoong function.
+   Halimbawa, kung may role na makakabura: dagdagan ng
+   "remove: true" dito, tapos sa page: {can.remove && ...}
+   ============================================================ */
+
 export const ROLES = {
   /* ---------------------------------------------------------- */
   [ROLE_KEYS.MEMBER]: {
     label: 'Member',
 
-    /* Tumitingin lang — hindi gumagawa ng event o announcement.
-       Ginagamit ito ng Events at Announcements pages para
-       magpasya kung may lalabas na "Gumawa" na button. */
-    canManage: false,
+    can: {
+      create: false,
+      review: false,
+    },
 
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, PROFILE],
 
@@ -87,11 +112,14 @@ export const ROLES = {
   [ROLE_KEYS.OFFICER]: {
     label: 'Officer',
 
-    /* Siya ang gumagawa ng event at announcement, kaya may
-       dagdag na button siyang nakikita sa mga page na iyon. */
-    canManage: true,
+    /* Hindi siya gumagawa ng event o announcement — sumusuri
+       siya at umaaksyon sa mga kahilingan. Kaya walang
+       "+ Gumawa" na button sa kanya. */
+    can: {
+      create: false,
+      review: true,
+    },
 
-    /* Dagdag sa Member: ang Members list at ang Requests */
     sidebar: [
       DASHBOARD,
       EVENTS,
@@ -103,12 +131,66 @@ export const ROLES = {
     ],
 
     dashboard: {
-      subtitle: 'Pamahalaan ang mga aktibidad ng organisasyon.',
+      subtitle: 'Suriin at aksyunan ang mga kahilingan ng organisasyon.',
+      stats: [
+        { label: 'Naghihintay na requests', value: '0', to: '/requests' },
+        { label: 'Aktibong events', value: '0', to: '/events' },
+        { label: 'Kabuuang miyembro', value: '0', to: '/members' },
+        { label: 'Attendance ngayong buwan', value: '—', to: '/attendance' },
+      ],
+      cards: [
+        {
+          to: '/requests',
+          icon: '✉',
+          title: 'Requests',
+          text: 'Suriin ang mga kahilingang naghihintay ng aksyon.',
+        },
+        {
+          to: '/events',
+          icon: '◆',
+          title: 'Events',
+          text: 'Tingnan ang mga paparating at natapos nang aktibidad.',
+        },
+        {
+          to: '/members',
+          icon: '▲',
+          title: 'Members',
+          text: 'Tingnan ang listahan ng mga miyembro ng organisasyon.',
+        },
+      ],
+    },
+  },
+
+  /* ---------------------------------------------------------- */
+  [ROLE_KEYS.ADVISER]: {
+    label: 'Adviser',
+
+    /* PAREHO ang sidebar niya sa Officer — pero siya ang
+       may pinakamalawak na kapangyarihan sa organisasyon.
+       Gumagawa siya ng events at announcements, at sumusuri
+       rin sa mga kahilingan. */
+    can: {
+      create: true,
+      review: true,
+    },
+
+    sidebar: [
+      DASHBOARD,
+      EVENTS,
+      ANNOUNCEMENTS,
+      ATTENDANCE,
+      MEMBERS,
+      REQUESTS,
+      PROFILE,
+    ],
+
+    dashboard: {
+      subtitle: 'Pamahalaan at bantayan ang organisasyon.',
       stats: [
         { label: 'Aktibong events', value: '0', to: '/events' },
         { label: 'Naghihintay na requests', value: '0', to: '/requests' },
-        { label: 'Kabuuang miyembro', value: '0', to: '/members' },
-        { label: 'Attendance ngayong buwan', value: '—', to: '/attendance' },
+        { label: 'Aktibong miyembro', value: '0', to: '/members' },
+        { label: 'Attendance rate', value: '—', to: '/attendance' },
       ],
       cards: [
         {
@@ -130,10 +212,10 @@ export const ROLES = {
           text: 'Suriin ang mga kahilingang naghihintay ng aksyon.',
         },
         {
-          to: '/members',
-          icon: '▲',
-          title: 'Members',
-          text: 'Tingnan ang listahan ng mga miyembro ng organisasyon.',
+          to: '/attendance',
+          icon: '✓',
+          title: 'Attendance',
+          text: 'Tingnan ang pagdalo ng buong organisasyon.',
         },
       ],
     },
@@ -141,7 +223,7 @@ export const ROLES = {
 
   /* ----------------------------------------------------------
      SUSUNOD NA GAGAWIN:
-       adviser, sao, supervisor, school_head, it_admin
+       sao, supervisor, school_head, it_admin
 
      Kopyahin mo lang ang hugis sa itaas. Para sa bawat bago:
        1. dagdagan ang ROLE_KEYS
@@ -156,7 +238,7 @@ export const ROLES = {
    para hindi masira ang app. */
 export const FALLBACK_ROLE = {
   label: 'Walang role',
-  canManage: false,
+  can: { create: false, review: false },
   sidebar: [DASHBOARD, PROFILE],
   dashboard: { subtitle: '', stats: [], cards: [] },
 }

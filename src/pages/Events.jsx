@@ -18,32 +18,37 @@ import EmptyState from '../components/EmptyState.jsx'
 function Events() {
   const { role } = useAuth()
 
-  /* Ang canManage ay nakatakda sa config/roles.js.
-     Officer: true. Member: false.
+  /* Ang can.create at can.review ay nakatakda sa
+     config/roles.js. Tatlong magkaibang itsura ang page
+     na ito, pero iisa lang ang component:
 
-     Ito ang nagpapaiba ng page na ito sa dalawang role —
-     iisang component, dalawang itsura. */
-  const { canManage } = getRoleConfig(role)
+       Officer → gumagawa    (may "+ Gumawa ng Event")
+       Adviser → sumusuri    (walang button, ibang subtitle)
+       Member  → tumitingin  (walang button)  */
+  const { can } = getRoleConfig(role)
+
+  let subtitle = 'Mga paparating na aktibidad ng organisasyon.'
+  if (can.create) {
+    subtitle = 'Gumawa at pamahalaan ang mga aktibidad ng organisasyon.'
+  } else if (can.review) {
+    subtitle = 'Suriin at aprubahan ang mga iminungkahing aktibidad.'
+  }
 
   return (
     <>
       <PageHeader
         title="Events"
-        subtitle={
-          canManage
-            ? 'Gumawa at pamahalaan ang mga aktibidad ng organisasyon.'
-            : 'Mga paparating na aktibidad ng organisasyon.'
-        }
-        /* Officer lang ang may button. Sa Member, undefined
-           ang action at walang lalabas. */
-        action={canManage && <ActionButton>+ Gumawa ng Event</ActionButton>}
+        subtitle={subtitle}
+        /* Ang gumagawa lang ang may button. Sa Adviser at
+           Member, undefined ang action at walang lalabas. */
+        action={can.create && <ActionButton>+ Gumawa ng Event</ActionButton>}
       />
 
       <EmptyState
         icon="◆"
         title="Wala pang naka-schedule na event"
         message={
-          canManage
+          can.create
             ? 'Kapag gumawa ka ng event, dito ito lalabas kasama ang petsa, lugar, at sino ang sumali.'
             : 'Kapag may naidagdag nang event, dito ito lalabas kasama ang petsa, lugar, at sino ang sumali.'
         }

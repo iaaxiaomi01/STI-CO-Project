@@ -8,18 +8,18 @@ import EmptyState from '../components/EmptyState.jsx'
    sa hugis ng pagkuha ng totoong data mula sa Supabase. */
 function Announcements() {
   const { role } = useAuth()
-  const { canManage } = getRoleConfig(role)
+  const { can } = getRoleConfig(role)
 
   return (
     <>
       <PageHeader
         title="Announcements"
         subtitle={
-          canManage
+          can.create
             ? 'Maglabas ng balita at paalala sa mga miyembro.'
             : 'Pinakabagong balita at paalala mula sa organisasyon.'
         }
-        action={canManage && <ActionButton>+ Magpaskil</ActionButton>}
+        action={can.create && <ActionButton>+ Magpaskil</ActionButton>}
       />
 
       <EmptyState
