@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom'
 import styles from './Header.module.css'
 
 /* PALITAN: ito ang mga nav links.
-   Ngayon, naka-anchor (#) sila dahil iisang page lang ang laman —
-   lahat ng sections ay nasa landing page. Kapag may totoo ka nang
-   separate pages, palitan ang <a href="#about"> ng
-   <Link to="/about"> mula sa react-router-dom. */
+   Pansinin ang "/" bago ang "#" — mahalaga ito. Ang "/#about" ay
+   nangangahulugang "pumunta sa home page, tapos mag-scroll sa
+   #about section". Kung "#about" lang, walang mangyayari kapag
+   nasa /login page ang user dahil wala doong #about section. */
 const NAV_LINKS = [
-  { label: 'Home', href: '#top' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/#top' },
+  { label: 'About', href: '/#about' },
+  { label: 'Services', href: '/#services' },
+  { label: 'Contact', href: '/#contact' },
 ]
 
 function Header() {
@@ -53,9 +53,13 @@ function Header() {
             </a>
           ))}
 
-          <a href="#contact" className={styles.cta} onClick={closeMenu}>
-            Get Started
-          </a>
+          {/* Login button.
+              <Link> ito, hindi <a>, dahil papunta siya sa ibang ROUTE.
+              Ang <Link> ay hindi nagre-reload ng buong page — ito ang
+              dahilan kung bakit mabilis ang React apps. */}
+          <Link to="/login" className={styles.cta} onClick={closeMenu}>
+            Login
+          </Link>
         </nav>
       </div>
     </header>

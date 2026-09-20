@@ -1,11 +1,13 @@
 import styles from './Footer.module.css'
 
-/* PALITAN: mga link sa footer */
+/* PALITAN: mga link sa footer.
+   Gaya ng sa Header, may "/" bago ang "#" para gumana ang mga
+   link kahit nasa ibang page (hal. /login) ang user. */
 const FOOTER_LINKS = [
-  { label: 'Home', href: '#top' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/#top' },
+  { label: 'About', href: '/#about' },
+  { label: 'Services', href: '/#services' },
+  { label: 'Contact', href: '/#contact' },
 ]
 
 function Footer() {

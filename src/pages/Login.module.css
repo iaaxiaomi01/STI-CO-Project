@@ -1,0 +1,198 @@
+.page {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-section) 1.25rem;
+  background-color: var(--color-surface);
+}
+
+.card {
+  width: 100%;
+  max-width: 430px;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem 2.25rem;
+}
+
+.cardHead {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  font-family: inherit;
+  font-size: 0.98rem;
+  color: var(--color-text);
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #a3aec2;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+/* Pulang border kapag may error sa field na ito */
+.inputError {
+  border-color: #d93636;
+}
+
+.inputError:focus {
+  border-color: #d93636;
+  box-shadow: 0 0 0 3px rgba(217, 54, 54, 0.14);
+}
+
+.errorText {
+  font-size: 0.85rem;
+  color: #d93636;
+}
+
+.successText {
+  font-size: 0.88rem;
+  color: #1a7f4b;
+  background-color: #e8f6ee;
+  border: 1px solid #bfe5cf;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+
+/* Password field na may "Ipakita / Itago" na button sa loob */
+.passwordWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Espasyo sa kanan para hindi matakpan ng button ang text */
+.passwordWrap .input {
+  padding-right: 5.25rem;
+}
+
+.toggle {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  border-radius: 6px;
+}
+
+.toggle:hover {
+  background-color: var(--color-primary-soft);
+}
+
+.formRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.smallLink {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.smallLink:hover {
+  text-decoration: underline;
+}
+
+.submit {
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color var(--transition), transform var(--transition);
+}
+
+.submit:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+
+.footNote {
+  margin-top: 1.75rem;
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--color-muted);
+}
+
+.footLink {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.footLink:hover {
+  text-decoration: underline;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 480px) {
+  .card {
+    padding: 2rem 1.35rem;
+  }
+}

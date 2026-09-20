@@ -31,6 +31,12 @@
   color: #9fabc2;
 }
 
+/* min-width: 0 — pinipigilan nito ang mahahabang salita na
+   lumagpas sa column nila sa loob ng grid. */
+.linkCol {
+  min-width: 0;
+}
+
 .colTitle {
   font-size: 0.85rem;
   font-weight: 700;
