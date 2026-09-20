@@ -81,25 +81,7 @@
   cursor: not-allowed;
 }
 
-/* Pansamantalang kahon kung saan mapupunta ang opisyal na logo.
-   Dashed border para halata agad na placeholder ito. */
-.msLogoPlaceholder {
-  width: 21px;
-  height: 21px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px dashed #a8a8a8;
-  border-radius: 2px;
-  font-size: 0.5rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #a8a8a8;
-  text-transform: uppercase;
-}
-
-/* Gamitin ito kapag napalitan mo na ng totoong <img> ang placeholder */
+/* Opisyal na Microsoft logo asset */
 .msLogo {
   width: 21px;
   height: 21px;
@@ -113,14 +95,15 @@
 /* ==========================================================
    MGA MENSAHE
    ========================================================== */
-.notice {
+/* Pulang kahon para sa error message sa ilalim ng button */
+.errorNotice {
   margin-top: 1.25rem;
   padding: 0.85rem 1rem;
   font-size: 0.88rem;
   text-align: left;
-  color: #1a4d8f;
-  background-color: var(--color-primary-soft);
-  border: 1px solid #c5d8fb;
+  color: #a12626;
+  background-color: #fdeaea;
+  border: 1px solid #f4c4c4;
   border-radius: 10px;
 }
 

@@ -1,32 +1,23 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
-import { useAuth } from '../context/AuthContext.js'
 import msLogo from '../assets/microsoft-logo.svg'
 import styles from './Login.module.css'
 
+/* Lalabas lang ang page na ito kapag HINDI ka naka-login.
+   Kapag naka-login ka, wala na ang /login sa route tree —
+   tingnan ang App.jsx. Kaya hindi na natin kailangang
+   manu-manong magbantay dito. */
 function Login() {
-  const { user, loading } = useAuth()
-  const navigate = useNavigate()
-
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-
-  /* Naka-login ka na at bumalik ka sa /login? Diretso sa member
-     page — walang saysay ang login page sa'yo. */
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/member', { replace: true })
-    }
-  }, [user, loading, navigate])
 
   async function handleMicrosoftSignIn() {
     setError('')
     setBusy(true)
 
-    /* IBA ITO SA MSAL: hindi popup, kundi buong-page na redirect.
-       Aalis ang browser papunta sa Microsoft, mag-si-sign in ka
-       doon, tapos babalik sa redirectTo sa baba.
+    /* Buong-page na redirect ito, hindi popup. Aalis ang browser
+       papunta sa Microsoft, mag-si-sign in ka doon, tapos babalik
+       sa redirectTo sa baba.
 
        Kaya walang navigate() pagkatapos nito — ang browser mismo
        ang magdadala sa'yo pabalik. */
@@ -72,7 +63,7 @@ function Login() {
           type="button"
           className={styles.msButton}
           onClick={handleMicrosoftSignIn}
-          disabled={busy || loading}
+          disabled={busy}
         >
           <img src={msLogo} alt="" className={styles.msLogo} />
           <span className={styles.msButtonText}>
