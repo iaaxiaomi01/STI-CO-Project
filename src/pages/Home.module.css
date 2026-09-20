@@ -1,0 +1,339 @@
+/* Shared na container width. Inuulit ito sa bawat module
+   para fully scoped ang bawat file (ganito ang paraan ng CSS Modules). */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* ==========================================================
+   HERO
+   ========================================================== */
+.hero {
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%);
+  padding: 4.5rem 0 var(--space-section);
+}
+
+.heroInner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 1.25rem;
+}
+
+.heroTitle {
+  font-size: clamp(2.25rem, 5vw, 3.4rem);
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+}
+
+.highlight {
+  color: var(--color-primary);
+}
+
+.heroSubtitle {
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  max-width: 52ch;
+  margin-bottom: 2rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.btnPrimary,
+.btnSecondary,
+.btnAccent {
+  display: inline-block;
+  padding: 0.85rem 1.75rem;
+  border-radius: 999px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  transition: transform var(--transition), background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.btnPrimary {
+  background-color: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.btnPrimary:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+
+.btnSecondary {
+  background-color: #fff;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btnSecondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+/* Placeholder box para sa hero image */
+.heroVisual {
+  display: flex;
+  justify-content: center;
+}
+
+.visualCard {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4a7bff 100%);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: #fff;
+}
+
+.visualLabel {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.visualHint {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+/* ==========================================================
+   SECTION HEADINGS (ginagamit ng About at Services)
+   ========================================================== */
+.sectionHead {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  margin-bottom: 0.6rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.75rem, 3.5vw, 2.4rem);
+  font-weight: 800;
+}
+
+.sectionSubtitle {
+  margin-top: 0.85rem;
+  color: var(--color-muted);
+  max-width: 55ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ==========================================================
+   ABOUT
+   ========================================================== */
+.about {
+  padding: var(--space-section) 0;
+}
+
+.aboutGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.aboutText {
+  color: var(--color-muted);
+  font-size: 1.02rem;
+}
+
+.aboutText code {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.9em;
+  color: var(--color-text);
+}
+
+.statsRow {
+  margin-top: 3.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding: 2.25rem 1.5rem;
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statValue {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+
+.statLabel {
+  font-size: 0.92rem;
+  color: var(--color-muted);
+  margin-top: 0.3rem;
+}
+
+/* ==========================================================
+   SERVICES
+   ========================================================== */
+.services {
+  padding: var(--space-section) 0;
+  background-color: var(--color-surface);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.75rem;
+}
+
+.card {
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 2rem 1.75rem;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  margin-bottom: 1.1rem;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+.cardText {
+  color: var(--color-muted);
+  font-size: 0.98rem;
+}
+
+/* ==========================================================
+   CTA / CONTACT
+   ========================================================== */
+.cta {
+  padding: var(--space-section) 0;
+}
+
+.ctaInner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3.5rem 2rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4a7bff 100%);
+  text-align: center;
+  color: #fff;
+}
+
+.ctaTitle {
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+  margin-bottom: 0.9rem;
+}
+
+.ctaText {
+  max-width: 48ch;
+  margin: 0 auto 2rem;
+  opacity: 0.92;
+}
+
+.btnAccent {
+  background-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.btnAccent:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+@media (max-width: 900px) {
+  .heroInner {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  /* Sa mobile, ilagay ang larawan sa ibaba ng teksto */
+  .heroVisual {
+    order: 2;
+  }
+
+  .aboutGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .statsRow {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .heroActions .btnPrimary,
+  .heroActions .btnSecondary {
+    flex: 1;
+    text-align: center;
+  }
+
+  .ctaInner {
+    padding: 2.5rem 1.25rem;
+  }
+}
