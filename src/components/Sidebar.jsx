@@ -1,25 +1,18 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.js'
+import { getRoleConfig } from '../config/roles.js'
 import styles from './Sidebar.module.css'
 
-/* PALITAN: mga link sa sidebar.
+/* Ang laman ng sidebar ay HINDI nakasulat dito — galing siya
+   sa src/config/roles.js, base sa role ng naka-login.
 
-   Lahat ng ito ay may totoong page at totoong <Route> na sa
-   App.jsx. Kapag magdadagdag ka ng bago:
-     1. gumawa ng page sa src/pages/
-     2. idagdag ang <Route> sa App.jsx
-     3. idagdag ang item dito
-
-   Kung may page na wala pa, lagyan mo ng "disabled: true" at
-   magiging kulay-abo ito na may "soon" badge. */
-const SIDEBAR_LINKS = [
-  { label: 'Dashboard', to: '/dashboard', icon: '■' },
-  { label: 'Events', to: '/events', icon: '◆' },
-  { label: 'Announcements', to: '/announcements', icon: '★' },
-  { label: 'Attendance', to: '/attendance', icon: '✓' },
-  { label: 'Profile', to: '/profile', icon: '●' },
-]
-
+   Kaya ibang-iba ang nakikita ng Member at ng Officer, pero
+   iisa lang ang component na ito. Doon ka magdagdag ng items,
+   hindi dito. */
 function Sidebar({ open, onClose, user, onLogout }) {
+  const { role } = useAuth()
+  const roleConfig = getRoleConfig(role)
+
   const displayName =
     user?.user_metadata?.full_name ??
     user?.user_metadata?.name ??
@@ -49,32 +42,23 @@ function Sidebar({ open, onClose, user, onLogout }) {
       </div>
 
       <nav className={styles.nav}>
-        {SIDEBAR_LINKS.map((link) =>
-          link.disabled ? (
-            /* Wala pang page — hindi pa pindutin */
-            <span key={link.label} className={styles.navItemDisabled}>
-              <span className={styles.icon}>{link.icon}</span>
-              {link.label}
-              <span className={styles.soon}>soon</span>
-            </span>
-          ) : (
-            /* Ang NavLink ay parang Link, pero alam niya kung
-               siya ang kasalukuyang page. Ang className ay
-               pwedeng maging function na tumatanggap ng
-               { isActive } — dito nanggagaling ang highlight. */
-            <NavLink
-              key={link.label}
-              to={link.to}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-              }
-            >
-              <span className={styles.icon}>{link.icon}</span>
-              {link.label}
-            </NavLink>
-          ),
-        )}
+        {roleConfig.sidebar.map((item) => (
+          /* Ang NavLink ay parang Link, pero alam niya kung
+             siya ang kasalukuyang page. Ang className ay
+             pwedeng maging function na tumatanggap ng
+             { isActive } — dito nanggagaling ang highlight. */
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={onClose}
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.icon}>{item.icon}</span>
+            {item.label}
+          </NavLink>
+        ))}
       </nav>
 
       {/* Naka-push sa ilalim ng sidebar — tingnan ang margin-top:auto */}
@@ -88,6 +72,10 @@ function Sidebar({ open, onClose, user, onLogout }) {
             {email && <span className={styles.userEmail}>{email}</span>}
           </span>
         </div>
+
+        {/* Ipinapakita ang role para alam agad kung bakit
+            ganito ang nakikitang menu */}
+        <p className={styles.roleTag}>{roleConfig.label}</p>
 
         <button type="button" className={styles.logout} onClick={onLogout}>
           Logout

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.js'
+import { getRoleConfig } from './config/roles.js'
 import PublicLayout from './layouts/PublicLayout.jsx'
 import MemberLayout from './layouts/MemberLayout.jsx'
 import Home from './pages/Home.jsx'
@@ -8,24 +9,42 @@ import Dashboard from './pages/Dashboard.jsx'
 import Events from './pages/Events.jsx'
 import Announcements from './pages/Announcements.jsx'
 import Attendance from './pages/Attendance.jsx'
+import Members from './pages/Members.jsx'
+import Requests from './pages/Requests.jsx'
 import Profile from './pages/Profile.jsx'
+
+/* ============================================================
+   REHISTRO NG PAGES
+
+   Tinutugma nito ang URL sa component. Ang config/roles.js ang
+   nagsasabi kung ALIN sa mga ito ang nakikita ng bawat role.
+
+   Kapag magdadagdag ka ng page: irehistro dito, tapos idagdag
+   sa sidebar ng mga role na dapat makakita nito.
+   ============================================================ */
+const PAGE_COMPONENTS = {
+  '/dashboard': Dashboard,
+  '/events': Events,
+  '/announcements': Announcements,
+  '/attendance': Attendance,
+  '/members': Members,
+  '/requests': Requests,
+  '/profile': Profile,
+}
 
 /* ============================================================
    DALAWANG MAGKAIBANG SITE SA ISANG APP
 
-   Naka-login    → MemberLayout (sidebar, walang navbar)
+   Naka-login       → MemberLayout (sidebar, walang navbar)
    Hindi naka-login → PublicLayout (navbar at footer)
 
-   Pansinin: ang mga route mismo ang nagbabago, hindi lang
-   ang hitsura. Kapag hindi ka naka-login, LITERAL NA WALA
-   ang /dashboard sa route tree — kaya hindi mo ito mapupuntahan
-   kahit i-type mo pa ang URL.
-
-   Ito ang dahilan kung bakit hindi na natin kailangan ang
-   ProtectedRoute. Ang route tree na mismo ang bantay.
+   At sa loob ng naka-login, ang MGA ROUTE MISMO ay galing sa
+   role. Kung walang Members sa sidebar ng Member, wala rin
+   siyang route para doon — kaya kahit i-type niya ang
+   /members, ibabalik siya sa dashboard.
    ============================================================ */
 function App() {
-  const { user, loading } = useAuth()
+  const { user, role, loading } = useAuth()
 
   /* Habang hinahanap pa ng Supabase ang naka-save na session.
      Kung wala ito, sandaling sisilip ang public layout bago
@@ -38,20 +57,27 @@ function App() {
     )
   }
 
+  const roleConfig = getRoleConfig(role)
+
   return (
     <Routes>
       {user ? (
         /* ---------- NAKA-LOGIN ---------- */
         <Route element={<MemberLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/announcements" element={<Announcements />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/profile" element={<Profile />} />
+          {roleConfig.sidebar.map((item) => {
+            const PageComponent = PAGE_COMPONENTS[item.to]
 
-          {/* Kahit anong ibang URL → dalhin sa dashboard.
-              Kasama rito ang "/" at "/login" — hindi na sila
-              kailangan ng naka-login na user. */}
+            /* Kung may item sa sidebar na walang naka-rehistrong
+               page, laktawan imbes na mag-crash. */
+            if (!PageComponent) return null
+
+            return (
+              <Route key={item.to} path={item.to} element={<PageComponent />} />
+            )
+          })}
+
+          {/* Kahit anong ibang URL — kasama ang mga page na bawal
+              sa role na ito — balik sa dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       ) : (
@@ -59,8 +85,6 @@ function App() {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-
-          {/* Kahit anong ibang URL → balik sa landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

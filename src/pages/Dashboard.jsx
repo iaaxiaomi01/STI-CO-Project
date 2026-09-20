@@ -1,51 +1,29 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
+import { getRoleConfig } from '../config/roles.js'
 import styles from './Dashboard.module.css'
 
-/* PALITAN: pekeng numero muna ito.
-   Kapag may database ka na, dito papasok ang totoong bilang
-   mula sa Supabase. */
-const STATS = [
-  { label: 'Paparating na events', value: '0', to: '/events' },
-  { label: 'Bagong announcements', value: '0', to: '/announcements' },
-  { label: 'Attendance rate', value: '—', to: '/attendance' },
-]
+/* ISANG Dashboard component, MARAMING magkaibang itsura.
 
-const QUICK_LINKS = [
-  {
-    to: '/events',
-    icon: '◆',
-    title: 'Events',
-    text: 'Tingnan ang mga paparating na aktibidad at mag-sign up.',
-  },
-  {
-    to: '/announcements',
-    icon: '★',
-    title: 'Announcements',
-    text: 'Basahin ang pinakabagong balita mula sa organisasyon.',
-  },
-  {
-    to: '/attendance',
-    icon: '✓',
-    title: 'Attendance',
-    text: 'Suriin ang iyong record ng pagdalo sa mga aktibidad.',
-  },
-]
+   Ang laman ay galing sa src/config/roles.js, base sa role ng
+   naka-login. Kaya hindi natin kailangan ng MemberDashboard.jsx
+   at OfficerDashboard.jsx — pare-pareho lang ang hugis, ang
+   teksto at numero ang nagkakaiba.
 
+   KAILAN DAPAT HIWALAYAN:
+   Kapag ang isang role ay nangailangan ng ibang-ibang LAYOUT —
+   hindi lang ibang teksto. Habang teksto at numero lang ang
+   pinagkaiba, config lang ang kailangan. */
 function Dashboard() {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
+  const roleConfig = getRoleConfig(role)
 
-  /* Saan nanggagaling ang pangalan:
-     Ang Supabase ay naglalagay ng impormasyon mula sa Microsoft
-     sa user_metadata. Nag-iiba ang eksaktong field depende sa
-     klase ng account, kaya sunod-sunod ang hinahanap natin. */
   const fullName =
     user?.user_metadata?.full_name ??
     user?.user_metadata?.name ??
     user?.email ??
     'Member'
 
-  // Unang pangalan lang sa pagbati
   const firstName = fullName.split(' ')[0]
   const initial = fullName.charAt(0).toUpperCase()
 
@@ -57,17 +35,15 @@ function Dashboard() {
         </div>
 
         <div className={styles.welcomeText}>
-          <p className={styles.badge}>Members only</p>
+          <p className={styles.badge}>{roleConfig.label}</p>
           <h1 className={styles.title}>Kumusta, {firstName}!</h1>
-          <p className={styles.sub}>
-            Narito ang mabilisang tanaw ng organisasyon.
-          </p>
+          <p className={styles.sub}>{roleConfig.dashboard.subtitle}</p>
         </div>
       </div>
 
       {/* Stat tiles — nakalink sa kaukulang seksyon */}
       <div className={styles.statRow}>
-        {STATS.map((stat) => (
+        {roleConfig.dashboard.stats.map((stat) => (
           <Link key={stat.label} to={stat.to} className={styles.stat}>
             <span className={styles.statValue}>{stat.value}</span>
             <span className={styles.statLabel}>{stat.label}</span>
@@ -78,13 +54,13 @@ function Dashboard() {
       <h2 className={styles.sectionTitle}>Mga seksyon</h2>
 
       <div className={styles.cardGrid}>
-        {QUICK_LINKS.map((link) => (
-          <Link key={link.to} to={link.to} className={styles.card}>
+        {roleConfig.dashboard.cards.map((card) => (
+          <Link key={card.to} to={card.to} className={styles.card}>
             <span className={styles.cardIcon} aria-hidden="true">
-              {link.icon}
+              {card.icon}
             </span>
-            <h3 className={styles.cardTitle}>{link.title}</h3>
-            <p className={styles.cardText}>{link.text}</p>
+            <h3 className={styles.cardTitle}>{card.title}</h3>
+            <p className={styles.cardText}>{card.text}</p>
           </Link>
         ))}
       </div>

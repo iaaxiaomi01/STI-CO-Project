@@ -1,4 +1,7 @@
+import { useAuth } from '../context/AuthContext.js'
+import { getRoleConfig } from '../config/roles.js'
 import PageHeader from '../components/PageHeader.jsx'
+import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 
 /* PALITAN: placeholder pa ito.
@@ -13,17 +16,37 @@ import EmptyState from '../components/EmptyState.jsx'
    Huwag burahin ang EmptyState kapag totoo na ang data —
    kakailanganin mo pa rin ito kapag walang naka-schedule. */
 function Events() {
+  const { role } = useAuth()
+
+  /* Ang canManage ay nakatakda sa config/roles.js.
+     Officer: true. Member: false.
+
+     Ito ang nagpapaiba ng page na ito sa dalawang role —
+     iisang component, dalawang itsura. */
+  const { canManage } = getRoleConfig(role)
+
   return (
     <>
       <PageHeader
         title="Events"
-        subtitle="Mga paparating na aktibidad ng organisasyon."
+        subtitle={
+          canManage
+            ? 'Gumawa at pamahalaan ang mga aktibidad ng organisasyon.'
+            : 'Mga paparating na aktibidad ng organisasyon.'
+        }
+        /* Officer lang ang may button. Sa Member, undefined
+           ang action at walang lalabas. */
+        action={canManage && <ActionButton>+ Gumawa ng Event</ActionButton>}
       />
 
       <EmptyState
         icon="◆"
         title="Wala pang naka-schedule na event"
-        message="Kapag may naidagdag nang event, dito ito lalabas kasama ang petsa, lugar, at sino ang sumali."
+        message={
+          canManage
+            ? 'Kapag gumawa ka ng event, dito ito lalabas kasama ang petsa, lugar, at sino ang sumali.'
+            : 'Kapag may naidagdag nang event, dito ito lalabas kasama ang petsa, lugar, at sino ang sumali.'
+        }
       />
     </>
   )

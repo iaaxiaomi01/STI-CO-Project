@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
+import { DEV_ROLE } from '../config/roles.js'
 import { AuthContext } from './AuthContext.js'
 
 /* ============================================================
@@ -53,6 +54,17 @@ function AuthProvider({ children }) {
   const value = {
     session,
     user: session?.user ?? null,
+
+    /* Ang role ay galing sa config, hindi sa database.
+       Pansamantala ito — tingnan ang DEV_ROLE sa
+       src/config/roles.js para sa paliwanag.
+
+       Kapag may profiles table na, dito papasok ang
+       totoong role ng naka-login. Ito lang ang linyang
+       magbabago; ang lahat ng component ay patuloy na
+       kukunin ito sa pamamagitan ng useAuth(). */
+    role: DEV_ROLE,
+
     loading,
   }
 
