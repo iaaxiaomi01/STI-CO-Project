@@ -1,169 +1,91 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import styles from './Login.module.css'
+import msLogo from '../assets/microsoft-logo.svg'
 
 function Login() {
-  /* CONTROLLED FORM:
-     Ang React ang may hawak ng laman ng bawat input, hindi ang
-     browser. Kaya isang useState lang para sa buong form —
-     object na may email at password. */
-  const [form, setForm] = useState({ email: '', password: '' })
+  /* Tatlong posibleng estado ng page:
+     'idle'        — naghihintay ng pindot
+     'signing-in'  — kunwari may kausap na Microsoft
+     'placeholder' — tapos na ang kunwaring proseso
 
-  // Mga error message kada field. Walang laman = walang error.
-  const [errors, setErrors] = useState({})
+     Isang state lang na may tatlong halaga — mas malinis kaysa
+     tatlong magkahiwalay na true/false na useState. */
+  const [status, setStatus] = useState('idle')
 
-  // Nakikita ba ang password o naka-dots?
-  const [showPassword, setShowPassword] = useState(false)
+  function handleMicrosoftSignIn() {
+    setStatus('signing-in')
 
-  // Naipasa ba nang matagumpay ang form?
-  const [submitted, setSubmitted] = useState(false)
+    /* TODO — DITO PAPASOK ANG TOTOONG MICROSOFT LOGIN.
+       Kapag handa ka na, ganito ang daan:
 
-  /* Isang handler lang para sa LAHAT ng input.
-     Gumagana ito dahil ang "name" attribute ng bawat input ay
-     katugma ng key sa form state. */
-  function handleChange(event) {
-    const { name, value } = event.target
+       1. Mag-register ng app sa Microsoft Entra ID (dating Azure AD)
+          para makakuha ng Client ID at Tenant ID.
+       2. npm install @azure/msal-browser @azure/msal-react
+       3. Balutin ang <App /> ng <MsalProvider> sa main.jsx
+       4. Palitan ang setTimeout sa baba ng:
+             const { instance } = useMsal()
+             instance.loginPopup({ scopes: ['User.Read'] })
 
-    setForm((prev) => ({ ...prev, [name]: value }))
-
-    // Alisin agad ang error habang nagta-type — mas magandang UX
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-    setSubmitted(false)
+       Sa ngayon, kunwari lang ang 900ms na paghihintay para
+       makita mo ang loading state. */
+    setTimeout(() => setStatus('placeholder'), 900)
   }
 
-  /* Validation. Ibinabalik ang object ng mga error.
-     Kung walang laman ang object, ibig sabihin valid ang form. */
-  function validate() {
-    const found = {}
-
-    if (!form.email.trim()) {
-      found.email = 'Kailangan ang email address.'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      found.email = 'Mukhang mali ang format ng email.'
-    }
-
-    if (!form.password) {
-      found.password = 'Kailangan ang password.'
-    } else if (form.password.length < 8) {
-      found.password = 'Dapat 8 characters pataas ang password.'
-    }
-
-    return found
-  }
-
-  function handleSubmit(event) {
-    // Pinipigilan nito ang default na page reload ng HTML forms
-    event.preventDefault()
-
-    const found = validate()
-    setErrors(found)
-
-    // May error? Huwag ituloy.
-    if (Object.keys(found).length > 0) return
-
-    /* TODO: dito ilalagay ang totoong login request kapag may
-       backend ka na, halimbawa:
-       const res = await fetch('/api/login', { ... })
-
-       Sa ngayon, frontend lang ito — walang totoong
-       authentication na nangyayari. */
-    setSubmitted(true)
-  }
+  const isSigningIn = status === 'signing-in'
 
   return (
     <section className={styles.page}>
       <div className={styles.card}>
+        {/* PALITAN: logo ng site mo */}
+        <p className={styles.brand}>
+          STI<span className={styles.brandAccent}>-CO</span>
+        </p>
+
         <div className={styles.cardHead}>
-          <h1 className={styles.title}>Welcome back</h1>
+          <h1 className={styles.title}>Sign in</h1>
           <p className={styles.subtitle}>
-            Mag-sign in para ipagpatuloy ang iyong account.
+            Gamitin ang iyong Microsoft account para makapasok.
           </p>
         </div>
 
-        {/* noValidate: pinapatay ang built-in na validation ng browser
-            para tayo ang may kontrol sa mga error message */}
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <div className={styles.field}>
-            <label htmlFor="email" className={styles.label}>
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
-              placeholder="ikaw@halimbawa.com"
-              value={form.email}
-              onChange={handleChange}
-              autoComplete="email"
-            />
-            {/* Lalabas lang ang error kapag may laman ang errors.email */}
-            {errors.email && <p className={styles.errorText}>{errors.email}</p>}
-          </div>
+        <button
+          type="button"
+          className={styles.msButton}
+          onClick={handleMicrosoftSignIn}
+          disabled={isSigningIn}
+        >
+          {/* PLACEHOLDER PARA SA MICROSOFT LOGO.
+              Hindi ko iginuhit ang logo — kailangan mong kunin ang
+              opisyal na asset mismo sa Microsoft. Hinihingi nila
+              ito sa kanilang branding guidelines, at ang gawa-gawang
+              kopya ay paglabag doon.
 
-          <div className={styles.field}>
-            <label htmlFor="password" className={styles.label}>
-              Password
-            </label>
+              Hanapin: "Microsoft identity platform branding
+              guidelines" — may downloadable na SVG doon.
 
-            <div className={styles.passwordWrap}>
-              <input
-                id="password"
-                name="password"
-                /* Dito nagpapalit ang type: "text" kapag nakikita,
-                   "password" kapag nakatago */
-                type={showPassword ? 'text' : 'password'}
-                className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
-                placeholder="••••••••"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className={styles.toggle}
-                onClick={() => setShowPassword((shown) => !shown)}
-                aria-label={showPassword ? 'Itago ang password' : 'Ipakita ang password'}
-              >
-                {showPassword ? 'Itago' : 'Ipakita'}
-              </button>
-            </div>
+              Kapag nakuha mo na:
+                1. Ilagay sa src/assets/microsoft-logo.svg
+                2. import msLogo from '../assets/microsoft-logo.svg'
+                3. Palitan ang <span> sa baba ng:
+                   <img src={msLogo} alt="" className={styles.msLogo} /> */}
+          <img src={msLogo} alt="" className={styles.msLogo} />
 
-            {errors.password && (
-              <p className={styles.errorText}>{errors.password}</p>
-            )}
-          </div>
+          <span className={styles.msButtonText}>
+            {isSigningIn ? 'Nagsa-sign in…' : 'Sign in with Microsoft'}
+          </span>
+        </button>
 
-          <div className={styles.formRow}>
-            <label className={styles.checkboxLabel}>
-              <input type="checkbox" name="remember" />
-              <span>Remember me</span>
-            </label>
+        {/* Lalabas lang kapag tapos na ang kunwaring proseso */}
+        {status === 'placeholder' && (
+          <p className={styles.notice}>
+            Dito papasok ang Microsoft sign-in window. Wala pang
+            totoong authentication — placeholder pa lang ito.
+          </p>
+        )}
 
-            {/* PALITAN: gawan ng totoong page kapag kailangan na */}
-            <a href="/#contact" className={styles.smallLink}>
-              Forgot password?
-            </a>
-          </div>
-
-          <button type="submit" className={styles.submit}>
-            Sign in
-          </button>
-
-          {/* Pansamantalang mensahe — palitan kapag may backend na */}
-          {submitted && (
-            <p className={styles.successText}>
-              Valid ang form. (Wala pang backend kaya dito muna
-              natatapos — walang totoong login na nangyayari.)
-            </p>
-          )}
-        </form>
-
-        <p className={styles.footNote}>
-          Wala pang account?{' '}
-          <Link to="/login" className={styles.footLink}>
-            Mag-sign up
-          </Link>
+        <p className={styles.helpText}>
+          Kailangan mo ng STI Microsoft account para makapasok.
+          Kung wala ka pa nito, makipag-ugnayan sa IT support.
         </p>
       </div>
     </section>

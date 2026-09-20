@@ -9,21 +9,32 @@
 
 .card {
   width: 100%;
-  max-width: 430px;
+  max-width: 420px;
   background-color: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  padding: 2.5rem 2.25rem;
+  padding: 2.75rem 2.25rem 2.25rem;
+  text-align: center;
 }
 
-.cardHead {
-  text-align: center;
+.brand {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   margin-bottom: 2rem;
 }
 
+.brandAccent {
+  color: var(--color-primary);
+}
+
+.cardHead {
+  margin-bottom: 1.75rem;
+}
+
 .title {
-  font-size: 1.75rem;
+  font-size: 1.7rem;
   font-weight: 800;
   margin-bottom: 0.4rem;
 }
@@ -33,166 +44,98 @@
   color: var(--color-muted);
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
+/* ==========================================================
+   MICROSOFT SIGN-IN BUTTON
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.label {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.input {
+   Ang laki, kulay, at font dito ay tinatantiya ang opisyal na
+   spec ng Microsoft (puting background, 1px na kulay-abong
+   border, Segoe UI). I-verify mo pa rin sa kanilang branding
+   guidelines bago i-submit o i-deploy — pwedeng nagbago na.
+   ========================================================== */
+.msButton {
   width: 100%;
-  padding: 0.8rem 0.95rem;
-  font-family: inherit;
-  font-size: 0.98rem;
-  color: var(--color-text);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  border: 1px solid #8c8c8c;
+  border-radius: 4px; /* maliit lang ang radius sa spec nila */
+  color: #5e5e5e;
+  font-family: "Segoe UI", var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background-color var(--transition), border-color var(--transition);
 }
 
-.input::placeholder {
-  color: #a3aec2;
+.msButton:hover:not(:disabled) {
+  background-color: #f3f3f3;
+  border-color: #6f6f6f;
 }
 
-.input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+/* Kapag nagsa-sign in: hindi na mapipindot at bahagyang kupas */
+.msButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
-/* Pulang border kapag may error sa field na ito */
-.inputError {
-  border-color: #d93636;
+/* Pansamantalang kahon kung saan mapupunta ang opisyal na logo.
+   Dashed border para halata agad na placeholder ito. */
+.msLogoPlaceholder {
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #a8a8a8;
+  border-radius: 2px;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #a8a8a8;
+  text-transform: uppercase;
 }
 
-.inputError:focus {
-  border-color: #d93636;
-  box-shadow: 0 0 0 3px rgba(217, 54, 54, 0.14);
+/* Gamitin ito kapag napalitan mo na ng totoong <img> ang placeholder */
+.msLogo {
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
 }
 
-.errorText {
-  font-size: 0.85rem;
-  color: #d93636;
+.msButtonText {
+  line-height: 1;
 }
 
-.successText {
+/* ==========================================================
+   MGA MENSAHE
+   ========================================================== */
+.notice {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
   font-size: 0.88rem;
-  color: #1a7f4b;
-  background-color: #e8f6ee;
-  border: 1px solid #bfe5cf;
-  border-radius: 10px;
-  padding: 0.75rem 0.9rem;
-}
-
-/* Password field na may "Ipakita / Itago" na button sa loob */
-.passwordWrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-/* Espasyo sa kanan para hindi matakpan ng button ang text */
-.passwordWrap .input {
-  padding-right: 5.25rem;
-}
-
-.toggle {
-  position: absolute;
-  right: 0.5rem;
-  background: none;
-  border: none;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  border-radius: 6px;
-}
-
-.toggle:hover {
+  text-align: left;
+  color: #1a4d8f;
   background-color: var(--color-primary-soft);
+  border: 1px solid #c5d8fb;
+  border-radius: 10px;
 }
 
-.formRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-  cursor: pointer;
-}
-
-.checkboxLabel input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary);
-  cursor: pointer;
-}
-
-.smallLink {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.smallLink:hover {
-  text-decoration: underline;
-}
-
-.submit {
-  padding: 0.9rem 1.5rem;
-  border: none;
-  border-radius: 999px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background-color var(--transition), transform var(--transition);
-}
-
-.submit:hover {
-  background-color: var(--color-primary-dark);
-  transform: translateY(-2px);
-}
-
-.footNote {
+.helpText {
   margin-top: 1.75rem;
-  text-align: center;
-  font-size: 0.92rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.87rem;
+  line-height: 1.55;
   color: var(--color-muted);
-}
-
-.footLink {
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.footLink:hover {
-  text-decoration: underline;
 }
 
 /* ---------- MOBILE ---------- */
 @media (max-width: 480px) {
   .card {
-    padding: 2rem 1.35rem;
+    padding: 2.25rem 1.35rem 1.85rem;
   }
 }
