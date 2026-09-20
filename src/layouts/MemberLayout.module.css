@@ -10,8 +10,19 @@
   min-height: 100vh;
 }
 
+/* Isang lugar lang ang padding ng lahat ng member pages.
+   Kaya hindi na ito inuulit sa bawat page — dito mo lang
+   babaguhin kung gusto mong mas maluwag o mas masikip. */
 .content {
   min-height: 100vh;
+  padding: 2.35rem 1.85rem 3.5rem;
+  max-width: 1180px;
+}
+
+@media (max-width: 560px) {
+  .content {
+    padding: 1.75rem 1.15rem 2.5rem;
+  }
 }
 
 /* ---------- OVERLAY (mobile lang) ---------- */

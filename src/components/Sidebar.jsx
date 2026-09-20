@@ -3,14 +3,20 @@ import styles from './Sidebar.module.css'
 
 /* PALITAN: mga link sa sidebar.
 
-   Ang "disabled: true" ay para sa mga page na wala pa.
-   Kapag nagawa mo na ang page at nadagdag mo na ang <Route>
-   nito sa App.jsx, alisin mo lang ang "disabled" at magiging
-   totoong link na siya. */
+   Lahat ng ito ay may totoong page at totoong <Route> na sa
+   App.jsx. Kapag magdadagdag ka ng bago:
+     1. gumawa ng page sa src/pages/
+     2. idagdag ang <Route> sa App.jsx
+     3. idagdag ang item dito
+
+   Kung may page na wala pa, lagyan mo ng "disabled: true" at
+   magiging kulay-abo ito na may "soon" badge. */
 const SIDEBAR_LINKS = [
-  { label: 'Overview', to: '/member', icon: '◆' },
-  { label: 'Profile', to: '/profile', icon: '●', disabled: true },
-  { label: 'Settings', to: '/settings', icon: '▲', disabled: true },
+  { label: 'Dashboard', to: '/dashboard', icon: '■' },
+  { label: 'Events', to: '/events', icon: '◆' },
+  { label: 'Announcements', to: '/announcements', icon: '★' },
+  { label: 'Attendance', to: '/attendance', icon: '✓' },
+  { label: 'Profile', to: '/profile', icon: '●' },
 ]
 
 function Sidebar({ open, onClose, user, onLogout }) {

@@ -1,0 +1,28 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.85rem;
+}
+
+.text {
+  min-width: 0;
+}
+
+.title {
+  font-size: clamp(1.45rem, 3vw, 1.95rem);
+  font-weight: 800;
+}
+
+.subtitle {
+  margin-top: 0.3rem;
+  font-size: 0.97rem;
+  color: var(--color-muted);
+  max-width: 62ch;
+}
+
+.action {
+  flex-shrink: 0;
+}

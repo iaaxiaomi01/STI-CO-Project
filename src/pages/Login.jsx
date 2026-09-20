@@ -29,10 +29,18 @@ function Login() {
            manatiling naka-login nang matagal. */
         scopes: 'email',
 
-        /* Saan babalik pagkatapos. DAPAT nakalista rin ito sa
-           Supabase dashboard → Authentication → URL Configuration
-           → Redirect URLs, kung hindi ay tatanggihan ito. */
-        redirectTo: `${window.location.origin}/member`,
+        /* Ang root lang ang ibinibigay natin — hindi
+           "/dashboard" o kahit anong partikular na page.
+
+           BAKIT: ang redirectTo ay dapat nakalista sa Supabase
+           dashboard → Authentication → URL Configuration. Ang
+           root ay laging nakalista bilang Site URL, kaya
+           imposible itong tanggihan.
+
+           Pagbalik mo sa "/", hindi ito route sa member tree,
+           kaya sasaluhin ka ng catch-all at dadalhin sa
+           /dashboard — tingnan ang App.jsx. */
+        redirectTo: window.location.origin,
       },
     })
 

@@ -1,0 +1,154 @@
+/* Walang padding dito — nasa MemberLayout .content na iyon,
+   para pare-pareho ang lahat ng member pages. */
+
+/* ---------- WELCOME CARD ---------- */
+.welcomeCard {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  padding: 1.85rem;
+  margin-bottom: 1.75rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.welcomeText {
+  min-width: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  margin-bottom: 0.5rem;
+  border-radius: 999px;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 800;
+}
+
+.sub {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+/* ---------- STAT TILES ---------- */
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1.3rem 1.4rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: border-color var(--transition), transform var(--transition);
+}
+
+.stat:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.statValue {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-primary);
+}
+
+.statLabel {
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+/* ---------- SEKSYON ---------- */
+.sectionTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 1.1rem;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  gap: 1.35rem;
+}
+
+.card {
+  display: block;
+  padding: 1.7rem 1.55rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 1rem;
+  border-radius: 11px;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 1.05rem;
+}
+
+.cardTitle {
+  font-size: 1.08rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.cardText {
+  font-size: 0.94rem;
+  color: var(--color-muted);
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 560px) {
+  .welcomeCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem 1.3rem;
+  }
+}

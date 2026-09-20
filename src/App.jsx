@@ -4,7 +4,11 @@ import PublicLayout from './layouts/PublicLayout.jsx'
 import MemberLayout from './layouts/MemberLayout.jsx'
 import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
-import Member from './pages/Member.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Events from './pages/Events.jsx'
+import Announcements from './pages/Announcements.jsx'
+import Attendance from './pages/Attendance.jsx'
+import Profile from './pages/Profile.jsx'
 
 /* ============================================================
    DALAWANG MAGKAIBANG SITE SA ISANG APP
@@ -14,7 +18,7 @@ import Member from './pages/Member.jsx'
 
    Pansinin: ang mga route mismo ang nagbabago, hindi lang
    ang hitsura. Kapag hindi ka naka-login, LITERAL NA WALA
-   ang /member sa route tree — kaya hindi mo ito mapupuntahan
+   ang /dashboard sa route tree — kaya hindi mo ito mapupuntahan
    kahit i-type mo pa ang URL.
 
    Ito ang dahilan kung bakit hindi na natin kailangan ang
@@ -39,13 +43,16 @@ function App() {
       {user ? (
         /* ---------- NAKA-LOGIN ---------- */
         <Route element={<MemberLayout />}>
-          <Route path="/member" element={<Member />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/announcements" element={<Announcements />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/profile" element={<Profile />} />
 
-          {/* Dagdagan mo lang dito ng bagong member pages:
-              <Route path="/profile" element={<Profile />} /> */}
-
-          {/* Kahit anong ibang URL → dalhin sa member page */}
-          <Route path="*" element={<Navigate to="/member" replace />} />
+          {/* Kahit anong ibang URL → dalhin sa dashboard.
+              Kasama rito ang "/" at "/login" — hindi na sila
+              kailangan ng naka-login na user. */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       ) : (
         /* ---------- HINDI NAKA-LOGIN ---------- */
