@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient.js'
+import { useAuth } from '../context/AuthContext.js'
 import styles from './Header.module.css'
 
 /* PALITAN: ito ang mga nav links.
    Pansinin ang "/" bago ang "#" — mahalaga ito. Ang "/#about" ay
    nangangahulugang "pumunta sa home page, tapos mag-scroll sa
    #about section". Kung "#about" lang, walang mangyayari kapag
-   nasa /login page ang user dahil wala doong #about section. */
+   nasa ibang page ang user dahil wala doong #about section. */
 const NAV_LINKS = [
   { label: 'Home', href: '/#top' },
   { label: 'About', href: '/#about' },
@@ -15,10 +17,27 @@ const NAV_LINKS = [
 ]
 
 function Header() {
-  // Para sa mobile hamburger menu: bukas ba o sarado?
   const [menuOpen, setMenuOpen] = useState(false)
+  const { user } = useAuth()
+  const navigate = useNavigate()
 
   const closeMenu = () => setMenuOpen(false)
+
+  // Unang pangalan lang para hindi masikip ang header
+  const displayName =
+    user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email ?? ''
+  const firstName = displayName.split(' ')[0]
+
+  async function handleLogout() {
+    closeMenu()
+
+    await supabase.auth.signOut()
+
+    /* Hindi na natin kailangang i-clear ang user state —
+       ang onAuthStateChange sa AuthProvider ang bahala doon,
+       awtomatiko. */
+    navigate('/', { replace: true })
+  }
 
   return (
     <header className={styles.header}>
@@ -28,7 +47,6 @@ function Header() {
           STI<span className={styles.logoAccent}>-CO</span>
         </Link>
 
-        {/* Hamburger button — lalabas lang sa mobile (tingnan ang CSS) */}
         <button
           type="button"
           className={styles.burger}
@@ -39,8 +57,6 @@ function Header() {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        {/* Ganito i-combine ang dalawang class sa CSS Modules:
-            template literal + conditional */}
         <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`}>
           {NAV_LINKS.map((link) => (
             <a
@@ -53,13 +69,28 @@ function Header() {
             </a>
           ))}
 
-          {/* Login button.
-              <Link> ito, hindi <a>, dahil papunta siya sa ibang ROUTE.
-              Ang <Link> ay hindi nagre-reload ng buong page — ito ang
-              dahilan kung bakit mabilis ang React apps. */}
-          <Link to="/login" className={styles.cta} onClick={closeMenu}>
-            Login
-          </Link>
+          {/* Nagpapalit ang dulo ng nav depende kung naka-sign in.
+              Naka-sign in  → Member link, pangalan, at Logout
+              Hindi pa      → Login button */}
+          {user ? (
+            <>
+              <Link to="/member" className={styles.navLink} onClick={closeMenu}>
+                Member
+              </Link>
+
+              {firstName && (
+                <span className={styles.userName}>Hi, {firstName}</span>
+              )}
+
+              <button type="button" className={styles.logout} onClick={handleLogout}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className={styles.cta} onClick={closeMenu}>
+              Login
+            </Link>
+          )}
         </nav>
       </div>
     </header>

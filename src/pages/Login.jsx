@@ -1,37 +1,57 @@
-import { useState } from 'react'
-import styles from './Login.module.css'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient.js'
+import { useAuth } from '../context/AuthContext.js'
 import msLogo from '../assets/microsoft-logo.svg'
+import styles from './Login.module.css'
 
 function Login() {
-  /* Tatlong posibleng estado ng page:
-     'idle'        — naghihintay ng pindot
-     'signing-in'  — kunwari may kausap na Microsoft
-     'placeholder' — tapos na ang kunwaring proseso
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
 
-     Isang state lang na may tatlong halaga — mas malinis kaysa
-     tatlong magkahiwalay na true/false na useState. */
-  const [status, setStatus] = useState('idle')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-  function handleMicrosoftSignIn() {
-    setStatus('signing-in')
+  /* Naka-login ka na at bumalik ka sa /login? Diretso sa member
+     page — walang saysay ang login page sa'yo. */
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/member', { replace: true })
+    }
+  }, [user, loading, navigate])
 
-    /* TODO — DITO PAPASOK ANG TOTOONG MICROSOFT LOGIN.
-       Kapag handa ka na, ganito ang daan:
+  async function handleMicrosoftSignIn() {
+    setError('')
+    setBusy(true)
 
-       1. Mag-register ng app sa Microsoft Entra ID (dating Azure AD)
-          para makakuha ng Client ID at Tenant ID.
-       2. npm install @azure/msal-browser @azure/msal-react
-       3. Balutin ang <App /> ng <MsalProvider> sa main.jsx
-       4. Palitan ang setTimeout sa baba ng:
-             const { instance } = useMsal()
-             instance.loginPopup({ scopes: ['User.Read'] })
+    /* IBA ITO SA MSAL: hindi popup, kundi buong-page na redirect.
+       Aalis ang browser papunta sa Microsoft, mag-si-sign in ka
+       doon, tapos babalik sa redirectTo sa baba.
 
-       Sa ngayon, kunwari lang ang 900ms na paghihintay para
-       makita mo ang loading state. */
-    setTimeout(() => setStatus('placeholder'), 900)
+       Kaya walang navigate() pagkatapos nito — ang browser mismo
+       ang magdadala sa'yo pabalik. */
+    const { error: signInError } = await supabase.auth.signInWithOAuth({
+      provider: 'azure',
+      options: {
+        /* Kailangan ng Supabase ang 'email' scope.
+           Idagdag ang 'offline_access' kung gusto mong
+           manatiling naka-login nang matagal. */
+        scopes: 'email',
+
+        /* Saan babalik pagkatapos. DAPAT nakalista rin ito sa
+           Supabase dashboard → Authentication → URL Configuration
+           → Redirect URLs, kung hindi ay tatanggihan ito. */
+        redirectTo: `${window.location.origin}/member`,
+      },
+    })
+
+    if (signInError) {
+      setError('Hindi natuloy ang sign-in. Subukan ulit.')
+      console.error('Supabase OAuth error:', signInError)
+      setBusy(false)
+    }
+    // Kung walang error, aalis na ang browser — wala nang susunod dito.
   }
-
-  const isSigningIn = status === 'signing-in'
 
   return (
     <section className={styles.page}>
@@ -52,36 +72,15 @@ function Login() {
           type="button"
           className={styles.msButton}
           onClick={handleMicrosoftSignIn}
-          disabled={isSigningIn}
+          disabled={busy || loading}
         >
-          {/* PLACEHOLDER PARA SA MICROSOFT LOGO.
-              Hindi ko iginuhit ang logo — kailangan mong kunin ang
-              opisyal na asset mismo sa Microsoft. Hinihingi nila
-              ito sa kanilang branding guidelines, at ang gawa-gawang
-              kopya ay paglabag doon.
-
-              Hanapin: "Microsoft identity platform branding
-              guidelines" — may downloadable na SVG doon.
-
-              Kapag nakuha mo na:
-                1. Ilagay sa src/assets/microsoft-logo.svg
-                2. import msLogo from '../assets/microsoft-logo.svg'
-                3. Palitan ang <span> sa baba ng:
-                   <img src={msLogo} alt="" className={styles.msLogo} /> */}
           <img src={msLogo} alt="" className={styles.msLogo} />
-
           <span className={styles.msButtonText}>
-            {isSigningIn ? 'Nagsa-sign in…' : 'Sign in with Microsoft'}
+            {busy ? 'Inihahatid sa Microsoft…' : 'Sign in with Microsoft'}
           </span>
         </button>
 
-        {/* Lalabas lang kapag tapos na ang kunwaring proseso */}
-        {status === 'placeholder' && (
-          <p className={styles.notice}>
-            Dito papasok ang Microsoft sign-in window. Wala pang
-            totoong authentication — placeholder pa lang ito.
-          </p>
-        )}
+        {error && <p className={styles.errorNotice}>{error}</p>}
 
         <p className={styles.helpText}>
           Kailangan mo ng STI Microsoft account para makapasok.

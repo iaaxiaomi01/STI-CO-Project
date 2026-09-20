@@ -1,8 +1,10 @@
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
+import Member from './pages/Member.jsx'
 
 /* Ito ang layout ng buong site.
    Ang Header at Footer ay nasa labas ng <Routes>, kaya
@@ -18,9 +20,19 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Kapag may bagong page ka na, dagdagan mo lang dito:
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />  */}
+          {/* Protektado — kailangang naka-sign in bago makapasok */}
+          <Route
+            path="/member"
+            element={
+              <ProtectedRoute>
+                <Member />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Kapag may bagong page ka na, dagdagan mo lang dito.
+              Ilagay sa loob ng <ProtectedRoute> kung para lang
+              siya sa naka-sign in na user. */}
         </Routes>
       </main>
 
