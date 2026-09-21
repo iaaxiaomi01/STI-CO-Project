@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { displayNameOf, firstNameOf } from '../lib/profile.js'
+import { countRecentAnnouncements } from '../lib/announcements.js'
+import Avatar from '../components/Avatar.jsx'
 import styles from './Dashboard.module.css'
 
 /* ISANG Dashboard component, MARAMING magkaibang itsura.
@@ -23,7 +25,6 @@ function Dashboard() {
 
   const fullName = displayNameOf(profile, user)
   const firstName = firstNameOf(profile, user)
-  const initial = fullName.charAt(0).toUpperCase()
 
   /* TOTOONG DATA: bilang ng aktibong miyembro ng organisasyon
      mo. Galing sa function na my_org_member_count() sa Supabase.
@@ -52,19 +53,43 @@ function Dashboard() {
     }
   }, [needsMemberCount])
 
+  /* TOTOONG DATA: ilang announcement ng org mo ang lumabas sa
+     nakaraang 7 araw. Kukunin lang kung may stat na
+     key: 'newAnnouncements' (Member). */
+  const needsNewAnnouncements = roleConfig.dashboard.stats.some(
+    (stat) => stat.key === 'newAnnouncements',
+  )
+  const [newAnnouncements, setNewAnnouncements] = useState(null)
+
+  useEffect(() => {
+    if (!needsNewAnnouncements) return
+    let active = true
+
+    countRecentAnnouncements(7)
+      .then((count) => {
+        if (active) setNewAnnouncements(count)
+      })
+      .catch((error) => {
+        console.error('Hindi makuha ang bilang ng announcements:', error)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [needsNewAnnouncements])
+
   /* Ang value sa config ay default lang; papalitan kapag
      may totoong numero na. */
   function statValue(stat) {
     if (stat.key === 'memberCount') return memberCount ?? '…'
+    if (stat.key === 'newAnnouncements') return newAnnouncements ?? '…'
     return stat.value
   }
 
   return (
     <>
       <div className={styles.welcomeCard}>
-        <div className={styles.avatar} aria-hidden="true">
-          {initial}
-        </div>
+        <Avatar src={profile?.avatar_url} name={fullName} size="md" />
 
         <div className={styles.welcomeText}>
           <p className={styles.badge}>

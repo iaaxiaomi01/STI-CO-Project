@@ -70,11 +70,18 @@ const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
      review — siya ang umaaksyon sa mga kahilingan: nakikita
               niya ang Requests at may Aprubahan/Tanggihan
 
+     announce — pwedeng gumawa ng announcement para sa org
+              niya. Ang pag-edit/pag-delete ng BAWAT post ay
+              nakadepende pa kung sino ang gumawa — tingnan ang
+              canManageAnnouncement() sa lib/announcements.js.
+              Hiwalay ito sa "create" dahil ang Officer ay
+              nagpapaskil pero hindi gumagawa ng events.
+
    Member  : tumitingin lang        → wala
-   Officer : hindi gumagawa — sumusuri at umaaksyon sa mga
-             kahilingan             → review lang
+   Officer : sumusuri at umaaksyon sa mga kahilingan, at
+             nagpapaskil            → review + announce
    Adviser : gumagawa ng events at announcements, at sumusuri
-             rin                    → create + review
+             rin                    → create + review + announce
 
    DITO KA MAGDAGDAG kapag nagkaroon na ng totoong function.
    Halimbawa, kung may role na makakabura: dagdagan ng
@@ -84,7 +91,7 @@ const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
 function staffRole(label) {
   return {
     label,
-    can: { create: false, review: false },
+    can: { create: false, review: false, announce: false },
     sidebar: [DASHBOARD, MEMBERS, PROFILE],
     dashboard: {
       subtitle: 'Tanaw sa lahat ng organisasyon at miyembro.',
@@ -115,6 +122,7 @@ export const ROLES = {
     can: {
       create: false,
       review: false,
+      announce: false,
     },
 
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, PROFILE],
@@ -123,7 +131,12 @@ export const ROLES = {
       subtitle: 'Narito ang mabilisang tanaw ng organisasyon.',
       stats: [
         { label: 'Paparating na events', value: '0', to: '/events' },
-        { label: 'Bagong announcements', value: '0', to: '/announcements' },
+        {
+          label: 'Bagong announcements (7 araw)',
+          value: '0',
+          to: '/announcements',
+          key: 'newAnnouncements',
+        },
         { label: 'Attendance rate', value: '—', to: '/attendance' },
       ],
       cards: [
@@ -153,12 +166,13 @@ export const ROLES = {
   [ROLE_KEYS.OFFICER]: {
     label: 'Officer',
 
-    /* Hindi siya gumagawa ng event o announcement — sumusuri
-       siya at umaaksyon sa mga kahilingan. Kaya walang
-       "+ Gumawa" na button sa kanya. */
+    /* Hindi siya gumagawa ng event — sumusuri siya at
+       umaaksyon sa mga kahilingan. Pero pwede siyang
+       magpaskil ng announcement para sa org niya. */
     can: {
       create: false,
       review: true,
+      announce: true,
     },
 
     sidebar: [
@@ -198,6 +212,12 @@ export const ROLES = {
           title: 'Members',
           text: 'Tingnan ang listahan ng mga miyembro ng organisasyon.',
         },
+        {
+          to: '/announcements',
+          icon: '★',
+          title: 'Magpaskil',
+          text: 'Maglabas ng balita at paalala sa mga miyembro.',
+        },
       ],
     },
   },
@@ -213,6 +233,7 @@ export const ROLES = {
     can: {
       create: true,
       review: true,
+      announce: true,
     },
 
     sidebar: [
@@ -286,7 +307,7 @@ export const ROLES = {
    para hindi masira ang app. */
 export const FALLBACK_ROLE = {
   label: 'Walang role',
-  can: { create: false, review: false },
+  can: { create: false, review: false, announce: false },
   sidebar: [DASHBOARD, PROFILE],
   dashboard: { subtitle: '', stats: [], cards: [] },
 }

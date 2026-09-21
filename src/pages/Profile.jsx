@@ -1,7 +1,15 @@
+import { useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import { displayNameOf } from '../lib/profile.js'
+import {
+  ACCEPTED_TYPES,
+  AvatarError,
+  removeAvatar,
+  uploadAvatar,
+} from '../lib/avatar.js'
 import PageHeader from '../components/PageHeader.jsx'
+import Avatar from '../components/Avatar.jsx'
 import styles from './Profile.module.css'
 
 /* TOTOONG DATA — galing sa DALAWANG pinagmulan:
@@ -11,13 +19,61 @@ import styles from './Profile.module.css'
                paraan ng pag-login, huling sign-in
 
    Ang profile ay kinopya mula sa student_records noong una
-   kang nag-login (trigger na handle_new_user). */
+   kang nag-login (trigger na handle_new_user).
+
+   AVATAR: ikaw lang ang makakapagpalit ng sarili mong larawan.
+   Pagkatapos mag-upload, tinatawag ang refreshProfile() para
+   sabay-sabay magbago ang larawan dito, sa Sidebar at sa
+   Dashboard. */
 function Profile() {
-  const { user, profile, role } = useAuth()
+  const { user, profile, role, refreshProfile } = useAuth()
   const roleConfig = getRoleConfig(role)
 
+  const fileInputRef = useRef(null)
+  const [busy, setBusy] = useState(null) // null | 'upload' | 'remove'
+  const [avatarError, setAvatarError] = useState('')
+
   const fullName = displayNameOf(profile, user)
-  const initial = fullName.charAt(0).toUpperCase()
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    /* I-reset para gumana ulit kahit parehong file ang piliin */
+    e.target.value = ''
+    if (!file || !profile) return
+
+    setAvatarError('')
+    setBusy('upload')
+    try {
+      await uploadAvatar(profile.id, file)
+      await refreshProfile()
+    } catch (err) {
+      console.error('Hindi na-upload ang avatar:', err)
+      setAvatarError(
+        err instanceof AvatarError
+          ? err.message
+          : 'Hindi na-upload ang larawan. Subukan ulit.',
+      )
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function handleRemove() {
+    if (!profile) return
+    if (!window.confirm('Alisin ang iyong profile picture?')) return
+
+    setAvatarError('')
+    setBusy('remove')
+    try {
+      await removeAvatar(profile.id)
+      await refreshProfile()
+    } catch (err) {
+      console.error('Hindi naalis ang avatar:', err)
+      setAvatarError('Hindi naalis ang larawan. Subukan ulit.')
+    } finally {
+      setBusy(null)
+    }
+  }
 
   const provider = user?.app_metadata?.provider ?? '—'
 
@@ -57,21 +113,57 @@ function Profile() {
 
       <div className={styles.card}>
         <div className={styles.identity}>
-          <div className={styles.avatar} aria-hidden="true">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt=""
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-              />
-            ) : (
-              initial
-            )}
+          <div className={styles.avatarWrap}>
+            <Avatar src={profile?.avatar_url} name={fullName} size="lg" />
+            {busy && <span className={styles.avatarBusy} aria-hidden="true" />}
           </div>
 
           <div className={styles.identityText}>
             <p className={styles.name}>{fullName}</p>
             <p className={styles.email}>{profile?.email ?? user?.email}</p>
+
+            {profile && (
+              <div className={styles.avatarActions}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED_TYPES.join(',')}
+                  onChange={handleFileChange}
+                  hidden
+                />
+                <button
+                  type="button"
+                  className={styles.avatarButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={Boolean(busy)}
+                >
+                  {busy === 'upload'
+                    ? 'Ina-upload…'
+                    : profile.avatar_url
+                      ? 'Palitan ang larawan'
+                      : 'Mag-upload ng larawan'}
+                </button>
+
+                {profile.avatar_url && (
+                  <button
+                    type="button"
+                    className={`${styles.avatarButton} ${styles.avatarRemove}`}
+                    onClick={handleRemove}
+                    disabled={Boolean(busy)}
+                  >
+                    {busy === 'remove' ? 'Inaalis…' : 'Alisin'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {avatarError ? (
+              <p className={styles.avatarError} role="alert">
+                {avatarError}
+              </p>
+            ) : (
+              <p className={styles.avatarHint}>JPG, PNG o WEBP · hanggang 10 MB</p>
+            )}
           </div>
         </div>
 

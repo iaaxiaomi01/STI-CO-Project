@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import { displayNameOf } from '../lib/profile.js'
+import Avatar from './Avatar.jsx'
 import styles from './Sidebar.module.css'
 
 /* Ang laman ng sidebar ay HINDI nakasulat dito — galing siya
@@ -19,7 +20,6 @@ function Sidebar({ open, onClose, user, onLogout }) {
   const displayName = displayNameOf(profile, user)
 
   const email = user?.email ?? ''
-  const initial = displayName.charAt(0).toUpperCase()
 
   return (
     <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ''}`}>
@@ -63,17 +63,7 @@ function Sidebar({ open, onClose, user, onLogout }) {
       {/* Naka-push sa ilalim ng sidebar — tingnan ang margin-top:auto */}
       <div className={styles.bottom}>
         <div className={styles.userBox}>
-          <span className={styles.avatar} aria-hidden="true">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt=""
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-              />
-            ) : (
-              initial
-            )}
-          </span>
+          <Avatar src={profile?.avatar_url} name={displayName} size="sm" />
           <span className={styles.userInfo}>
             <span className={styles.userName}>{displayName}</span>
             {email && <span className={styles.userEmail}>{email}</span>}
