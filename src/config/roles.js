@@ -11,26 +11,41 @@
    ============================================================ */
 
 /* ┌────────────────────────────────────────────────────────┐
-   │  ITO ANG LINYANG BABAGUHIN MO                          │
+   │  GALING NA SA DATABASE ANG ROLE                        │
    │                                                        │
-   │  Kung sino man ang naka-login, ito ang role niya.      │
-   │  Palitan ng 'member', 'officer', o 'adviser' at        │
-   │  iyon ka na sa susunod mong refresh.                   │
+   │  Wala na ang DEV_ROLE. Ang role ng naka-login ay       │
+   │  kinukuha na ng AuthProvider mula sa profiles.role_id  │
+   │  sa Supabase, tapos isinasalin dito sa ROLE_ID_TO_KEY. │
    │                                                        │
-   │  ⚠️  PANSAMANTALA ITO. Walang database pa, kaya walang │
-   │  paraan para malaman kung sino talaga ang Adviser.      │
-   │  Kapag may profiles table na, ang isang linyang ito     │
-   │  ang papalitan ng totoong role galing doon — at wala    │
-   │  nang ibang file na gagalawin.                         │
+   │  Para palitan ang role ng isang tao, baguhin ang       │
+   │  role_id niya sa profiles table (IT Admin lang ang     │
+   │  may pahintulot, dahil sa RLS at guard trigger).       │
    └────────────────────────────────────────────────────────┘ */
-export const DEV_ROLE = 'adviser'
 
-/* Ang mga susi dito ay magiging role values sa database
-   mamaya. Tandaan ang pagbabaybay. */
 export const ROLE_KEYS = {
   MEMBER: 'member',
   OFFICER: 'officer',
   ADVISER: 'adviser',
+  SAO: 'sao',
+  COORDINATOR: 'coordinator',
+  SCHOOL_HEAD: 'school_head',
+  IT_ADMIN: 'it_admin',
+}
+
+/* Katumbas ng laman ng public.roles sa database.
+   Kapag nagdagdag ka ng role doon, dagdagan mo rin dito. */
+export const ROLE_ID_TO_KEY = {
+  1: ROLE_KEYS.MEMBER,
+  2: ROLE_KEYS.OFFICER,
+  3: ROLE_KEYS.ADVISER,
+  4: ROLE_KEYS.SAO,
+  5: ROLE_KEYS.COORDINATOR,
+  6: ROLE_KEYS.SCHOOL_HEAD,
+  7: ROLE_KEYS.IT_ADMIN,
+}
+
+export function roleKeyFromId(roleId) {
+  return ROLE_ID_TO_KEY[roleId] ?? null
 }
 
 /* Mga karaniwang sidebar item, para hindi paulit-ulit isulat */
@@ -65,6 +80,32 @@ const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
    Halimbawa, kung may role na makakabura: dagdagan ng
    "remove: true" dito, tapos sa page: {can.remove && ...}
    ============================================================ */
+
+function staffRole(label) {
+  return {
+    label,
+    can: { create: false, review: false },
+    sidebar: [DASHBOARD, MEMBERS, PROFILE],
+    dashboard: {
+      subtitle: 'Tanaw sa lahat ng organisasyon at miyembro.',
+      stats: [],
+      cards: [
+        {
+          to: '/members',
+          icon: '▲',
+          title: 'Members',
+          text: 'Tingnan ang mga miyembro ng lahat ng organisasyon.',
+        },
+        {
+          to: '/profile',
+          icon: '●',
+          title: 'Profile',
+          text: 'Tingnan ang iyong impormasyon.',
+        },
+      ],
+    },
+  }
+}
 
 export const ROLES = {
   /* ---------------------------------------------------------- */
@@ -135,7 +176,7 @@ export const ROLES = {
       stats: [
         { label: 'Naghihintay na requests', value: '0', to: '/requests' },
         { label: 'Aktibong events', value: '0', to: '/events' },
-        { label: 'Kabuuang miyembro', value: '0', to: '/members' },
+        { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance ngayong buwan', value: '—', to: '/attendance' },
       ],
       cards: [
@@ -189,7 +230,7 @@ export const ROLES = {
       stats: [
         { label: 'Aktibong events', value: '0', to: '/events' },
         { label: 'Naghihintay na requests', value: '0', to: '/requests' },
-        { label: 'Aktibong miyembro', value: '0', to: '/members' },
+        { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate', value: '—', to: '/attendance' },
       ],
       cards: [
@@ -222,19 +263,26 @@ export const ROLES = {
   },
 
   /* ----------------------------------------------------------
-     SUSUNOD NA GAGAWIN:
-       sao, supervisor, school_head, it_admin
+     STAFF ROLES (SAO, SHS/Tertiary, School Head, IT Admin)
 
-     Kopyahin mo lang ang hugis sa itaas. Para sa bawat bago:
-       1. dagdagan ang ROLE_KEYS
-       2. dagdagan ang ROLES dito
-       3. gumawa ng bagong page kung may bagong seksyon siya
-       4. irehistro ang page sa PAGE_COMPONENTS sa App.jsx
+     Panimulang config lang ito para may makita sila pagka-login.
+     Dahil sa RLS (is_staff), nakikita nila ang profiles ng LAHAT
+     ng organisasyon sa Members page.
+
+     Kapag may sariling page na sila (hal. pamamahala ng
+     student_records para sa SAO at IT Admin):
+       1. gumawa ng page
+       2. irehistro sa PAGE_COMPONENTS sa App.jsx
+       3. idagdag sa sidebar nila dito
      ---------------------------------------------------------- */
+  [ROLE_KEYS.SAO]: staffRole('SAO'),
+  [ROLE_KEYS.COORDINATOR]: staffRole('SHS/Tertiary'),
+  [ROLE_KEYS.SCHOOL_HEAD]: staffRole('School Head'),
+  [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
 }
 
 /* Ginagamit kapag hindi kilala ang role — halimbawa, kung
-   nagkamali ng baybay sa DEV_ROLE. Kaunti lang ang laman
+   walang role_id ang profile o hindi pa kilala ang role_id. Kaunti lang ang laman
    para hindi masira ang app. */
 export const FALLBACK_ROLE = {
   label: 'Walang role',

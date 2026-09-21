@@ -12,6 +12,7 @@ import Attendance from './pages/Attendance.jsx'
 import Members from './pages/Members.jsx'
 import Requests from './pages/Requests.jsx'
 import Profile from './pages/Profile.jsx'
+import AccessDenied from './pages/AccessDenied.jsx'
 
 /* ============================================================
    REHISTRO NG PAGES
@@ -44,9 +45,10 @@ const PAGE_COMPONENTS = {
    /members, ibabalik siya sa dashboard.
    ============================================================ */
 function App() {
-  const { user, role, loading } = useAuth()
+  const { user, role, loading, accessDenied, profileError } = useAuth()
 
-  /* Habang hinahanap pa ng Supabase ang naka-save na session.
+  /* Habang hinahanap pa ng Supabase ang naka-save na session
+     at kinukuha ang profile mula sa database.
      Kung wala ito, sandaling sisilip ang public layout bago
      bumalik sa member layout kapag nag-refresh ka. */
   if (loading) {
@@ -54,6 +56,20 @@ function App() {
       <div style={{ padding: '6rem 1.25rem', textAlign: 'center' }}>
         Sinusuri ang iyong session…
       </div>
+    )
+  }
+
+  /* Naka-login sa Microsoft pero walang aktibong profile sa
+     database (wala sa student_records, deactivated, o may error
+     sa pagkuha). Hindi siya papasok sa member pages. */
+  if (user && (accessDenied || profileError)) {
+    return (
+      <Routes>
+        <Route element={<PublicLayout />}>
+          <Route path="/access-denied" element={<AccessDenied />} />
+          <Route path="*" element={<Navigate to="/access-denied" replace />} />
+        </Route>
+      </Routes>
     )
   }
 

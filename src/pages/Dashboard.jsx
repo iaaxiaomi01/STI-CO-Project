@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
+import { supabase } from '../lib/supabaseClient.js'
+import { displayNameOf, firstNameOf } from '../lib/profile.js'
 import styles from './Dashboard.module.css'
 
 /* ISANG Dashboard component, MARAMING magkaibang itsura.
@@ -15,17 +18,46 @@ import styles from './Dashboard.module.css'
    hindi lang ibang teksto. Habang teksto at numero lang ang
    pinagkaiba, config lang ang kailangan. */
 function Dashboard() {
-  const { user, role } = useAuth()
+  const { user, profile, role } = useAuth()
   const roleConfig = getRoleConfig(role)
 
-  const fullName =
-    user?.user_metadata?.full_name ??
-    user?.user_metadata?.name ??
-    user?.email ??
-    'Member'
-
-  const firstName = fullName.split(' ')[0]
+  const fullName = displayNameOf(profile, user)
+  const firstName = firstNameOf(profile, user)
   const initial = fullName.charAt(0).toUpperCase()
+
+  /* TOTOONG DATA: bilang ng aktibong miyembro ng organisasyon
+     mo. Galing sa function na my_org_member_count() sa Supabase.
+     Kukunin lang kung may stat na key: 'memberCount' sa role
+     config (Officer at Adviser). */
+  const needsMemberCount = roleConfig.dashboard.stats.some(
+    (stat) => stat.key === 'memberCount',
+  )
+  const [memberCount, setMemberCount] = useState(null)
+
+  useEffect(() => {
+    if (!needsMemberCount) return
+    let active = true
+
+    supabase.rpc('my_org_member_count').then(({ data, error }) => {
+      if (!active) return
+      if (error) {
+        console.error('Hindi makuha ang member count:', error)
+        return
+      }
+      setMemberCount(data)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [needsMemberCount])
+
+  /* Ang value sa config ay default lang; papalitan kapag
+     may totoong numero na. */
+  function statValue(stat) {
+    if (stat.key === 'memberCount') return memberCount ?? '…'
+    return stat.value
+  }
 
   return (
     <>
@@ -35,7 +67,10 @@ function Dashboard() {
         </div>
 
         <div className={styles.welcomeText}>
-          <p className={styles.badge}>{roleConfig.label}</p>
+          <p className={styles.badge}>
+            {roleConfig.label}
+            {profile?.organizations?.name && ` · ${profile.organizations.name}`}
+          </p>
           <h1 className={styles.title}>Kumusta, {firstName}!</h1>
           <p className={styles.sub}>{roleConfig.dashboard.subtitle}</p>
         </div>
@@ -45,7 +80,7 @@ function Dashboard() {
       <div className={styles.statRow}>
         {roleConfig.dashboard.stats.map((stat) => (
           <Link key={stat.label} to={stat.to} className={styles.stat}>
-            <span className={styles.statValue}>{stat.value}</span>
+            <span className={styles.statValue}>{statValue(stat)}</span>
             <span className={styles.statLabel}>{stat.label}</span>
           </Link>
         ))}

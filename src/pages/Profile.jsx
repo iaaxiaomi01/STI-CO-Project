@@ -1,39 +1,48 @@
 import { useAuth } from '../context/AuthContext.js'
+import { getRoleConfig } from '../config/roles.js'
+import { displayNameOf } from '../lib/profile.js'
 import PageHeader from '../components/PageHeader.jsx'
 import styles from './Profile.module.css'
 
-/* Hindi ito placeholder — totoong data ito.
-   Lahat ng nasa page na ito ay galing sa Microsoft account
-   mo, dumaan sa Supabase. Walang hardcoded dito. */
+/* TOTOONG DATA — galing sa DALAWANG pinagmulan:
+     profile — ang row mo sa public.profiles (Supabase database)
+               student ID, kurso, year level, role, organisasyon
+     user    — ang Microsoft account mo (Supabase Auth)
+               paraan ng pag-login, huling sign-in
+
+   Ang profile ay kinopya mula sa student_records noong una
+   kang nag-login (trigger na handle_new_user). */
 function Profile() {
-  const { user } = useAuth()
+  const { user, profile, role } = useAuth()
+  const roleConfig = getRoleConfig(role)
 
-  const fullName =
-    user?.user_metadata?.full_name ??
-    user?.user_metadata?.name ??
-    user?.email ??
-    'Member'
-
+  const fullName = displayNameOf(profile, user)
   const initial = fullName.charAt(0).toUpperCase()
 
-  /* Ang provider ay kung saan galing ang account — 'azure'
-     para sa Microsoft. Kapag nagdagdag ka ng ibang paraan ng
-     pag-login mamaya, dito mo makikita ang pinagkaiba. */
   const provider = user?.app_metadata?.provider ?? '—'
 
-  /* Ang toLocaleString() ang nagpapalit ng petsa sa hugis na
-     nakasanayan ng user, base sa setting ng browser niya. */
   const lastSignIn = user?.last_sign_in_at
     ? new Date(user.last_sign_in_at).toLocaleString()
     : '—'
 
-  const memberSince = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString()
+  const memberSince = profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString()
+    : '—'
+
+  const organization = profile?.organizations
+    ? [profile.organizations.name, profile.organizations.department]
+        .filter(Boolean)
+        .join(' — ')
     : '—'
 
   const DETAILS = [
     { label: 'Buong pangalan', value: fullName },
-    { label: 'Email', value: user?.email ?? '—' },
+    { label: 'Student ID', value: profile?.student_id || '—' },
+    { label: 'Email', value: profile?.email ?? user?.email ?? '—' },
+    { label: 'Kurso', value: profile?.program || '—' },
+    { label: 'Year level', value: profile?.year_level || '—' },
+    { label: 'Organisasyon', value: organization },
+    { label: 'Role', value: profile?.roles?.name ?? roleConfig.label },
     { label: 'Paraan ng pag-login', value: provider },
     { label: 'Huling pag-sign in', value: lastSignIn },
     { label: 'Miyembro mula', value: memberSince },
@@ -43,18 +52,26 @@ function Profile() {
     <>
       <PageHeader
         title="Profile"
-        subtitle="Ang impormasyong ibinigay ng iyong Microsoft account."
+        subtitle="Ang impormasyon mo sa talaan ng paaralan."
       />
 
       <div className={styles.card}>
         <div className={styles.identity}>
           <div className={styles.avatar} aria-hidden="true">
-            {initial}
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt=""
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+              />
+            ) : (
+              initial
+            )}
           </div>
 
           <div className={styles.identityText}>
             <p className={styles.name}>{fullName}</p>
-            <p className={styles.email}>{user?.email}</p>
+            <p className={styles.email}>{profile?.email ?? user?.email}</p>
           </div>
         </div>
 
@@ -68,9 +85,9 @@ function Profile() {
         </dl>
 
         <p className={styles.note}>
-          Ang impormasyong ito ay hawak ng Microsoft, hindi ng site
-          na ito. Para palitan ang pangalan o email, sa account
-          settings ng Microsoft mo ito gagawin.
+          Ang student ID, role, at organisasyon ay hawak ng SAO at IT
+          Administrator. Kung may mali, makipag-ugnayan sa kanila para
+          maitama sa talaan.
         </p>
       </div>
     </>

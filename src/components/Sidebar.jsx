@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
+import { displayNameOf } from '../lib/profile.js'
 import styles from './Sidebar.module.css'
 
 /* Ang laman ng sidebar ay HINDI nakasulat dito — galing siya
@@ -10,14 +11,12 @@ import styles from './Sidebar.module.css'
    iisa lang ang component na ito. Doon ka magdagdag ng items,
    hindi dito. */
 function Sidebar({ open, onClose, user, onLogout }) {
-  const { role } = useAuth()
+  const { role, profile } = useAuth()
   const roleConfig = getRoleConfig(role)
 
-  const displayName =
-    user?.user_metadata?.full_name ??
-    user?.user_metadata?.name ??
-    user?.email ??
-    'Member'
+  /* Galing sa profiles table ang pangalan; Microsoft account
+     lang kapag wala pa. */
+  const displayName = displayNameOf(profile, user)
 
   const email = user?.email ?? ''
   const initial = displayName.charAt(0).toUpperCase()
@@ -65,7 +64,15 @@ function Sidebar({ open, onClose, user, onLogout }) {
       <div className={styles.bottom}>
         <div className={styles.userBox}>
           <span className={styles.avatar} aria-hidden="true">
-            {initial}
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt=""
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+              />
+            ) : (
+              initial
+            )}
           </span>
           <span className={styles.userInfo}>
             <span className={styles.userName}>{displayName}</span>
@@ -75,7 +82,10 @@ function Sidebar({ open, onClose, user, onLogout }) {
 
         {/* Ipinapakita ang role para alam agad kung bakit
             ganito ang nakikitang menu */}
-        <p className={styles.roleTag}>{roleConfig.label}</p>
+        <p className={styles.roleTag}>
+          {roleConfig.label}
+          {profile?.organizations?.name && ` · ${profile.organizations.name}`}
+        </p>
 
         <button type="button" className={styles.logout} onClick={onLogout}>
           Logout

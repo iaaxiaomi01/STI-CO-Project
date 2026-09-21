@@ -7,10 +7,12 @@ import { createContext, useContext } from 'react'
    ng component nang hindi kailangang ipasa-pasa bilang props
    sa bawat antas.
 
-   Tatlong bagay ang ipinapasa dito:
-     user    — sino ang naka-login (galing sa Microsoft)
-     role    — ano ang kaya niyang gawin
-     loading — sinusuri pa ba ang session
+   Ang mga ipinapasa dito:
+     user         — sino ang naka-login (galing sa Microsoft)
+     profile      — ang row niya sa public.profiles (database)
+     role         — ano ang kaya niyang gawin (galing sa profile)
+     accessDenied — naka-login pero wala sa student_records
+     loading      — sinusuri pa ba ang session at profile
 
    MAHALAGA: ito ang "kontrata" sa pagitan ng auth at ng buong
    app. Ang mga component ay humihingi lang ng user at role —
@@ -23,14 +25,18 @@ import { createContext, useContext } from 'react'
 export const AuthContext = createContext({
   session: null,
   user: null,
+  profile: null,
   role: null,
+  accessDenied: false,
+  profileError: null,
+  refreshProfile: () => {},
   loading: true,
 })
 
 /* Shortcut para hindi mo na kailangang i-import ang AuthContext
    at useContext sa bawat component. Ganito lang ang gamit:
 
-     const { user, role, loading } = useAuth()
+     const { user, profile, role, loading } = useAuth()
 */
 export function useAuth() {
   return useContext(AuthContext)

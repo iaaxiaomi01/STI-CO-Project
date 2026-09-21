@@ -1,0 +1,84 @@
+.status {
+  padding: 2rem 0;
+  color: var(--color-muted);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.7rem 0.95rem;
+  font: inherit;
+  font-size: 0.93rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.search:focus {
+  outline: 2px solid var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.count {
+  font-size: 0.87rem;
+  color: var(--color-muted);
+}
+
+/* Naka-scroll pahalang sa mobile para hindi masira ang page */
+.tableWrap {
+  overflow-x: auto;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table th {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  background-color: var(--color-surface);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.name {
+  display: block;
+  font-weight: 600;
+}
+
+.email {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.inactive {
+  opacity: 0.5;
+}
