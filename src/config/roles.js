@@ -56,6 +56,7 @@ const ATTENDANCE = { label: 'Attendance', to: '/attendance', icon: '✓' }
 const MEMBERS = { label: 'Members', to: '/members', icon: '▲' }
 const PROPOSALS = { label: 'Proposals', to: '/proposals', icon: '✉' }
 const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
+const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 
 /* ============================================================
    MGA KAKAYAHAN (capabilities)
@@ -226,7 +227,8 @@ export const ROLES = {
   [ROLE_KEYS.ADVISER]: {
     label: 'Adviser',
 
-    /* PAREHO ang sidebar niya sa Officer — pero siya ang
+    /* Halos PAREHO ang sidebar niya sa Officer (may dagdag na
+       Org Profile) — pero siya ang
        may pinakamalawak na kapangyarihan sa organisasyon.
        Gumagawa siya ng events at announcements, at sumusuri
        rin sa mga proposal. */
@@ -243,6 +245,7 @@ export const ROLES = {
       ATTENDANCE,
       MEMBERS,
       PROPOSALS,
+      ORG_PROFILE,
       PROFILE,
     ],
 
@@ -255,6 +258,12 @@ export const ROLES = {
         { label: 'Attendance rate', value: '—', to: '/attendance' },
       ],
       cards: [
+        {
+          to: '/org-profile',
+          icon: '◈',
+          title: 'Org Profile',
+          text: 'Baguhin ang pangalan, description at logo ng organisasyon.',
+        },
         {
           to: '/events',
           icon: '◆',

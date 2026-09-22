@@ -12,6 +12,7 @@ import Attendance from './pages/Attendance.jsx'
 import Members from './pages/Members.jsx'
 import Proposals from './pages/Proposals.jsx'
 import Profile from './pages/Profile.jsx'
+import OrgProfile from './pages/OrgProfile.jsx'
 import AccessDenied from './pages/AccessDenied.jsx'
 
 /* ============================================================
@@ -31,6 +32,7 @@ const PAGE_COMPONENTS = {
   '/members': Members,
   '/proposals': Proposals,
   '/profile': Profile,
+  '/org-profile': OrgProfile,
 }
 
 /* ============================================================

@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js'
+import { checkImageFile, extensionFor, resizeToSquare } from './image.js'
 
 /* ============================================================
    AVATAR — pag-upload at pag-alis ng profile picture
@@ -24,46 +25,9 @@ import { supabase } from './supabaseClient.js'
 const BUCKET = 'avatars'
 const OUTPUT_SIZE = 256
 
-export const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-export const MAX_INPUT_BYTES = 10 * 1024 * 1024 // 10 MB bago paliitin
-
-/* Mensaheng maiintindihan ng user */
-export class AvatarError extends Error {}
-
-/* Hinihiwa sa gitna para maging parisukat, tapos pinaliliit.
-   Ang createImageBitmap ay sumusunod sa EXIF orientation,
-   kaya hindi babaligtad ang litrato mula sa cellphone. */
-async function resizeToSquare(file, size) {
-  let bitmap
-  try {
-    bitmap = await createImageBitmap(file)
-  } catch {
-    throw new AvatarError('Hindi mabasa ang larawan. Subukan ang ibang file.')
-  }
-
-  const side = Math.min(bitmap.width, bitmap.height)
-  const sx = (bitmap.width - side) / 2
-  const sy = (bitmap.height - side) / 2
-
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size)
-  bitmap.close?.()
-
-  const toBlob = (type, quality) =>
-    new Promise((resolve) => canvas.toBlob(resolve, type, quality))
-
-  /* WEBP kung kaya ng browser; JPEG kung hindi (lumang Safari) */
-  let blob = await toBlob('image/webp', 0.85)
-  if (!blob || blob.type !== 'image/webp') {
-    blob = await toBlob('image/jpeg', 0.88)
-  }
-  if (!blob) throw new AvatarError('Hindi maproseso ang larawan.')
-  return blob
-}
+/* Ang pagpapaliit ay nasa lib/image.js na (kasama ng org logo).
+   Ini-export ulit dito para hindi magbago ang import sa Profile.jsx. */
+export { ACCEPTED_TYPES, MAX_INPUT_BYTES, ImageError as AvatarError } from './image.js'
 
 async function listOwnFiles(userId) {
   const { data, error } = await supabase.storage.from(BUCKET).list(userId)
@@ -85,15 +49,10 @@ async function cleanupOldFiles(userId, keep) {
 }
 
 export async function uploadAvatar(userId, file) {
-  if (!ACCEPTED_TYPES.includes(file.type)) {
-    throw new AvatarError('JPG, PNG o WEBP lang ang tinatanggap.')
-  }
-  if (file.size > MAX_INPUT_BYTES) {
-    throw new AvatarError('Masyadong malaki ang file (hanggang 10 MB lang).')
-  }
+  checkImageFile(file)
 
-  const blob = await resizeToSquare(file, OUTPUT_SIZE)
-  const ext = blob.type === 'image/webp' ? 'webp' : 'jpg'
+  const blob = await resizeToSquare(file, OUTPUT_SIZE, 'cover')
+  const ext = extensionFor(blob)
   const path = `${userId}/${Date.now()}.${ext}`
 
   /* 1. I-upload ang file */
