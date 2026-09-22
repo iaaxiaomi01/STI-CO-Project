@@ -10,7 +10,7 @@ import Events from './pages/Events.jsx'
 import Announcements from './pages/Announcements.jsx'
 import Attendance from './pages/Attendance.jsx'
 import Members from './pages/Members.jsx'
-import Requests from './pages/Requests.jsx'
+import Proposals from './pages/Proposals.jsx'
 import Profile from './pages/Profile.jsx'
 import AccessDenied from './pages/AccessDenied.jsx'
 
@@ -29,7 +29,7 @@ const PAGE_COMPONENTS = {
   '/announcements': Announcements,
   '/attendance': Attendance,
   '/members': Members,
-  '/requests': Requests,
+  '/proposals': Proposals,
   '/profile': Profile,
 }
 

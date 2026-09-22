@@ -54,7 +54,7 @@ const EVENTS = { label: 'Events', to: '/events', icon: '◆' }
 const ANNOUNCEMENTS = { label: 'Announcements', to: '/announcements', icon: '★' }
 const ATTENDANCE = { label: 'Attendance', to: '/attendance', icon: '✓' }
 const MEMBERS = { label: 'Members', to: '/members', icon: '▲' }
-const REQUESTS = { label: 'Requests', to: '/requests', icon: '✉' }
+const PROPOSALS = { label: 'Proposals', to: '/proposals', icon: '✉' }
 const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
 
 /* ============================================================
@@ -67,8 +67,8 @@ const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
      create — kaya niyang gumawa: may "+ Gumawa ng Event" at
               iba pang button siya sa kanang itaas
 
-     review — siya ang umaaksyon sa mga kahilingan: nakikita
-              niya ang Requests at may Aprubahan/Tanggihan
+     review — siya ang umaaksyon sa mga proposal: nakikita
+              niya ang Proposals at may Aprubahan/Tanggihan
 
      announce — pwedeng gumawa ng announcement para sa org
               niya. Ang pag-edit/pag-delete ng BAWAT post ay
@@ -78,7 +78,7 @@ const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
               nagpapaskil pero hindi gumagawa ng events.
 
    Member  : tumitingin lang        → wala
-   Officer : sumusuri at umaaksyon sa mga kahilingan, at
+   Officer : sumusuri at umaaksyon sa mga proposal, at
              nagpapaskil            → review + announce
    Adviser : gumagawa ng events at announcements, at sumusuri
              rin                    → create + review + announce
@@ -167,7 +167,7 @@ export const ROLES = {
     label: 'Officer',
 
     /* Hindi siya gumagawa ng event — sumusuri siya at
-       umaaksyon sa mga kahilingan. Pero pwede siyang
+       umaaksyon sa mga proposal. Pero pwede siyang
        magpaskil ng announcement para sa org niya. */
     can: {
       create: false,
@@ -181,24 +181,24 @@ export const ROLES = {
       ANNOUNCEMENTS,
       ATTENDANCE,
       MEMBERS,
-      REQUESTS,
+      PROPOSALS,
       PROFILE,
     ],
 
     dashboard: {
-      subtitle: 'Suriin at aksyunan ang mga kahilingan ng organisasyon.',
+      subtitle: 'Suriin at aksyunan ang mga proposal ng organisasyon.',
       stats: [
-        { label: 'Naghihintay na requests', value: '0', to: '/requests' },
+        { label: 'Naghihintay na proposals', value: '0', to: '/proposals' },
         { label: 'Aktibong events', value: '0', to: '/events' },
         { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance ngayong buwan', value: '—', to: '/attendance' },
       ],
       cards: [
         {
-          to: '/requests',
+          to: '/proposals',
           icon: '✉',
-          title: 'Requests',
-          text: 'Suriin ang mga kahilingang naghihintay ng aksyon.',
+          title: 'Proposals',
+          text: 'Suriin ang mga proposal na naghihintay ng aksyon.',
         },
         {
           to: '/events',
@@ -229,7 +229,7 @@ export const ROLES = {
     /* PAREHO ang sidebar niya sa Officer — pero siya ang
        may pinakamalawak na kapangyarihan sa organisasyon.
        Gumagawa siya ng events at announcements, at sumusuri
-       rin sa mga kahilingan. */
+       rin sa mga proposal. */
     can: {
       create: true,
       review: true,
@@ -242,7 +242,7 @@ export const ROLES = {
       ANNOUNCEMENTS,
       ATTENDANCE,
       MEMBERS,
-      REQUESTS,
+      PROPOSALS,
       PROFILE,
     ],
 
@@ -250,7 +250,7 @@ export const ROLES = {
       subtitle: 'Pamahalaan at bantayan ang organisasyon.',
       stats: [
         { label: 'Aktibong events', value: '0', to: '/events' },
-        { label: 'Naghihintay na requests', value: '0', to: '/requests' },
+        { label: 'Naghihintay na proposals', value: '0', to: '/proposals' },
         { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate', value: '—', to: '/attendance' },
       ],
@@ -268,10 +268,10 @@ export const ROLES = {
           text: 'Maglabas ng balita at paalala sa mga miyembro.',
         },
         {
-          to: '/requests',
+          to: '/proposals',
           icon: '✉',
-          title: 'Requests',
-          text: 'Suriin ang mga kahilingang naghihintay ng aksyon.',
+          title: 'Proposals',
+          text: 'Suriin ang mga proposal na naghihintay ng aksyon.',
         },
         {
           to: '/attendance',
