@@ -21,7 +21,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
   const [title, setTitle] = useState(initial?.title ?? '')
-  const [type, setType] = useState(initial?.type ?? 'general')
+  const [type, setType] = useState(initial?.type ?? 'meeting')
   const [message, setMessage] = useState(initial?.message ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')

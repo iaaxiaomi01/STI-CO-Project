@@ -16,8 +16,6 @@ import { toTitleCase } from './profile.js'
 
 /* Dapat tugma sa check constraint na announcements_type_valid */
 export const ANNOUNCEMENT_TYPES = [
-  { value: 'general', label: 'Pangkalahatan' },
-  { value: 'event', label: 'Event' },
   { value: 'meeting', label: 'Meeting' },
   { value: 'reminder', label: 'Paalala' },
   { value: 'urgent', label: 'Urgent' },

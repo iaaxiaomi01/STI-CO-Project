@@ -49,16 +49,6 @@
 }
 
 /* Kulay bawat type */
-.type_general {
-  background-color: var(--color-surface);
-  color: var(--color-muted);
-}
-
-.type_event {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-}
-
 .type_meeting {
   background-color: #e8f6ee;
   color: #1c6b3f;
