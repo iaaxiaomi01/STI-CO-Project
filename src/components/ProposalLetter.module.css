@@ -228,3 +228,37 @@
     box-shadow: none;
   }
 }
+
+/* ---------- AKSYON NG ADVISER SA SULAT ---------- */
+.review {
+  margin-top: 2.5rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid #1c6b3f;
+  border-radius: 8px;
+}
+
+.rejected {
+  border-color: #b42318;
+}
+
+.reviewStatus {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1c6b3f;
+}
+
+.rejected .reviewStatus {
+  color: #b42318;
+}
+
+.reviewBy {
+  font-size: 0.95rem;
+  color: #3b4559;
+}
+
+.reviewComment {
+  margin-top: 0.6rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

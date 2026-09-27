@@ -5,10 +5,14 @@ import {
   authorName,
   authorRoleLabel,
   canManageProposal,
+  canReviewProposal,
   createProposal,
   deleteProposal,
   fetchProposals,
   formatDateTime,
+  reviewProposal,
+  reviewerName,
+  statusLabel,
   updateProposal,
   wasEdited,
 } from '../lib/proposals.js'
@@ -17,14 +21,17 @@ import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
+import RejectDialog from '../components/RejectDialog.jsx'
 import styles from './Proposals.module.css'
 
 /* ============================================================
    PROPOSALS — TOTOONG DATA mula sa public.proposals
 
    Officer → gumagawa ng proposal, at nag-e-edit/nagde-delete
-             ng SARILI niyang proposal
-   Adviser → nakikita ang lahat ng proposal sa org niya
+             ng SARILI niyang proposal HABANG naghihintay pa
+   Adviser → nakikita ang lahat ng proposal sa org niya, at
+             siya ang nag-a-Approve o nagre-Reject. Sa Reject,
+             kailangan ng dahilan.
    Member  → wala. Wala ito sa sidebar niya, at hinaharang
              din siya ng RLS sa database.
 
@@ -54,6 +61,12 @@ function Proposals() {
 
   const [deletingId, setDeletingId] = useState(null)
 
+  /* Aling proposal ang nire-reject (bukas ang dialog) */
+  const [rejecting, setRejecting] = useState(null)
+
+  /* Aling proposal ang kasalukuyang inaaksyunan */
+  const [reviewingId, setReviewingId] = useState(null)
+
   const load = useCallback(async () => {
     try {
       setProposals(await fetchProposals())
@@ -72,6 +85,43 @@ function Proposals() {
 
   const closeForm = useCallback(() => setEditing(null), [])
   const closeLetter = useCallback(() => setViewing(null), [])
+  const closeReject = useCallback(() => setRejecting(null), [])
+
+  /* Inilalagay ang na-update na proposal sa listahan, at sa
+     sulat kung iyon ang nakabukas. */
+  function replaceProposal(updated) {
+    setProposals((list) => list.map((p) => (p.id === updated.id ? updated : p)))
+    setViewing((current) => (current?.id === updated.id ? updated : current))
+  }
+
+  async function handleApprove(proposal) {
+    if (!window.confirm(`Aprubahan ang "${proposal.title}"?`)) return
+
+    setNotice('')
+    setReviewingId(proposal.id)
+    try {
+      replaceProposal(await reviewProposal(proposal.id, 'approved'))
+      setNotice('Na-approve ang proposal.')
+    } catch (err) {
+      console.error('Hindi na-approve ang proposal:', err)
+      setNotice(
+        err?.message === 'not-allowed'
+          ? 'Wala kang pahintulot na aksyunan ang proposal na ito.'
+          : 'Hindi na-save. Subukan ulit.',
+      )
+    } finally {
+      setReviewingId(null)
+    }
+  }
+
+  /* Galing sa RejectDialog. Kapag nag-throw, doon lalabas
+     ang error at mananatiling bukas ang dialog. */
+  async function handleReject(comment) {
+    const updated = await reviewProposal(rejecting.id, 'rejected', comment)
+    replaceProposal(updated)
+    setRejecting(null)
+    setNotice('Na-reject ang proposal.')
+  }
 
   async function handleSubmit(values) {
     if (editing === 'new') {
@@ -170,7 +220,12 @@ function Proposals() {
             return (
               <li key={p.id} className={styles.card}>
                 <div className={styles.cardMain}>
-                  <h2 className={styles.title}>{p.title}</h2>
+                  <div className={styles.titleRow}>
+                    <h2 className={styles.title}>{p.title}</h2>
+                    <span className={`${styles.status} ${styles[`status_${p.status}`] ?? ''}`}>
+                      {statusLabel(p.status)}
+                    </span>
+                  </div>
 
                   <p className={styles.meta}>
                     Proposed to: <strong>{p.proposed_to}</strong>
@@ -184,6 +239,23 @@ function Proposals() {
                     {formatDateTime(p.created_at)}
                     {wasEdited(p) && <span className={styles.edited}> · na-edit</span>}
                   </p>
+
+                  {p.status !== 'pending' && (
+                    <div
+                      className={`${styles.review} ${
+                        p.status === 'rejected' ? styles.reviewRejected : ''
+                      }`}
+                    >
+                      <p className={styles.reviewHead}>
+                        {p.status === 'approved' ? 'Inaprubahan' : 'Ni-reject'} ni{' '}
+                        <strong>{reviewerName(p)}</strong>
+                        {p.reviewed_at && ` · ${formatDateTime(p.reviewed_at)}`}
+                      </p>
+                      {p.review_comment && (
+                        <p className={styles.reviewComment}>{p.review_comment}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.cardActions}>
@@ -194,6 +266,30 @@ function Proposals() {
                   >
                     Buksan ang sulat
                   </button>
+
+                  {canReviewProposal(p, profile) && (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.approveButton}
+                        onClick={() => handleApprove(p)}
+                        disabled={reviewingId === p.id}
+                      >
+                        {reviewingId === p.id ? 'Sine-save…' : 'Approve'}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.rejectButton}
+                        onClick={() => {
+                          setNotice('')
+                          setRejecting(p)
+                        }}
+                        disabled={reviewingId === p.id}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
 
                   {manageable && (
                     <>
@@ -234,6 +330,14 @@ function Proposals() {
       )}
 
       {viewing && <ProposalLetter proposal={viewing} onClose={closeLetter} />}
+
+      {rejecting && (
+        <RejectDialog
+          proposal={rejecting}
+          onSubmit={handleReject}
+          onCancel={closeReject}
+        />
+      )}
     </>
   )
 }

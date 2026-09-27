@@ -20,6 +20,18 @@ import { toTitleCase } from './profile.js'
    kusang nagbabago rin ang lumang sulat.
    ============================================================ */
 
+/* ---------- STATUS ---------- */
+export const STATUS_LABELS = {
+  pending: 'Naghihintay',
+  approved: 'Approved',
+  rejected: 'Rejected',
+}
+
+export function statusLabel(status) {
+  return STATUS_LABELS[status] ?? status
+}
+
+export const COMMENT_MAX = 2000
 export const TITLE_MAX = 150
 export const DESCRIPTION_MAX = 8000
 export const PROPOSED_TO_MAX = 150
@@ -27,6 +39,7 @@ export const PROPOSED_TO_MAX = 150
 const COLUMNS = `
   id, organization_id, title, description, proposed_to,
   author_id, author_name, author_role_id,
+  status, review_comment, reviewed_by, reviewer_name, reviewed_at,
   created_at, updated_at, updated_by,
   organizations ( name, department, logo_url )
 `
@@ -77,21 +90,59 @@ export async function deleteProposal(id) {
 }
 
 /* ============================================================
+   AKSYON NG ADVISER — Approve at Reject
+
+   Ang status, ang pangalan ng nag-review at ang petsa ay
+   itinatakda ng trigger sa database, hindi dito. Ang komento
+   ay KAILANGAN kapag Reject — hinaharang ito ng database kahit
+   malusutan ang check sa browser.
+   ============================================================ */
+export async function reviewProposal(id, status, comment = '') {
+  const { data, error } = await supabase
+    .from('proposals')
+    .update({ status, review_comment: comment.trim() || null })
+    .eq('id', id)
+    .select(COLUMNS)
+
+  if (error) throw error
+  if (!data || data.length === 0) throw new Error('not-allowed')
+  return data[0]
+}
+
+/* Adviser lang, sa org niya, at habang naghihintay pa */
+export function canReviewProposal(proposal, profile) {
+  return Boolean(
+    profile?.is_active &&
+      profile.role_id === 3 &&
+      proposal.organization_id === profile.organization_id &&
+      proposal.status === 'pending',
+  )
+}
+
+/* ============================================================
    SINO ANG PWEDENG MAG-EDIT / MAG-DELETE
 
    KAPAREHO ito ng can_manage_proposal() sa database. Dito, para
    lang itago ang mga button. Ang database pa rin ang totoong
    nagbabantay — kapag binago mo ang isa, baguhin mo rin ang isa.
 
-     Officer → sariling gawa lang
+     Officer → sariling gawa lang, at habang naghihintay pa.
+               Kapag na-approve o na-reject na, hindi na ito
+               mababago o mabubura.
    ============================================================ */
 export function canManageProposal(proposal, profile) {
   return Boolean(
     profile?.is_active &&
       profile.role_id === 2 &&
       proposal.organization_id === profile.organization_id &&
-      proposal.author_id === profile.id,
+      proposal.author_id === profile.id &&
+      proposal.status === 'pending',
   )
+}
+
+/* "Maria Santos" — ALL CAPS sa database, Title Case dito */
+export function reviewerName(proposal) {
+  return toTitleCase(proposal.reviewer_name ?? '')
 }
 
 /* "Juan Dela Cruz" — ALL CAPS sa database, Title Case dito */

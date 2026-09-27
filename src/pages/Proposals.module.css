@@ -39,7 +39,6 @@
 
 .title {
   font-size: 1.12rem;
-  margin-bottom: 0.5rem;
   overflow-wrap: anywhere;
 }
 
@@ -110,4 +109,106 @@
 
 .danger:hover:not(:disabled) {
   background-color: #fdecec;
+}
+
+/* ---------- STATUS ---------- */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+}
+
+.status_pending {
+  background-color: #fff6da;
+  color: #8a5a00;
+}
+
+.status_approved {
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+}
+
+.status_rejected {
+  background-color: #fdecec;
+  color: #a61b1b;
+}
+
+/* ---------- AKSYON NG ADVISER SA CARD ---------- */
+.review {
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid #1c6b3f;
+  border-radius: 0 10px 10px 0;
+  background-color: #f2f9f5;
+}
+
+.reviewRejected {
+  border-left-color: #b42318;
+  background-color: #fdf3f2;
+}
+
+.reviewHead {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.reviewHead strong {
+  color: var(--color-text);
+}
+
+.reviewComment {
+  margin-top: 0.3rem;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- MGA BUTTON NG ADVISER ---------- */
+.approveButton,
+.rejectButton {
+  padding: 0.5rem 1.05rem;
+  border-radius: 999px;
+  font-size: 0.87rem;
+  font-weight: 600;
+  transition: background-color var(--transition);
+}
+
+.approveButton {
+  border: none;
+  background-color: #1c6b3f;
+  color: #fff;
+}
+
+.approveButton:hover:not(:disabled) {
+  background-color: #155430;
+}
+
+.rejectButton {
+  border: 1px solid #e3b4ae;
+  background-color: #fff;
+  color: #b42318;
+}
+
+.rejectButton:hover:not(:disabled) {
+  background-color: #fdecec;
+}
+
+.approveButton:disabled,
+.rejectButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

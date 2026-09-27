@@ -3,6 +3,8 @@ import {
   authorName,
   authorRoleLabel,
   formatLetterDate,
+  reviewerName,
+  statusLabel,
   wasEdited,
 } from '../lib/proposals.js'
 import styles from './ProposalLetter.module.css'
@@ -17,6 +19,8 @@ import styles from './ProposalLetter.module.css'
      Title                      → nagiging SUBJECT ng sulat
      Description                → katawan ng sulat
      Proposed by                → ang gumawa, at ang role niya
+     Aksyon ng Adviser          → Approved o Rejected, kasama
+                                  ang dahilan kapag Rejected
 
    Ang Logo at Organization Name ay hindi nakakopya sa
    proposal. Galing sila sa Org Profile, kaya kusang nag-a-update.
@@ -107,6 +111,25 @@ function ProposalLetter({ proposal, onClose }) {
               {org?.name && `, ${org.name}`}
             </p>
           </div>
+
+          {proposal.status !== 'pending' && (
+            <div
+              className={`${styles.review} ${
+                proposal.status === 'approved' ? styles.approved : styles.rejected
+              }`}
+            >
+              <p className={styles.reviewStatus}>{statusLabel(proposal.status)}</p>
+              <p className={styles.reviewBy}>
+                {proposal.status === 'approved' ? 'Inaprubahan' : 'Ni-reject'} ni{' '}
+                {reviewerName(proposal)}
+                {proposal.reviewed_at &&
+                  ` noong ${formatLetterDate(proposal.reviewed_at)}`}
+              </p>
+              {proposal.review_comment && (
+                <p className={styles.reviewComment}>{proposal.review_comment}</p>
+              )}
+            </div>
+          )}
 
           {wasEdited(proposal) && (
             <p className={styles.editedNote}>
