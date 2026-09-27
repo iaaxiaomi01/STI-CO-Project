@@ -71,6 +71,11 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
      review — siya ang umaaksyon sa mga proposal: nakikita
               niya ang Proposals at may Aprubahan/Tanggihan
 
+     propose — pwedeng gumawa ng proposal (pormal na sulat)
+              para sa org niya. Ang pag-edit/pag-delete ay
+              sariling gawa lang — tingnan ang
+              canManageProposal() sa lib/proposals.js.
+
      announce — pwedeng gumawa ng announcement para sa org
               niya. Ang pag-edit/pag-delete ng BAWAT post ay
               nakadepende pa kung sino ang gumawa — tingnan ang
@@ -79,8 +84,8 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
               nagpapaskil pero hindi gumagawa ng events.
 
    Member  : tumitingin lang        → wala
-   Officer : sumusuri at umaaksyon sa mga proposal, at
-             nagpapaskil            → review + announce
+   Officer : nagpapasa ng proposal at nagpapaskil ng
+             announcement           → review + announce + propose
    Adviser : gumagawa ng events at announcements, at sumusuri
              rin                    → create + review + announce
 
@@ -92,7 +97,7 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 function staffRole(label) {
   return {
     label,
-    can: { create: false, review: false, announce: false },
+    can: { create: false, review: false, announce: false, propose: false },
     sidebar: [DASHBOARD, MEMBERS, PROFILE],
     dashboard: {
       subtitle: 'Tanaw sa lahat ng organisasyon at miyembro.',
@@ -124,6 +129,7 @@ export const ROLES = {
       create: false,
       review: false,
       announce: false,
+      propose: false,
     },
 
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, PROFILE],
@@ -174,6 +180,7 @@ export const ROLES = {
       create: false,
       review: true,
       announce: true,
+      propose: true,
     },
 
     sidebar: [
@@ -199,7 +206,7 @@ export const ROLES = {
           to: '/proposals',
           icon: '✉',
           title: 'Proposals',
-          text: 'Suriin ang mga proposal na naghihintay ng aksyon.',
+          text: 'Gumawa ng proposal para sa organisasyon mo.',
         },
         {
           to: '/events',
@@ -236,6 +243,7 @@ export const ROLES = {
       create: true,
       review: true,
       announce: true,
+      propose: false,
     },
 
     sidebar: [
@@ -316,7 +324,7 @@ export const ROLES = {
    para hindi masira ang app. */
 export const FALLBACK_ROLE = {
   label: 'Walang role',
-  can: { create: false, review: false, announce: false },
+  can: { create: false, review: false, announce: false, propose: false },
   sidebar: [DASHBOARD, PROFILE],
   dashboard: { subtitle: '', stats: [], cards: [] },
 }
