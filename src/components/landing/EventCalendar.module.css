@@ -1,0 +1,542 @@
+/* ==========================================================
+   EVENT CALENDAR — galing sa lumang calendar.css
+   ========================================================== */
+.section {
+  position: relative;
+  width: 100%;
+  padding: 55px 0;
+  background: #f5f9fd;
+  color: var(--sti-ink);
+  overflow: hidden;
+}
+
+.inner {
+  width: min(100% - 70px, 1500px);
+  min-height: 700px;
+  margin: 0 auto;
+  padding: 28px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 28px;
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 12px 35px rgba(16, 40, 92, 0.08);
+}
+
+/* ==========================================================
+   LEFT INFORMATION PANEL
+   ========================================================== */
+.info {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 8px 0;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.headingIcon {
+  width: 78px;
+  height: 78px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sti-blue);
+  color: #fff;
+}
+
+.headingText {
+  display: flex;
+  flex-direction: column;
+}
+
+.headingText span {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  color: #f2ae00;
+}
+
+.headingText h2 {
+  margin-top: 5px;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -1px;
+  color: var(--sti-ink);
+}
+
+.description {
+  max-width: 260px;
+  margin: 30px 0 15px;
+  font-size: 20px;
+  line-height: 1.7;
+  color: #182d5e;
+}
+
+/* ---------- ILLUSTRATION ---------- */
+.illustration {
+  position: relative;
+  width: 100%;
+  height: 215px;
+  margin: 5px 0 15px;
+}
+
+.illustrationCalendar {
+  position: absolute;
+  left: 12px;
+  bottom: 15px;
+  width: 175px;
+  height: 145px;
+  background: #fff;
+  border-radius: 15px;
+  transform: rotate(-5deg);
+  box-shadow: 0 10px 20px rgba(16, 40, 92, 0.18);
+}
+
+.illustrationTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 42px;
+  background: #1765d8;
+  border-radius: 15px 15px 8px 8px;
+}
+
+/* Mga "ring" ng kalendaryo */
+.illustrationTop::before,
+.illustrationTop::after {
+  content: "";
+  position: absolute;
+  top: -16px;
+  width: 18px;
+  height: 40px;
+  background: #d8dce2;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 3px #b5bbc5;
+}
+
+.illustrationTop::before {
+  left: 35px;
+}
+
+.illustrationTop::after {
+  right: 35px;
+}
+
+.illustrationGrid {
+  position: absolute;
+  left: 25px;
+  right: 25px;
+  bottom: 25px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.illustrationGrid span {
+  width: 20px;
+  height: 20px;
+  background: #1765d8;
+  border-radius: 3px;
+  box-shadow: 0 3px 5px rgba(16, 40, 92, 0.12);
+}
+
+.illustrationClock {
+  position: absolute;
+  right: 15px;
+  bottom: 5px;
+  width: 92px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sti-gold);
+  border-radius: 50%;
+  box-shadow: 0 8px 15px rgba(16, 40, 92, 0.18);
+}
+
+.illustrationClock::before {
+  content: "";
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  background: #fff;
+  border: 3px solid #e4a900;
+  border-radius: 50%;
+}
+
+/* Kamay ng orasan */
+.illustrationClock span {
+  position: relative;
+  width: 4px;
+  height: 28px;
+  background: var(--sti-ink);
+  border-radius: 5px;
+  transform: rotate(20deg);
+  transform-origin: bottom center;
+}
+
+.illustrationClock span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--sti-ink);
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+/* ---------- CATEGORIES ---------- */
+.categories {
+  margin-top: 5px;
+}
+
+.categories h3 {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: normal;
+  color: var(--sti-ink);
+}
+
+.categoryLine {
+  width: 32px;
+  height: 3px;
+  margin: 10px 0;
+  background: var(--sti-gold);
+}
+
+.category {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e3e7ee;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #172c5c;
+}
+
+.categoryDot {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  border-radius: 5px;
+}
+
+/* ---------- FULL CALENDAR BUTTON ---------- */
+.fullCalendarBtn {
+  min-height: 58px;
+  margin-top: auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #dfe5ee;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sti-ink);
+  font-size: 14px;
+  font-weight: 800;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.fullCalendarBtn span {
+  flex: 1;
+}
+
+.fullCalendarBtn:hover {
+  background: var(--sti-blue);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(16, 40, 92, 0.15);
+}
+
+/* ==========================================================
+   CALENDAR PANEL
+   ========================================================== */
+.panel {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(16, 40, 92, 0.06);
+}
+
+.panelHeader {
+  position: relative;
+  min-height: 145px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  background: var(--sti-blue);
+  color: #fff;
+}
+
+/* Malabong bilog na palamuti */
+.panelHeader::before {
+  content: "";
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  right: -220px;
+  top: -300px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.panelHeader h2 {
+  position: relative;
+  font-size: clamp(32px, 3vw, 46px);
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-align: center;
+}
+
+.panelHeader h2 span {
+  color: var(--sti-gold);
+}
+
+.navBtn {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.navBtn:hover {
+  background: var(--sti-gold);
+  border-color: var(--sti-gold);
+  color: var(--sti-blue);
+  transform: scale(1.05);
+}
+
+/* ---------- WEEKDAYS ---------- */
+.weekdays {
+  min-height: 55px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--sti-blue);
+  color: #fff;
+}
+
+.weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* ---------- DAYS ---------- */
+.grid {
+  min-height: 600px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  background: #fff;
+}
+
+.day {
+  position: relative;
+  min-height: 100px;
+  padding-top: 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border-right: 1px solid #e5e9ef;
+  border-bottom: 1px solid #e5e9ef;
+  background: #fff;
+  color: var(--sti-ink);
+}
+
+.day:nth-child(7n) {
+  border-right: none;
+}
+
+.day:nth-last-child(-n + 7) {
+  border-bottom: none;
+}
+
+.outsideMonth {
+  background: #fcfcfd;
+  color: #c3c7cf;
+}
+
+.dayNumber {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+@media (max-width: 1023px) {
+  .inner {
+    width: min(100% - 50px, 900px);
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 25px;
+  }
+
+  .info {
+    padding: 10px 10px 0;
+  }
+
+  .description {
+    max-width: 500px;
+  }
+
+  .illustration {
+    display: none;
+  }
+
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 25px;
+  }
+
+  .categories h3,
+  .categoryLine {
+    grid-column: 1 / -1;
+  }
+
+  .fullCalendarBtn {
+    margin-top: 25px;
+  }
+
+  .grid {
+    min-height: 500px;
+  }
+
+  .day {
+    min-height: 80px;
+    padding-top: 22px;
+  }
+}
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+@media (max-width: 767px) {
+  .section {
+    padding: 35px 0;
+  }
+
+  .inner {
+    width: calc(100% - 30px);
+    min-height: auto;
+    padding: 18px;
+    gap: 22px;
+    border-radius: 20px;
+  }
+
+  .headingIcon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .headingIcon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .headingText span {
+    font-size: 14px;
+  }
+
+  .headingText h2 {
+    font-size: 29px;
+  }
+
+  .description {
+    margin-top: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .categories {
+    display: block;
+  }
+
+  .category {
+    font-size: 12px;
+  }
+
+  .fullCalendarBtn {
+    min-height: 52px;
+    margin-top: 20px;
+    font-size: 12px;
+  }
+
+  .panel {
+    border-radius: 15px;
+  }
+
+  .panelHeader {
+    min-height: 90px;
+    padding: 0 12px;
+  }
+
+  .panelHeader h2 {
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+
+  .navBtn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navBtn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .weekdays {
+    min-height: 42px;
+  }
+
+  .weekday {
+    font-size: 10px;
+  }
+
+  .grid {
+    min-height: 360px;
+  }
+
+  .day {
+    min-height: 60px;
+    padding-top: 16px;
+  }
+
+  .dayNumber {
+    font-size: 14px;
+  }
+}

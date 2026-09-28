@@ -19,6 +19,17 @@
   --color-surface: #f5f7fb;
   --color-border: #e4e9f2;
 
+  /* STI brand colors — ginagamit ng landing page (Header, Footer,
+     at components/landing/*). Hiwalay sa --color-primary para hindi
+     maapektuhan ang member pages kapag binago mo ang isa. */
+  --sti-blue: #06358c;
+  --sti-blue-deep: #031b4b;
+  --sti-blue-bright: #1249a8;
+  --sti-yellow: #ffd200;
+  --sti-gold: #f7b900;
+  --sti-ink: #10285c;
+  --sti-cream: #faf8f1;
+
   /* Typography */
   --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
 
