@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
@@ -16,12 +17,18 @@ import {
   updateProposal,
   wasEdited,
 } from '../lib/proposals.js'
+import {
+  canCreateEventFrom,
+  createEventFromProposal,
+  eventOfProposal,
+} from '../lib/events.js'
 import PageHeader from '../components/PageHeader.jsx'
 import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
 import RejectDialog from '../components/RejectDialog.jsx'
+import EventForm from '../components/EventForm.jsx'
 import styles from './Proposals.module.css'
 
 /* ============================================================
@@ -34,6 +41,10 @@ import styles from './Proposals.module.css'
              kailangan ng dahilan.
    Member  → wala. Wala ito sa sidebar niya, at hinaharang
              din siya ng RLS sa database.
+
+   Kapag APPROVED na, ang Officer na NAGPASA ay may lalabas na
+   "Gumawa ng Event". Isang event lang bawat proposal — kapag
+   nagawa na, "Tingnan ang Event" na ang lalabas.
 
    Ang bawat proposal ay binubuksan bilang PORMAL NA SULAT
    (components/ProposalLetter.jsx), na pwedeng i-print.
@@ -67,6 +78,9 @@ function Proposals() {
   /* Aling proposal ang kasalukuyang inaaksyunan */
   const [reviewingId, setReviewingId] = useState(null)
 
+  /* Aling approved na proposal ang ginagawan ng event */
+  const [eventFor, setEventFor] = useState(null)
+
   const load = useCallback(async () => {
     try {
       setProposals(await fetchProposals())
@@ -86,6 +100,7 @@ function Proposals() {
   const closeForm = useCallback(() => setEditing(null), [])
   const closeLetter = useCallback(() => setViewing(null), [])
   const closeReject = useCallback(() => setRejecting(null), [])
+  const closeEventForm = useCallback(() => setEventFor(null), [])
 
   /* Inilalagay ang na-update na proposal sa listahan, at sa
      sulat kung iyon ang nakabukas. */
@@ -121,6 +136,15 @@ function Proposals() {
     replaceProposal(updated)
     setRejecting(null)
     setNotice('Na-reject ang proposal.')
+  }
+
+  /* Galing sa EventForm. Kapag nag-throw, doon lalabas ang
+     error at mananatiling bukas ang form. */
+  async function handleCreateEvent(values, { imageFile }) {
+    const created = await createEventFromProposal(eventFor, values, imageFile)
+    replaceProposal({ ...eventFor, events: { id: created.id } })
+    setEventFor(null)
+    setNotice('Nagawa ang event. Makikita na ito ng mga miyembro sa Events.')
   }
 
   async function handleSubmit(values) {
@@ -291,6 +315,25 @@ function Proposals() {
                     </>
                   )}
 
+                  {canCreateEventFrom(p, profile) && (
+                    <button
+                      type="button"
+                      className={styles.eventButton}
+                      onClick={() => {
+                        setNotice('')
+                        setEventFor(p)
+                      }}
+                    >
+                      + Gumawa ng Event
+                    </button>
+                  )}
+
+                  {p.status === 'approved' && eventOfProposal(p) && (
+                    <Link to="/events" className={styles.eventLink}>
+                      Tingnan ang Event →
+                    </Link>
+                  )}
+
                   {manageable && (
                     <>
                       <button
@@ -330,6 +373,14 @@ function Proposals() {
       )}
 
       {viewing && <ProposalLetter proposal={viewing} onClose={closeLetter} />}
+
+      {eventFor && (
+        <EventForm
+          proposal={eventFor}
+          onSubmit={handleCreateEvent}
+          onCancel={closeEventForm}
+        />
+      )}
 
       {rejecting && (
         <RejectDialog

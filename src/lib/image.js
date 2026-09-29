@@ -77,3 +77,42 @@ export function extensionFor(blob) {
   if (blob.type === 'image/png') return 'png'
   return 'jpg'
 }
+
+/* ============================================================
+   RESIZE TO FIT — para sa larawan ng Event
+
+   Hindi pinuputol. Pinapanatili ang hugis (landscape o portrait)
+   at pinaliliit lang hanggang `maxSide` ang pinakamahabang gilid.
+   Hindi pinalalaki ang maliit na larawan.
+   ============================================================ */
+export async function resizeToFit(file, maxSide) {
+  let bitmap
+  try {
+    bitmap = await createImageBitmap(file)
+  } catch {
+    throw new ImageError('Hindi mabasa ang larawan. Subukan ang ibang file.')
+  }
+
+  const { width: w, height: h } = bitmap
+  const scale = Math.min(1, maxSide / Math.max(w, h))
+  const dw = Math.round(w * scale)
+  const dh = Math.round(h * scale)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = dw
+  canvas.height = dh
+  const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, 0, 0, dw, dh)
+  bitmap.close?.()
+
+  const toBlob = (type, quality) =>
+    new Promise((resolve) => canvas.toBlob(resolve, type, quality))
+
+  let blob = await toBlob('image/webp', 0.85)
+  if (!blob || blob.type !== 'image/webp') {
+    blob = await toBlob('image/jpeg', 0.85)
+  }
+  if (!blob) throw new ImageError('Hindi maproseso ang larawan.')
+  return blob
+}

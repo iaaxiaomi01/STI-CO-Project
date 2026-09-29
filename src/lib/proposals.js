@@ -16,6 +16,10 @@ import { toTitleCase } from './profile.js'
 
    Ang Organization Name at Logo sa sulat ay galing sa
    organizations ( ... ) na join, hindi nakakopya sa proposal.
+
+   Ang events ( id ) na join ay para malaman kung may event na
+   ang isang approved na proposal — para alam kung "Gumawa ng
+   Event" o "Tingnan ang Event" ang ipapakita.
    Kaya kapag pinalitan ng Adviser ang logo sa Org Profile,
    kusang nagbabago rin ang lumang sulat.
    ============================================================ */
@@ -41,7 +45,8 @@ const COLUMNS = `
   author_id, author_name, author_role_id,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
   created_at, updated_at, updated_by,
-  organizations ( name, department, logo_url )
+  organizations ( name, department, logo_url ),
+  events ( id )
 `
 
 export async function fetchProposals() {

@@ -173,9 +173,10 @@ export const ROLES = {
   [ROLE_KEYS.OFFICER]: {
     label: 'Officer',
 
-    /* Hindi siya gumagawa ng event — sumusuri siya at
-       umaaksyon sa mga proposal. Pero pwede siyang
-       magpaskil ng announcement para sa org niya. */
+    /* Nagpapasa siya ng proposal. Kapag na-approve ng
+       Adviser, SIYA (ang nagpasa) ang gagawa ng event mula
+       roon — "+ Gumawa ng Event" sa Proposals page.
+       Pwede rin siyang magpaskil ng announcement. */
     can: {
       create: false,
       review: true,
