@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
   EVENT_STATUSES,
   authorLabel,
+  canJoinEvents,
   canManageEvent,
+  canViewParticipants,
   computeStatus,
   deleteEvent,
   eventErrorMessage,
   eventStatusLabel,
   fetchEvents,
+  fetchMyJoinedEventIds,
+  fetchParticipantCounts,
   formatEventDate,
   formatTime,
+  joinErrorMessage,
+  joinEvent,
+  leaveEvent,
   nowKey,
   updateEvent,
   wasEdited,
@@ -20,6 +27,7 @@ import {
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
+import ParticipantsDialog from '../components/ParticipantsDialog.jsx'
 import styles from './Events.module.css'
 
 /* ============================================================
@@ -37,6 +45,13 @@ import styles from './Events.module.css'
    Ang Status (Upcoming/Ongoing/Completed) ay AUTOMATIC —
    kinukuwenta mula sa Date at oras, at nire-refresh bawat
    30 segundo habang bukas ang page.
+
+   JOIN:
+     Member at Officer → may "Join" / "Umalis" habang hindi
+                          pa tapos ang event. Pagka-Join,
+                          lilipat sa Attendance tab.
+     Lahat              → nakikita ang BILANG ng sasali
+     Officer at Adviser → "Tingnan ang sasali" (buong listahan)
 
    Ang RLS sa database ang totoong nagbabantay. Ang
    canManageEvent() dito ay para lang itago ang mga button.
@@ -90,6 +105,22 @@ function Events() {
   /* Mga event na nakabukas ang buong description */
   const [expanded, setExpanded] = useState(() => new Set())
 
+  /* ---------- JOIN ---------- */
+  const joinable = canJoinEvents(profile)
+  const showParticipants = canViewParticipants(profile)
+
+  /* Mga event_id na sinalihan mo, at bilang ng sasali bawat event */
+  const [joinedIds, setJoinedIds] = useState(() => new Set())
+  const [participantCounts, setParticipantCounts] = useState({})
+  const [joiningId, setJoiningId] = useState(null)
+
+  /* Ang event na tinitingnan ang listahan ng sasali */
+  const [viewingParticipants, setViewingParticipants] = useState(null)
+  const closeParticipants = useCallback(() => setViewingParticipants(null), [])
+
+  const profileId = profile?.id
+  const navigate = useNavigate()
+
   const load = useCallback(async () => {
     try {
       setEvents(await fetchEvents())
@@ -100,7 +131,57 @@ function Events() {
     } finally {
       setLoading(false)
     }
-  }, [])
+
+    /* Hiwalay para hindi masira ang listahan ng events kung
+       pumalya ang pagkuha ng sasali */
+    try {
+      const [counts, mine] = await Promise.all([
+        fetchParticipantCounts(),
+        profileId ? fetchMyJoinedEventIds(profileId) : Promise.resolve(new Set()),
+      ])
+      setParticipantCounts(counts)
+      setJoinedIds(mine)
+    } catch (err) {
+      console.error('Hindi makuha ang mga sasali:', err)
+    }
+  }, [profileId])
+
+  async function handleJoin(event) {
+    setNotice('')
+    setJoiningId(event.id)
+    try {
+      await joinEvent(event.id)
+      /* Pagka-Join, lipat sa Attendance kung saan nakalista
+         ang mga sinalihan mong event */
+      navigate('/attendance', { state: { joinedTitle: event.title } })
+    } catch (err) {
+      console.error('Hindi nakasali:', err)
+      setNotice(joinErrorMessage(err))
+      setJoiningId(null)
+    }
+  }
+
+  async function handleLeave(event) {
+    if (!window.confirm(`Umalis sa "${event.title}"?`)) return
+
+    setNotice('')
+    setJoiningId(event.id)
+    try {
+      await leaveEvent(event.id, profileId)
+      setJoinedIds((current) => {
+        const next = new Set(current)
+        next.delete(event.id)
+        return next
+      })
+      setParticipantCounts((c) => ({ ...c, [event.id]: Math.max(0, (c[event.id] ?? 1) - 1) }))
+      setNotice(`Umalis ka na sa "${event.title}".`)
+    } catch (err) {
+      console.error('Hindi nakaalis:', err)
+      setNotice(joinErrorMessage(err))
+    } finally {
+      setJoiningId(null)
+    }
+  }
 
   useEffect(() => {
     load()
@@ -231,6 +312,10 @@ function Events() {
                 const busy = deletingId === ev.id
                 const isOpen = expanded.has(ev.id)
                 const longText = ev.description.length > 280
+                const joined = joinedIds.has(ev.id)
+                const total = participantCounts[ev.id] ?? 0
+                const isDone = ev.status === 'completed'
+                const joinBusy = joiningId === ev.id
 
                 return (
                   <li key={ev.id} className={styles.card}>
@@ -283,6 +368,52 @@ function Events() {
                         </button>
                       )}
 
+                      {/* ---------- JOIN ---------- */}
+                      <div className={styles.joinRow}>
+                        <span className={styles.joinCount}>
+                          {total === 0
+                            ? 'Wala pang sumasali'
+                            : `${total} ${isDone ? 'ang sumali' : 'ang sasali'}`}
+                        </span>
+
+                        {showParticipants && total > 0 && (
+                          <button
+                            type="button"
+                            className={styles.linkButton}
+                            onClick={() => setViewingParticipants(ev)}
+                          >
+                            Tingnan ang sasali
+                          </button>
+                        )}
+
+                        {joinable && !isDone && !joined && (
+                          <button
+                            type="button"
+                            className={styles.joinButton}
+                            onClick={() => handleJoin(ev)}
+                            disabled={joinBusy}
+                          >
+                            {joinBusy ? 'Sumasali…' : 'Join'}
+                          </button>
+                        )}
+
+                        {joinable && joined && (
+                          <span className={styles.joinedGroup}>
+                            <span className={styles.joinedBadge}>✓ Nakasali ka</span>
+                            {!isDone && (
+                              <button
+                                type="button"
+                                className={`${styles.linkButton} ${styles.danger}`}
+                                onClick={() => handleLeave(ev)}
+                                disabled={joinBusy}
+                              >
+                                {joinBusy ? 'Sandali…' : 'Umalis'}
+                              </button>
+                            )}
+                          </span>
+                        )}
+                      </div>
+
                       <div className={styles.footer}>
                         <p className={styles.author}>
                           {authorLabel(ev)}
@@ -320,6 +451,10 @@ function Events() {
             </ul>
           )}
         </>
+      )}
+
+      {viewingParticipants && (
+        <ParticipantsDialog event={viewingParticipants} onClose={closeParticipants} />
       )}
 
       {editing && <EventForm initial={editing} onSubmit={handleUpdate} onCancel={closeForm} />}

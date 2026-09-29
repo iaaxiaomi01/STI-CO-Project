@@ -364,3 +364,127 @@ export function authorLabel(event) {
 export function wasEdited(event) {
   return Boolean(event.updated_by)
 }
+
+/* ============================================================
+   JOIN — pagsali ng Member at Officer sa event
+
+   Table: public.event_participants
+     Join    → insert (event_id lang ang ipinapadala; ang pangalan,
+               role at org ay itinatakda ng trigger sa database)
+     Umalis  → delete ng sariling row
+
+   Parehong hinaharang ng database kapag tapos na ang event.
+
+   Sino ang nakakakita:
+     Member           → sariling join lang, at ang BILANG ng sasali
+     Officer, Adviser → buong listahan ng sasali
+   ============================================================ */
+
+/* Member at Officer lang ang may Join */
+export function canJoinEvents(profile) {
+  return Boolean(profile?.is_active && (profile.role_id === 1 || profile.role_id === 2))
+}
+
+/* Officer at Adviser lang ang nakakakita ng listahan */
+export function canViewParticipants(profile) {
+  return Boolean(profile?.is_active && (profile.role_id === 2 || profile.role_id === 3))
+}
+
+/* Mga event_id na sinalihan mo → Set */
+export async function fetchMyJoinedEventIds(profileId) {
+  const { data, error } = await supabase
+    .from('event_participants')
+    .select('event_id')
+    .eq('profile_id', profileId)
+
+  if (error) throw error
+  return new Set((data ?? []).map((r) => r.event_id))
+}
+
+/* { [event_id]: bilang ng sasali } */
+export async function fetchParticipantCounts() {
+  const { data, error } = await supabase.rpc('event_participant_counts')
+  if (error) throw error
+
+  const map = {}
+  ;(data ?? []).forEach((r) => {
+    map[r.event_id] = Number(r.total)
+  })
+  return map
+}
+
+export async function joinEvent(eventId) {
+  const { error } = await supabase.from('event_participants').insert({ event_id: eventId })
+
+  /* 23505 = nakasali ka na (baka dalawang beses napindot) */
+  if (error && error.code !== '23505') throw error
+}
+
+export async function leaveEvent(eventId, profileId) {
+  const { data, error } = await supabase
+    .from('event_participants')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('profile_id', profileId)
+    .select('event_id')
+
+  if (error) throw error
+  /* Walang nabura = tapos na ang event, o hindi ka naman nakasali */
+  if (!data || data.length === 0) throw new Error('not-allowed')
+}
+
+export async function fetchParticipants(eventId) {
+  const { data, error } = await supabase
+    .from('event_participants')
+    .select('profile_id, participant_name, participant_role_id, joined_at')
+    .eq('event_id', eventId)
+    .order('joined_at', { ascending: true })
+
+  if (error) throw error
+  return data ?? []
+}
+
+export function participantLabel(p) {
+  return {
+    name: toTitleCase(p.participant_name),
+    role: getRoleConfig(roleKeyFromId(p.participant_role_id)).label,
+  }
+}
+
+export function joinErrorMessage(err) {
+  if (err?.message === 'not-allowed') return 'Hindi na pwedeng umalis — tapos na ang event.'
+  /* Galing sa trigger — nakasulat na sa Tagalog */
+  if (err?.code === 'P0001' && err.message) return err.message
+  /* RLS: tapos na ang event o wala kang pahintulot */
+  if (err?.code === '42501') return 'Hindi ka na makakasali — tapos na ang event.'
+  return 'Hindi na-save. Subukan ulit.'
+}
+
+/* Mga event na sinalihan mo, kasama ang detalye ng event —
+   para sa Attendance page ng Member at Officer.
+   Pinakabagong sinalihan muna. */
+export async function fetchMyJoinedEvents(profileId) {
+  const { data, error } = await supabase
+    .from('event_participants')
+    .select(
+      `joined_at,
+       events ( id, title, event_date, start_time, end_time, location, image_url )`,
+    )
+    .eq('profile_id', profileId)
+    .order('joined_at', { ascending: false })
+
+  if (error) throw error
+  /* Laktawan kung hindi na mabasa ang event (hal. nabura) */
+  return (data ?? [])
+    .filter((r) => r.events)
+    .map((r) => ({ ...r.events, joined_at: r.joined_at }))
+}
+
+/* "Sep 30, 2026, 12:30 AM" */
+export function formatDateTimeShort(iso) {
+  return new Date(iso).toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}

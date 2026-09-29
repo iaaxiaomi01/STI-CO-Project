@@ -254,3 +254,58 @@
 .danger:hover:not(:disabled) {
   background-color: #fdecec;
 }
+
+/* ---------- JOIN ---------- */
+.joinRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  background-color: var(--color-surface);
+}
+
+.joinCount {
+  flex: 1;
+  min-width: 8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.joinButton {
+  padding: 0.45rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 0.87rem;
+  font-weight: 700;
+  transition: background-color var(--transition);
+}
+
+.joinButton:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.joinButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.joinedGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.joinedBadge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
