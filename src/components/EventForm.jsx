@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   DESCRIPTION_MAX,
-  EVENT_STATUSES,
   LOCATION_MAX,
   TITLE_MAX,
+  computeStatus,
   eventErrorMessage,
+  eventStatusLabel,
   toTimeInput,
 } from '../lib/events.js'
 import { ACCEPTED_TYPES, ImageError, checkImageFile } from '../lib/image.js'
@@ -18,8 +19,11 @@ import styles from './EventForm.module.css'
              Title at Description (pwede pang baguhin)
    Edit    → may `initial`: ang kasalukuyang event
 
-   Laman: Status, Title, Description, Date, Start Time,
-          End Time, Location, Picture (optional)
+   Laman: Title, Description, Date, Start Time, End Time,
+          Location, Picture (optional)
+
+   Walang Status — kusa itong kinukuwenta mula sa Date at oras
+   (tingnan ang computeStatus() sa lib/events.js).
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
    onSubmit(values, { imageFile, removeImage }).
@@ -27,7 +31,6 @@ import styles from './EventForm.module.css'
 function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
-  const [status, setStatus] = useState(initial?.status ?? 'upcoming')
   const [title, setTitle] = useState(initial?.title ?? proposal?.title ?? '')
   const [description, setDescription] = useState(
     initial?.description ?? proposal?.description ?? '',
@@ -46,6 +49,12 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
   const [error, setError] = useState('')
 
   const titleRef = useRef(null)
+
+  /* Silip lang kung ano ang magiging status */
+  const previewStatus =
+    eventDate && startTime && endTime
+      ? computeStatus({ event_date: eventDate, start_time: startTime, end_time: endTime })
+      : null
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -93,7 +102,6 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
     setError('')
 
     const clean = {
-      status,
       title: title.trim(),
       description: description.trim(),
       eventDate,
@@ -152,30 +160,6 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             Mula sa approved na proposal: <strong>{proposal.title}</strong>
           </p>
         )}
-
-        {/* ---------- STATUS ---------- */}
-        <fieldset className={styles.fieldset}>
-          <legend className={base.label}>Status</legend>
-          <div className={styles.statusGroup}>
-            {EVENT_STATUSES.map((s) => (
-              <label
-                key={s.value}
-                className={`${styles.statusOption} ${
-                  status === s.value ? styles[`active_${s.value}`] : ''
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="event-status"
-                  value={s.value}
-                  checked={status === s.value}
-                  onChange={() => setStatus(s.value)}
-                />
-                {s.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
 
         {/* ---------- TITLE ---------- */}
         <label className={base.field}>
@@ -245,6 +229,13 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             />
           </label>
         </div>
+
+        {eventDate && startTime && endTime && endTime > startTime && (
+          <p className={styles.autoStatus}>
+            Status: <strong>{eventStatusLabel(previewStatus)}</strong>
+            <span> · kusang magbabago ayon sa petsa at oras</span>
+          </p>
+        )}
 
         {/* ---------- LOCATION ---------- */}
         <label className={base.field}>

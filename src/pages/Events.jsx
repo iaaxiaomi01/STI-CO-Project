@@ -6,12 +6,14 @@ import {
   EVENT_STATUSES,
   authorLabel,
   canManageEvent,
+  computeStatus,
   deleteEvent,
   eventErrorMessage,
   eventStatusLabel,
   fetchEvents,
   formatEventDate,
   formatTime,
+  nowKey,
   updateEvent,
   wasEdited,
 } from '../lib/events.js'
@@ -32,8 +34,9 @@ import styles from './Events.module.css'
    Officer → nakikita lahat; nag-e-edit/nagbubura ng SARILI niyang gawa
    Adviser → nakikita lahat; nag-e-edit/nagbubura ng LAHAT sa org
 
-   Ang Status (Upcoming/Ongoing/Completed) ay binabago ng
-   gumawa o ng Adviser sa "I-edit".
+   Ang Status (Upcoming/Ongoing/Completed) ay AUTOMATIC —
+   kinukuwenta mula sa Date at oras, at nire-refresh bawat
+   30 segundo habang bukas ang page.
 
    Ang RLS sa database ang totoong nagbabantay. Ang
    canManageEvent() dito ay para lang itago ang mga button.
@@ -69,6 +72,21 @@ function Events() {
   const [editing, setEditing] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
 
+  /* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo
+     para kusang lumipat ang status habang bukas ang page */
+  const [now, setNow] = useState(() => nowKey())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(nowKey()), 30 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  /* Ang mga event, may kinuwentang status */
+  const withStatus = useMemo(
+    () => events.map((e) => ({ ...e, status: computeStatus(e, now) })),
+    [events, now],
+  )
+
   /* Mga event na nakabukas ang buong description */
   const [expanded, setExpanded] = useState(() => new Set())
 
@@ -91,16 +109,17 @@ function Events() {
   const closeForm = useCallback(() => setEditing(null), [])
 
   const counts = useMemo(() => {
-    const c = { all: events.length, upcoming: 0, ongoing: 0, completed: 0 }
-    events.forEach((e) => {
+    const c = { all: withStatus.length, upcoming: 0, ongoing: 0, completed: 0 }
+    withStatus.forEach((e) => {
       c[e.status] = (c[e.status] ?? 0) + 1
     })
     return c
-  }, [events])
+  }, [withStatus])
 
   const visible = useMemo(
-    () => sortEvents(filter === 'all' ? events : events.filter((e) => e.status === filter)),
-    [events, filter],
+    () =>
+      sortEvents(filter === 'all' ? withStatus : withStatus.filter((e) => e.status === filter)),
+    [withStatus, filter],
   )
 
   async function handleUpdate(values, imageOptions) {

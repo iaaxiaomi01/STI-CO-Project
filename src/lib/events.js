@@ -33,6 +33,51 @@ export function eventStatusLabel(value) {
   return EVENT_STATUSES.find((s) => s.value === value)?.label ?? value
 }
 
+/* ============================================================
+   AUTOMATIC NA STATUS
+
+   Hindi na pinipili ang status. Kinukuwenta ito mula sa Date,
+   Start Time at End Time, kumpara sa oras NGAYON sa Pilipinas:
+
+     bago mag-Start Time          → Upcoming
+     mula Start hanggang End Time → Ongoing
+     lampas na sa End Time        → Completed
+
+   Laging oras ng Pilipinas (Asia/Manila) ang gamit, kahit iba
+   ang timezone ng computer ng tumitingin.
+
+   Ang lumang "status" column sa database ay hindi na ginagamit.
+   ============================================================ */
+const EVENT_TIMEZONE = 'Asia/Manila'
+
+/* "2026-09-29 17:27" — ang oras ngayon sa Pilipinas */
+export function nowKey(date = new Date()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: EVENT_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(date)
+      .map((p) => [p.type, p.value]),
+  )
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`
+}
+
+/* Pareho ang anyo ng "YYYY-MM-DD HH:MM", kaya pwedeng
+   ikumpara bilang text. */
+export function computeStatus(event, now = nowKey()) {
+  const start = `${event.event_date} ${event.start_time.slice(0, 5)}`
+  const end = `${event.event_date} ${event.end_time.slice(0, 5)}`
+  if (now < start) return 'upcoming'
+  if (now < end) return 'ongoing'
+  return 'completed'
+}
+
 export const TITLE_MAX = 150
 export const DESCRIPTION_MAX = 8000
 export const LOCATION_MAX = 200
@@ -127,7 +172,6 @@ async function cleanupImages(orgId, proposalId, keep) {
 
 function toRow(values) {
   return {
-    status: values.status,
     title: values.title,
     description: values.description,
     event_date: values.eventDate,
