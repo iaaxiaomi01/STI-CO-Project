@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAuth } from '../context/AuthContext.js'
-import { getRoleConfig } from '../config/roles.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { fullNameOf } from '../lib/profile.js'
 import PageHeader from '../components/PageHeader.jsx'
-import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import styles from './Members.module.css'
 
@@ -22,9 +19,6 @@ import styles from './Members.module.css'
    nasa student_records na hindi pa nag-login ay wala pa rito.
    ============================================================ */
 function Members() {
-  const { role } = useAuth()
-  const { can } = getRoleConfig(role)
-
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -77,14 +71,7 @@ function Members() {
     <>
       <PageHeader
         title="Members"
-        subtitle={
-          can.create
-            ? 'Pamahalaan ang listahan ng mga miyembro.'
-            : 'Listahan ng mga miyembro ng organisasyon.'
-        }
-        action={
-          can.create && <ActionButton>+ Magdagdag ng Miyembro</ActionButton>
-        }
+        subtitle="Listahan ng mga miyembro ng organisasyon."
       />
 
       {loading && <p className={styles.status}>Kinukuha ang mga miyembro…</p>}
