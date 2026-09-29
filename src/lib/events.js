@@ -116,6 +116,39 @@ export async function fetchEvents() {
   return data ?? []
 }
 
+/* ============================================================
+   BILANG PARA SA DASHBOARD
+
+   Automatic ang status (kinukuwenta sa browser), kaya hindi ito
+   mabibilang sa database. Kinukuha ang petsa at oras ng mga
+   event mula NGAYONG ARAW pataas — ang mas luma ay siguradong
+   Completed na — tapos binibilang dito.
+
+     upcoming → hindi pa nagsisimula
+     ongoing  → nagaganap ngayon
+     active   → upcoming + ongoing
+   ============================================================ */
+export async function countEventsByStatus() {
+  const now = nowKey()
+  const today = now.slice(0, 10)
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('event_date, start_time, end_time')
+    .gte('event_date', today)
+
+  if (error) throw error
+
+  const counts = { upcoming: 0, ongoing: 0, active: 0 }
+  ;(data ?? []).forEach((e) => {
+    const status = computeStatus(e, now)
+    if (status === 'completed') return
+    counts[status] += 1
+    counts.active += 1
+  })
+  return counts
+}
+
 /* ---------- PICTURE ---------- */
 
 function folderOf(orgId, proposalId) {

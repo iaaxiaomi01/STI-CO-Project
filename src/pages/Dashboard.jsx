@@ -5,6 +5,8 @@ import { getRoleConfig } from '../config/roles.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { displayNameOf, firstNameOf } from '../lib/profile.js'
 import { countRecentAnnouncements } from '../lib/announcements.js'
+import { countPendingProposals } from '../lib/proposals.js'
+import { countEventsByStatus } from '../lib/events.js'
 import Avatar from '../components/Avatar.jsx'
 import styles from './Dashboard.module.css'
 
@@ -78,11 +80,65 @@ function Dashboard() {
     }
   }, [needsNewAnnouncements])
 
+  /* TOTOONG DATA: bilang ng events.
+       key: 'upcomingEvents' (Member)          → hindi pa nagsisimula
+       key: 'activeEvents'   (Officer, Adviser) → Upcoming + Ongoing
+     Automatic ang status, kaya kinukuwenta ito mula sa petsa at
+     oras (tingnan ang countEventsByStatus() sa lib/events.js). */
+  const needsEventCounts = roleConfig.dashboard.stats.some(
+    (stat) => stat.key === 'upcomingEvents' || stat.key === 'activeEvents',
+  )
+  const [eventCounts, setEventCounts] = useState(null)
+
+  useEffect(() => {
+    if (!needsEventCounts) return
+    let active = true
+
+    countEventsByStatus()
+      .then((counts) => {
+        if (active) setEventCounts(counts)
+      })
+      .catch((error) => {
+        console.error('Hindi makuha ang bilang ng events:', error)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [needsEventCounts])
+
+  /* TOTOONG DATA: ilang proposal ang naghihintay pa ng aksyon.
+     key: 'pendingProposals' (Officer, Adviser) */
+  const needsPendingProposals = roleConfig.dashboard.stats.some(
+    (stat) => stat.key === 'pendingProposals',
+  )
+  const [pendingProposals, setPendingProposals] = useState(null)
+
+  useEffect(() => {
+    if (!needsPendingProposals) return
+    let active = true
+
+    countPendingProposals()
+      .then((count) => {
+        if (active) setPendingProposals(count)
+      })
+      .catch((error) => {
+        console.error('Hindi makuha ang bilang ng proposals:', error)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [needsPendingProposals])
+
   /* Ang value sa config ay default lang; papalitan kapag
      may totoong numero na. */
   function statValue(stat) {
     if (stat.key === 'memberCount') return memberCount ?? '…'
     if (stat.key === 'newAnnouncements') return newAnnouncements ?? '…'
+    if (stat.key === 'upcomingEvents') return eventCounts?.upcoming ?? '…'
+    if (stat.key === 'activeEvents') return eventCounts?.active ?? '…'
+    if (stat.key === 'pendingProposals') return pendingProposals ?? '…'
     return stat.value
   }
 

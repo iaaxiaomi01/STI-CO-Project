@@ -137,7 +137,7 @@ export const ROLES = {
     dashboard: {
       subtitle: 'Narito ang mabilisang tanaw ng organisasyon.',
       stats: [
-        { label: 'Paparating na events', value: '0', to: '/events' },
+        { label: 'Paparating na events', value: '0', to: '/events', key: 'upcomingEvents' },
         {
           label: 'Bagong announcements (7 araw)',
           value: '0',
@@ -197,8 +197,8 @@ export const ROLES = {
     dashboard: {
       subtitle: 'Suriin at aksyunan ang mga proposal ng organisasyon.',
       stats: [
-        { label: 'Naghihintay na proposals', value: '0', to: '/proposals' },
-        { label: 'Aktibong events', value: '0', to: '/events' },
+        { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
+        { label: 'Aktibong events', value: '0', to: '/events', key: 'activeEvents' },
         { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance ngayong buwan', value: '—', to: '/attendance' },
       ],
@@ -261,8 +261,8 @@ export const ROLES = {
     dashboard: {
       subtitle: 'Pamahalaan at bantayan ang organisasyon.',
       stats: [
-        { label: 'Aktibong events', value: '0', to: '/events' },
-        { label: 'Naghihintay na proposals', value: '0', to: '/proposals' },
+        { label: 'Aktibong events', value: '0', to: '/events', key: 'activeEvents' },
+        { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate', value: '—', to: '/attendance' },
       ],

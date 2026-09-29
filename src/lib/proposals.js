@@ -180,3 +180,16 @@ export function formatDateTime(iso) {
 export function wasEdited(proposal) {
   return Boolean(proposal.updated_by)
 }
+
+/* Ilang proposal ng org mo ang naghihintay pa ng aksyon —
+   para sa stat tile sa Dashboard (Officer at Adviser).
+   Ang RLS na ang nagsasala: sariling org lang. */
+export async function countPendingProposals() {
+  const { count, error } = await supabase
+    .from('proposals')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending')
+
+  if (error) throw error
+  return count ?? 0
+}
