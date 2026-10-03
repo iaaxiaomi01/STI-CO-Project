@@ -343,3 +343,125 @@
     padding-left: 2.25rem;
   }
 }
+/* ============================================================
+   QR ATTENDANCE (Time In / Time Out)
+   ============================================================ */
+
+/* Linya ng Time In / Time Out sa "Sinalihan ko" */
+.attendLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chipIn {
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+}
+
+.chipOut {
+  background-color: #fff1e0;
+  color: #9a4a00;
+}
+
+.manualTag {
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.qrBtn,
+.scanBtn {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: background-color var(--transition);
+}
+
+.qrBtn:hover,
+.scanBtn:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.hintSmall {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* Bilang ng Time In / Out sa bawat event (Officer/Adviser) */
+.attendMeta {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.attendMeta strong {
+  color: var(--color-text);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.cardActions .toggle {
+  margin-top: 0;
+}
+
+/* Sa listahan: laging pwedeng bumaba sa susunod na linya */
+.person {
+  flex-wrap: wrap;
+}
+
+.times {
+  display: inline-flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.manualBtn {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.manualBtn:hover:not(:disabled) {
+  background-color: var(--color-primary-soft);
+}
+
+.manualBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.person .when {
+  width: 100%;
+  padding-left: 2.25rem;
+}

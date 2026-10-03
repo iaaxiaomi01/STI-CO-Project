@@ -429,7 +429,8 @@ export async function leaveEvent(eventId, profileId) {
     .select('event_id')
 
   if (error) throw error
-  /* Walang nabura = tapos na ang event, o hindi ka naman nakasali */
+  /* Walang nabura = tapos na ang event, naka-Time In ka na (QR
+     attendance), o hindi ka naman nakasali */
   if (!data || data.length === 0) throw new Error('not-allowed')
 }
 
@@ -452,7 +453,9 @@ export function participantLabel(p) {
 }
 
 export function joinErrorMessage(err) {
-  if (err?.message === 'not-allowed') return 'Hindi na pwedeng umalis — tapos na ang event.'
+  if (err?.message === 'not-allowed') {
+    return 'Hindi na pwedeng umalis — tapos na ang event, o naka-Time In ka na.'
+  }
   /* Galing sa trigger — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
   /* RLS: tapos na ang event o wala kang pahintulot */

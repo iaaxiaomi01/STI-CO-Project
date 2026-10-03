@@ -17,8 +17,25 @@ import {
   nowKey,
   participantLabel,
 } from '../lib/events.js'
+import {
+  MODE_IN,
+  MODE_OUT,
+  attendanceErrorMessage,
+  attendanceOpensAt,
+  canScanAttendance,
+  canShowQr,
+  fetchAttendanceCounts,
+  fetchEventAttendance,
+  fetchMyAttendance,
+  formatClock,
+  isAttendanceOpen,
+  isManualOpen,
+  manualAttendance,
+} from '../lib/attendance.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import MyQrDialog from '../components/MyQrDialog.jsx'
+import AttendanceScanner from '../components/AttendanceScanner.jsx'
 import styles from './Attendance.module.css'
 
 /* ============================================================
@@ -41,6 +58,13 @@ import styles from './Attendance.module.css'
 
    Automatic ang status ng event (Upcoming/Ongoing/Completed),
    gaya ng sa Events page.
+
+   QR ATTENDANCE (Time In / Time Out) — lib/attendance.js
+     "Sinalihan ko"       → "Ipakita ang QR" (30 min bago ang
+                            Start hanggang 60 min lampas End)
+     "Sasali bawat event" → "I-scan" (Officer/Adviser), at
+                            manual na Time In/Out sa listahan
+                            para sa walang phone
    ============================================================ */
 
 const TAB_MINE = 'mine'
@@ -77,8 +101,8 @@ function Attendance() {
 
   const subtitle =
     tab === TAB_MINE
-      ? 'Mga event na sinalihan mo.'
-      : 'Tingnan kung sino ang sasali sa bawat event ng organisasyon.'
+      ? 'Mga event na sinalihan mo, at ang QR mo para sa Time In at Time Out.'
+      : 'Tingnan kung sino ang sasali sa bawat event, at i-scan ang Time In at Time Out nila.'
 
   return (
     <>
@@ -101,7 +125,11 @@ function Attendance() {
         </div>
       )}
 
-      {tab === TAB_MINE ? <MyJoinedEvents profile={profile} /> : <ParticipantsPerEvent />}
+      {tab === TAB_MINE ? (
+        <MyJoinedEvents profile={profile} />
+      ) : (
+        <ParticipantsPerEvent profile={profile} />
+      )}
     </>
   )
 }
@@ -176,10 +204,26 @@ function MyJoinedEvents({ profile }) {
 
   const now = useNow()
   const profileId = profile.id
+  const hasQr = canShowQr(profile)
+
+  /* { [event_id]: { time_in, time_out } } */
+  const [mine, setMine] = useState({})
+  /* Ang event na nakabukas ang QR */
+  const [qrEvent, setQrEvent] = useState(null)
+
+  const loadMine = useCallback(async () => {
+    try {
+      setMine(await fetchMyAttendance(profileId))
+    } catch (err) {
+      /* Hindi kritikal — wala lang lalabas na Time In/Out */
+      console.error('Hindi makuha ang sariling attendance:', err)
+    }
+  }, [profileId])
 
   const load = useCallback(async () => {
     try {
-      setEvents(await fetchMyJoinedEvents(profileId))
+      const [evs] = await Promise.all([fetchMyJoinedEvents(profileId), loadMine()])
+      setEvents(evs)
       setError(null)
     } catch (err) {
       console.error('Hindi makuha ang mga sinalihang event:', err)
@@ -187,7 +231,7 @@ function MyJoinedEvents({ profile }) {
     } finally {
       setLoading(false)
     }
-  }, [profileId])
+  }, [profileId, loadMine])
 
   useEffect(() => {
     load()
@@ -250,13 +294,71 @@ function MyJoinedEvents({ profile }) {
                   </p>
                   <p className={styles.meta}>{ev.location}</p>
                   <p className={styles.joined}>Sumali ka noong {formatDateTimeShort(ev.joined_at)}</p>
+
+                  <MyAttendanceLine
+                    event={ev}
+                    record={mine[ev.id]}
+                    now={now}
+                    hasQr={hasQr}
+                    onShowQr={() => setQrEvent(ev)}
+                  />
                 </div>
               </li>
             ))}
           </ul>
         </>
       )}
+
+      {qrEvent && (
+        <MyQrDialog
+          event={qrEvent}
+          profileId={profileId}
+          onClose={() => {
+            setQrEvent(null)
+            loadMine()
+          }}
+        />
+      )}
     </>
+  )
+}
+
+/* "2026-10-04 08:30" → "8:30 AM" */
+function clockOfKey(key) {
+  return formatTime(key.slice(11))
+}
+
+/* Time In / Time Out mo, at ang button na "Ipakita ang QR" */
+function MyAttendanceLine({ event, record, now, hasQr, onShowQr }) {
+  const open = isAttendanceOpen(event, now)
+  const complete = Boolean(record?.time_out)
+  const notYet = now < attendanceOpensAt(event)
+
+  return (
+    <div className={styles.attendLine}>
+      <span className={`${styles.chip} ${record?.time_in ? styles.chipIn : ''}`}>
+        In: {record?.time_in ? formatClock(record.time_in) : '—'}
+      </span>
+      <span className={`${styles.chip} ${record?.time_out ? styles.chipOut : ''}`}>
+        Out: {record?.time_out ? formatClock(record.time_out) : '—'}
+      </span>
+
+      {hasQr && open && !complete && (
+        <button type="button" className={styles.qrBtn} onClick={onShowQr}>
+          ▣ Ipakita ang QR
+        </button>
+      )}
+
+      {hasQr && notYet && (
+        <span className={styles.hintSmall}>
+          Lalabas ang QR mo ng {clockOfKey(attendanceOpensAt(event))}
+        </span>
+      )}
+
+      {!open && !notYet && !record?.time_in && (
+        <span className={styles.hintSmall}>Hindi ka nakapag-Time In</span>
+      )}
+    </div>
   )
 }
 
@@ -269,7 +371,7 @@ function MyJoinedEvents({ profile }) {
    ============================================================ */
 const FILTERS = [{ value: 'all', label: 'Lahat' }, ...EVENT_STATUSES]
 
-function ParticipantsPerEvent() {
+function ParticipantsPerEvent({ profile }) {
   const [events, setEvents] = useState([])
   const [counts, setCounts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -279,11 +381,31 @@ function ParticipantsPerEvent() {
   /* Mga event na nakabukas ang listahan */
   const [openIds, setOpenIds] = useState(() => new Set())
 
+  /* { [event_id]: { timedIn, timedOut } } */
+  const [attCounts, setAttCounts] = useState({})
+  /* Ang event na nakabukas ang scanner */
+  const [scanEvent, setScanEvent] = useState(null)
+  /* Pinapalitan para muling kunin ang mga nakabukas na listahan */
+  const [listVersion, setListVersion] = useState(0)
+
+  const canScan = canScanAttendance(profile)
   const now = useNow()
+
+  const loadAttCounts = useCallback(async () => {
+    try {
+      setAttCounts(await fetchAttendanceCounts())
+    } catch (err) {
+      console.error('Hindi makuha ang bilang ng attendance:', err)
+    }
+  }, [])
 
   const load = useCallback(async () => {
     try {
-      const [evs, c] = await Promise.all([fetchEvents(), fetchParticipantCounts()])
+      const [evs, c] = await Promise.all([
+        fetchEvents(),
+        fetchParticipantCounts(),
+        loadAttCounts(),
+      ])
       setEvents(evs)
       setCounts(c)
       setError(null)
@@ -293,11 +415,18 @@ function ParticipantsPerEvent() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [loadAttCounts])
 
   useEffect(() => {
     load()
   }, [load])
+
+  /* May na-record (scan o manual) → i-update ang mga bilang at
+     ang mga nakabukas na listahan */
+  const onAttendanceChanged = useCallback(() => {
+    loadAttCounts()
+    setListVersion((v) => v + 1)
+  }, [loadAttCounts])
 
   const withStatus = useMemo(
     () => events.map((e) => ({ ...e, status: computeStatus(e, now) })),
@@ -384,6 +513,9 @@ function ParticipantsPerEvent() {
             const total = counts[ev.id] ?? 0
             const isOpen = openIds.has(ev.id)
             const isDone = ev.status === 'completed'
+            const att = attCounts[ev.id] ?? { timedIn: 0, timedOut: 0 }
+            const scanOpen = canScan && total > 0 && isAttendanceOpen(ev, now)
+            const showAtt = att.timedIn > 0 || ev.status !== 'upcoming'
 
             return (
               <li key={ev.id} className={styles.card}>
@@ -400,6 +532,12 @@ function ParticipantsPerEvent() {
                       {formatTime(ev.end_time)}
                     </p>
                     <p className={styles.meta}>{ev.location}</p>
+                    {showAtt && total > 0 && (
+                      <p className={styles.attendMeta}>
+                        Time In: <strong>{att.timedIn}</strong> / {total} · Time Out:{' '}
+                        <strong>{att.timedOut}</strong>
+                      </p>
+                    )}
                   </div>
 
                   <div className={styles.countBox}>
@@ -408,37 +546,87 @@ function ParticipantsPerEvent() {
                   </div>
                 </div>
 
-                {total > 0 && (
-                  <button
-                    type="button"
-                    className={styles.toggle}
-                    aria-expanded={isOpen}
-                    onClick={() => toggle(ev.id)}
-                  >
-                    {isOpen ? 'Itago ang listahan ▴' : 'Tingnan ang sasali ▾'}
-                  </button>
+                {(total > 0 || scanOpen) && (
+                  <div className={styles.cardActions}>
+                    {scanOpen && (
+                      <button
+                        type="button"
+                        className={styles.scanBtn}
+                        onClick={() => setScanEvent(ev)}
+                      >
+                        ▣ I-scan ang QR
+                      </button>
+                    )}
+                    {total > 0 && (
+                      <button
+                        type="button"
+                        className={styles.toggle}
+                        aria-expanded={isOpen}
+                        onClick={() => toggle(ev.id)}
+                      >
+                        {isOpen ? 'Itago ang listahan ▴' : 'Tingnan ang sasali ▾'}
+                      </button>
+                    )}
+                  </div>
                 )}
 
-                {isOpen && <ParticipantList eventId={ev.id} />}
+                {isOpen && (
+                  <ParticipantList
+                    event={ev}
+                    now={now}
+                    myId={profile.id}
+                    canManual={canScan}
+                    version={listVersion}
+                    onChanged={onAttendanceChanged}
+                  />
+                )}
               </li>
             )
           })}
         </ul>
       )}
+
+      {scanEvent && (
+        <AttendanceScanner
+          event={scanEvent}
+          totalJoined={counts[scanEvent.id] ?? 0}
+          initialCounts={attCounts[scanEvent.id]}
+          onClose={(changed) => {
+            setScanEvent(null)
+            if (changed) onAttendanceChanged()
+          }}
+        />
+      )}
     </>
   )
 }
 
-function ParticipantList({ eventId }) {
+/* ============================================================
+   LISTAHAN NG SASALI + TIME IN / TIME OUT
+
+   Para sa walang phone o patay ang phone: may "Time In" at
+   "Time Out" na button bawat tao (Officer/Adviser), hanggang 24
+   oras pagkatapos ng event. Nakatala sa database na "manual"
+   ito at kung sino ang gumawa.
+   ============================================================ */
+function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
+  const eventId = event.id
   const [list, setList] = useState([])
+  const [att, setAtt] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [busyId, setBusyId] = useState(null)
+  const [actionError, setActionError] = useState('')
+
+  const manualOpen = canManual && isManualOpen(event, now)
 
   useEffect(() => {
     let active = true
-    fetchParticipants(eventId)
-      .then((data) => {
-        if (active) setList(data)
+    Promise.all([fetchParticipants(eventId), fetchEventAttendance(eventId)])
+      .then(([data, a]) => {
+        if (!active) return
+        setList(data)
+        setAtt(a)
       })
       .catch((err) => {
         console.error('Hindi makuha ang listahan ng sasali:', err)
@@ -450,26 +638,90 @@ function ParticipantList({ eventId }) {
     return () => {
       active = false
     }
-  }, [eventId])
+    /* "version" — nagbabago kapag may na-scan, para kunin ulit */
+  }, [eventId, version])
+
+  async function handleManual(p, mode) {
+    const { name } = participantLabel(p)
+    const label = mode === MODE_IN ? 'Time In' : 'Time Out'
+    if (!window.confirm(`I-${label} nang manual si ${name}?`)) return
+
+    setBusyId(p.profile_id)
+    setActionError('')
+    try {
+      const r = await manualAttendance(eventId, p.profile_id, mode)
+      setAtt((current) => ({
+        ...current,
+        [p.profile_id]: {
+          ...current[p.profile_id],
+          profile_id: p.profile_id,
+          time_in: r.time_in,
+          time_out: r.time_out,
+          time_in_method: current[p.profile_id]?.time_in_method ?? 'manual',
+          time_out_method:
+            mode === MODE_OUT ? 'manual' : current[p.profile_id]?.time_out_method ?? null,
+        },
+      }))
+      if (r.result === 'ok') onChanged()
+    } catch (err) {
+      console.error('Hindi na-record ang manual na attendance:', err)
+      setActionError(attendanceErrorMessage(err))
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   if (loading) return <p className={styles.panelMuted}>Kinukuha ang listahan…</p>
   if (error) return <p className={styles.panelError}>{error}</p>
   if (list.length === 0) return <p className={styles.panelMuted}>Wala pang sumasali.</p>
 
   return (
-    <ol className={styles.people}>
-      {list.map((p, i) => {
-        const { name, role } = participantLabel(p)
-        return (
-          <li key={p.profile_id} className={styles.person}>
-            <span className={styles.num}>{i + 1}</span>
-            <span className={styles.name}>{name}</span>
-            <span className={styles.role}>{role}</span>
-            <span className={styles.when}>{formatDateTimeShort(p.joined_at)}</span>
-          </li>
-        )
-      })}
-    </ol>
+    <>
+      {actionError && <p className={styles.panelError}>{actionError}</p>}
+
+      <ol className={styles.people}>
+        {list.map((p, i) => {
+          const { name, role } = participantLabel(p)
+          const a = att[p.profile_id]
+          const isMe = p.profile_id === myId
+          const busy = busyId === p.profile_id
+
+          return (
+            <li key={p.profile_id} className={styles.person}>
+              <span className={styles.num}>{i + 1}</span>
+              <span className={styles.name}>{name}</span>
+              <span className={styles.role}>{role}</span>
+
+              <span className={styles.times}>
+                <span className={`${styles.chip} ${a?.time_in ? styles.chipIn : ''}`}>
+                  In: {a?.time_in ? formatClock(a.time_in) : '—'}
+                  {a?.time_in_method === 'manual' && <em className={styles.manualTag}> manual</em>}
+                </span>
+                <span className={`${styles.chip} ${a?.time_out ? styles.chipOut : ''}`}>
+                  Out: {a?.time_out ? formatClock(a.time_out) : '—'}
+                  {a?.time_out_method === 'manual' && (
+                    <em className={styles.manualTag}> manual</em>
+                  )}
+                </span>
+              </span>
+
+              {manualOpen && !isMe && !a?.time_out && (
+                <button
+                  type="button"
+                  className={styles.manualBtn}
+                  disabled={busy}
+                  onClick={() => handleManual(p, a?.time_in ? MODE_OUT : MODE_IN)}
+                >
+                  {busy ? '…' : a?.time_in ? 'Time Out' : 'Time In'}
+                </button>
+              )}
+
+              <span className={styles.when}>Sumali {formatDateTimeShort(p.joined_at)}</span>
+            </li>
+          )
+        })}
+      </ol>
+    </>
   )
 }
 

@@ -144,7 +144,7 @@ export const ROLES = {
           to: '/announcements',
           key: 'newAnnouncements',
         },
-        { label: 'Attendance rate', value: '—', to: '/attendance' },
+        { label: 'Attendance rate mo', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
       cards: [
         {
@@ -163,7 +163,7 @@ export const ROLES = {
           to: '/attendance',
           icon: '✓',
           title: 'Attendance',
-          text: 'Suriin ang iyong record ng pagdalo.',
+          text: 'Suriin ang iyong record ng pagdalo at ipakita ang QR mo.',
         },
       ],
     },
@@ -200,7 +200,7 @@ export const ROLES = {
         { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Aktibong events', value: '0', to: '/events', key: 'activeEvents' },
         { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
-        { label: 'Attendance ngayong buwan', value: '—', to: '/attendance' },
+        { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
       cards: [
         {
@@ -264,7 +264,7 @@ export const ROLES = {
         { label: 'Aktibong events', value: '0', to: '/events', key: 'activeEvents' },
         { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
-        { label: 'Attendance rate', value: '—', to: '/attendance' },
+        { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
       cards: [
         {

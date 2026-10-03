@@ -7,6 +7,7 @@ import { displayNameOf, firstNameOf } from '../lib/profile.js'
 import { countRecentAnnouncements } from '../lib/announcements.js'
 import { countPendingProposals } from '../lib/proposals.js'
 import { countEventsByStatus } from '../lib/events.js'
+import { fetchAttendanceRate } from '../lib/attendance.js'
 import Avatar from '../components/Avatar.jsx'
 import styles from './Dashboard.module.css'
 
@@ -131,6 +132,35 @@ function Dashboard() {
     }
   }, [needsPendingProposals])
 
+  /* TOTOONG DATA: attendance rate (galing sa QR Time In).
+     key: 'attendanceRate'
+       Member          → sa mga natapos na event na sinalihan mo
+       Officer/Adviser → sa buong organisasyon
+     Tingnan ang attendance_summary() sa QR_ATTENDANCE.sql. */
+  const needsAttendanceRate = roleConfig.dashboard.stats.some(
+    (stat) => stat.key === 'attendanceRate',
+  )
+  const orgWideRate = profile?.role_id === 2 || profile?.role_id === 3
+  const [attendanceRate, setAttendanceRate] = useState(null)
+
+  useEffect(() => {
+    if (!needsAttendanceRate) return
+    let active = true
+
+    fetchAttendanceRate({ orgWide: orgWideRate })
+      .then((rate) => {
+        if (active) setAttendanceRate(rate)
+      })
+      .catch((error) => {
+        console.error('Hindi makuha ang attendance rate:', error)
+        if (active) setAttendanceRate('—')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [needsAttendanceRate, orgWideRate])
+
   /* Ang value sa config ay default lang; papalitan kapag
      may totoong numero na. */
   function statValue(stat) {
@@ -139,6 +169,7 @@ function Dashboard() {
     if (stat.key === 'upcomingEvents') return eventCounts?.upcoming ?? '…'
     if (stat.key === 'activeEvents') return eventCounts?.active ?? '…'
     if (stat.key === 'pendingProposals') return pendingProposals ?? '…'
+    if (stat.key === 'attendanceRate') return attendanceRate ?? '…'
     return stat.value
   }
 
