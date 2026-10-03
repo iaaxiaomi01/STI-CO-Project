@@ -1,3 +1,32 @@
+/* ---------- TABS (Officer) ---------- */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  margin-bottom: -1px;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
 .notice {
   margin-bottom: 1rem;
   padding: 0.7rem 1rem;
@@ -35,15 +64,20 @@
   list-style: none;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+/* Ang kahon ng bawat item */
+.card {
   padding: 0.9rem 1.1rem;
   background-color: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+/* Ang ayos sa loob: larawan · detalye · bilang */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .thumb,
@@ -125,6 +159,158 @@
   font-style: italic;
 }
 
+/* ---------- SASALI BAWAT EVENT ---------- */
+.filters {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--color-muted);
+  font-size: 0.87rem;
+  font-weight: 600;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.filter:hover {
+  border-color: var(--color-primary);
+}
+
+.filterActive {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.filterCount {
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.filterActive .filterCount {
+  background-color: #fff;
+}
+
+.countBox {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 4.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  background-color: var(--color-surface);
+}
+
+.countNum {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.countLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.toggle {
+  margin-top: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+
+.toggle:hover {
+  background-color: var(--color-primary-soft);
+}
+
+.panelMuted,
+.panelError {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  font-size: 0.87rem;
+  color: var(--color-muted);
+}
+
+.panelError {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
+.people {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.person + .person {
+  border-top: 1px solid var(--color-border);
+}
+
+.num {
+  min-width: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  text-align: right;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.role {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.when {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
 @media (max-width: 520px) {
   .row {
     flex-wrap: wrap;
@@ -134,5 +320,26 @@
   .thumbPlaceholder {
     width: 64px;
     height: 48px;
+  }
+
+  /* Sa maliit na screen, sa ilalim na ang bilang */
+  .main {
+    flex-basis: calc(100% - 64px - 1rem);
+  }
+
+  .countBox {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  .person {
+    flex-wrap: wrap;
+  }
+
+  .when {
+    width: 100%;
+    padding-left: 2.25rem;
   }
 }

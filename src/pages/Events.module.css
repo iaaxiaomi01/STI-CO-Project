@@ -267,14 +267,6 @@
   background-color: var(--color-surface);
 }
 
-.joinCount {
-  flex: 1;
-  min-width: 8rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-muted);
-}
-
 .joinButton {
   padding: 0.45rem 1.25rem;
   border: none;
