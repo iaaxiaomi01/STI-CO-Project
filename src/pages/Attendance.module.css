@@ -125,27 +125,6 @@
   font-style: italic;
 }
 
-.leave {
-  flex-shrink: 0;
-  padding: 0.4rem 0.9rem;
-  border: 1px solid #e3b4ae;
-  border-radius: 999px;
-  background-color: #fff;
-  color: #b42318;
-  font-size: 0.84rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.leave:hover:not(:disabled) {
-  background-color: #fdecec;
-}
-
-.leave:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 @media (max-width: 520px) {
   .row {
     flex-wrap: wrap;
@@ -155,9 +134,5 @@
   .thumbPlaceholder {
     width: 64px;
     height: 48px;
-  }
-
-  .leave {
-    margin-left: auto;
   }
 }

@@ -10,8 +10,6 @@ import {
   formatDateTimeShort,
   formatEventDate,
   formatTime,
-  joinErrorMessage,
-  leaveEvent,
   nowKey,
 } from '../lib/events.js'
 import PageHeader from '../components/PageHeader.jsx'
@@ -24,7 +22,8 @@ import styles from './Attendance.module.css'
 
    Member at Officer → listahan ng mga event na SINALIHAN mo
                        (galing sa "Join" sa Events). Dito ka rin
-                       dinadala pagkatapos mag-Join.
+                       dinadala pagkatapos mag-Join. Ang pag-alis
+                       sa event ay ginagawa sa Events page.
    Adviser           → placeholder pa (pagkuha ng attendance ng
                        buong organisasyon — susunod na gagawin).
 
@@ -68,10 +67,9 @@ function MyJoinedEvents({ profile }) {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [leavingId, setLeavingId] = useState(null)
 
   /* Mensahe galing sa Events pagkatapos mag-Join */
-  const [notice, setNotice] = useState(() =>
+  const [notice] = useState(() =>
     location.state?.joinedTitle
       ? `Sumali ka sa "${location.state.joinedTitle}". Nakalista na ito dito sa Attendance.`
       : '',
@@ -121,23 +119,6 @@ function MyJoinedEvents({ profile }) {
   }, [events, now])
 
   const activeCount = list.filter((e) => e.status !== 'completed').length
-
-  async function handleLeave(event) {
-    if (!window.confirm(`Umalis sa "${event.title}"?`)) return
-
-    setNotice('')
-    setLeavingId(event.id)
-    try {
-      await leaveEvent(event.id, profileId)
-      setEvents((current) => current.filter((e) => e.id !== event.id))
-      setNotice(`Umalis ka na sa "${event.title}".`)
-    } catch (err) {
-      console.error('Hindi nakaalis:', err)
-      setNotice(joinErrorMessage(err))
-    } finally {
-      setLeavingId(null)
-    }
-  }
 
   return (
     <>
@@ -203,17 +184,6 @@ function MyJoinedEvents({ profile }) {
                   <p className={styles.meta}>{ev.location}</p>
                   <p className={styles.joined}>Sumali ka noong {formatDateTimeShort(ev.joined_at)}</p>
                 </div>
-
-                {ev.status !== 'completed' && (
-                  <button
-                    type="button"
-                    className={styles.leave}
-                    onClick={() => handleLeave(ev)}
-                    disabled={leavingId === ev.id}
-                  >
-                    {leavingId === ev.id ? 'Sandali…' : 'Umalis'}
-                  </button>
-                )}
               </li>
             ))}
           </ul>
