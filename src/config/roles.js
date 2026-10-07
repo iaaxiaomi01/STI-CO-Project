@@ -125,6 +125,9 @@ export const ROLES = {
   [ROLE_KEYS.MEMBER]: {
     label: 'Member',
 
+    /* May notification bell sa Dashboard (UI lang muna) */
+    notifications: true,
+
     can: {
       create: false,
       review: false,
@@ -172,6 +175,9 @@ export const ROLES = {
   /* ---------------------------------------------------------- */
   [ROLE_KEYS.OFFICER]: {
     label: 'Officer',
+
+    /* May notification bell sa Dashboard (UI lang muna) */
+    notifications: true,
 
     /* Nagpapasa siya ng proposal. Kapag na-approve ng
        Adviser, SIYA (ang nagpasa) ang gagawa ng event mula
@@ -234,6 +240,9 @@ export const ROLES = {
   /* ---------------------------------------------------------- */
   [ROLE_KEYS.ADVISER]: {
     label: 'Adviser',
+
+    /* May notification bell sa Dashboard (UI lang muna) */
+    notifications: true,
 
     /* Halos PAREHO ang sidebar niya sa Officer (may dagdag na
        Org Profile) — pero siya ang

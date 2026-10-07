@@ -9,6 +9,7 @@ import { countPendingProposals } from '../lib/proposals.js'
 import { countEventsByStatus } from '../lib/events.js'
 import { fetchAttendanceRate } from '../lib/attendance.js'
 import Avatar from '../components/Avatar.jsx'
+import NotificationBell from '../components/NotificationBell.jsx'
 import styles from './Dashboard.module.css'
 
 /* ISANG Dashboard component, MARAMING magkaibang itsura.
@@ -186,6 +187,14 @@ function Dashboard() {
           <h1 className={styles.title}>Kumusta, {firstName}!</h1>
           <p className={styles.sub}>{roleConfig.dashboard.subtitle}</p>
         </div>
+
+        {/* Bell sa kanang itaas — Member, Officer, Adviser lang
+            (notifications: true sa config/roles.js) */}
+        {roleConfig.notifications && (
+          <div className={styles.welcomeActions}>
+            <NotificationBell />
+          </div>
+        )}
       </div>
 
       {/* Stat tiles — nakalink sa kaukulang seksyon */}
