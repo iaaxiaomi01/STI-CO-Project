@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient.js'
 import { fullNameOf } from '../lib/profile.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import Avatar from '../components/Avatar.jsx'
 import styles from './Members.module.css'
 
 /* ============================================================
@@ -31,7 +32,7 @@ function Members() {
       .from('profiles')
       .select(
         `id, student_id, email, first_name, middle_name, last_name,
-         program, year_level, is_active,
+         program, year_level, is_active, avatar_url,
          roles ( name ),
          organizations ( name )`,
       )
@@ -123,8 +124,15 @@ function Members() {
                 {filtered.map((m) => (
                   <tr key={m.id} className={m.is_active ? '' : styles.inactive}>
                     <td>
-                      <span className={styles.name}>{fullNameOf(m)}</span>
-                      <span className={styles.email}>{m.email}</span>
+                      {/* Profile picture + pangalan. Kapag walang larawan,
+                          unang letra ng pangalan ang lalabas (Avatar). */}
+                      <div className={styles.person}>
+                        <Avatar src={m.avatar_url} name={fullNameOf(m)} size="sm" />
+                        <div>
+                          <span className={styles.name}>{fullNameOf(m)}</span>
+                          <span className={styles.email}>{m.email}</span>
+                        </div>
+                      </div>
                     </td>
                     <td>{m.student_id || '—'}</td>
                     <td>{m.program || '—'}</td>

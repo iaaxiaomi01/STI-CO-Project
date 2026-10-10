@@ -68,6 +68,13 @@
   border-bottom: none;
 }
 
+/* Profile picture sa kaliwa ng pangalan at email */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .name {
   display: block;
   font-weight: 600;

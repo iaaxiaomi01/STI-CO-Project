@@ -29,6 +29,8 @@ function Avatar({ src, name = '', size = 'md', className = '' }) {
         <img
           src={src}
           alt=""
+          loading="lazy"
+          decoding="async"
           className={styles.image}
           onError={() => setFailedSrc(src)}
         />
