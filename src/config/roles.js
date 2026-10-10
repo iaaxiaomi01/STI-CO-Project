@@ -128,6 +128,9 @@ export const ROLES = {
     /* May notification bell sa Dashboard (UI lang muna) */
     notifications: true,
 
+    /* May Event Calendar sa Dashboard (UI lang muna, wala pang data) */
+    calendar: true,
+
     can: {
       create: false,
       review: false,
@@ -151,12 +154,6 @@ export const ROLES = {
       ],
       cards: [
         {
-          to: '/events',
-          icon: '◆',
-          title: 'Events',
-          text: 'Tingnan ang mga paparating na aktibidad at mag-sign up.',
-        },
-        {
           to: '/announcements',
           icon: '★',
           title: 'Announcements',
@@ -178,6 +175,9 @@ export const ROLES = {
 
     /* May notification bell sa Dashboard (UI lang muna) */
     notifications: true,
+
+    /* May Event Calendar sa Dashboard (UI lang muna, wala pang data) */
+    calendar: true,
 
     /* Nagpapasa siya ng proposal. Kapag na-approve ng
        Adviser, SIYA (ang nagpasa) ang gagawa ng event mula
@@ -204,7 +204,6 @@ export const ROLES = {
       subtitle: 'Suriin at aksyunan ang mga proposal ng organisasyon.',
       stats: [
         { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
-        { label: 'Aktibong events', value: '0', to: '/events', key: 'activeEvents' },
         { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
@@ -214,12 +213,6 @@ export const ROLES = {
           icon: '✉',
           title: 'Proposals',
           text: 'Gumawa ng proposal para sa organisasyon mo.',
-        },
-        {
-          to: '/events',
-          icon: '◆',
-          title: 'Events',
-          text: 'Tingnan ang mga paparating at natapos nang aktibidad.',
         },
         {
           to: '/members',
@@ -243,6 +236,9 @@ export const ROLES = {
 
     /* May notification bell sa Dashboard (UI lang muna) */
     notifications: true,
+
+    /* May Event Calendar sa Dashboard (UI lang muna, wala pang data) */
+    calendar: true,
 
     /* Halos PAREHO ang sidebar niya sa Officer (may dagdag na
        Org Profile) — pero siya ang
@@ -270,7 +266,6 @@ export const ROLES = {
     dashboard: {
       subtitle: 'Pamahalaan at bantayan ang organisasyon.',
       stats: [
-        { label: 'Aktibong events', value: '0', to: '/events', key: 'activeEvents' },
         { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
@@ -281,12 +276,6 @@ export const ROLES = {
           icon: '◈',
           title: 'Org Profile',
           text: 'Baguhin ang pangalan, description at logo ng organisasyon.',
-        },
-        {
-          to: '/events',
-          icon: '◆',
-          title: 'Pamahalaan ang Events',
-          text: 'Gumawa, baguhin, o kanselahin ang mga aktibidad.',
         },
         {
           to: '/announcements',

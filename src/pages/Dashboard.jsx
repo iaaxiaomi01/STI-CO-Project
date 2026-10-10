@@ -10,6 +10,7 @@ import { countEventsByStatus } from '../lib/events.js'
 import { fetchAttendanceRate } from '../lib/attendance.js'
 import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
+import DashboardCalendar from '../components/DashboardCalendar.jsx'
 import styles from './Dashboard.module.css'
 
 /* ISANG Dashboard component, MARAMING magkaibang itsura.
@@ -83,12 +84,14 @@ function Dashboard() {
   }, [needsNewAnnouncements])
 
   /* TOTOONG DATA: bilang ng events.
-       key: 'upcomingEvents' (Member)          → hindi pa nagsisimula
-       key: 'activeEvents'   (Officer, Adviser) → Upcoming + Ongoing
+       key: 'upcomingEvents' (Member) → hindi pa nagsisimula
      Automatic ang status, kaya kinukuwenta ito mula sa petsa at
-     oras (tingnan ang countEventsByStatus() sa lib/events.js). */
+     oras (tingnan ang countEventsByStatus() sa lib/events.js).
+
+     Inalis na ang 'activeEvents' (Officer, Adviser) — Event
+     Calendar na ang pumalit sa Dashboard. */
   const needsEventCounts = roleConfig.dashboard.stats.some(
-    (stat) => stat.key === 'upcomingEvents' || stat.key === 'activeEvents',
+    (stat) => stat.key === 'upcomingEvents',
   )
   const [eventCounts, setEventCounts] = useState(null)
 
@@ -168,7 +171,6 @@ function Dashboard() {
     if (stat.key === 'memberCount') return memberCount ?? '…'
     if (stat.key === 'newAnnouncements') return newAnnouncements ?? '…'
     if (stat.key === 'upcomingEvents') return eventCounts?.upcoming ?? '…'
-    if (stat.key === 'activeEvents') return eventCounts?.active ?? '…'
     if (stat.key === 'pendingProposals') return pendingProposals ?? '…'
     if (stat.key === 'attendanceRate') return attendanceRate ?? '…'
     return stat.value
@@ -206,6 +208,15 @@ function Dashboard() {
           </Link>
         ))}
       </div>
+
+      {/* Event Calendar — Member, Officer, Adviser lang
+          (calendar: true sa config/roles.js). UI lang muna. */}
+      {roleConfig.calendar && (
+        <section className={styles.calendarSection}>
+          <h2 className={styles.sectionTitle}>Event Calendar</h2>
+          <DashboardCalendar />
+        </section>
+      )}
 
       <h2 className={styles.sectionTitle}>Mga seksyon</h2>
 

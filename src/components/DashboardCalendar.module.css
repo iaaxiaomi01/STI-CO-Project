@@ -1,0 +1,173 @@
+/* ============================================================
+   DASHBOARD CALENDAR — kapareho ng itsura ng mga card sa
+   Dashboard (puting background, border, radius, shadow).
+   ============================================================ */
+
+.calendar {
+  padding: 1.4rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* ---------- HEADER ---------- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  flex-wrap: wrap;
+}
+
+.monthTitle {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.monthTitle span {
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.navBtn,
+.todayBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background-color: #fff;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.navBtn {
+  width: 36px;
+}
+
+.todayBtn {
+  padding: 0 0.9rem;
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+
+.navBtn:hover,
+.todayBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.todayBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- MGA ARAW NG LINGGO ---------- */
+.weekdays,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.weekday {
+  padding: 0.5rem 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+/* ---------- MGA ARAW ---------- */
+.grid {
+  border-top: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+}
+
+.day {
+  min-height: 84px;
+  padding: 0.4rem;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dayNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Araw na hindi sakop ng buwang tinitingnan */
+.outsideMonth {
+  background-color: var(--color-surface);
+}
+
+.outsideMonth .dayNumber {
+  color: var(--color-muted);
+  opacity: 0.6;
+}
+
+/* Araw ngayon */
+.today .dayNumber {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Nakahandang lugar para sa events (wala pang laman) */
+.dayEvents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.note {
+  margin-top: 0.9rem;
+  font-size: 0.87rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 560px) {
+  .calendar {
+    padding: 1rem 0.75rem;
+  }
+
+  .day {
+    min-height: 48px;
+    padding: 0.25rem;
+    align-items: center;
+  }
+
+  .dayNumber {
+    width: 24px;
+    height: 24px;
+    font-size: 0.78rem;
+  }
+
+  .weekday {
+    font-size: 0.68rem;
+  }
+}
