@@ -104,19 +104,6 @@
   margin-bottom: 1.75rem;
 }
 
-.recipient {
-  margin-bottom: 1.5rem;
-}
-
-.recipientLabel {
-  font-size: 0.95rem;
-  color: #3b4559;
-}
-
-.recipientName {
-  font-weight: 700;
-}
-
 .subject {
   margin-bottom: 1.5rem;
 }
@@ -261,4 +248,21 @@
   margin-top: 0.6rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* ---------- ATTACHMENT ---------- */
+.attachment {
+  margin-top: 1.75rem;
+  font-size: 0.92rem;
+  color: #3b4559;
+  overflow-wrap: anywhere;
+}
+
+.attachmentLabel {
+  font-weight: 700;
+}
+
+.toolButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }

@@ -18,6 +18,12 @@ import {
   wasEdited,
 } from '../lib/proposals.js'
 import {
+  deleteProposalFile,
+  downloadProposalFile,
+  formatFileSize,
+  uploadProposalFile,
+} from '../lib/proposalFiles.js'
+import {
   canCreateEventFrom,
   createEventFromProposal,
   eventOfProposal,
@@ -80,6 +86,9 @@ function Proposals() {
 
   /* Aling approved na proposal ang ginagawan ng event */
   const [eventFor, setEventFor] = useState(null)
+
+  /* Aling proposal ang dina-download ang file */
+  const [downloadingId, setDownloadingId] = useState(null)
 
   const load = useCallback(async () => {
     try {
@@ -147,17 +156,52 @@ function Proposals() {
     setNotice('Nagawa ang event. Makikita na ito ng mga miyembro sa Events.')
   }
 
-  async function handleSubmit(values) {
-    if (editing === 'new') {
-      const created = await createProposal(values)
-      setProposals((list) => [created, ...list])
-      setNotice('Naipasa ang proposal.')
-    } else {
-      const updated = await updateProposal(editing.id, values)
-      setProposals((list) => list.map((p) => (p.id === updated.id ? updated : p)))
-      setNotice('Na-save ang pagbabago.')
+  /* Galing sa ProposalForm. Kapag nag-throw, doon lalabas ang
+     error at mananatiling bukas ang form.
+
+     Ang file ay ina-upload MUNA, bago i-save ang proposal.
+     Kapag pumalya ang pag-save, binubura ang na-upload para
+     walang maiwang file na walang gumagamit. */
+  async function handleSubmit(values, { file, removeFile }) {
+    const uploaded = file ? await uploadProposalFile(profile, file) : null
+
+    /* undefined = hindi ginagalaw ang dating file */
+    const attachment = uploaded ?? (removeFile ? null : undefined)
+
+    try {
+      if (editing === 'new') {
+        const created = await createProposal({ ...values, attachment })
+        setProposals((list) => [created, ...list])
+        setNotice('Naipasa ang proposal.')
+      } else {
+        const oldPath = editing.attachment_path
+        const updated = await updateProposal(editing.id, { ...values, attachment })
+        setProposals((list) => list.map((p) => (p.id === updated.id ? updated : p)))
+        setNotice('Na-save ang pagbabago.')
+
+        /* Napalitan o inalis → burahin ang lumang file */
+        if (oldPath && attachment !== undefined && oldPath !== updated.attachment_path) {
+          await deleteProposalFile(oldPath)
+        }
+      }
+    } catch (err) {
+      if (uploaded) await deleteProposalFile(uploaded.path)
+      throw err
     }
     setEditing(null)
+  }
+
+  async function handleDownload(proposal) {
+    setNotice('')
+    setDownloadingId(proposal.id)
+    try {
+      await downloadProposalFile(proposal)
+    } catch (err) {
+      console.error('Hindi ma-download ang file:', err)
+      setNotice('Hindi ma-download ang file. Subukan ulit.')
+    } finally {
+      setDownloadingId(null)
+    }
   }
 
   async function handleDelete(proposal) {
@@ -170,6 +214,7 @@ function Proposals() {
     setNotice('')
     try {
       await deleteProposal(proposal.id)
+      await deleteProposalFile(proposal.attachment_path)
       setProposals((list) => list.filter((p) => p.id !== proposal.id))
       setNotice('Nabura ang proposal.')
     } catch (err) {
@@ -252,9 +297,6 @@ function Proposals() {
                   </div>
 
                   <p className={styles.meta}>
-                    Proposed to: <strong>{p.proposed_to}</strong>
-                  </p>
-                  <p className={styles.meta}>
                     Proposed by: <strong>{authorName(p)}</strong> ·{' '}
                     {authorRoleLabel(p)}
                   </p>
@@ -263,6 +305,25 @@ function Proposals() {
                     {formatDateTime(p.created_at)}
                     {wasEdited(p) && <span className={styles.edited}> · na-edit</span>}
                   </p>
+
+                  {/* Naka-attach na file — pindutin para i-download */}
+                  {p.attachment_path && (
+                    <button
+                      type="button"
+                      className={styles.fileChip}
+                      onClick={() => handleDownload(p)}
+                      disabled={downloadingId === p.id}
+                      title="I-download ang file"
+                    >
+                      <span aria-hidden="true">📎</span>
+                      <span className={styles.fileChipName}>{p.attachment_name}</span>
+                      <span className={styles.fileChipMeta}>
+                        {downloadingId === p.id
+                          ? 'Dina-download…'
+                          : `${formatFileSize(p.attachment_size)} · I-download`}
+                      </span>
+                    </button>
+                  )}
 
                   {p.status !== 'pending' && (
                     <div
@@ -372,7 +433,14 @@ function Proposals() {
         />
       )}
 
-      {viewing && <ProposalLetter proposal={viewing} onClose={closeLetter} />}
+      {viewing && (
+        <ProposalLetter
+          proposal={viewing}
+          onClose={closeLetter}
+          onDownload={handleDownload}
+          downloading={downloadingId === viewing.id}
+        />
+      )}
 
       {eventFor && (
         <EventForm

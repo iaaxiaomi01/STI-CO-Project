@@ -10,8 +10,8 @@ import { toTitleCase } from './profile.js'
    Adviser lang, at proposals lang ng SARILI nilang org.
    Ang Member ay walang makukuha dito.
 
-   Sa paggawa, title, description at proposed_to lang ang
-   ipinapadala. Ang org, author at petsa ay itinatakda ng
+   Sa paggawa, title, description at (kung meron) ang file
+   ang ipinapadala. Ang org, author at petsa ay itinatakda ng
    trigger sa database — hindi mapepeke mula sa browser.
 
    Ang Organization Name at Logo sa sulat ay galing sa
@@ -38,10 +38,10 @@ export function statusLabel(status) {
 export const COMMENT_MAX = 2000
 export const TITLE_MAX = 150
 export const DESCRIPTION_MAX = 8000
-export const PROPOSED_TO_MAX = 150
 
 const COLUMNS = `
-  id, organization_id, title, description, proposed_to,
+  id, organization_id, title, description,
+  attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
   created_at, updated_at, updated_by,
@@ -59,10 +59,25 @@ export async function fetchProposals() {
   return data ?? []
 }
 
-export async function createProposal({ title, description, proposedTo }) {
+/* attachment = { path, name, size } galing sa uploadProposalFile()
+   (lib/proposalFiles.js), o null kapag walang file.
+
+     undefined → hindi ginagalaw ang file (sa pag-edit)
+     null      → walang file / alisin ang file
+     { ... }   → bagong file */
+function attachmentColumns(attachment) {
+  if (attachment === undefined) return {}
+  return {
+    attachment_path: attachment?.path ?? null,
+    attachment_name: attachment?.name ?? null,
+    attachment_size: attachment?.size ?? null,
+  }
+}
+
+export async function createProposal({ title, description, attachment = null }) {
   const { data, error } = await supabase
     .from('proposals')
-    .insert({ title, description, proposed_to: proposedTo })
+    .insert({ title, description, ...attachmentColumns(attachment) })
     .select(COLUMNS)
     .single()
 
@@ -70,10 +85,10 @@ export async function createProposal({ title, description, proposedTo }) {
   return data
 }
 
-export async function updateProposal(id, { title, description, proposedTo }) {
+export async function updateProposal(id, { title, description, attachment }) {
   const { data, error } = await supabase
     .from('proposals')
-    .update({ title, description, proposed_to: proposedTo })
+    .update({ title, description, ...attachmentColumns(attachment) })
     .eq('id', id)
     .select(COLUMNS)
 

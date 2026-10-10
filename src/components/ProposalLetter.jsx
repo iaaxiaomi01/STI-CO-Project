@@ -15,10 +15,11 @@ import styles from './ProposalLetter.module.css'
    Ang laman:
      Organization Logo at Name  → galing sa organizations
      Petsa                      → kailan ginawa
-     Proposed to                → tinype ng Officer
      Title                      → nagiging SUBJECT ng sulat
      Description                → katawan ng sulat
      Proposed by                → ang gumawa, at ang role niya
+     Attachment                 → pangalan ng file (kung meron);
+                                  "I-download" sa itaas na toolbar
      Aksyon ng Adviser          → Approved o Rejected, kasama
                                   ang dahilan kapag Rejected
 
@@ -29,7 +30,7 @@ import styles from './ProposalLetter.module.css'
    ang sidebar at ang mga button (tingnan ang @media print sa
    ProposalLetter.module.css).
    ============================================================ */
-function ProposalLetter({ proposal, onClose }) {
+function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) {
   const org = proposal.organizations
 
   /* Esc para isara */
@@ -56,6 +57,16 @@ function ProposalLetter({ proposal, onClose }) {
       }}
     >
       <div className={styles.toolbar}>
+        {proposal.attachment_path && onDownload && (
+          <button
+            type="button"
+            className={styles.toolButton}
+            onClick={() => onDownload(proposal)}
+            disabled={downloading}
+          >
+            {downloading ? 'Dina-download…' : 'I-download ang file'}
+          </button>
+        )}
         <button type="button" className={styles.toolButton} onClick={() => window.print()}>
           I-print
         </button>
@@ -92,11 +103,6 @@ function ProposalLetter({ proposal, onClose }) {
         <div className={styles.body}>
           <p className={styles.date}>{formatLetterDate(proposal.created_at)}</p>
 
-          <div className={styles.recipient}>
-            <p className={styles.recipientLabel}>Proposed to:</p>
-            <p className={styles.recipientName}>{proposal.proposed_to}</p>
-          </div>
-
           <p className={styles.subject}>
             <span className={styles.subjectLabel}>SUBJECT:</span> {proposal.title}
           </p>
@@ -111,6 +117,13 @@ function ProposalLetter({ proposal, onClose }) {
               {org?.name && `, ${org.name}`}
             </p>
           </div>
+
+          {proposal.attachment_name && (
+            <p className={styles.attachment}>
+              <span className={styles.attachmentLabel}>Attachment:</span>{' '}
+              {proposal.attachment_name}
+            </p>
+          )}
 
           {proposal.status !== 'pending' && (
             <div
