@@ -31,7 +31,7 @@ import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
-import RejectDialog from '../components/RejectDialog.jsx'
+import ReviewDialog from '../components/ReviewDialog.jsx'
 import EventForm from '../components/EventForm.jsx'
 import styles from './Proposals.module.css'
 
@@ -42,8 +42,8 @@ import styles from './Proposals.module.css'
              niyang proposal HABANG naghihintay pa. Wala nang
              pag-edit — kapag may mali, burahin at gumawa ng bago.
    Adviser → nakikita ang lahat ng proposal sa org niya, at
-             siya ang nag-a-Approve o nagre-Reject. Sa Reject,
-             kailangan ng dahilan.
+             siya ang nag-a-Approve o nagre-Reject. Approve man o
+             Reject, kailangan ng dahilan (ReviewDialog).
    Member  → wala. Wala ito sa sidebar niya, at hinaharang
              din siya ng RLS sa database.
 
@@ -75,11 +75,9 @@ function Proposals() {
 
   const [deletingId, setDeletingId] = useState(null)
 
-  /* Aling proposal ang nire-reject (bukas ang dialog) */
-  const [rejecting, setRejecting] = useState(null)
-
-  /* Aling proposal ang kasalukuyang inaaksyunan */
-  const [reviewingId, setReviewingId] = useState(null)
+  /* Bukas na Approve/Reject dialog:
+     null, o { proposal, action: 'approved' | 'rejected' } */
+  const [reviewing, setReviewing] = useState(null)
 
   /* Aling approved na proposal ang ginagawan ng event */
   const [eventFor, setEventFor] = useState(null)
@@ -105,7 +103,7 @@ function Proposals() {
 
   const closeForm = useCallback(() => setFormOpen(false), [])
   const closeLetter = useCallback(() => setViewing(null), [])
-  const closeReject = useCallback(() => setRejecting(null), [])
+  const closeReview = useCallback(() => setReviewing(null), [])
   const closeEventForm = useCallback(() => setEventFor(null), [])
 
   /* Inilalagay ang na-update na proposal sa listahan, at sa
@@ -115,33 +113,21 @@ function Proposals() {
     setViewing((current) => (current?.id === updated.id ? updated : current))
   }
 
-  async function handleApprove(proposal) {
-    if (!window.confirm(`Aprubahan ang "${proposal.title}"?`)) return
-
+  /* Binubuksan ang ReviewDialog para sa Approve o Reject */
+  function openReview(proposal, action) {
     setNotice('')
-    setReviewingId(proposal.id)
-    try {
-      replaceProposal(await reviewProposal(proposal.id, 'approved'))
-      setNotice('Na-approve ang proposal.')
-    } catch (err) {
-      console.error('Hindi na-approve ang proposal:', err)
-      setNotice(
-        err?.message === 'not-allowed'
-          ? 'Wala kang pahintulot na aksyunan ang proposal na ito.'
-          : 'Hindi na-save. Subukan ulit.',
-      )
-    } finally {
-      setReviewingId(null)
-    }
+    setReviewing({ proposal, action })
   }
 
-  /* Galing sa RejectDialog. Kapag nag-throw, doon lalabas
-     ang error at mananatiling bukas ang dialog. */
-  async function handleReject(comment) {
-    const updated = await reviewProposal(rejecting.id, 'rejected', comment)
+  /* Galing sa ReviewDialog. Approve man o Reject, may dahilan.
+     Kapag nag-throw, doon lalabas ang error at mananatiling
+     bukas ang dialog. */
+  async function handleReview(comment) {
+    const { proposal, action } = reviewing
+    const updated = await reviewProposal(proposal.id, action, comment)
     replaceProposal(updated)
-    setRejecting(null)
-    setNotice('Na-reject ang proposal.')
+    setReviewing(null)
+    setNotice(action === 'approved' ? 'Na-approve ang proposal.' : 'Na-reject ang proposal.')
   }
 
   /* Galing sa EventForm. Kapag nag-throw, doon lalabas ang
@@ -338,19 +324,14 @@ function Proposals() {
                       <button
                         type="button"
                         className={styles.approveButton}
-                        onClick={() => handleApprove(p)}
-                        disabled={reviewingId === p.id}
+                        onClick={() => openReview(p, 'approved')}
                       >
-                        {reviewingId === p.id ? 'Sine-save…' : 'Approve'}
+                        Approve
                       </button>
                       <button
                         type="button"
                         className={styles.rejectButton}
-                        onClick={() => {
-                          setNotice('')
-                          setRejecting(p)
-                        }}
-                        disabled={reviewingId === p.id}
+                        onClick={() => openReview(p, 'rejected')}
                       >
                         Reject
                       </button>
@@ -417,11 +398,12 @@ function Proposals() {
         />
       )}
 
-      {rejecting && (
-        <RejectDialog
-          proposal={rejecting}
-          onSubmit={handleReject}
-          onCancel={closeReject}
+      {reviewing && (
+        <ReviewDialog
+          proposal={reviewing.proposal}
+          action={reviewing.action}
+          onSubmit={handleReview}
+          onCancel={closeReview}
         />
       )}
     </>

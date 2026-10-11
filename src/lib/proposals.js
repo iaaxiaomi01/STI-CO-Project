@@ -96,8 +96,8 @@ export async function deleteProposal(id) {
 
    Ang status, ang pangalan ng nag-review at ang petsa ay
    itinatakda ng trigger sa database, hindi dito. Ang komento
-   ay KAILANGAN kapag Reject — hinaharang ito ng database kahit
-   malusutan ang check sa browser.
+   ay KAILANGAN, Approve man o Reject — hinaharang ito ng
+   database kahit malusutan ang check sa browser.
    ============================================================ */
 export async function reviewProposal(id, status, comment = '') {
   const { data, error } = await supabase

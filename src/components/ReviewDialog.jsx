@@ -3,16 +3,42 @@ import { COMMENT_MAX } from '../lib/proposals.js'
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
-   REJECT DIALOG — para sa Adviser
+   REVIEW DIALOG — para sa Adviser (Approve at Reject)
 
-   Kapag nag-Reject, KAILANGAN ng dahilan. Dito iyon itinatype.
-   Ang database din ang nagbabantay nito, kaya walang
-   makakalusot na rejected na walang dahilan.
+   Pinalitan nito ang dating RejectDialog. Approve man o Reject,
+   KAILANGAN na ng dahilan. Dito iyon itinatype.
+   Ang database din ang nagbabantay nito (proposals_before_update),
+   kaya walang makakalusot na aksyon na walang dahilan.
+
+     <ReviewDialog action="approved" ... />  → berdeng "I-approve"
+     <ReviewDialog action="rejected" ... />  → pulang "I-reject"
 
    Ginagamit nito ang istilo ng ProposalForm para pare-pareho
    ang itsura ng mga modal.
    ============================================================ */
-function RejectDialog({ proposal, onSubmit, onCancel }) {
+
+const TEXT = {
+  approved: {
+    heading: 'I-approve ang proposal',
+    label: 'Dahilan ng pag-approve',
+    placeholder: 'hal. Malinaw ang layunin at kumpleto ang budget. Ituloy.',
+    required: 'Kailangan ang dahilan ng pag-approve.',
+    button: 'I-approve',
+    buttonClass: 'success',
+  },
+  rejected: {
+    heading: 'I-reject ang proposal',
+    label: 'Dahilan ng pag-reject',
+    placeholder: 'hal. Sabay ito sa midterm exam week. Ilipat sa Disyembre.',
+    required: 'Kailangan ang dahilan ng pag-reject.',
+    button: 'I-reject',
+    buttonClass: 'danger',
+  },
+}
+
+function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
+  const text = TEXT[action] ?? TEXT.rejected
+
   const [comment, setComment] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,7 +63,7 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
 
     const clean = comment.trim()
     if (!clean) {
-      setError('Kailangan ang dahilan ng pag-reject.')
+      setError(text.required)
       return
     }
 
@@ -45,7 +71,7 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
     try {
       await onSubmit(clean)
     } catch (err) {
-      console.error('Hindi na-reject ang proposal:', err)
+      console.error('Hindi na-save ang aksyon sa proposal:', err)
       setError(
         err?.message === 'not-allowed'
           ? 'Wala kang pahintulot na aksyunan ang proposal na ito.'
@@ -67,10 +93,10 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
         onSubmit={handleSubmit}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="reject-dialog-title"
+        aria-labelledby="review-dialog-title"
       >
-        <h2 id="reject-dialog-title" className={styles.heading}>
-          I-reject ang proposal
+        <h2 id="review-dialog-title" className={styles.heading}>
+          {text.heading}
         </h2>
 
         <p className={styles.note}>
@@ -81,7 +107,7 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
 
         <label className={styles.field}>
           <span className={styles.labelRow}>
-            <span className={styles.label}>Dahilan</span>
+            <span className={styles.label}>{text.label}</span>
             <span className={styles.counter}>
               {comment.length} / {COMMENT_MAX}
             </span>
@@ -93,7 +119,7 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
             maxLength={COMMENT_MAX}
             onChange={(e) => setComment(e.target.value)}
             rows={6}
-            placeholder="hal. Sabay ito sa midterm exam week. Ilipat sa Disyembre."
+            placeholder={text.placeholder}
             required
           />
         </label>
@@ -109,8 +135,8 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
           >
             Kanselahin
           </button>
-          <button type="submit" className={styles.danger} disabled={saving}>
-            {saving ? 'Sine-save…' : 'I-reject'}
+          <button type="submit" className={styles[text.buttonClass]} disabled={saving}>
+            {saving ? 'Sine-save…' : text.button}
           </button>
         </div>
       </form>
@@ -118,4 +144,4 @@ function RejectDialog({ proposal, onSubmit, onCancel }) {
   )
 }
 
-export default RejectDialog
+export default ReviewDialog
