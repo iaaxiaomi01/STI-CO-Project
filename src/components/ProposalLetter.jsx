@@ -1,11 +1,6 @@
 import { useEffect } from 'react'
-import {
-  authorName,
-  authorRoleLabel,
-  formatLetterDate,
-  reviewerName,
-  statusLabel,
-} from '../lib/proposals.js'
+import { authorName, authorRoleLabel, formatLetterDate } from '../lib/proposals.js'
+import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalLetter.module.css'
 
 /* ============================================================
@@ -19,8 +14,10 @@ import styles from './ProposalLetter.module.css'
      Proposed by                → ang gumawa, at ang role niya
      Attachment                 → pangalan ng file (kung meron);
                                   "I-download" sa itaas na toolbar
-     Aksyon ng Adviser          → Approved o Rejected, kasama
-                                  ang dahilan kapag Rejected
+     Daan ng review             → Adviser → SAO → School Head,
+                                  bawat isa ay may Approved/
+                                  Rejected at dahilan. Ang
+                                  School Head ang pinal.
 
    Ang Logo at Organization Name ay hindi nakakopya sa
    proposal. Galing sila sa Org Profile, kaya kusang nag-a-update.
@@ -124,24 +121,7 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
             </p>
           )}
 
-          {proposal.status !== 'pending' && (
-            <div
-              className={`${styles.review} ${
-                proposal.status === 'approved' ? styles.approved : styles.rejected
-              }`}
-            >
-              <p className={styles.reviewStatus}>{statusLabel(proposal.status)}</p>
-              <p className={styles.reviewBy}>
-                {proposal.status === 'approved' ? 'Inaprubahan' : 'Ni-reject'} ni{' '}
-                {reviewerName(proposal)}
-                {proposal.reviewed_at &&
-                  ` noong ${formatLetterDate(proposal.reviewed_at)}`}
-              </p>
-              {proposal.review_comment && (
-                <p className={styles.reviewComment}>{proposal.review_comment}</p>
-              )}
-            </div>
-          )}
+          <ReviewTrail proposal={proposal} variant="letter" />
         </div>
       </article>
     </div>

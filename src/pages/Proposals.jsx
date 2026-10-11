@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
@@ -11,9 +11,10 @@ import {
   deleteProposal,
   fetchProposals,
   formatDateTime,
+  isFinalReview,
+  progressLabel,
   reviewProposal,
-  reviewerName,
-  statusLabel,
+  stageLabel,
 } from '../lib/proposals.js'
 import {
   deleteProposalFile,
@@ -32,24 +33,35 @@ import EmptyState from '../components/EmptyState.jsx'
 import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
 import ReviewDialog from '../components/ReviewDialog.jsx'
+import ReviewTrail from '../components/ReviewTrail.jsx'
 import EventForm from '../components/EventForm.jsx'
 import styles from './Proposals.module.css'
 
 /* ============================================================
    PROPOSALS — TOTOONG DATA mula sa public.proposals
 
-   Officer → gumagawa ng proposal, at nagde-delete ng SARILI
-             niyang proposal HABANG naghihintay pa. Wala nang
-             pag-edit — kapag may mali, burahin at gumawa ng bago.
-   Adviser → nakikita ang lahat ng proposal sa org niya, at
-             siya ang nag-a-Approve o nagre-Reject. Approve man o
-             Reject, kailangan ng dahilan (ReviewDialog).
-   Member  → wala. Wala ito sa sidebar niya, at hinaharang
-             din siya ng RLS sa database.
+   ANG DALOY:  Officer → Adviser → SAO → School Head
 
-   Kapag APPROVED na, ang Officer na NAGPASA ay may lalabas na
-   "Gumawa ng Event". Isang event lang bawat proposal — kapag
-   nagawa na, "Tingnan ang Event" na ang lalabas.
+   Officer     → gumagawa ng proposal, at nagde-delete ng SARILI
+                 niyang proposal habang WALA PANG umaaksyon.
+                 Wala nang pag-edit — kapag may mali, burahin at
+                 gumawa ng bago.
+   Adviser     → Approve/Reject ng proposals ng org niya.
+   SAO         → Approve/Reject ng proposals ng lahat ng org,
+                 pagkatapos ng Adviser.
+   School Head → PINAL na Approve/Reject, pagkatapos ng SAO.
+   Member      → wala. Wala ito sa sidebar niya, at hinaharang
+                 din siya ng RLS sa database.
+
+   Approve man o Reject ang Adviser at SAO, tuloy pa rin ang
+   proposal hanggang School Head. Laging may dahilan
+   (ReviewDialog), at nakikita ng lahat ang buong daan
+   (ReviewTrail).
+
+   Kapag APPROVED na ng School Head, ang Officer na NAGPASA ay
+   may lalabas na "Gumawa ng Event". Kapag REJECTED, wala.
+   Isang event lang bawat proposal — kapag nagawa na,
+   "Tingnan ang Event" na ang lalabas.
 
    Ang bawat proposal ay binubuksan bilang PORMAL NA SULAT
    (components/ProposalLetter.jsx), na pwedeng i-print.
@@ -65,6 +77,13 @@ function Proposals() {
   /* SAO (at iba pang staff): proposals ng LAHAT ng org ang
      nakikita, kaya ipinapakita rin kung aling org ang bawat isa. */
   const isStaff = (profile?.role_id ?? 0) >= 4
+
+  /* Adviser, SAO, School Head: may sariling hanay ng proposal
+     na naghihintay ng AKSYON NILA. */
+  const isReviewer = [3, 4, 6].includes(profile?.role_id)
+
+  /* 'mine' → naghihintay ng aksyon mo · 'all' → lahat */
+  const [filter, setFilter] = useState('mine')
 
   const [proposals, setProposals] = useState([])
   const [loading, setLoading] = useState(true)
@@ -131,8 +150,25 @@ function Proposals() {
     const updated = await reviewProposal(proposal.id, action, comment)
     replaceProposal(updated)
     setReviewing(null)
-    setNotice(action === 'approved' ? 'Na-approve ang proposal.' : 'Na-reject ang proposal.')
+
+    const verb = action === 'approved' ? 'Na-approve' : 'Na-reject'
+    if (isFinalReview(proposal)) {
+      setNotice(
+        action === 'approved'
+          ? 'Na-approve ang proposal (pinal). Makakagawa na ng event ang Officer.'
+          : 'Na-reject ang proposal (pinal).',
+      )
+    } else {
+      setNotice(`${verb} mo ang proposal. Naipasa na ito sa ${stageLabel(updated.stage)}.`)
+    }
   }
+
+  /* Mga proposal na naghihintay ng aksyon mo */
+  const mine = useMemo(
+    () => proposals.filter((p) => canReviewProposal(p, profile)),
+    [proposals, profile],
+  )
+  const shown = isReviewer && filter === 'mine' ? mine : proposals
 
   /* Galing sa EventForm. Kapag nag-throw, doon lalabas ang
      error at mananatiling bukas ang form. */
@@ -207,10 +243,12 @@ function Proposals() {
         title="Proposals"
         subtitle={
           can.propose
-            ? 'Gumawa ng proposal para sa organisasyon mo.'
-            : isStaff
-              ? 'Mga proposal na ipinasa ng mga Officer ng lahat ng organisasyon.'
-              : 'Mga proposal na ipinasa ng mga Officer ng organisasyon.'
+            ? 'Gumawa ng proposal para sa organisasyon mo. Dadaan ito sa Adviser, SAO, at School Head.'
+            : profile?.role_id === 6
+              ? 'Ikaw ang nagbibigay ng PINAL na desisyon sa mga proposal ng lahat ng organisasyon.'
+              : isStaff
+                ? 'Suriin ang mga proposal ng lahat ng organisasyon. Ipapasa ito sa School Head para sa pinal na desisyon.'
+                : 'Suriin ang mga proposal ng organisasyon. Ipapasa ito sa SAO at School Head.'
         }
         action={
           can.propose && (
@@ -232,6 +270,29 @@ function Proposals() {
         </p>
       )}
 
+      {isReviewer && !loading && !error && (
+        <div className={styles.filters} role="tablist" aria-label="Salain ang proposals">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'mine'}
+            className={`${styles.filterChip} ${filter === 'mine' ? styles.filterActive : ''}`}
+            onClick={() => setFilter('mine')}
+          >
+            Naghihintay ng aksyon mo ({mine.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'all'}
+            className={`${styles.filterChip} ${filter === 'all' ? styles.filterActive : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            Lahat ({proposals.length})
+          </button>
+        </div>
+      )}
+
       {loading && <p className={styles.status}>Kinukuha ang proposals…</p>}
 
       {!loading && error && (
@@ -239,6 +300,14 @@ function Proposals() {
           icon="!"
           title="Hindi makuha ang proposals"
           message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+        />
+      )}
+
+      {!loading && !error && proposals.length > 0 && shown.length === 0 && (
+        <EmptyState
+          icon="✓"
+          title="Wala kang kailangang aksyunan"
+          message='Walang proposal na naghihintay sa iyo ngayon. Pindutin ang "Lahat" para makita ang iba.'
         />
       )}
 
@@ -256,9 +325,9 @@ function Proposals() {
         />
       )}
 
-      {!loading && !error && proposals.length > 0 && (
+      {!loading && !error && shown.length > 0 && (
         <ul className={styles.list}>
-          {proposals.map((p) => {
+          {shown.map((p) => {
             const manageable = canManageProposal(p, profile)
             const busy = deletingId === p.id
 
@@ -268,7 +337,7 @@ function Proposals() {
                   <div className={styles.titleRow}>
                     <h2 className={styles.title}>{p.title}</h2>
                     <span className={`${styles.status} ${styles[`status_${p.status}`] ?? ''}`}>
-                      {statusLabel(p.status)}
+                      {progressLabel(p)}
                     </span>
                   </div>
 
@@ -307,22 +376,8 @@ function Proposals() {
                     </button>
                   )}
 
-                  {p.status !== 'pending' && (
-                    <div
-                      className={`${styles.review} ${
-                        p.status === 'rejected' ? styles.reviewRejected : ''
-                      }`}
-                    >
-                      <p className={styles.reviewHead}>
-                        {p.status === 'approved' ? 'Inaprubahan' : 'Ni-reject'} ni{' '}
-                        <strong>{reviewerName(p)}</strong>
-                        {p.reviewed_at && ` · ${formatDateTime(p.reviewed_at)}`}
-                      </p>
-                      {p.review_comment && (
-                        <p className={styles.reviewComment}>{p.review_comment}</p>
-                      )}
-                    </div>
-                  )}
+                  {/* Adviser → SAO → School Head */}
+                  <ReviewTrail proposal={p} />
                 </div>
 
                 <div className={styles.cardActions}>

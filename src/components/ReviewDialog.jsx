@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { COMMENT_MAX } from '../lib/proposals.js'
+import { COMMENT_MAX, isFinalReview, stageLabel } from '../lib/proposals.js'
+import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
-   REVIEW DIALOG — para sa Adviser (Approve at Reject)
+   REVIEW DIALOG — para sa Adviser, SAO at School Head
+                   (Approve at Reject)
+
+   Adviser at SAO: Approve man o Reject, ipapasa pa rin ang
+   proposal sa susunod. School Head: PINAL ang desisyon —
+   kapag Approved, makakagawa na ng event ang Officer.
+   Ipinapakita rin dito ang mga naunang aksyon at dahilan.
 
    Pinalitan nito ang dating RejectDialog. Approve man o Reject,
    KAILANGAN na ng dahilan. Dito iyon itinatype.
@@ -38,6 +45,8 @@ const TEXT = {
 
 function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
   const text = TEXT[action] ?? TEXT.rejected
+  const final = isFinalReview(proposal)
+  const nextStage = proposal.stage === 'adviser' ? 'sao' : 'school_head'
 
   const [comment, setComment] = useState('')
   const [saving, setSaving] = useState(false)
@@ -72,11 +81,15 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
       await onSubmit(clean)
     } catch (err) {
       console.error('Hindi na-save ang aksyon sa proposal:', err)
-      setError(
-        err?.message === 'not-allowed'
-          ? 'Wala kang pahintulot na aksyunan ang proposal na ito.'
-          : 'Hindi na-save. Subukan ulit.',
-      )
+      let message = 'Hindi na-save. Subukan ulit.'
+      if (err?.message === 'not-allowed') {
+        message = 'Wala kang pahintulot na aksyunan ang proposal na ito.'
+      } else if (err?.code === 'P0001' && err.message) {
+        /* Mensahe galing sa review_proposal() sa database,
+           hal. "Tapos na ang pagsusuri sa proposal na ito." */
+        message = err.message
+      }
+      setError(message)
       setSaving(false)
     }
   }
@@ -102,8 +115,24 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
         <p className={styles.note}>
           <strong>{proposal.title}</strong>
           <br />
+          {final ? (
+            <>
+              <strong>Ito ang PINAL na desisyon.</strong>{' '}
+              {action === 'approved'
+                ? 'Makakagawa na ng event ang Officer mula sa proposal na ito.'
+                : 'Hindi na matutuloy ang proposal, at walang event na magagawa mula rito.'}
+            </>
+          ) : (
+            <>
+              Hindi pa ito ang pinal na desisyon. Approve man o Reject, ipapasa ito sa{' '}
+              <strong>{stageLabel(nextStage)}</strong> kasama ang dahilan mo.
+            </>
+          )}
+          <br />
           Makikita ng Officer na nagpasa ang dahilang isusulat mo.
         </p>
+
+        <ReviewTrail proposal={proposal} />
 
         <label className={styles.field}>
           <span className={styles.labelRow}>

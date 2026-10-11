@@ -122,21 +122,33 @@ function staffRole(label) {
   }
 }
 
-/* Staff na may read-only na Proposals (SAO, School Head) */
-function staffRoleWithProposals(label) {
+/* Staff na sumusuri rin ng Proposals (SAO, School Head).
+   review: true — may Approve/Reject sila kapag nasa stage nila
+   ang proposal (tingnan ang canReviewProposal() sa
+   lib/proposals.js). */
+function staffRoleWithProposals(label, proposalsText) {
   const base = staffRole(label)
   return {
     ...base,
+    can: { ...base.can, review: true },
     sidebar: [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
     dashboard: {
       ...base.dashboard,
+      stats: [
+        {
+          label: 'Proposals na naghihintay ng aksyon mo',
+          value: '0',
+          to: '/proposals',
+          key: 'pendingProposals',
+        },
+      ],
       cards: [
         base.dashboard.cards[0],
         {
           to: '/proposals',
           icon: '✉',
           title: 'Proposals',
-          text: 'Tingnan ang mga proposal ng lahat ng organisasyon.',
+          text: proposalsText,
         },
         base.dashboard.cards[1],
       ],
@@ -203,8 +215,9 @@ export const ROLES = {
     /* May Event Calendar sa Dashboard (UI lang muna, wala pang data) */
     calendar: true,
 
-    /* Nagpapasa siya ng proposal. Kapag na-approve ng
-       Adviser, SIYA (ang nagpasa) ang gagawa ng event mula
+    /* Nagpapasa siya ng proposal. Dadaan ito sa Adviser, SAO,
+       at School Head. Kapag na-approve ng School Head (pinal),
+       SIYA (ang nagpasa) ang gagawa ng event mula
        roon — "+ Gumawa ng Event" sa Proposals page.
        Pwede rin siyang magpaskil ng announcement. */
     can: {
@@ -290,7 +303,7 @@ export const ROLES = {
     dashboard: {
       subtitle: 'Pamahalaan at bantayan ang organisasyon.',
       stats: [
-        { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
+        { label: 'Proposals na naghihintay ng aksyon mo', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
@@ -337,14 +350,24 @@ export const ROLES = {
        3. idagdag sa sidebar nila dito
      ---------------------------------------------------------- */
   /* SAO at School Head: tulad ng ibang staff, pero may
-     Proposals din. TUMITINGIN LANG sila (review: false,
-     propose: false) — nakikita nila ang proposals ng LAHAT ng
-     organisasyon, pero walang Approve/Reject at walang paggawa.
-     Kailangan ng ADD_SCHOOL_HEAD_PROPOSALS_READ.sql sa Supabase
-     (policy na "proposals_read_staff"), dahil RLS ang
-     nagpapasya kung may makukuha sila. */
-  [ROLE_KEYS.SAO]: staffRoleWithProposals('SAO'),
-  [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals('School Head'),
+     Proposals din, ng LAHAT ng organisasyon.
+
+     Daloy: Officer → Adviser → SAO → School Head
+       SAO         → Approve/Reject pagkatapos ng Adviser;
+                     tuloy pa rin sa School Head anuman ang piliin
+       School Head → PINAL na Approve/Reject
+
+     Kailangan sa Supabase:
+       ADD_SCHOOL_HEAD_PROPOSALS_READ.sql (makabasa)
+       PROPOSAL_THREE_STEP_REVIEW.sql     (makaaksyon) */
+  [ROLE_KEYS.SAO]: staffRoleWithProposals(
+    'SAO',
+    'Suriin ang mga proposal na naipasa na ng Adviser.',
+  ),
+  [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals(
+    'School Head',
+    'Ibigay ang pinal na desisyon sa mga proposal.',
+  ),
   [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
 }
 

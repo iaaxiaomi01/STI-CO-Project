@@ -1,0 +1,124 @@
+/* Ang daan ng proposal: Adviser → SAO → School Head */
+
+.trail {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  padding: 0.6rem 0.9rem;
+  border-left: 3px solid var(--color-border, #d9dee8);
+  border-radius: 0 10px 10px 0;
+  background-color: var(--color-surface, #f5f7fb);
+}
+
+.approved {
+  border-left-color: #1c6b3f;
+  background-color: #f2f9f5;
+}
+
+.rejected {
+  border-left-color: #b42318;
+  background-color: #fdf3f2;
+}
+
+.waiting {
+  border-left-style: dashed;
+  border-left-color: #c79a2b;
+  background-color: #fffaf0;
+}
+
+/* Ang pinal na desisyon ng School Head: mas makapal ang guhit */
+.final {
+  border-left-width: 5px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.role {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text, #1d2433);
+}
+
+.decision {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.approved .decision {
+  color: #1c6b3f;
+}
+
+.rejected .decision {
+  color: #a61b1b;
+}
+
+.waiting .decision {
+  color: #8a5a00;
+}
+
+.by {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--color-muted, #5b6478);
+}
+
+.by strong {
+  color: var(--color-text, #1d2433);
+}
+
+.comment {
+  margin-top: 0.3rem;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- SA SULAT (pang-print) ---------- */
+.letter {
+  margin-top: 2.5rem;
+  gap: 0.75rem;
+}
+
+.letter .step {
+  padding: 0.8rem 1.1rem;
+  border: 2px solid #d9dee8;
+  border-radius: 8px;
+  background: none;
+}
+
+.letter .approved {
+  border-color: #1c6b3f;
+}
+
+.letter .rejected {
+  border-color: #b42318;
+}
+
+.letter .waiting {
+  border-style: dashed;
+  border-color: #c79a2b;
+}
+
+.letter .final {
+  border-width: 3px;
+}
+
+@media print {
+  .step {
+    break-inside: avoid;
+  }
+}

@@ -7,8 +7,8 @@ import { toTitleCase } from './profile.js'
 
    Walang .eq('organization_id', ...) sa pagkuha, at sinadya
    iyon. Ang RLS sa Supabase na ang nagsasala: Officer at
-   Adviser lang, at proposals lang ng SARILI nilang org.
-   Ang Member ay walang makukuha dito.
+   Adviser: proposals lang ng SARILI nilang org. SAO at School
+   Head: lahat ng org. Ang Member ay walang makukuha dito.
 
    Sa paggawa, title, description at (kung meron) ang file
    ang ipinapadala. Ang org, author at petsa ay itinatakda ng
@@ -16,15 +16,24 @@ import { toTitleCase } from './profile.js'
 
    Ang Organization Name at Logo sa sulat ay galing sa
    organizations ( ... ) na join, hindi nakakopya sa proposal.
+   Kaya kapag pinalitan ng Adviser ang logo sa Org Profile,
+   kusang nagbabago rin ang lumang sulat.
 
    Ang events ( id ) na join ay para malaman kung may event na
    ang isang approved na proposal — para alam kung "Gumawa ng
    Event" o "Tingnan ang Event" ang ipapakita.
-   Kaya kapag pinalitan ng Adviser ang logo sa Org Profile,
-   kusang nagbabago rin ang lumang sulat.
+
+   ANG DALOY NG REVIEW (PROPOSAL_THREE_STEP_REVIEW.sql)
+     Officer nagpasa → Adviser → SAO → School Head
+   Approve man o Reject ang Adviser at SAO, TULOY pa rin ito
+   hanggang School Head. Ang School Head ang PINAL: siya lang
+   ang nagtatakda ng status, at kapag 'approved', saka lang
+   makakagawa ng event ang Officer.
    ============================================================ */
 
-/* ---------- STATUS ---------- */
+/* ---------- STATUS ----------
+   Ang status ay ang PINAL na desisyon. Habang 'pending',
+   nasa isa sa tatlong stage ang proposal. */
 export const STATUS_LABELS = {
   pending: 'Naghihintay',
   approved: 'Approved',
@@ -33,6 +42,29 @@ export const STATUS_LABELS = {
 
 export function statusLabel(status) {
   return STATUS_LABELS[status] ?? status
+}
+
+/* ---------- STAGE: kanino nakatoka ang proposal ngayon ----------
+   adviser → sao → school_head → done
+   Kapareho ito ng review_proposal() sa database. */
+export const STAGES = {
+  adviser: { roleId: 3, label: 'Adviser' },
+  sao: { roleId: 4, label: 'SAO' },
+  school_head: { roleId: 6, label: 'School Head' },
+}
+
+export function stageLabel(stage) {
+  return STAGES[stage]?.label ?? ''
+}
+
+/* Ang nakasulat sa badge ng card:
+   "Nasa Adviser" / "Nasa SAO" / "Nasa School Head" habang
+   naghihintay; "Approved" / "Rejected" kapag tapos na. */
+export function progressLabel(proposal) {
+  if (proposal.status === 'pending' && STAGES[proposal.stage]) {
+    return `Nasa ${stageLabel(proposal.stage)}`
+  }
+  return statusLabel(proposal.status)
 }
 
 export const COMMENT_MAX = 2000
@@ -44,6 +76,9 @@ const COLUMNS = `
   attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
+  stage,
+  adviser_decision, adviser_comment, adviser_name, adviser_reviewed_at,
+  sao_decision, sao_comment, sao_name, sao_reviewed_at,
   created_at, updated_at, updated_by,
   organizations ( name, department, logo_url ),
   events ( id )
@@ -92,48 +127,122 @@ export async function deleteProposal(id) {
 }
 
 /* ============================================================
-   AKSYON NG ADVISER — Approve at Reject
+   AKSYON NG ADVISER, SAO AT SCHOOL HEAD — Approve at Reject
 
-   Ang status, ang pangalan ng nag-review at ang petsa ay
-   itinatakda ng trigger sa database, hindi dito. Ang komento
-   ay KAILANGAN, Approve man o Reject — hinaharang ito ng
-   database kahit malusutan ang check sa browser.
+   Dumadaan sa function na review_proposal() sa database. Doon
+   sinusuri kung ikaw ang tamang tao para sa kasalukuyang stage,
+   at doon itinatakda ang pangalan mo, ang petsa, at ang
+   susunod na stage. Ang komento ay KAILANGAN, Approve man o
+   Reject — hinaharang ito ng database kahit malusutan ang
+   check sa browser.
+
+   decision = 'approved' | 'rejected'
    ============================================================ */
-export async function reviewProposal(id, status, comment = '') {
-  const { data, error } = await supabase
-    .from('proposals')
-    .update({ status, review_comment: comment.trim() || null })
-    .eq('id', id)
-    .select(COLUMNS)
+export async function reviewProposal(id, decision, comment = '') {
+  const { error } = await supabase.rpc('review_proposal', {
+    p_id: id,
+    p_decision: decision,
+    p_comment: comment.trim(),
+  })
 
-  if (error) throw error
-  if (!data || data.length === 0) throw new Error('not-allowed')
-  return data[0]
+  if (error) {
+    if (error.message === 'not-allowed') throw new Error('not-allowed')
+    throw error
+  }
+
+  const { data, error: fetchError } = await supabase
+    .from('proposals')
+    .select(COLUMNS)
+    .eq('id', id)
+    .single()
+
+  if (fetchError) throw fetchError
+  return data
 }
 
-/* Adviser lang, sa org niya, at habang naghihintay pa */
+/* Ikaw ba ang dapat umaksyon ngayon?
+     stage 'adviser'     → Adviser ng org na iyon
+     stage 'sao'         → SAO
+     stage 'school_head' → School Head */
 export function canReviewProposal(proposal, profile) {
-  return Boolean(
-    profile?.is_active &&
-      profile.role_id === 3 &&
-      proposal.organization_id === profile.organization_id &&
-      proposal.status === 'pending',
-  )
+  if (!profile?.is_active || proposal.status !== 'pending') return false
+
+  const stage = STAGES[proposal.stage]
+  if (!stage || profile.role_id !== stage.roleId) return false
+
+  if (proposal.stage === 'adviser') {
+    return proposal.organization_id === profile.organization_id
+  }
+  return true
+}
+
+/* Ang School Head ang nagbibigay ng PINAL na desisyon */
+export function isFinalReview(proposal) {
+  return proposal.stage === 'school_head'
+}
+
+/* Ang mga aksyong nagawa na, sunod-sunod:
+   [{ key, role, decision, comment, name, at, final }]
+
+   Ang mga LUMANG proposal (bago ang 3-step review) ay walang
+   adviser_decision at sao_decision. Ang Adviser ang nag-review
+   sa kanila, at iyon na ang pinal. */
+export function reviewSteps(proposal) {
+  const steps = []
+
+  if (proposal.adviser_decision) {
+    steps.push({
+      key: 'adviser',
+      role: 'Adviser',
+      decision: proposal.adviser_decision,
+      comment: proposal.adviser_comment,
+      name: toTitleCase(proposal.adviser_name ?? ''),
+      at: proposal.adviser_reviewed_at,
+      final: false,
+    })
+  }
+
+  if (proposal.sao_decision) {
+    steps.push({
+      key: 'sao',
+      role: 'SAO',
+      decision: proposal.sao_decision,
+      comment: proposal.sao_comment,
+      name: toTitleCase(proposal.sao_name ?? ''),
+      at: proposal.sao_reviewed_at,
+      final: false,
+    })
+  }
+
+  if (proposal.status !== 'pending') {
+    const legacy = !proposal.adviser_decision && !proposal.sao_decision
+    steps.push({
+      key: 'final',
+      role: legacy ? 'Adviser' : 'School Head',
+      decision: proposal.status,
+      comment: proposal.review_comment,
+      name: reviewerName(proposal),
+      at: proposal.reviewed_at,
+      final: true,
+    })
+  }
+
+  return steps
 }
 
 /* ============================================================
    SINO ANG PWEDENG MAG-DELETE
 
    Wala nang pag-edit ng proposal. Kapag may mali, burahin ito
-   habang naghihintay pa, at gumawa ng bago.
+   habang wala pang umaaksyon, at gumawa ng bago.
 
-   KAPAREHO ito ng can_manage_proposal() sa database. Dito, para
+   KAPAREHO ito ng "proposals_delete_own" sa database. Dito, para
    lang itago ang mga button. Ang database pa rin ang totoong
    nagbabantay — kapag binago mo ang isa, baguhin mo rin ang isa.
 
-     Officer → sariling gawa lang, at habang naghihintay pa.
-               Kapag na-approve o na-reject na, hindi na ito
-               mabubura.
+     Officer → sariling gawa lang, at habang nasa Adviser pa at
+               hindi pa niya nagagalaw. Kapag may nag-approve o
+               nag-reject na, hindi na ito mabubura.
    ============================================================ */
 export function canManageProposal(proposal, profile) {
   return Boolean(
@@ -141,7 +250,9 @@ export function canManageProposal(proposal, profile) {
       profile.role_id === 2 &&
       proposal.organization_id === profile.organization_id &&
       proposal.author_id === profile.id &&
-      proposal.status === 'pending',
+      proposal.status === 'pending' &&
+      proposal.stage === 'adviser' &&
+      !proposal.adviser_decision,
   )
 }
 
@@ -177,14 +288,21 @@ export function formatDateTime(iso) {
   })
 }
 
-/* Ilang proposal ng org mo ang naghihintay pa ng aksyon —
-   para sa stat tile sa Dashboard (Officer at Adviser).
-   Ang RLS na ang nagsasala: sariling org lang. */
-export async function countPendingProposals() {
-  const { count, error } = await supabase
+/* Para sa stat tile sa Dashboard.
+     Officer                   → lahat ng naghihintay pa sa org niya
+     Adviser, SAO, School Head → ang naghihintay ng AKSYON NIYA
+   Ang RLS na ang nagsasala kung aling org ang kasama. */
+export async function countPendingProposals(roleId) {
+  const stage = Object.keys(STAGES).find((key) => STAGES[key].roleId === roleId)
+
+  let query = supabase
     .from('proposals')
     .select('id', { count: 'exact', head: true })
     .eq('status', 'pending')
+
+  if (stage) query = query.eq('stage', stage)
+
+  const { count, error } = await query
 
   if (error) throw error
   return count ?? 0

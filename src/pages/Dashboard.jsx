@@ -113,7 +113,9 @@ function Dashboard() {
   }, [needsEventCounts])
 
   /* TOTOONG DATA: ilang proposal ang naghihintay pa ng aksyon.
-     key: 'pendingProposals' (Officer, Adviser) */
+     key: 'pendingProposals'
+       Officer                   → lahat ng naghihintay pa sa org niya
+       Adviser, SAO, School Head → ang naghihintay ng AKSYON NIYA */
   const needsPendingProposals = roleConfig.dashboard.stats.some(
     (stat) => stat.key === 'pendingProposals',
   )
@@ -123,7 +125,7 @@ function Dashboard() {
     if (!needsPendingProposals) return
     let active = true
 
-    countPendingProposals()
+    countPendingProposals(profile?.role_id)
       .then((count) => {
         if (active) setPendingProposals(count)
       })
@@ -134,7 +136,7 @@ function Dashboard() {
     return () => {
       active = false
     }
-  }, [needsPendingProposals])
+  }, [needsPendingProposals, profile?.role_id])
 
   /* TOTOONG DATA: attendance rate (galing sa QR Time In).
      key: 'attendanceRate'
