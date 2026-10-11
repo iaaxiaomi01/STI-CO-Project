@@ -25,6 +25,12 @@
   background-color: #fdf3f2;
 }
 
+/* Ipina-revise ng Adviser o SAO */
+.revision {
+  border-left-color: #b25e09;
+  background-color: #fff4e8;
+}
+
 .waiting {
   border-left-style: dashed;
   border-left-color: #c79a2b;
@@ -70,6 +76,18 @@
   color: #8a5a00;
 }
 
+.revision .decision {
+  color: #9a4f05;
+}
+
+/* "✓ Na-revise at naipasa ulit" */
+.resubmitted {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1c6b3f;
+}
+
 .by {
   margin-top: 0.15rem;
   font-size: 0.85rem;
@@ -106,6 +124,10 @@
 
 .letter .rejected {
   border-color: #b42318;
+}
+
+.letter .revision {
+  border-color: #b25e09;
 }
 
 .letter .waiting {

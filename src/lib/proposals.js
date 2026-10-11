@@ -29,6 +29,13 @@ import { toTitleCase } from './profile.js'
    hanggang School Head. Ang School Head ang PINAL: siya lang
    ang nagtatakda ng status, at kapag 'approved', saka lang
    makakagawa ng event ang Officer.
+
+   REVISE (PROPOSAL_REVISE.sql)
+     Bukod sa Approve/Reject, ang Adviser at SAO ay may "Revise".
+     Ibinabalik nito ang proposal sa Officer na NAGPASA para
+     i-edit (stage = 'revision'). Nakahold ito — walang ibang
+     makakaaksyon. Kapag naipasa ulit ng Officer, BABALIK ito sa
+     nag-pa-revise (revision_from), hindi na uulit sa simula.
    ============================================================ */
 
 /* ---------- STATUS ----------
@@ -61,6 +68,9 @@ export function stageLabel(stage) {
    "Nasa Adviser" / "Nasa SAO" / "Nasa School Head" habang
    naghihintay; "Approved" / "Rejected" kapag tapos na. */
 export function progressLabel(proposal) {
+  if (isInRevision(proposal)) {
+    return `Ibinalik ng ${stageLabel(proposal.revision_from)} · I-revise`
+  }
   if (proposal.status === 'pending' && STAGES[proposal.stage]) {
     return `Nasa ${stageLabel(proposal.stage)}`
   }
@@ -79,10 +89,30 @@ const COLUMNS = `
   stage,
   adviser_decision, adviser_comment, adviser_name, adviser_reviewed_at,
   sao_decision, sao_comment, sao_name, sao_reviewed_at,
+  revision_from, revision_count,
   created_at, updated_at, updated_by,
   organizations ( name, department, logo_url ),
-  events ( id )
+  events ( id ),
+  proposal_revisions ( id, stage, requester_name, comment, requested_at, resubmitted_at )
 `
+
+async function fetchOne(id) {
+  const { data, error } = await supabase
+    .from('proposals')
+    .select(COLUMNS)
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/* Mensahe galing sa database (raise exception) → Error na may
+   parehong message, para maipakita sa dialog. */
+function rpcError(error) {
+  if (error.message === 'not-allowed') return new Error('not-allowed')
+  return error
+}
 
 export async function fetchProposals() {
   const { data, error } = await supabase
@@ -145,19 +175,78 @@ export async function reviewProposal(id, decision, comment = '') {
     p_comment: comment.trim(),
   })
 
-  if (error) {
-    if (error.message === 'not-allowed') throw new Error('not-allowed')
-    throw error
-  }
+  if (error) throw rpcError(error)
+  return fetchOne(id)
+}
 
-  const { data, error: fetchError } = await supabase
-    .from('proposals')
-    .select(COLUMNS)
-    .eq('id', id)
-    .single()
+/* ============================================================
+   REVISE — Adviser o SAO: ibalik sa Officer para i-edit
 
-  if (fetchError) throw fetchError
-  return data
+   Kailangan ang komento: ano ang dapat baguhin. Nakahold ang
+   proposal hanggang maipasa ulit ng Officer.
+   ============================================================ */
+export async function requestRevision(id, comment) {
+  const { error } = await supabase.rpc('request_proposal_revision', {
+    p_id: id,
+    p_comment: comment.trim(),
+  })
+
+  if (error) throw rpcError(error)
+  return fetchOne(id)
+}
+
+/* Officer: ipasa ulit ang na-edit na proposal.
+   attachment = { path, name, size } o null kapag walang file.
+   Kapag pareho ang path sa dati, hindi binago ang file. */
+export async function resubmitProposal(id, { title, description, attachment = null }) {
+  const { error } = await supabase.rpc('resubmit_proposal', {
+    p_id: id,
+    p_title: title,
+    p_description: description,
+    p_attachment_path: attachment?.path ?? null,
+    p_attachment_name: attachment?.name ?? null,
+    p_attachment_size: attachment?.size ?? null,
+  })
+
+  if (error) throw rpcError(error)
+  return fetchOne(id)
+}
+
+/* Nakabalik ba sa Officer para i-revise? */
+export function isInRevision(proposal) {
+  return proposal.status === 'pending' && proposal.stage === 'revision'
+}
+
+/* Ang pinakahuling pa-revise (ang hinihintay pang maipasa ulit) */
+export function latestRevision(proposal) {
+  const list = revisionsOf(proposal)
+  return list.length ? list[list.length - 1] : null
+}
+
+/* Lahat ng pa-revise, mula pinakaluma */
+export function revisionsOf(proposal) {
+  return [...(proposal.proposal_revisions ?? [])].sort(
+    (a, b) => new Date(a.requested_at) - new Date(b.requested_at),
+  )
+}
+
+/* Pwede ka bang mag-Revise ngayon? Adviser at SAO lang, kapag
+   nasa stage mo ang proposal (hindi ang School Head). */
+export function canRequestRevision(proposal, profile) {
+  return (
+    ['adviser', 'sao'].includes(proposal.stage) && canReviewProposal(proposal, profile)
+  )
+}
+
+/* Ikaw ba ang Officer na dapat mag-revise? */
+export function canReviseProposal(proposal, profile) {
+  return Boolean(
+    profile?.is_active &&
+      profile.role_id === 2 &&
+      isInRevision(proposal) &&
+      proposal.organization_id === profile.organization_id &&
+      proposal.author_id === profile.id,
+  )
 }
 
 /* Ikaw ba ang dapat umaksyon ngayon?
@@ -181,14 +270,31 @@ export function isFinalReview(proposal) {
   return proposal.stage === 'school_head'
 }
 
-/* Ang mga aksyong nagawa na, sunod-sunod:
-   [{ key, role, decision, comment, name, at, final }]
+/* Ang mga aksyong nagawa na, sunod-sunod ayon sa oras:
+   [{ key, role, decision, comment, name, at, final, resubmittedAt }]
+
+   decision = 'approved' | 'rejected' | 'revision'
+   Ang 'revision' ay galing sa proposal_revisions; may
+   resubmittedAt kapag naipasa na ulit ng Officer.
 
    Ang mga LUMANG proposal (bago ang 3-step review) ay walang
    adviser_decision at sao_decision. Ang Adviser ang nag-review
    sa kanila, at iyon na ang pinal. */
 export function reviewSteps(proposal) {
   const steps = []
+
+  for (const rev of revisionsOf(proposal)) {
+    steps.push({
+      key: `revision-${rev.id}`,
+      role: stageLabel(rev.stage),
+      decision: 'revision',
+      comment: rev.comment,
+      name: toTitleCase(rev.requester_name ?? ''),
+      at: rev.requested_at,
+      final: false,
+      resubmittedAt: rev.resubmitted_at,
+    })
+  }
 
   if (proposal.adviser_decision) {
     steps.push({
@@ -227,7 +333,18 @@ export function reviewSteps(proposal) {
     })
   }
 
+  /* Ayon sa oras, para tama ang pagkakasunod kapag may pa-revise
+     sa gitna (hal. Adviser approved → SAO revise → SAO approved).
+     Ang walang petsa ay nananatili sa puwesto nito. */
   return steps
+    .map((step, index) => ({ step, index }))
+    .sort((a, b) => {
+      const ta = a.step.at ? new Date(a.step.at).getTime() : null
+      const tb = b.step.at ? new Date(b.step.at).getTime() : null
+      if (ta === null || tb === null || ta === tb) return a.index - b.index
+      return ta - tb
+    })
+    .map(({ step }) => step)
 }
 
 /* ============================================================
@@ -290,6 +407,7 @@ export function formatDateTime(iso) {
 
 /* Para sa stat tile sa Dashboard.
      Officer                   → lahat ng naghihintay pa sa org niya
+                                 (kasama ang nakabalik para i-revise)
      Adviser, SAO, School Head → ang naghihintay ng AKSYON NIYA
    Ang RLS na ang nagsasala kung aling org ang kasama. */
 export async function countPendingProposals(roleId) {

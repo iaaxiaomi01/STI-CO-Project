@@ -277,3 +277,55 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+
+/* Kahel na button — "Ipa-revise" sa ReviewDialog */
+.warning {
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background-color: #b25e09;
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background-color var(--transition);
+}
+
+.warning:hover:not(:disabled) {
+  background-color: #8f4b06;
+}
+
+.warning:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ang komento ng nag-pa-revise, sa itaas ng form ng Officer */
+.revisionBox {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.95rem;
+  border-left: 3px solid #b25e09;
+  border-radius: 0 10px 10px 0;
+  background-color: #fff4e8;
+}
+
+.revisionHead {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9a4f05;
+}
+
+.revisionBy {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.revisionComment {
+  margin-top: 0.35rem;
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -1,12 +1,13 @@
-import { formatDateTime, reviewSteps, stageLabel, statusLabel } from '../lib/proposals.js'
+import { authorName, formatDateTime, reviewSteps, stageLabel, statusLabel } from '../lib/proposals.js'
 import styles from './ReviewTrail.module.css'
 
 /* ============================================================
    REVIEW TRAIL — ang daan ng proposal: Adviser → SAO → School Head
 
-   Ipinapakita ang bawat aksyong nagawa na (Approved o Rejected,
-   sino, kailan, at ang dahilan). Kapag naghihintay pa, may
-   huling linya na nagsasabi kung kanino ito nakatoka ngayon.
+   Ipinapakita ang bawat aksyong nagawa na (Approved, Rejected o
+   Ipina-revise, sino, kailan, at ang dahilan). Kapag naghihintay
+   pa, may huling linya na nagsasabi kung kanino ito nakatoka
+   ngayon — kasama ang Officer kapag ibinalik ito para i-revise.
 
    Ang aksyon ng Adviser at SAO ay rekomendasyon lang — ang
    School Head ang PINAL, kaya iyon ang may "Pinal na desisyon".
@@ -14,9 +15,29 @@ import styles from './ReviewTrail.module.css'
      <ReviewTrail proposal={p} />            → para sa card
      <ReviewTrail proposal={p} variant="letter" /> → para sa sulat
    ============================================================ */
+
+const DECISION_CLASS = {
+  approved: styles.approved,
+  rejected: styles.rejected,
+  revision: styles.revision,
+}
+
+const DECISION_VERB = {
+  approved: 'Inaprubahan',
+  rejected: 'Ni-reject',
+  revision: 'Ipina-revise',
+}
+
+function decisionLabel(step) {
+  if (step.decision === 'revision') return 'Ipina-revise'
+  return step.final ? `Pinal: ${statusLabel(step.decision)}` : statusLabel(step.decision)
+}
+
 function ReviewTrail({ proposal, variant = 'card' }) {
   const steps = reviewSteps(proposal)
-  const waiting = proposal.status === 'pending' ? stageLabel(proposal.stage) : ''
+  const inRevision = proposal.status === 'pending' && proposal.stage === 'revision'
+  const waiting =
+    proposal.status !== 'pending' ? '' : inRevision ? 'Officer' : stageLabel(proposal.stage)
 
   if (steps.length === 0 && !waiting) return null
 
@@ -25,22 +46,24 @@ function ReviewTrail({ proposal, variant = 'card' }) {
       {steps.map((step) => (
         <li
           key={step.key}
-          className={`${styles.step} ${
-            step.decision === 'approved' ? styles.approved : styles.rejected
-          } ${step.final ? styles.final : ''}`}
+          className={`${styles.step} ${DECISION_CLASS[step.decision] ?? ''} ${
+            step.final ? styles.final : ''
+          }`}
         >
           <p className={styles.head}>
             <span className={styles.role}>{step.role}</span>
-            <span className={styles.decision}>
-              {step.final ? `Pinal: ${statusLabel(step.decision)}` : statusLabel(step.decision)}
-            </span>
+            <span className={styles.decision}>{decisionLabel(step)}</span>
           </p>
           <p className={styles.by}>
-            {step.decision === 'approved' ? 'Inaprubahan' : 'Ni-reject'} ni{' '}
-            <strong>{step.name || '—'}</strong>
+            {DECISION_VERB[step.decision] ?? ''} ni <strong>{step.name || '—'}</strong>
             {step.at && ` · ${formatDateTime(step.at)}`}
           </p>
           {step.comment && <p className={styles.comment}>{step.comment}</p>}
+          {step.resubmittedAt && (
+            <p className={styles.resubmitted}>
+              ✓ Na-revise at naipasa ulit · {formatDateTime(step.resubmittedAt)}
+            </p>
+          )}
         </li>
       ))}
 
@@ -48,12 +71,18 @@ function ReviewTrail({ proposal, variant = 'card' }) {
         <li className={`${styles.step} ${styles.waiting}`}>
           <p className={styles.head}>
             <span className={styles.role}>{waiting}</span>
-            <span className={styles.decision}>Naghihintay</span>
+            <span className={styles.decision}>
+              {inRevision ? 'Nire-revise' : 'Naghihintay'}
+            </span>
           </p>
           <p className={styles.by}>
-            {proposal.stage === 'school_head'
-              ? 'Hinihintay ang pinal na desisyon ng School Head.'
-              : `Hinihintay ang aksyon ng ${waiting}.`}
+            {inRevision
+              ? `Hinihintay na i-revise ni ${authorName(proposal)}. Babalik ito sa ${stageLabel(
+                  proposal.revision_from,
+                )} pagkatapos.`
+              : proposal.stage === 'school_head'
+                ? 'Hinihintay ang pinal na desisyon ng School Head.'
+                : `Hinihintay ang aksyon ng ${waiting}.`}
           </p>
         </li>
       )}

@@ -133,6 +133,11 @@
   color: #8a5a00;
 }
 
+.status_revision {
+  background-color: #fff0e0;
+  color: #9a4f05;
+}
+
 .status_approved {
   background-color: #e8f6ee;
   color: #1c6b3f;
@@ -207,6 +212,22 @@
 .rejectButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* "Revise" ng Adviser/SAO at "I-revise" ng Officer */
+.reviseButton {
+  padding: 0.5rem 1.05rem;
+  border: 1px solid #e8c49f;
+  border-radius: 999px;
+  background-color: #fff;
+  color: #9a4f05;
+  font-size: 0.87rem;
+  font-weight: 600;
+  transition: background-color var(--transition);
+}
+
+.reviseButton:hover:not(:disabled) {
+  background-color: #fff4e8;
 }
 
 /* ---------- EVENT MULA SA APPROVED NA PROPOSAL ---------- */

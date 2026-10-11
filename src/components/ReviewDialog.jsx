@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { COMMENT_MAX, isFinalReview, stageLabel } from '../lib/proposals.js'
+import { COMMENT_MAX, authorName, isFinalReview, stageLabel } from '../lib/proposals.js'
 import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
    REVIEW DIALOG — para sa Adviser, SAO at School Head
-                   (Approve at Reject)
+                   (Approve, Reject at Revise)
 
    Adviser at SAO: Approve man o Reject, ipapasa pa rin ang
    proposal sa susunod. School Head: PINAL ang desisyon —
@@ -19,6 +19,12 @@ import styles from './ProposalForm.module.css'
 
      <ReviewDialog action="approved" ... />  → berdeng "I-approve"
      <ReviewDialog action="rejected" ... />  → pulang "I-reject"
+     <ReviewDialog action="revision" ... />  → kahel na "Ipa-revise"
+                                               (Adviser at SAO lang)
+
+   REVISE: ibinabalik ang proposal sa Officer na nagpasa para
+   i-edit. Nakahold ito hanggang maipasa niya ulit, at saka
+   BABALIK sa nag-pa-revise — hindi na uulit sa simula.
 
    Ginagamit nito ang istilo ng ProposalForm para pare-pareho
    ang itsura ng mga modal.
@@ -40,6 +46,14 @@ const TEXT = {
     required: 'Kailangan ang dahilan ng pag-reject.',
     button: 'I-reject',
     buttonClass: 'danger',
+  },
+  revision: {
+    heading: 'Ipa-revise ang proposal',
+    label: 'Ano ang kailangang baguhin',
+    placeholder: 'hal. Idagdag ang detalyadong budget at ang listahan ng mga kalahok.',
+    required: 'Isulat kung ano ang kailangang baguhin.',
+    button: 'Ipa-revise',
+    buttonClass: 'warning',
   },
 }
 
@@ -115,7 +129,13 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
         <p className={styles.note}>
           <strong>{proposal.title}</strong>
           <br />
-          {final ? (
+          {action === 'revision' ? (
+            <>
+              Ibabalik ito kay <strong>{authorName(proposal)}</strong> para i-edit.
+              Naka-hold ito habang nire-revise. Kapag naipasa na ulit, babalik ito sa{' '}
+              <strong>iyo ({stageLabel(proposal.stage)})</strong> para suriin muli.
+            </>
+          ) : final ? (
             <>
               <strong>Ito ang PINAL na desisyon.</strong>{' '}
               {action === 'approved'

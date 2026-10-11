@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import {
   DESCRIPTION_MAX,
   TITLE_MAX,
+  formatDateTime,
+  latestRevision,
+  stageLabel,
 } from '../lib/proposals.js'
+import { toTitleCase } from '../lib/profile.js'
 import {
   ACCEPT_ATTRIBUTE,
   ACCEPTED_LABEL,
@@ -13,8 +17,15 @@ import {
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
-   PROPOSAL FORM — modal para sa paggawa ng BAGONG proposal
-   (wala nang pag-edit)
+   PROPOSAL FORM — modal para sa paggawa ng BAGONG proposal,
+   at para sa pag-REVISE ng proposal na ibinalik ng Adviser o SAO
+
+     <ProposalForm onSubmit ... />                 → bago
+     <ProposalForm proposal={p} onSubmit ... />    → i-revise
+
+   Sa pag-revise, nakalagay na ang dating Title, Description at
+   file, at nasa itaas ang komento ng nag-pa-revise. Pwedeng
+   panatilihin, palitan, o alisin ang file.
 
    Tinatype: Title at Description. May opsyonal na File
    (isa lang) — hal. ang pirmadong proposal o budget.
@@ -22,18 +33,27 @@ import styles from './ProposalForm.module.css'
    nilalagay — galing sila sa org at sa account mo.
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
-   onSubmit(values, { file }) — ang page ang
+   onSubmit(values, { file, keepExisting }) — ang page ang
    mag-a-upload at tatawag sa database.
+     file         → bagong file na pinili (o null)
+     keepExisting → true kapag pinanatili ang dating file
    ============================================================ */
-function ProposalForm({ onSubmit, onCancel }) {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+function ProposalForm({ proposal = null, onSubmit, onCancel }) {
+  const editing = Boolean(proposal)
+  const revision = editing ? latestRevision(proposal) : null
+
+  const [title, setTitle] = useState(proposal?.title ?? '')
+  const [description, setDescription] = useState(proposal?.description ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   /* File na pinili (wala pang na-upload) */
   const [file, setFile] = useState(null)
   const [fileError, setFileError] = useState('')
+
+  /* Ang dating file ng proposal (sa pag-revise lang).
+     Nagiging false kapag inalis o pinalitan. */
+  const [keepExisting, setKeepExisting] = useState(Boolean(proposal?.attachment_path))
 
   const titleRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -46,6 +66,7 @@ function ProposalForm({ onSubmit, onCancel }) {
     try {
       checkProposalFile(picked)
       setFile(picked)
+      setKeepExisting(false)
       setFileError('')
     } catch (err) {
       setFileError(err.message)
@@ -54,6 +75,7 @@ function ProposalForm({ onSubmit, onCancel }) {
 
   function clearFile() {
     setFile(null)
+    setKeepExisting(false)
     setFileError('')
   }
 
@@ -86,14 +108,19 @@ function ProposalForm({ onSubmit, onCancel }) {
 
     setSaving(true)
     try {
-      await onSubmit(clean, { file })
+      await onSubmit(clean, { file, keepExisting: !file && keepExisting })
     } catch (err) {
       console.error('Hindi na-save ang proposal:', err)
-      setError(
-        err instanceof ProposalFileError
-          ? err.message
-          : 'Hindi na-save. Subukan ulit.',
-      )
+      let message = 'Hindi na-save. Subukan ulit.'
+      if (err instanceof ProposalFileError) {
+        message = err.message
+      } else if (err?.message === 'not-allowed') {
+        message = 'Wala kang pahintulot na i-revise ang proposal na ito.'
+      } else if (err?.code === 'P0001' && err.message) {
+        /* Mensahe galing sa resubmit_proposal() sa database */
+        message = err.message
+      }
+      setError(message)
       setSaving(false)
     }
   }
@@ -113,12 +140,31 @@ function ProposalForm({ onSubmit, onCancel }) {
         aria-labelledby="proposal-form-title"
       >
         <h2 id="proposal-form-title" className={styles.heading}>
-          Bagong proposal
+          {editing ? 'I-revise ang proposal' : 'Bagong proposal'}
         </h2>
 
+        {revision && (
+          <div className={styles.revisionBox}>
+            <p className={styles.revisionHead}>
+              Ipina-revise ng {stageLabel(revision.stage)}
+            </p>
+            <p className={styles.revisionBy}>
+              {toTitleCase(revision.requester_name ?? '')} ·{' '}
+              {formatDateTime(revision.requested_at)}
+            </p>
+            <p className={styles.revisionComment}>{revision.comment}</p>
+          </div>
+        )}
+
         <p className={styles.note}>
-          Ang logo at pangalan ng organisasyon, at ang pangalan mo bilang
-          nagpasa, ay kusang ilalagay sa sulat.
+          {editing ? (
+            <>
+              Baguhin ang kailangan, tapos pindutin ang &quot;Ipasa ulit&quot;. Babalik ito
+              sa <strong>{stageLabel(proposal.revision_from)}</strong> para suriin muli.
+            </>
+          ) : (
+            'Ang logo at pangalan ng organisasyon, at ang pangalan mo bilang nagpasa, ay kusang ilalagay sa sulat.'
+          )}
         </p>
 
         <label className={styles.field}>
@@ -159,14 +205,20 @@ function ProposalForm({ onSubmit, onCancel }) {
             File <span className={styles.optional}>(opsyonal)</span>
           </span>
 
-          {file ? (
+          {file || keepExisting ? (
             <div className={styles.fileBox}>
               <span className={styles.fileIcon} aria-hidden="true">
                 📎
               </span>
               <span className={styles.fileInfo}>
-                <span className={styles.fileName}>{file.name}</span>
-                <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
+                <span className={styles.fileName}>
+                  {file ? file.name : proposal.attachment_name}
+                </span>
+                <span className={styles.fileSize}>
+                  {file
+                    ? formatFileSize(file.size)
+                    : `${formatFileSize(proposal.attachment_size)} · dating file`}
+                </span>
               </span>
               <button
                 type="button"
@@ -228,7 +280,7 @@ function ProposalForm({ onSubmit, onCancel }) {
             Kanselahin
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
-            {saving ? 'Sine-save…' : 'Ipasa'}
+            {saving ? 'Sine-save…' : editing ? 'Ipasa ulit' : 'Ipasa'}
           </button>
         </div>
       </form>
