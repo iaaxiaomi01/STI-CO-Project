@@ -122,6 +122,28 @@ function staffRole(label) {
   }
 }
 
+/* Staff na may read-only na Proposals (SAO, School Head) */
+function staffRoleWithProposals(label) {
+  const base = staffRole(label)
+  return {
+    ...base,
+    sidebar: [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
+    dashboard: {
+      ...base.dashboard,
+      cards: [
+        base.dashboard.cards[0],
+        {
+          to: '/proposals',
+          icon: '✉',
+          title: 'Proposals',
+          text: 'Tingnan ang mga proposal ng lahat ng organisasyon.',
+        },
+        base.dashboard.cards[1],
+      ],
+    },
+  }
+}
+
 export const ROLES = {
   /* ---------------------------------------------------------- */
   [ROLE_KEYS.MEMBER]: {
@@ -314,33 +336,15 @@ export const ROLES = {
        2. irehistro sa PAGE_COMPONENTS sa App.jsx
        3. idagdag sa sidebar nila dito
      ---------------------------------------------------------- */
-  /* SAO: tulad ng ibang staff, pero may Proposals din.
-     TUMITINGIN LANG siya (review: false, propose: false) —
-     nakikita niya ang proposals ng LAHAT ng organisasyon,
-     pero walang Approve/Reject at walang paggawa.
-     Kailangan ng ADD_SAO_PROPOSALS_READ.sql sa Supabase,
-     dahil RLS ang nagpapasya kung may makukuha siya. */
-  [ROLE_KEYS.SAO]: (() => {
-    const base = staffRole('SAO')
-    return {
-      ...base,
-      sidebar: [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
-      dashboard: {
-        ...base.dashboard,
-        cards: [
-          base.dashboard.cards[0],
-          {
-            to: '/proposals',
-            icon: '✉',
-            title: 'Proposals',
-            text: 'Tingnan ang mga proposal ng lahat ng organisasyon.',
-          },
-          base.dashboard.cards[1],
-        ],
-      },
-    }
-  })(),
-  [ROLE_KEYS.SCHOOL_HEAD]: staffRole('School Head'),
+  /* SAO at School Head: tulad ng ibang staff, pero may
+     Proposals din. TUMITINGIN LANG sila (review: false,
+     propose: false) — nakikita nila ang proposals ng LAHAT ng
+     organisasyon, pero walang Approve/Reject at walang paggawa.
+     Kailangan ng ADD_SCHOOL_HEAD_PROPOSALS_READ.sql sa Supabase
+     (policy na "proposals_read_staff"), dahil RLS ang
+     nagpapasya kung may makukuha sila. */
+  [ROLE_KEYS.SAO]: staffRoleWithProposals('SAO'),
+  [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals('School Head'),
   [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
 }
 
