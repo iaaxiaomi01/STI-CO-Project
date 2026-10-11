@@ -27,19 +27,21 @@ export const ROLE_KEYS = {
   OFFICER: 'officer',
   ADVISER: 'adviser',
   SAO: 'sao',
-  COORDINATOR: 'coordinator',
   SCHOOL_HEAD: 'school_head',
   IT_ADMIN: 'it_admin',
 }
 
 /* Katumbas ng laman ng public.roles sa database.
-   Kapag nagdagdag ka ng role doon, dagdagan mo rin dito. */
+   Kapag nagdagdag ka ng role doon, dagdagan mo rin dito.
+
+   Walang 5: inalis na ang SHS/Tertiary coordinator (tingnan ang
+   REMOVE_SHS_TERTIARY.sql). Hindi inilipat ang 6 at 7 para hindi
+   masira ang mga role_id na nakasulat na sa database. */
 export const ROLE_ID_TO_KEY = {
   1: ROLE_KEYS.MEMBER,
   2: ROLE_KEYS.OFFICER,
   3: ROLE_KEYS.ADVISER,
   4: ROLE_KEYS.SAO,
-  5: ROLE_KEYS.COORDINATOR,
   6: ROLE_KEYS.SCHOOL_HEAD,
   7: ROLE_KEYS.IT_ADMIN,
 }
@@ -300,7 +302,7 @@ export const ROLES = {
   },
 
   /* ----------------------------------------------------------
-     STAFF ROLES (SAO, SHS/Tertiary, School Head, IT Admin)
+     STAFF ROLES (SAO, School Head, IT Admin)
 
      Panimulang config lang ito para may makita sila pagka-login.
      Dahil sa RLS (is_staff), nakikita nila ang profiles ng LAHAT
@@ -313,7 +315,6 @@ export const ROLES = {
        3. idagdag sa sidebar nila dito
      ---------------------------------------------------------- */
   [ROLE_KEYS.SAO]: staffRole('SAO'),
-  [ROLE_KEYS.COORDINATOR]: staffRole('SHS/Tertiary'),
   [ROLE_KEYS.SCHOOL_HEAD]: staffRole('School Head'),
   [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
 }
