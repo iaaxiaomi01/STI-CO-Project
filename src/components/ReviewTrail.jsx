@@ -1,16 +1,26 @@
-import { authorName, formatDateTime, reviewSteps, stageLabel, statusLabel } from '../lib/proposals.js'
+import {
+  authorName,
+  awaitsNoted,
+  decisionLabel,
+  formatDateTime,
+  rejectedBy,
+  reviewSteps,
+  stageLabel,
+} from '../lib/proposals.js'
 import styles from './ReviewTrail.module.css'
 
 /* ============================================================
    REVIEW TRAIL — ang daan ng proposal: Adviser → SAO → School Head
 
-   Ipinapakita ang bawat aksyong nagawa na (Approved, Rejected o
-   Ipina-revise, sino, kailan, at ang dahilan). Kapag naghihintay
-   pa, may huling linya na nagsasabi kung kanino ito nakatoka
-   ngayon — kasama ang Officer kapag ibinalik ito para i-revise.
+   Ipinapakita ang bawat aksyong nagawa na (Approved, Rejected,
+   Noted o Ipina-revise, sino, kailan, at ang dahilan). Kapag
+   naghihintay pa, may huling linya na nagsasabi kung kanino ito
+   nakatoka ngayon — kasama ang Officer kapag ibinalik ito para
+   i-revise.
 
-   Ang aksyon ng Adviser at SAO ay rekomendasyon lang — ang
-   School Head ang PINAL, kaya iyon ang may "Pinal na desisyon".
+   Ang hakbang na NAGPASYA ang may "Pinal": ang unang nag-Reject,
+   o ang Approve ng School Head. Ang mga sumunod sa isang
+   Reject ay "Noted" na lang.
 
      <ReviewTrail proposal={p} />            → para sa card
      <ReviewTrail proposal={p} variant="letter" /> → para sa sulat
@@ -19,25 +29,27 @@ import styles from './ReviewTrail.module.css'
 const DECISION_CLASS = {
   approved: styles.approved,
   rejected: styles.rejected,
+  noted: styles.noted,
   revision: styles.revision,
 }
 
 const DECISION_VERB = {
   approved: 'Inaprubahan',
   rejected: 'Ni-reject',
+  noted: 'Noted',
   revision: 'Ipina-revise',
 }
 
-function decisionLabel(step) {
-  if (step.decision === 'revision') return 'Ipina-revise'
-  return step.final ? `Pinal: ${statusLabel(step.decision)}` : statusLabel(step.decision)
+function stepLabel(step) {
+  const label = decisionLabel(step.decision)
+  return step.final ? `Pinal: ${label}` : label
 }
 
 function ReviewTrail({ proposal, variant = 'card' }) {
   const steps = reviewSteps(proposal)
   const inRevision = proposal.status === 'pending' && proposal.stage === 'revision'
-  const waiting =
-    proposal.status !== 'pending' ? '' : inRevision ? 'Officer' : stageLabel(proposal.stage)
+  const noted = awaitsNoted(proposal)
+  const waiting = inRevision ? 'Officer' : stageLabel(proposal.stage)
 
   if (steps.length === 0 && !waiting) return null
 
@@ -52,10 +64,11 @@ function ReviewTrail({ proposal, variant = 'card' }) {
         >
           <p className={styles.head}>
             <span className={styles.role}>{step.role}</span>
-            <span className={styles.decision}>{decisionLabel(step)}</span>
+            <span className={styles.decision}>{stepLabel(step)}</span>
           </p>
           <p className={styles.by}>
-            {DECISION_VERB[step.decision] ?? ''} ni <strong>{step.name || '—'}</strong>
+            {DECISION_VERB[step.decision] ?? ''} ni{' '}
+            <strong>{step.name || '—'}</strong>
             {step.at && ` · ${formatDateTime(step.at)}`}
           </p>
           {step.comment && <p className={styles.comment}>{step.comment}</p>}
@@ -72,11 +85,13 @@ function ReviewTrail({ proposal, variant = 'card' }) {
           <p className={styles.head}>
             <span className={styles.role}>{waiting}</span>
             <span className={styles.decision}>
-              {inRevision ? 'Nire-revise' : 'Naghihintay'}
+              {inRevision ? 'Nire-revise' : noted ? 'Para sa Noted' : 'Naghihintay'}
             </span>
           </p>
           <p className={styles.by}>
-            {inRevision
+            {noted
+              ? `Rejected na ng ${rejectedBy(proposal)}. Hinihintay ang "Noted" ng ${waiting}.`
+              : inRevision
               ? `Hinihintay na i-revise ni ${authorName(proposal)}. Babalik ito sa ${stageLabel(
                   proposal.revision_from,
                 )} pagkatapos.`

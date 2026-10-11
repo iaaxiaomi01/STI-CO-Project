@@ -25,6 +25,16 @@
   background-color: #fdf3f2;
 }
 
+/* Noted: nakita na ng sumunod pagkatapos ng isang Reject */
+.noted {
+  border-left-color: #8a93a6;
+  background-color: #f4f5f8;
+}
+
+.noted .decision {
+  color: #4a5368;
+}
+
 /* Ipina-revise ng Adviser o SAO */
 .revision {
   border-left-color: #b25e09;
@@ -124,6 +134,10 @@
 
 .letter .rejected {
   border-color: #b42318;
+}
+
+.letter .noted {
+  border-color: #8a93a6;
 }
 
 .letter .revision {

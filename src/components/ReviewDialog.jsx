@@ -1,19 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
-import { COMMENT_MAX, authorName, isFinalReview, stageLabel } from '../lib/proposals.js'
+import {
+  COMMENT_MAX,
+  authorName,
+  isFinalReview,
+  rejectedBy,
+  stageLabel,
+} from '../lib/proposals.js'
 import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
    REVIEW DIALOG — para sa Adviser, SAO at School Head
-                   (Approve, Reject at Revise)
+                   (Approve, Reject, Revise at Noted)
 
-   Adviser at SAO: Approve man o Reject, ipapasa pa rin ang
-   proposal sa susunod. School Head: PINAL ang desisyon —
-   kapag Approved, makakagawa na ng event ang Officer.
+   Approve → ipapasa sa susunod (sa School Head: Approved na,
+             makakagawa na ng event ang Officer).
+   Reject  → REJECTED na AGAD (pinal), kahit sino sa tatlo.
+             Tuloy pa rin sa mga susunod para sa "Noted".
+   Noted   → para sa proposal na rejected na: "nakita ko na".
    Ipinapakita rin dito ang mga naunang aksyon at dahilan.
 
-   Pinalitan nito ang dating RejectDialog. Approve man o Reject,
-   KAILANGAN na ng dahilan. Dito iyon itinatype.
+   Approve, Reject o Noted man, KAILANGAN ng komento. Dito iyon
+   itinatype.
    Ang database din ang nagbabantay nito (proposals_before_update),
    kaya walang makakalusot na aksyon na walang dahilan.
 
@@ -21,6 +29,8 @@ import styles from './ProposalForm.module.css'
      <ReviewDialog action="rejected" ... />  → pulang "I-reject"
      <ReviewDialog action="revision" ... />  → kahel na "Ipa-revise"
                                                (Adviser at SAO lang)
+     <ReviewDialog action="noted" ... />     → asul na "Noted"
+                                               (kapag rejected na)
 
    REVISE: ibinabalik ang proposal sa Officer na nagpasa para
    i-edit. Nakahold ito hanggang maipasa niya ulit, at saka
@@ -46,6 +56,14 @@ const TEXT = {
     required: 'Kailangan ang dahilan ng pag-reject.',
     button: 'I-reject',
     buttonClass: 'danger',
+  },
+  noted: {
+    heading: 'Noted ang proposal',
+    label: 'Komento',
+    placeholder: 'hal. Nakita ko na. Sang-ayon ako sa dahilan ng pag-reject.',
+    required: 'Kailangan ng komento.',
+    button: 'Noted',
+    buttonClass: 'primary',
   },
   revision: {
     heading: 'Ipa-revise ang proposal',
@@ -135,17 +153,39 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
               Naka-hold ito habang nire-revise. Kapag naipasa na ulit, babalik ito sa{' '}
               <strong>iyo ({stageLabel(proposal.stage)})</strong> para suriin muli.
             </>
+          ) : action === 'noted' ? (
+            <>
+              <strong>Rejected na ito ng {rejectedBy(proposal)}</strong> at hindi na
+              mababago. Ang &quot;Noted&quot; ay pagpapatunay na nakita mo na.{' '}
+              {final ? (
+                'Dito na matatapos ang daan ng proposal.'
+              ) : (
+                <>
+                  Ipapasa pa ito sa <strong>{stageLabel(nextStage)}</strong> para sa
+                  kanyang &quot;Noted&quot;.
+                </>
+              )}
+            </>
+          ) : action === 'rejected' ? (
+            <>
+              <strong>REJECTED na AGAD ang proposal</strong> kapag ni-reject mo — pinal na ito
+              at walang event na magagawa mula rito.{' '}
+              {final ? null : (
+                <>
+                  Dadaan pa rin ito sa <strong>{stageLabel(nextStage)}</strong>
+                  {nextStage === 'sao' && ' at School Head'}, pero &quot;Noted&quot; na lang ang
+                  magagawa nila.
+                </>
+              )}
+            </>
           ) : final ? (
             <>
-              <strong>Ito ang PINAL na desisyon.</strong>{' '}
-              {action === 'approved'
-                ? 'Makakagawa na ng event ang Officer mula sa proposal na ito.'
-                : 'Hindi na matutuloy ang proposal, at walang event na magagawa mula rito.'}
+              <strong>Ito ang huling pag-apruba.</strong> Makakagawa na ng event ang Officer
+              mula sa proposal na ito.
             </>
           ) : (
             <>
-              Hindi pa ito ang pinal na desisyon. Approve man o Reject, ipapasa ito sa{' '}
-              <strong>{stageLabel(nextStage)}</strong> kasama ang dahilan mo.
+              Ipapasa ito sa <strong>{stageLabel(nextStage)}</strong> kasama ang dahilan mo.
             </>
           )}
           <br />

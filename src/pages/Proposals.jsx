@@ -5,6 +5,7 @@ import { getRoleConfig } from '../config/roles.js'
 import {
   authorName,
   authorRoleLabel,
+  awaitsNoted,
   canManageProposal,
   canRequestRevision,
   canReviewProposal,
@@ -54,14 +55,15 @@ import styles from './Proposals.module.css'
    Adviser     → Approve/Reject/Revise ng proposals ng org niya.
    SAO         → Approve/Reject/Revise ng proposals ng lahat ng
                  org, pagkatapos ng Adviser.
-   School Head → PINAL na Approve/Reject, pagkatapos ng SAO.
+   School Head → huling Approve/Reject, pagkatapos ng SAO.
    Member      → wala. Wala ito sa sidebar niya, at hinaharang
                  din siya ng RLS sa database.
 
-   Approve man o Reject ang Adviser at SAO, tuloy pa rin ang
-   proposal hanggang School Head. Laging may dahilan
-   (ReviewDialog), at nakikita ng lahat ang buong daan
-   (ReviewTrail).
+   REJECT: kapag may nag-reject sa tatlo, REJECTED na AGAD (pinal).
+   Tuloy pa rin ito hanggang School Head, pero "Noted" na lang
+   ang button ng mga susunod. Approved lang kapag LAHAT ng tatlo
+   ay nag-Approve. Laging may komento (ReviewDialog), at
+   nakikita ng lahat ang buong daan (ReviewTrail).
 
    REVISE: ibinabalik ng Adviser o SAO ang proposal sa Officer
    na NAGPASA, may komento kung ano ang babaguhin. Ang Officer
@@ -182,15 +184,23 @@ function Proposals() {
     replaceProposal(updated)
     setReviewing(null)
 
-    const verb = action === 'approved' ? 'Na-approve' : 'Na-reject'
-    if (isFinalReview(proposal)) {
+    const last = isFinalReview(proposal)
+    const next = last ? '' : ` Naipasa na ito sa ${stageLabel(updated.stage)}.`
+
+    if (action === 'noted') {
+      setNotice(last ? 'Noted. Tapos na ang daan ng proposal.' : `Noted.${next}`)
+    } else if (action === 'rejected') {
       setNotice(
-        action === 'approved'
-          ? 'Na-approve ang proposal (pinal). Makakagawa na ng event ang Officer.'
-          : 'Na-reject ang proposal (pinal).',
+        last
+          ? 'Na-reject ang proposal (pinal).'
+          : `Na-reject ang proposal — Rejected na ito (pinal).${next} "Noted" na lang ang magagawa ng mga susunod.`,
       )
     } else {
-      setNotice(`${verb} mo ang proposal. Naipasa na ito sa ${stageLabel(updated.stage)}.`)
+      setNotice(
+        last
+          ? 'Na-approve ang proposal (pinal). Makakagawa na ng event ang Officer.'
+          : `Na-approve mo ang proposal.${next}`,
+      )
     }
   }
 
@@ -319,10 +329,10 @@ function Proposals() {
           can.propose
             ? 'Gumawa ng proposal para sa organisasyon mo. Dadaan ito sa Adviser, SAO, at School Head.'
             : profile?.role_id === 6
-              ? 'Ikaw ang nagbibigay ng PINAL na desisyon sa mga proposal ng lahat ng organisasyon.'
+              ? 'Ikaw ang huling sumusuri sa mga proposal ng lahat ng organisasyon. Kapag rejected na ng iba, "Noted" na lang ang aksyon mo.'
               : isStaff
-                ? 'Suriin ang mga proposal ng lahat ng organisasyon. Ipapasa ito sa School Head para sa pinal na desisyon.'
-                : 'Suriin ang mga proposal ng organisasyon. Ipapasa ito sa SAO at School Head.'
+                ? 'Suriin ang mga proposal ng lahat ng organisasyon. Kapag ni-reject mo, Rejected na agad; dadaan pa rin ito sa School Head para sa "Noted".'
+                : 'Suriin ang mga proposal ng organisasyon. Kapag ni-reject mo, Rejected na agad; dadaan pa rin ito sa SAO at School Head para sa "Noted".'
         }
         action={
           can.propose && (
@@ -469,7 +479,18 @@ function Proposals() {
                     Buksan ang sulat
                   </button>
 
-                  {canReviewProposal(p, profile) && (
+                  {/* Rejected na: "Noted" lang ang aksyon */}
+                  {canReviewProposal(p, profile) && awaitsNoted(p) && (
+                    <button
+                      type="button"
+                      className={styles.notedButton}
+                      onClick={() => openReview(p, 'noted')}
+                    >
+                      Noted
+                    </button>
+                  )}
+
+                  {canReviewProposal(p, profile) && !awaitsNoted(p) && (
                     <>
                       <button
                         type="button"
