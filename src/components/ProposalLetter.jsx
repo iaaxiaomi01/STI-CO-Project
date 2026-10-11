@@ -5,7 +5,6 @@ import {
   formatLetterDate,
   reviewerName,
   statusLabel,
-  wasEdited,
 } from '../lib/proposals.js'
 import styles from './ProposalLetter.module.css'
 
@@ -142,12 +141,6 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
                 <p className={styles.reviewComment}>{proposal.review_comment}</p>
               )}
             </div>
-          )}
-
-          {wasEdited(proposal) && (
-            <p className={styles.editedNote}>
-              Na-edit noong {formatLetterDate(proposal.updated_at)}
-            </p>
           )}
         </div>
       </article>

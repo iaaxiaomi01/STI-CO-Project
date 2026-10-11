@@ -255,14 +255,3 @@
   font-size: 0.8rem;
   color: #a61b1b;
 }
-
-.undoButton {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}

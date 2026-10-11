@@ -13,7 +13,8 @@ import {
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
-   PROPOSAL FORM — modal para sa GUMAWA at MAG-EDIT
+   PROPOSAL FORM — modal para sa paggawa ng BAGONG proposal
+   (wala nang pag-edit)
 
    Tinatype: Title at Description. May opsyonal na File
    (isa lang) — hal. ang pirmadong proposal o budget.
@@ -21,30 +22,21 @@ import styles from './ProposalForm.module.css'
    nilalagay — galing sila sa org at sa account mo.
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
-   onSubmit(values, { file, removeFile }) — ang page ang
+   onSubmit(values, { file }) — ang page ang
    mag-a-upload at tatawag sa database.
    ============================================================ */
-function ProposalForm({ initial, onSubmit, onCancel }) {
-  const isEdit = Boolean(initial)
-
-  const [title, setTitle] = useState(initial?.title ?? '')
-  const [description, setDescription] = useState(initial?.description ?? '')
+function ProposalForm({ onSubmit, onCancel }) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  /* Bagong file na pinili (wala pang na-upload) */
+  /* File na pinili (wala pang na-upload) */
   const [file, setFile] = useState(null)
-  /* Sa pag-edit: inalis ang dating file */
-  const [removeFile, setRemoveFile] = useState(false)
   const [fileError, setFileError] = useState('')
 
   const titleRef = useRef(null)
   const fileInputRef = useRef(null)
-
-  /* Ang dating file — lalabas lang kapag ine-edit, may file,
-     at hindi pa inaalis o pinapalitan */
-  const currentFile =
-    isEdit && initial.attachment_path && !removeFile && !file ? initial : null
 
   function handleFileChange(e) {
     const picked = e.target.files?.[0]
@@ -61,11 +53,7 @@ function ProposalForm({ initial, onSubmit, onCancel }) {
   }
 
   function clearFile() {
-    if (file) {
-      setFile(null)
-    } else {
-      setRemoveFile(true)
-    }
+    setFile(null)
     setFileError('')
   }
 
@@ -98,15 +86,13 @@ function ProposalForm({ initial, onSubmit, onCancel }) {
 
     setSaving(true)
     try {
-      await onSubmit(clean, { file, removeFile })
+      await onSubmit(clean, { file })
     } catch (err) {
       console.error('Hindi na-save ang proposal:', err)
       setError(
         err instanceof ProposalFileError
           ? err.message
-          : err?.message === 'not-allowed'
-            ? 'Wala kang pahintulot na baguhin ang proposal na ito.'
-            : 'Hindi na-save. Subukan ulit.',
+          : 'Hindi na-save. Subukan ulit.',
       )
       setSaving(false)
     }
@@ -127,7 +113,7 @@ function ProposalForm({ initial, onSubmit, onCancel }) {
         aria-labelledby="proposal-form-title"
       >
         <h2 id="proposal-form-title" className={styles.heading}>
-          {isEdit ? 'I-edit ang proposal' : 'Bagong proposal'}
+          Bagong proposal
         </h2>
 
         <p className={styles.note}>
@@ -173,19 +159,14 @@ function ProposalForm({ initial, onSubmit, onCancel }) {
             File <span className={styles.optional}>(opsyonal)</span>
           </span>
 
-          {file || currentFile ? (
+          {file ? (
             <div className={styles.fileBox}>
               <span className={styles.fileIcon} aria-hidden="true">
                 📎
               </span>
               <span className={styles.fileInfo}>
-                <span className={styles.fileName}>
-                  {file ? file.name : currentFile.attachment_name}
-                </span>
-                <span className={styles.fileSize}>
-                  {formatFileSize(file ? file.size : currentFile.attachment_size)}
-                  {file && isEdit && initial.attachment_path && ' · papalitan ang dating file'}
-                </span>
+                <span className={styles.fileName}>{file.name}</span>
+                <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
               </span>
               <button
                 type="button"
@@ -233,19 +214,6 @@ function ProposalForm({ initial, onSubmit, onCancel }) {
               Adviser.
             </span>
           )}
-
-          {removeFile && !file && (
-            <span className={styles.hint}>
-              Aalisin ang dating file kapag na-save.{' '}
-              <button
-                type="button"
-                className={styles.undoButton}
-                onClick={() => setRemoveFile(false)}
-              >
-                Ibalik
-              </button>
-            </span>
-          )}
         </div>
 
         {error && <p className={styles.error}>{error}</p>}
@@ -260,7 +228,7 @@ function ProposalForm({ initial, onSubmit, onCancel }) {
             Kanselahin
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
-            {saving ? 'Sine-save…' : isEdit ? 'I-save ang pagbabago' : 'Ipasa'}
+            {saving ? 'Sine-save…' : 'Ipasa'}
           </button>
         </div>
       </form>

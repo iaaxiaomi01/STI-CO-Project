@@ -74,8 +74,8 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
               niya ang Proposals at may Aprubahan/Tanggihan
 
      propose — pwedeng gumawa ng proposal (pormal na sulat)
-              para sa org niya. Ang pag-edit/pag-delete ay
-              sariling gawa lang — tingnan ang
+              para sa org niya. Walang pag-edit; ang pag-delete
+              ay sariling gawa lang, habang naghihintay pa — tingnan ang
               canManageProposal() sa lib/proposals.js.
 
      announce — pwedeng gumawa ng announcement para sa org

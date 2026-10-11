@@ -14,8 +14,6 @@ import {
   reviewProposal,
   reviewerName,
   statusLabel,
-  updateProposal,
-  wasEdited,
 } from '../lib/proposals.js'
 import {
   deleteProposalFile,
@@ -40,8 +38,9 @@ import styles from './Proposals.module.css'
 /* ============================================================
    PROPOSALS — TOTOONG DATA mula sa public.proposals
 
-   Officer → gumagawa ng proposal, at nag-e-edit/nagde-delete
-             ng SARILI niyang proposal HABANG naghihintay pa
+   Officer → gumagawa ng proposal, at nagde-delete ng SARILI
+             niyang proposal HABANG naghihintay pa. Wala nang
+             pag-edit — kapag may mali, burahin at gumawa ng bago.
    Adviser → nakikita ang lahat ng proposal sa org niya, at
              siya ang nag-a-Approve o nagre-Reject. Sa Reject,
              kailangan ng dahilan.
@@ -68,10 +67,8 @@ function Proposals() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState('')
 
-  /* null = sarado ang form
-     'new' = bagong proposal
-     { ...proposal } = ine-edit */
-  const [editing, setEditing] = useState(null)
+  /* Bukas ba ang form ng bagong proposal */
+  const [formOpen, setFormOpen] = useState(false)
 
   /* Aling proposal ang bukas bilang sulat */
   const [viewing, setViewing] = useState(null)
@@ -106,7 +103,7 @@ function Proposals() {
     load()
   }, [load])
 
-  const closeForm = useCallback(() => setEditing(null), [])
+  const closeForm = useCallback(() => setFormOpen(false), [])
   const closeLetter = useCallback(() => setViewing(null), [])
   const closeReject = useCallback(() => setRejecting(null), [])
   const closeEventForm = useCallback(() => setEventFor(null), [])
@@ -162,33 +159,18 @@ function Proposals() {
      Ang file ay ina-upload MUNA, bago i-save ang proposal.
      Kapag pumalya ang pag-save, binubura ang na-upload para
      walang maiwang file na walang gumagamit. */
-  async function handleSubmit(values, { file, removeFile }) {
+  async function handleSubmit(values, { file }) {
     const uploaded = file ? await uploadProposalFile(profile, file) : null
 
-    /* undefined = hindi ginagalaw ang dating file */
-    const attachment = uploaded ?? (removeFile ? null : undefined)
-
     try {
-      if (editing === 'new') {
-        const created = await createProposal({ ...values, attachment })
-        setProposals((list) => [created, ...list])
-        setNotice('Naipasa ang proposal.')
-      } else {
-        const oldPath = editing.attachment_path
-        const updated = await updateProposal(editing.id, { ...values, attachment })
-        setProposals((list) => list.map((p) => (p.id === updated.id ? updated : p)))
-        setNotice('Na-save ang pagbabago.')
-
-        /* Napalitan o inalis → burahin ang lumang file */
-        if (oldPath && attachment !== undefined && oldPath !== updated.attachment_path) {
-          await deleteProposalFile(oldPath)
-        }
-      }
+      const created = await createProposal({ ...values, attachment: uploaded })
+      setProposals((list) => [created, ...list])
+      setNotice('Naipasa ang proposal.')
     } catch (err) {
       if (uploaded) await deleteProposalFile(uploaded.path)
       throw err
     }
-    setEditing(null)
+    setFormOpen(false)
   }
 
   async function handleDownload(proposal) {
@@ -243,7 +225,7 @@ function Proposals() {
             <ActionButton
               onClick={() => {
                 setNotice('')
-                setEditing('new')
+                setFormOpen(true)
               }}
             >
               + Gumawa ng Proposal
@@ -303,7 +285,6 @@ function Proposals() {
 
                   <p className={styles.date}>
                     {formatDateTime(p.created_at)}
-                    {wasEdited(p) && <span className={styles.edited}> · na-edit</span>}
                   </p>
 
                   {/* Naka-attach na file — pindutin para i-download */}
@@ -396,27 +377,14 @@ function Proposals() {
                   )}
 
                   {manageable && (
-                    <>
-                      <button
-                        type="button"
-                        className={styles.linkButton}
-                        onClick={() => {
-                          setNotice('')
-                          setEditing(p)
-                        }}
-                        disabled={busy}
-                      >
-                        I-edit
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.linkButton} ${styles.danger}`}
-                        onClick={() => handleDelete(p)}
-                        disabled={busy}
-                      >
-                        {busy ? 'Binubura…' : 'Burahin'}
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      className={`${styles.linkButton} ${styles.danger}`}
+                      onClick={() => handleDelete(p)}
+                      disabled={busy}
+                    >
+                      {busy ? 'Binubura…' : 'Burahin'}
+                    </button>
                   )}
                 </div>
               </li>
@@ -425,9 +393,8 @@ function Proposals() {
         </ul>
       )}
 
-      {editing && (
+      {formOpen && (
         <ProposalForm
-          initial={editing === 'new' ? null : editing}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />

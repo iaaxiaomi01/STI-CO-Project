@@ -139,13 +139,6 @@
   color: #3b4559;
 }
 
-.editedNote {
-  margin-top: 2.5rem;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: #6b7590;
-}
-
 /* ---------- MOBILE ---------- */
 @media (max-width: 640px) {
   .sheet {

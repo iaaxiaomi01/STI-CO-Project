@@ -60,13 +60,8 @@ export async function fetchProposals() {
 }
 
 /* attachment = { path, name, size } galing sa uploadProposalFile()
-   (lib/proposalFiles.js), o null kapag walang file.
-
-     undefined → hindi ginagalaw ang file (sa pag-edit)
-     null      → walang file / alisin ang file
-     { ... }   → bagong file */
+   (lib/proposalFiles.js), o null kapag walang file. */
 function attachmentColumns(attachment) {
-  if (attachment === undefined) return {}
   return {
     attachment_path: attachment?.path ?? null,
     attachment_name: attachment?.name ?? null,
@@ -83,19 +78,6 @@ export async function createProposal({ title, description, attachment = null }) 
 
   if (error) throw error
   return data
-}
-
-export async function updateProposal(id, { title, description, attachment }) {
-  const { data, error } = await supabase
-    .from('proposals')
-    .update({ title, description, ...attachmentColumns(attachment) })
-    .eq('id', id)
-    .select(COLUMNS)
-
-  if (error) throw error
-  /* Walang row na bumalik = hinarang ng RLS (wala kang pahintulot) */
-  if (!data || data.length === 0) throw new Error('not-allowed')
-  return data[0]
 }
 
 export async function deleteProposal(id) {
@@ -140,7 +122,10 @@ export function canReviewProposal(proposal, profile) {
 }
 
 /* ============================================================
-   SINO ANG PWEDENG MAG-EDIT / MAG-DELETE
+   SINO ANG PWEDENG MAG-DELETE
+
+   Wala nang pag-edit ng proposal. Kapag may mali, burahin ito
+   habang naghihintay pa, at gumawa ng bago.
 
    KAPAREHO ito ng can_manage_proposal() sa database. Dito, para
    lang itago ang mga button. Ang database pa rin ang totoong
@@ -148,7 +133,7 @@ export function canReviewProposal(proposal, profile) {
 
      Officer → sariling gawa lang, at habang naghihintay pa.
                Kapag na-approve o na-reject na, hindi na ito
-               mababago o mabubura.
+               mabubura.
    ============================================================ */
 export function canManageProposal(proposal, profile) {
   return Boolean(
@@ -190,10 +175,6 @@ export function formatDateTime(iso) {
     dateStyle: 'medium',
     timeStyle: 'short',
   })
-}
-
-export function wasEdited(proposal) {
-  return Boolean(proposal.updated_by)
 }
 
 /* Ilang proposal ng org mo ang naghihintay pa ng aksyon —

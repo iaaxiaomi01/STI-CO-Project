@@ -58,10 +58,6 @@
   color: var(--color-muted);
 }
 
-.edited {
-  font-style: italic;
-}
-
 .cardActions {
   display: flex;
   align-items: center;
