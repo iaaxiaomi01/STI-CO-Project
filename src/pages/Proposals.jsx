@@ -62,6 +62,10 @@ function Proposals() {
   const { role, profile } = useAuth()
   const { can } = getRoleConfig(role)
 
+  /* SAO (at iba pang staff): proposals ng LAHAT ng org ang
+     nakikita, kaya ipinapakita rin kung aling org ang bawat isa. */
+  const isStaff = (profile?.role_id ?? 0) >= 4
+
   const [proposals, setProposals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -204,7 +208,9 @@ function Proposals() {
         subtitle={
           can.propose
             ? 'Gumawa ng proposal para sa organisasyon mo.'
-            : 'Mga proposal na ipinasa ng mga Officer ng organisasyon.'
+            : isStaff
+              ? 'Mga proposal na ipinasa ng mga Officer ng lahat ng organisasyon.'
+              : 'Mga proposal na ipinasa ng mga Officer ng organisasyon.'
         }
         action={
           can.propose && (
@@ -243,7 +249,9 @@ function Proposals() {
           message={
             can.propose
               ? 'Pindutin ang "+ Gumawa ng Proposal" para gumawa ng unang sulat.'
-              : 'Dito lalabas ang mga proposal na ipapasa ng mga Officer ng organisasyon mo.'
+              : isStaff
+                ? 'Dito lalabas ang mga proposal na ipapasa ng mga Officer ng lahat ng organisasyon.'
+                : 'Dito lalabas ang mga proposal na ipapasa ng mga Officer ng organisasyon mo.'
           }
         />
       )}
@@ -263,6 +271,13 @@ function Proposals() {
                       {statusLabel(p.status)}
                     </span>
                   </div>
+
+                  {isStaff && p.organizations?.name && (
+                    <p className={styles.meta}>
+                      <strong>{p.organizations.name}</strong>
+                      {p.organizations.department && ` · ${p.organizations.department}`}
+                    </p>
+                  )}
 
                   <p className={styles.meta}>
                     Proposed by: <strong>{authorName(p)}</strong> ·{' '}

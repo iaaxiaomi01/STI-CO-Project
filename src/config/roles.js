@@ -314,7 +314,32 @@ export const ROLES = {
        2. irehistro sa PAGE_COMPONENTS sa App.jsx
        3. idagdag sa sidebar nila dito
      ---------------------------------------------------------- */
-  [ROLE_KEYS.SAO]: staffRole('SAO'),
+  /* SAO: tulad ng ibang staff, pero may Proposals din.
+     TUMITINGIN LANG siya (review: false, propose: false) —
+     nakikita niya ang proposals ng LAHAT ng organisasyon,
+     pero walang Approve/Reject at walang paggawa.
+     Kailangan ng ADD_SAO_PROPOSALS_READ.sql sa Supabase,
+     dahil RLS ang nagpapasya kung may makukuha siya. */
+  [ROLE_KEYS.SAO]: (() => {
+    const base = staffRole('SAO')
+    return {
+      ...base,
+      sidebar: [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
+      dashboard: {
+        ...base.dashboard,
+        cards: [
+          base.dashboard.cards[0],
+          {
+            to: '/proposals',
+            icon: '✉',
+            title: 'Proposals',
+            text: 'Tingnan ang mga proposal ng lahat ng organisasyon.',
+          },
+          base.dashboard.cards[1],
+        ],
+      },
+    }
+  })(),
   [ROLE_KEYS.SCHOOL_HEAD]: staffRole('School Head'),
   [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
 }
