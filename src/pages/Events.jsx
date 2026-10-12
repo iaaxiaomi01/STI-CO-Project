@@ -87,6 +87,9 @@ function Events() {
   const [notice, setNotice] = useState('')
   const [filter, setFilter] = useState('all')
 
+  /* Search: title, description, lugar, petsa at gumawa */
+  const [search, setSearch] = useState('')
+
   /* Ang event na ine-edit (bukas ang form) */
   const [editing, setEditing] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -177,18 +180,37 @@ function Events() {
 
   const closeForm = useCallback(() => setEditing(null), [])
 
+  /* Mga event na tumutugma sa search (lahat kapag blangko).
+     Hindi mahalaga ang malaki o maliit na titik. */
+  const query = search.trim().toLowerCase()
+  const matched = useMemo(() => {
+    if (!query) return withStatus
+    return withStatus.filter((e) =>
+      [
+        e.title,
+        e.description,
+        e.location,
+        e.author_name,
+        e.event_date,
+        formatEventDate(e.event_date),
+      ]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(query)),
+    )
+  }, [withStatus, query])
+
+  /* Ang bilang sa bawat tab ay ayon sa search */
   const counts = useMemo(() => {
-    const c = { all: withStatus.length, upcoming: 0, ongoing: 0, completed: 0 }
-    withStatus.forEach((e) => {
+    const c = { all: matched.length, upcoming: 0, ongoing: 0, completed: 0 }
+    matched.forEach((e) => {
       c[e.status] = (c[e.status] ?? 0) + 1
     })
     return c
-  }, [withStatus])
+  }, [matched])
 
   const visible = useMemo(
-    () =>
-      sortEvents(filter === 'all' ? withStatus : withStatus.filter((e) => e.status === filter)),
-    [withStatus, filter],
+    () => sortEvents(filter === 'all' ? matched : matched.filter((e) => e.status === filter)),
+    [matched, filter],
   )
 
   async function handleUpdate(values, imageOptions) {
@@ -273,6 +295,23 @@ function Events() {
             </p>
           )}
 
+          {/* ---------- SEARCH ---------- */}
+          <div className={styles.searchBar}>
+            <input
+              type="search"
+              className={styles.search}
+              placeholder="Hanapin ang event, lugar, petsa, o gumawa…"
+              aria-label="Hanapin ang event"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {query && (
+              <span className={styles.searchCount}>
+                {matched.length} sa {withStatus.length}
+              </span>
+            )}
+          </div>
+
           <div className={styles.filters} role="tablist" aria-label="Salain ayon sa status">
             {FILTERS.map((f) => (
               <button
@@ -291,7 +330,18 @@ function Events() {
 
           {visible.length === 0 ? (
             <p className={styles.loading}>
-              Walang event na {eventStatusLabel(filter).toLowerCase()}.
+              {query ? (
+                <>
+                  Walang event
+                  {filter !== 'all' && ` na ${eventStatusLabel(filter).toLowerCase()}`} na
+                  tumutugma sa &ldquo;{search.trim()}&rdquo;.{' '}
+                  <button type="button" className={styles.clearSearch} onClick={() => setSearch('')}>
+                    I-clear ang search
+                  </button>
+                </>
+              ) : (
+                `Walang event na ${eventStatusLabel(filter).toLowerCase()}.`
+              )}
             </p>
           ) : (
             <ul className={styles.list}>
