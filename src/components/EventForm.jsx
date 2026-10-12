@@ -15,8 +15,9 @@ import styles from './EventForm.module.css'
 /* ============================================================
    EVENT FORM — modal para sa GUMAWA at MAG-EDIT ng event
 
-   Gumawa  → may `proposal`: kinukuha sa proposal ang panimulang
-             Title at Description (pwede pang baguhin)
+   Gumawa  → may `proposal`: BLANGKO ang Title at Description —
+             ang Officer ang magsusulat. Ang pamagat ng proposal
+             ay ipinapakita lang sa itaas bilang sanggunian.
    Edit    → may `initial`: ang kasalukuyang event
 
    Laman: Title, Description, Date, Start Time, End Time,
@@ -31,10 +32,8 @@ import styles from './EventForm.module.css'
 function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
-  const [title, setTitle] = useState(initial?.title ?? proposal?.title ?? '')
-  const [description, setDescription] = useState(
-    initial?.description ?? proposal?.description ?? '',
-  )
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [description, setDescription] = useState(initial?.description ?? '')
   const [eventDate, setEventDate] = useState(initial?.event_date ?? '')
   const [startTime, setStartTime] = useState(toTimeInput(initial?.start_time))
   const [endTime, setEndTime] = useState(toTimeInput(initial?.end_time))
