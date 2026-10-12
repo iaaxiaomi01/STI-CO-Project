@@ -6,6 +6,7 @@ import {
   EVENT_STATUSES,
   authorLabel,
   canJoinEvents,
+  canDeleteEvent,
   canManageEvent,
   computeStatus,
   deleteEvent,
@@ -36,7 +37,8 @@ import styles from './Events.module.css'
      Kaya walang "+ Gumawa ng Event" dito.
 
    Member  → nakikita ang events ng org niya
-   Officer → nakikita lahat; nag-e-edit/nagbubura ng SARILI niyang gawa
+   Officer → nakikita lahat; nag-e-edit ng SARILI niyang gawa,
+             pero HINDI na ito mabubura kapag nagawa na
    Adviser → nakikita lahat; nag-e-edit/nagbubura ng LAHAT sa org
 
    Ang Status (Upcoming/Ongoing/Completed) ay AUTOMATIC —
@@ -52,7 +54,8 @@ import styles from './Events.module.css'
      nasa Attendance page (Officer at Adviser).
 
    Ang RLS sa database ang totoong nagbabantay. Ang
-   canManageEvent() dito ay para lang itago ang mga button.
+   canManageEvent() at canDeleteEvent() dito ay para lang itago
+   ang mga button.
    ============================================================ */
 
 /* Ongoing muna, tapos Upcoming (pinakamalapit una),
@@ -296,6 +299,7 @@ function Events() {
             <ul className={styles.list}>
               {visible.map((ev) => {
                 const manageable = canManageEvent(ev, profile)
+                const deletable = canDeleteEvent(ev, profile)
                 const busy = deletingId === ev.id
                 const isOpen = expanded.has(ev.id)
                 const longText = ev.description.length > 280
@@ -407,14 +411,16 @@ function Events() {
                             >
                               I-edit
                             </button>
-                            <button
-                              type="button"
-                              className={`${styles.linkButton} ${styles.danger}`}
-                              onClick={() => handleDelete(ev)}
-                              disabled={busy}
-                            >
-                              {busy ? 'Binubura…' : 'Burahin'}
-                            </button>
+                            {deletable && (
+                              <button
+                                type="button"
+                                className={`${styles.linkButton} ${styles.danger}`}
+                                onClick={() => handleDelete(ev)}
+                                disabled={busy}
+                              >
+                                {busy ? 'Binubura…' : 'Burahin'}
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

@@ -296,6 +296,10 @@ export async function deleteEvent(event) {
      Gumawa  → Officer na NAGPASA ng proposal, kapag approved
                na, at wala pang event
      Edit    → Officer: sariling gawa · Adviser: lahat sa org
+     Burahin → Adviser LANG (lahat sa org). Kapag nagawa na ng
+               Officer ang event, hindi na niya ito mabubura —
+               tingnan ang "events_delete_manage" sa
+               EVENT_DELETE_ADVISER_ONLY.sql.
    ============================================================ */
 
 /* Ang event na naka-kabit sa proposal (galing sa join sa
@@ -324,6 +328,15 @@ export function canManageEvent(event, profile) {
   if (profile.role_id === 3) return true
   if (profile.role_id === 2) return event.author_id === profile.id
   return false
+}
+
+/* Burahin: Adviser lang ng org na iyon */
+export function canDeleteEvent(event, profile) {
+  return Boolean(
+    profile?.is_active &&
+      profile.role_id === 3 &&
+      event.organization_id === profile.organization_id,
+  )
 }
 
 /* ---------- PAG-FORMAT ---------- */
