@@ -20,17 +20,22 @@ import {
 import {
   MODE_IN,
   MODE_OUT,
+  PHASE_BEFORE,
+  PHASE_CLOSED,
+  PHASE_IN,
+  PHASE_ONGOING,
+  PHASE_OUT,
   attendanceErrorMessage,
-  attendanceOpensAt,
+  attendancePhase,
+  attendanceWindows,
   canScanAttendance,
   canShowQr,
   fetchAttendanceCounts,
   fetchEventAttendance,
   fetchMyAttendance,
   formatClock,
-  isAttendanceOpen,
-  isManualOpen,
   manualAttendance,
+  modeForPhase,
 } from '../lib/attendance.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
@@ -60,11 +65,15 @@ import styles from './Attendance.module.css'
    gaya ng sa Events page.
 
    QR ATTENDANCE (Time In / Time Out) — lib/attendance.js
-     "Sinalihan ko"       → "Ipakita ang QR" (30 min bago ang
-                            Start hanggang 60 min lampas End)
+     "Sinalihan ko"       → "Ipakita ang QR"
      "Sasali bawat event" → "I-scan" (Officer/Adviser), at
                             manual na Time In/Out sa listahan
                             para sa walang phone
+
+     Oras (pareho sa QR, scan at manual):
+       30 min bago ang Start → Start   Time In lang
+       Start → End                     sarado (nagaganap)
+       End → 1 oras pagkatapos         Time Out lang
    ============================================================ */
 
 const TAB_MINE = 'mine'
@@ -328,11 +337,44 @@ function clockOfKey(key) {
   return formatTime(key.slice(11))
 }
 
+/* Ano ang ipapakita sa tabi ng Time In / Time Out mo.
+   Ibinabalik ang { qr: 'Time In' | 'Time Out' | null, hint } */
+function myAttendanceState(event, record, now) {
+  const phase = attendancePhase(event, now)
+  const w = attendanceWindows(event)
+  const hasIn = Boolean(record?.time_in)
+  const hasOut = Boolean(record?.time_out)
+  const outRange = `${clockOfKey(w.outOpens)} – ${clockOfKey(w.outCloses)}`
+
+  if (hasOut) return { qr: null, hint: '' }
+
+  switch (phase) {
+    case PHASE_BEFORE:
+      return {
+        qr: null,
+        hint: `Bubukas ang QR para sa Time In ng ${clockOfKey(w.inOpens)} hanggang ${clockOfKey(w.inCloses)}`,
+      }
+    case PHASE_IN:
+      return hasIn
+        ? { qr: null, hint: `Naka-Time In ka na. Time Out: ${outRange}` }
+        : { qr: 'Time In', hint: `Hanggang ${clockOfKey(w.inCloses)} lang ang Time In` }
+    case PHASE_ONGOING:
+      return hasIn
+        ? { qr: null, hint: `Nagaganap ang event. Time Out: ${outRange}` }
+        : { qr: null, hint: 'Hindi ka nakapag-Time In' }
+    case PHASE_OUT:
+      return hasIn
+        ? { qr: 'Time Out', hint: `Hanggang ${clockOfKey(w.outCloses)} lang ang Time Out` }
+        : { qr: null, hint: 'Hindi ka nakapag-Time In' }
+    case PHASE_CLOSED:
+    default:
+      return { qr: null, hint: hasIn ? 'Hindi ka nakapag-Time Out' : 'Hindi ka nakapag-Time In' }
+  }
+}
+
 /* Time In / Time Out mo, at ang button na "Ipakita ang QR" */
 function MyAttendanceLine({ event, record, now, hasQr, onShowQr }) {
-  const open = isAttendanceOpen(event, now)
-  const complete = Boolean(record?.time_out)
-  const notYet = now < attendanceOpensAt(event)
+  const { qr, hint } = myAttendanceState(event, record, now)
 
   return (
     <div className={styles.attendLine}>
@@ -343,21 +385,13 @@ function MyAttendanceLine({ event, record, now, hasQr, onShowQr }) {
         Out: {record?.time_out ? formatClock(record.time_out) : '—'}
       </span>
 
-      {hasQr && open && !complete && (
+      {hasQr && qr && (
         <button type="button" className={styles.qrBtn} onClick={onShowQr}>
-          ▣ Ipakita ang QR
+          ▣ Ipakita ang QR ({qr})
         </button>
       )}
 
-      {hasQr && notYet && (
-        <span className={styles.hintSmall}>
-          Lalabas ang QR mo ng {clockOfKey(attendanceOpensAt(event))}
-        </span>
-      )}
-
-      {!open && !notYet && !record?.time_in && (
-        <span className={styles.hintSmall}>Hindi ka nakapag-Time In</span>
-      )}
+      {hasQr && hint && <span className={styles.hintSmall}>{hint}</span>}
     </div>
   )
 }
@@ -514,8 +548,18 @@ function ParticipantsPerEvent({ profile }) {
             const isOpen = openIds.has(ev.id)
             const isDone = ev.status === 'completed'
             const att = attCounts[ev.id] ?? { timedIn: 0, timedOut: 0 }
-            const scanOpen = canScan && total > 0 && isAttendanceOpen(ev, now)
+            const phase = attendancePhase(ev, now)
+            const scanMode = modeForPhase(phase)
+            const scanOpen = canScan && total > 0 && scanMode !== null
             const showAtt = att.timedIn > 0 || ev.status !== 'upcoming'
+            const w = attendanceWindows(ev)
+            const scanHint =
+              canScan && total > 0
+                ? {
+                    [PHASE_BEFORE]: `Time In: ${clockOfKey(w.inOpens)} – ${clockOfKey(w.inCloses)}`,
+                    [PHASE_ONGOING]: `Sarado habang nagaganap. Time Out: ${clockOfKey(w.outOpens)} – ${clockOfKey(w.outCloses)}`,
+                  }[phase] ?? ''
+                : ''
 
             return (
               <li key={ev.id} className={styles.card}>
@@ -554,9 +598,10 @@ function ParticipantsPerEvent({ profile }) {
                         className={styles.scanBtn}
                         onClick={() => setScanEvent(ev)}
                       >
-                        ▣ I-scan ang QR
+                        ▣ I-scan ang {scanMode === MODE_IN ? 'Time In' : 'Time Out'}
                       </button>
                     )}
+                    {scanHint && <span className={styles.hintSmall}>{scanHint}</span>}
                     {total > 0 && (
                       <button
                         type="button"
@@ -605,8 +650,9 @@ function ParticipantsPerEvent({ profile }) {
    LISTAHAN NG SASALI + TIME IN / TIME OUT
 
    Para sa walang phone o patay ang phone: may "Time In" at
-   "Time Out" na button bawat tao (Officer/Adviser), hanggang 24
-   oras pagkatapos ng event. Nakatala sa database na "manual"
+   "Time Out" na button bawat tao (Officer/Adviser). PAREHO ang
+   oras sa QR: Time In bago magsimula, Time Out pagkatapos ng
+   event (hanggang 1 oras). Nakatala sa database na "manual"
    ito at kung sino ang gumawa.
    ============================================================ */
 function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
@@ -618,7 +664,8 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
   const [busyId, setBusyId] = useState(null)
   const [actionError, setActionError] = useState('')
 
-  const manualOpen = canManual && isManualOpen(event, now)
+  /* MODE_IN, MODE_OUT, o null (sarado) */
+  const manualMode = canManual ? modeForPhase(attendancePhase(event, now)) : null
 
   useEffect(() => {
     let active = true
@@ -686,6 +733,12 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
           const isMe = p.profile_id === myId
           const busy = busyId === p.profile_id
 
+          /* Time In: wala pang Time In · Time Out: may Time In na, wala pang Out */
+          const showManual =
+            !isMe &&
+            ((manualMode === MODE_IN && !a?.time_in) ||
+              (manualMode === MODE_OUT && a?.time_in && !a?.time_out))
+
           return (
             <li key={p.profile_id} className={styles.person}>
               <span className={styles.num}>{i + 1}</span>
@@ -705,14 +758,14 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
                 </span>
               </span>
 
-              {manualOpen && !isMe && !a?.time_out && (
+              {showManual && (
                 <button
                   type="button"
                   className={styles.manualBtn}
                   disabled={busy}
-                  onClick={() => handleManual(p, a?.time_in ? MODE_OUT : MODE_IN)}
+                  onClick={() => handleManual(p, manualMode)}
                 >
-                  {busy ? '…' : a?.time_in ? 'Time Out' : 'Time In'}
+                  {busy ? '…' : manualMode === MODE_IN ? 'Time In' : 'Time Out'}
                 </button>
               )}
 

@@ -3,8 +3,9 @@ import { supabase } from './supabaseClient.js'
 /* ============================================================
    ATTENDANCE (QR) — lahat ng pakikipag-usap sa database
 
-   Tingnan ang supabase/QR_ATTENDANCE.sql para sa buong
-   paliwanag. Sa maikling salita:
+   Tingnan ang supabase/QR_ATTENDANCE.sql at
+   ATTENDANCE_TIME_WINDOWS.sql para sa buong paliwanag.
+   Sa maikling salita:
 
      Member/Officer (nag-Join) → "Ipakita ang QR"
        issueAttendanceToken() bawat ~25 segundo. Ang token ay
@@ -65,24 +66,52 @@ function addMinutes(dateStr, timeStr, minutes) {
 const OPEN_BEFORE_START = 30
 const CLOSE_AFTER_END = 60
 
-/* Bukas ba ang QR / pag-scan ngayon?
-   30 min bago ang Start hanggang 60 min lampas End */
+/* ============================================================
+   MGA YUGTO NG ATTENDANCE (pareho sa QR at manual)
+
+     Start − 30 min → Start          PHASE_IN      Time In lang
+     Start          → End            PHASE_ONGOING sarado (nagaganap)
+     End            → End + 60 min   PHASE_OUT     Time Out lang
+     bago / lampas niyan             PHASE_BEFORE / PHASE_CLOSED
+
+   KAPAREHO ng attendance_phase() sa ATTENDANCE_TIME_WINDOWS.sql.
+   ============================================================ */
+export const PHASE_BEFORE = 'before'
+export const PHASE_IN = 'in'
+export const PHASE_ONGOING = 'ongoing'
+export const PHASE_OUT = 'out'
+export const PHASE_CLOSED = 'closed'
+
+/* Mga oras ng bawat hangganan, "YYYY-MM-DD HH:MM" */
+export function attendanceWindows(event) {
+  return {
+    inOpens: addMinutes(event.event_date, event.start_time, -OPEN_BEFORE_START),
+    inCloses: addMinutes(event.event_date, event.start_time, 0),
+    outOpens: addMinutes(event.event_date, event.end_time, 0),
+    outCloses: addMinutes(event.event_date, event.end_time, CLOSE_AFTER_END),
+  }
+}
+
+export function attendancePhase(event, now) {
+  const w = attendanceWindows(event)
+  if (now < w.inOpens) return PHASE_BEFORE
+  if (now < w.inCloses) return PHASE_IN
+  if (now < w.outOpens) return PHASE_ONGOING
+  if (now < w.outCloses) return PHASE_OUT
+  return PHASE_CLOSED
+}
+
+/* Bukas ba ang QR / pag-scan ngayon? (Time In o Time Out) */
 export function isAttendanceOpen(event, now) {
-  const open = addMinutes(event.event_date, event.start_time, -OPEN_BEFORE_START)
-  const close = addMinutes(event.event_date, event.end_time, CLOSE_AFTER_END)
-  return now >= open && now <= close
+  const phase = attendancePhase(event, now)
+  return phase === PHASE_IN || phase === PHASE_OUT
 }
 
-/* Hindi pa bukas (para sa mensaheng "magbubukas sa …") */
-export function attendanceOpensAt(event) {
-  return addMinutes(event.event_date, event.start_time, -OPEN_BEFORE_START)
-}
-
-/* Pwede pa bang mag-manual (hanggang 24 oras lampas End) */
-export function isManualOpen(event, now) {
-  const open = addMinutes(event.event_date, event.start_time, -OPEN_BEFORE_START)
-  const close = addMinutes(event.event_date, event.end_time, 24 * 60)
-  return now >= open && now <= close
+/* Ang mode na pwede ngayon: MODE_IN, MODE_OUT, o null kung sarado */
+export function modeForPhase(phase) {
+  if (phase === PHASE_IN) return MODE_IN
+  if (phase === PHASE_OUT) return MODE_OUT
+  return null
 }
 
 /* ---------- QR ---------- */

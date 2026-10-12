@@ -3,19 +3,29 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import {
   MODE_IN,
   MODE_OUT,
+  PHASE_BEFORE,
   attendanceErrorMessage,
+  attendancePhase,
+  attendanceWindows,
   formatClock,
+  modeForPhase,
   parseQrValue,
   scanAttendance,
 } from '../lib/attendance.js'
+import { formatTime, nowKey } from '../lib/events.js'
 import { toTitleCase } from '../lib/profile.js'
 import styles from './AttendanceDialog.module.css'
 
 /* ============================================================
    SCANNER — para sa Officer at Adviser
 
-   Binubuksan ang camera ng phone. Pumili muna kung "Time In" o
-   "Time Out", tapos itapat sa QR ng miyembro.
+   Binubuksan ang camera ng phone, tapos itapat sa QR ng miyembro.
+
+   Ang ORAS ang pumipili ng mode — hindi na ito pinipili:
+     30 min bago ang Start → Start   Time In
+     Start → End                     sarado (nagaganap)
+     End → 1 oras pagkatapos         Time Out
+   Kapag sarado, hindi tumatanggap ng scan.
 
    Ang database ang nagsusuri (scan_attendance):
      - hindi expired ang QR at para sa event na ito
@@ -35,6 +45,24 @@ const PAUSE_AFTER_SCAN_MS = 1500
 const SAME_QR_IGNORE_MS = 6000
 
 const MODE_LABEL = { [MODE_IN]: 'Time In', [MODE_OUT]: 'Time Out' }
+const PHASE_CHECK_MS = 5000
+
+/* "2026-10-04 08:30" → "8:30 AM" */
+function clockOfKey(key) {
+  return formatTime(key.slice(11))
+}
+
+/* Mensahe kapag sarado ang pag-scan */
+function closedMessage(event, phase) {
+  const w = attendanceWindows(event)
+  if (phase === PHASE_BEFORE) {
+    return `Hindi pa bukas. Time In mula ${clockOfKey(w.inOpens)} hanggang ${clockOfKey(w.inCloses)}.`
+  }
+  if (nowKey() < w.outOpens) {
+    return `Nagaganap ang event — sarado ang Time In at Time Out. Bubukas ang Time Out ng ${clockOfKey(w.outOpens)} hanggang ${clockOfKey(w.outCloses)}.`
+  }
+  return 'Sarado na ang attendance para sa event na ito.'
+}
 
 /* Iisang camera lang sa buong app; dito pumipila ang
    pagbukas at pagsara */
@@ -61,7 +89,9 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
   const rawId = useId()
   const regionId = `qr-region-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`
 
-  const [mode, setMode] = useState(MODE_IN)
+  const [phase, setPhase] = useState(() => attendancePhase(event, nowKey()))
+  /* MODE_IN, MODE_OUT, o null kapag sarado */
+  const mode = modeForPhase(phase)
   const [cameraError, setCameraError] = useState('')
   const [cameraReady, setCameraReady] = useState(false)
   const [result, setResult] = useState(null) // { kind, title, text }
@@ -81,7 +111,14 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
     modeRef.current = mode
     /* Bagong mode = pwedeng i-scan ulit ang parehong QR */
     lastRef.current = { text: '', at: 0 }
+    setResult(null)
   }, [mode])
+
+  /* Bantayan ang oras para lumipat ang mode nang kusa */
+  useEffect(() => {
+    const timer = setInterval(() => setPhase(attendancePhase(event, nowKey())), PHASE_CHECK_MS)
+    return () => clearInterval(timer)
+  }, [event])
 
   const handleDecoded = useCallback(
     async (text) => {
@@ -90,6 +127,16 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
       const now = Date.now()
       if (text === lastRef.current.text && now - lastRef.current.at < SAME_QR_IGNORE_MS) return
       lastRef.current = { text, at: now }
+
+      const currentMode = modeRef.current
+      if (!currentMode) {
+        setResult({
+          kind: 'error',
+          title: '✗ Sarado ang attendance',
+          text: closedMessage(event, attendancePhase(event, nowKey())),
+        })
+        return
+      }
 
       const token = parseQrValue(text)
       if (!token) {
@@ -102,7 +149,6 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
       }
 
       busyRef.current = true
-      const currentMode = modeRef.current
       setResult({ kind: 'busy', title: 'Sinusuri…', text: '' })
 
       try {
@@ -136,7 +182,7 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
         }, PAUSE_AFTER_SCAN_MS)
       }
     },
-    [event.id],
+    [event],
   )
 
   /* Ang callback ay laging pinakabago, pero hindi nire-restart
@@ -234,25 +280,20 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
           </button>
         </div>
 
-        <div className={styles.modes} role="radiogroup" aria-label="Uri ng scan">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === MODE_IN}
+        {/* Hindi na pinipindot — ipinapakita lang kung alin ang bukas ngayon */}
+        <div className={styles.modes} aria-label="Uri ng scan ngayon">
+          <span
             className={`${styles.modeBtn} ${mode === MODE_IN ? styles.modeIn : ''}`}
-            onClick={() => setMode(MODE_IN)}
+            aria-current={mode === MODE_IN ? 'true' : undefined}
           >
             Time In
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === MODE_OUT}
+          </span>
+          <span
             className={`${styles.modeBtn} ${mode === MODE_OUT ? styles.modeOut : ''}`}
-            onClick={() => setMode(MODE_OUT)}
+            aria-current={mode === MODE_OUT ? 'true' : undefined}
           >
             Time Out
-          </button>
+          </span>
         </div>
 
         <div className={styles.camera}>
@@ -268,8 +309,10 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
               <strong>{result.title}</strong>
               {result.text}
             </>
-          ) : (
+          ) : mode ? (
             <>Itapat ang camera sa QR ng miyembro. Mode ngayon: {MODE_LABEL[mode]}.</>
+          ) : (
+            <>{closedMessage(event, phase)}</>
           )}
         </div>
 

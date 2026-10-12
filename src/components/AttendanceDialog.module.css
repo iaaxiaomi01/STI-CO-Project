@@ -179,6 +179,10 @@
   color: var(--color-muted);
   font-size: 0.92rem;
   font-weight: 700;
+  text-align: center;
+  /* Hindi na pinipindot — ang oras ang pumipili ng mode */
+  cursor: default;
+  user-select: none;
 }
 
 .modeIn {

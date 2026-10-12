@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import {
+  MODE_IN,
+  MODE_OUT,
   QR_REFRESH_SECONDS,
   attendanceErrorMessage,
+  attendancePhase,
   fetchEventAttendance,
   formatClock,
   issueAttendanceToken,
+  modeForPhase,
   qrValueFor,
 } from '../lib/attendance.js'
+import { nowKey } from '../lib/events.js'
 import styles from './AttendanceDialog.module.css'
 
 /* ============================================================
@@ -23,12 +28,23 @@ import styles from './AttendanceDialog.module.css'
 
    Habang bukas, sinusubukang pigilan ang pag-dim/pag-lock ng
    screen (Wake Lock) para hindi mawala ang QR sa pila.
+
+   ORAS: Time In mula 30 min bago ang Start hanggang Start;
+   sarado habang nagaganap; Time Out mula End hanggang 1 oras.
+   Kapag lumipat ang yugto habang bukas ito (hal. nagsimula na
+   ang event), kukuha agad ulit — at ang database na ang
+   magsasabing sarado na, kaya mawawala agad ang QR.
    ============================================================ */
+
+const MODE_LABEL = { [MODE_IN]: 'Time In', [MODE_OUT]: 'Time Out' }
+const PHASE_CHECK_MS = 5000
 function MyQrDialog({ event, profileId, onClose }) {
   const [token, setToken] = useState(null)
   const [error, setError] = useState('')
   const [secondsLeft, setSecondsLeft] = useState(QR_REFRESH_SECONDS)
   const [mine, setMine] = useState(null)
+  const [phase, setPhase] = useState(() => attendancePhase(event, nowKey()))
+  const mode = modeForPhase(phase)
 
   /* Kapag may error na galing sa database (hal. "Kumpleto na
      ang attendance mo"), huminto na sa pag-refresh */
@@ -81,6 +97,22 @@ function MyQrDialog({ event, profileId, onClose }) {
     if (secondsLeft === 0) refresh()
   }, [secondsLeft, refresh])
 
+  /* Bantayan ang oras. Kapag nagbago ang yugto (hal. Time In →
+     nagaganap), kumuha agad ng bago para hindi na makita ang
+     QR na hindi na tatanggapin. */
+  const phaseRef = useRef(phase)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const next = attendancePhase(event, nowKey())
+      if (next === phaseRef.current) return
+      phaseRef.current = next
+      setPhase(next)
+      stoppedRef.current = false
+      refresh()
+    }, PHASE_CHECK_MS)
+    return () => clearInterval(timer)
+  }, [event, refresh])
+
   /* Kapag bumalik sa app (hal. galing sa ibang tab), kumuha
      agad ng bago — baka luma na ang nakikita */
   useEffect(() => {
@@ -130,7 +162,7 @@ function MyQrDialog({ event, profileId, onClose }) {
         <div className={styles.header}>
           <div>
             <h2 id="my-qr-title" className={styles.heading}>
-              Ang QR mo
+              Ang QR mo{mode ? ` · ${MODE_LABEL[mode]}` : ''}
             </h2>
             <p className={styles.sub}>{event.title}</p>
           </div>
