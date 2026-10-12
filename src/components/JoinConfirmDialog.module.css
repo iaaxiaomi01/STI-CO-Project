@@ -1,0 +1,67 @@
+/* Join confirm dialog — mas makitid kaysa sa ibang form */
+.modal {
+  max-width: 460px;
+}
+
+/* ---------- Detalye ng event ---------- */
+.event {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.details {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+}
+
+.details div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.details dt {
+  min-width: 3.5rem;
+  color: var(--color-muted);
+}
+
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Paalala: hindi na makakaalis ---------- */
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid #b25e09;
+  border-radius: 0 10px 10px 0;
+  background-color: #fff4e8;
+  font-size: 0.88rem;
+  color: #5c3404;
+}
+
+.warningIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background-color: #b25e09;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}

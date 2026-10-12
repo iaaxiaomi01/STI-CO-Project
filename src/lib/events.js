@@ -414,9 +414,11 @@ export function wasEdited(event) {
    Table: public.event_participants
      Join    → insert (event_id lang ang ipinapadala; ang pangalan,
                role at org ay itinatakda ng trigger sa database)
-     Umalis  → delete ng sariling row
+     Umalis  → WALA NA. Kapag nakasali, hindi na makakaalis
+               (EVENT_JOIN_NO_LEAVE.sql). May paalala nito sa
+               JoinConfirmDialog bago sumali.
 
-   Parehong hinaharang ng database kapag tapos na ang event.
+   Hinaharang ng database ang Join kapag tapos na ang event.
 
    Sino ang nakakakita:
      Member           → sariling join lang, at ang BILANG ng sasali
@@ -463,20 +465,6 @@ export async function joinEvent(eventId) {
   if (error && error.code !== '23505') throw error
 }
 
-export async function leaveEvent(eventId, profileId) {
-  const { data, error } = await supabase
-    .from('event_participants')
-    .delete()
-    .eq('event_id', eventId)
-    .eq('profile_id', profileId)
-    .select('event_id')
-
-  if (error) throw error
-  /* Walang nabura = tapos na ang event, naka-Time In ka na (QR
-     attendance), o hindi ka naman nakasali */
-  if (!data || data.length === 0) throw new Error('not-allowed')
-}
-
 export async function fetchParticipants(eventId) {
   const { data, error } = await supabase
     .from('event_participants')
@@ -496,9 +484,6 @@ export function participantLabel(p) {
 }
 
 export function joinErrorMessage(err) {
-  if (err?.message === 'not-allowed') {
-    return 'Hindi na pwedeng umalis — tapos na ang event, o naka-Time In ka na.'
-  }
   /* Galing sa trigger — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
   /* RLS: tapos na ang event o wala kang pahintulot */

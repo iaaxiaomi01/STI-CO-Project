@@ -16,9 +16,7 @@ import {
   fetchMyJoinedEventIds,
   formatEventDate,
   formatTime,
-  joinErrorMessage,
   joinEvent,
-  leaveEvent,
   nowKey,
   updateEvent,
   wasEdited,
@@ -26,6 +24,7 @@ import {
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
+import JoinConfirmDialog from '../components/JoinConfirmDialog.jsx'
 import styles from './Events.module.css'
 
 /* ============================================================
@@ -50,7 +49,7 @@ import styles from './Events.module.css'
    30 segundo habang bukas ang page.
 
    JOIN:
-     Member at Officer → may "Join" / "Umalis" habang hindi
+     Member at Officer → may "Join" habang hindi
                           pa tapos ang event. Pagka-Join,
                           lilipat sa Attendance tab.
      Walang bilang ng sasali dito para sa kahit anong role.
@@ -117,6 +116,9 @@ function Events() {
   const [joinedIds, setJoinedIds] = useState(() => new Set())
   const [joiningId, setJoiningId] = useState(null)
 
+  /* Aling event ang nasa "Sasali ka ba?" na dialog */
+  const [confirmingJoin, setConfirmingJoin] = useState(null)
+
   const profileId = profile?.id
   const navigate = useNavigate()
 
@@ -141,41 +143,33 @@ function Events() {
     }
   }, [profileId])
 
-  async function handleJoin(event) {
+  /* "Join" → bubuksan muna ang JoinConfirmDialog. Doon pa lang
+     talagang sasali, pagkapindot ng "Oo, mag-Join". */
+  function openJoin(event) {
     setNotice('')
+    setConfirmingJoin(event)
+  }
+
+  /* Galing sa JoinConfirmDialog. Kapag nag-throw, doon lalabas
+     ang error at mananatiling bukas ang dialog.
+
+     WALANG "Umalis": kapag nakasali na, hindi na makakaalis
+     (hinaharang din ng database — EVENT_JOIN_NO_LEAVE.sql). */
+  async function handleJoin() {
+    const event = confirmingJoin
     setJoiningId(event.id)
     try {
       await joinEvent(event.id)
-      /* Pagka-Join, lipat sa Attendance kung saan nakalista
-         ang mga sinalihan mong event */
-      navigate('/attendance', { state: { joinedTitle: event.title } })
     } catch (err) {
-      console.error('Hindi nakasali:', err)
-      setNotice(joinErrorMessage(err))
       setJoiningId(null)
+      throw err
     }
+    /* Pagka-Join, lipat sa Attendance kung saan nakalista
+       ang mga sinalihan mong event */
+    navigate('/attendance', { state: { joinedTitle: event.title } })
   }
 
-  async function handleLeave(event) {
-    if (!window.confirm(`Umalis sa "${event.title}"?`)) return
-
-    setNotice('')
-    setJoiningId(event.id)
-    try {
-      await leaveEvent(event.id, profileId)
-      setJoinedIds((current) => {
-        const next = new Set(current)
-        next.delete(event.id)
-        return next
-      })
-      setNotice(`Umalis ka na sa "${event.title}".`)
-    } catch (err) {
-      console.error('Hindi nakaalis:', err)
-      setNotice(joinErrorMessage(err))
-    } finally {
-      setJoiningId(null)
-    }
-  }
+  const closeJoin = useCallback(() => setConfirmingJoin(null), [])
 
   useEffect(() => {
     load()
@@ -310,7 +304,7 @@ function Events() {
                 const joined = joinedIds.has(ev.id)
                 const isDone = ev.status === 'completed'
                 const joinBusy = joiningId === ev.id
-                /* May Join, "Nakasali ka" o Umalis na ipapakita */
+                /* May Join o "Nakasali ka" na ipapakita */
                 const hasJoinAction = joinable && (joined || !isDone)
 
                 return (
@@ -371,7 +365,7 @@ function Events() {
                             <button
                               type="button"
                               className={styles.joinButton}
-                              onClick={() => handleJoin(ev)}
+                              onClick={() => openJoin(ev)}
                               disabled={joinBusy}
                             >
                               {joinBusy ? 'Sumasali…' : 'Join'}
@@ -381,16 +375,6 @@ function Events() {
                           {joinable && joined && (
                             <span className={styles.joinedGroup}>
                               <span className={styles.joinedBadge}>✓ Nakasali ka</span>
-                              {!isDone && (
-                                <button
-                                  type="button"
-                                  className={`${styles.linkButton} ${styles.danger}`}
-                                  onClick={() => handleLeave(ev)}
-                                  disabled={joinBusy}
-                                >
-                                  {joinBusy ? 'Sandali…' : 'Umalis'}
-                                </button>
-                              )}
                             </span>
                           )}
                         </div>
@@ -440,6 +424,10 @@ function Events() {
       )}
 
       {editing && <EventForm initial={editing} onSubmit={handleUpdate} onCancel={closeForm} />}
+
+      {confirmingJoin && (
+        <JoinConfirmDialog event={confirmingJoin} onConfirm={handleJoin} onCancel={closeJoin} />
+      )}
     </>
   )
 }
