@@ -296,6 +296,9 @@ export async function deleteEvent(event) {
      Gumawa  → Officer na NAGPASA ng proposal, kapag approved
                na, at wala pang event
      Edit    → Officer: sariling gawa · Adviser: lahat sa org
+               HANGGANG 30 minuto bago magsimula ang event.
+               Pagkatapos noon, wala nang "I-edit" — tingnan ang
+               canEditEvent() at EVENT_EDIT_LOCK.sql.
      Burahin → Adviser LANG (lahat sa org). Kapag nagawa na ng
                Officer ang event, hindi na niya ito mabubura —
                tingnan ang "events_delete_manage" sa
@@ -328,6 +331,33 @@ export function canManageEvent(event, profile) {
   if (profile.role_id === 3) return true
   if (profile.role_id === 2) return event.author_id === profile.id
   return false
+}
+
+/* ---------- PAG-LOCK NG PAG-EDIT ----------
+   Ilang minuto bago mag-Start Time hindi na mae-edit ang
+   event. Kapareho ito ng nasa events_before_update() sa
+   database (EVENT_EDIT_LOCK.sql) — kapag binago mo ang isa,
+   baguhin mo rin ang isa. */
+export const EDIT_LOCK_MINUTES = 30
+
+/* "2026-12-01 08:30" — mula rito, hindi na mae-edit ang event
+   (Start Time bawas 30 minuto, oras ng Pilipinas). Pareho ang
+   anyo ng nowKey(), kaya pwedeng ikumpara bilang text. */
+export function editLockKey(event) {
+  const [y, m, d] = event.event_date.split('-').map(Number)
+  const [h, min] = event.start_time.split(':').map(Number)
+  const t = new Date(Date.UTC(y, m - 1, d, h, min) - EDIT_LOCK_MINUTES * 60 * 1000)
+  const pad = (n) => String(n).padStart(2, '0')
+  return (
+    `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())} ` +
+    `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`
+  )
+}
+
+/* Mae-edit pa ba? Kailangang may pahintulot ka (canManageEvent)
+   AT mahigit 30 minuto pa bago magsimula ang event. */
+export function canEditEvent(event, profile, now = nowKey()) {
+  return canManageEvent(event, profile) && now < editLockKey(event)
 }
 
 /* Burahin: Adviser lang ng org na iyon */

@@ -7,7 +7,7 @@ import {
   authorLabel,
   canJoinEvents,
   canDeleteEvent,
-  canManageEvent,
+  canEditEvent,
   computeStatus,
   deleteEvent,
   eventErrorMessage,
@@ -41,6 +41,10 @@ import styles from './Events.module.css'
              pero HINDI na ito mabubura kapag nagawa na
    Adviser → nakikita lahat; nag-e-edit/nagbubura ng LAHAT sa org
 
+   I-EDIT: nawawala ang button 30 minuto bago magsimula ang
+   event (kusa, dahil sa "now" na nire-refresh bawat 30 segundo).
+   Hinaharang din ito ng database (EVENT_EDIT_LOCK.sql).
+
    Ang Status (Upcoming/Ongoing/Completed) ay AUTOMATIC —
    kinukuwenta mula sa Date at oras, at nire-refresh bawat
    30 segundo habang bukas ang page.
@@ -54,7 +58,7 @@ import styles from './Events.module.css'
      nasa Attendance page (Officer at Adviser).
 
    Ang RLS sa database ang totoong nagbabantay. Ang
-   canManageEvent() at canDeleteEvent() dito ay para lang itago
+   canEditEvent() at canDeleteEvent() dito ay para lang itago
    ang mga button.
    ============================================================ */
 
@@ -298,7 +302,7 @@ function Events() {
           ) : (
             <ul className={styles.list}>
               {visible.map((ev) => {
-                const manageable = canManageEvent(ev, profile)
+                const editable = canEditEvent(ev, profile, now)
                 const deletable = canDeleteEvent(ev, profile)
                 const busy = deletingId === ev.id
                 const isOpen = expanded.has(ev.id)
@@ -398,19 +402,21 @@ function Events() {
                           {wasEdited(ev) && <span className={styles.edited}> · na-edit</span>}
                         </p>
 
-                        {manageable && (
+                        {(editable || deletable) && (
                           <div className={styles.actions}>
-                            <button
-                              type="button"
-                              className={styles.linkButton}
-                              onClick={() => {
-                                setNotice('')
-                                setEditing(ev)
-                              }}
-                              disabled={busy}
-                            >
-                              I-edit
-                            </button>
+                            {editable && (
+                              <button
+                                type="button"
+                                className={styles.linkButton}
+                                onClick={() => {
+                                  setNotice('')
+                                  setEditing(ev)
+                                }}
+                                disabled={busy}
+                              >
+                                I-edit
+                              </button>
+                            )}
                             {deletable && (
                               <button
                                 type="button"
