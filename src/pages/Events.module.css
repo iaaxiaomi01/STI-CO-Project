@@ -192,6 +192,12 @@
   color: #3b4660;
 }
 
+/* Member lang: tapos na ang event at hindi siya nag-Join */
+.badge_missed {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
 .title {
   margin: 0.6rem 0 0.75rem;
   font-size: 1.12rem;
@@ -343,4 +349,10 @@
   color: #1c6b3f;
   font-size: 0.82rem;
   font-weight: 700;
+}
+/* "Natapos ang event nang hindi ka nakasali." (Member) */
+.missedNote {
+  font-size: 0.85rem;
+  color: #b42318;
+  font-weight: 600;
 }

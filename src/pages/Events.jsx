@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
   EVENT_STATUSES,
+  MISSED_STATUS,
   authorLabel,
   canJoinEvents,
   canDeleteEvent,
@@ -48,6 +49,11 @@ import styles from './Events.module.css'
    kinukuwenta mula sa Date at oras, at nire-refresh bawat
    30 segundo habang bukas ang page.
 
+   MISSED (Member lang): kapag Completed na ang event at HINDI
+   siya nag-Join, "Missed" ang ipinapakita imbes na "Completed",
+   at may sarili itong tab. Display lang ito — walang
+   binabago sa database.
+
    JOIN:
      Member at Officer → may "Join" habang hindi
                           pa tapos ang event. Pagka-Join,
@@ -62,8 +68,8 @@ import styles from './Events.module.css'
    ============================================================ */
 
 /* Ongoing muna, tapos Upcoming (pinakamalapit una),
-   tapos Completed (pinakabago una) */
-const STATUS_ORDER = { ongoing: 0, upcoming: 1, completed: 2 }
+   tapos Completed at Missed (pinakabago una) */
+const STATUS_ORDER = { ongoing: 0, upcoming: 1, completed: 2, missed: 2 }
 
 function sortEvents(list) {
   return [...list].sort((a, b) => {
@@ -71,11 +77,18 @@ function sortEvents(list) {
     if (byStatus !== 0) return byStatus
     const ka = `${a.event_date} ${a.start_time}`
     const kb = `${b.event_date} ${b.start_time}`
-    return a.status === 'completed' ? kb.localeCompare(ka) : ka.localeCompare(kb)
+    return STATUS_ORDER[a.status] === 2 ? kb.localeCompare(ka) : ka.localeCompare(kb)
   })
 }
 
 const FILTERS = [{ value: 'all', label: 'Lahat' }, ...EVENT_STATUSES]
+
+/* Member: may dagdag na tab na "Missed" */
+const MEMBER_FILTERS = [...FILTERS, MISSED_STATUS]
+
+function isFinished(status) {
+  return status === 'completed' || status === MISSED_STATUS.value
+}
 
 function Events() {
   const { role, profile } = useAuth()
@@ -103,12 +116,6 @@ function Events() {
     return () => clearInterval(timer)
   }, [])
 
-  /* Ang mga event, may kinuwentang status */
-  const withStatus = useMemo(
-    () => events.map((e) => ({ ...e, status: computeStatus(e, now) })),
-    [events, now],
-  )
-
   /* Mga event na nakabukas ang buong description */
   const [expanded, setExpanded] = useState(() => new Set())
 
@@ -117,6 +124,29 @@ function Events() {
 
   /* Mga event_id na sinalihan mo */
   const [joinedIds, setJoinedIds] = useState(() => new Set())
+
+  /* Nakuha na ba ang mga sinalihan mo? Habang hindi pa (o kung
+     pumalya), walang "Missed" — para hindi magmukhang lahat ay
+     na-miss mo sa unang segundo. */
+  const [joinedLoaded, setJoinedLoaded] = useState(false)
+
+  /* "Missed" — Member lang */
+  const showMissed = profile?.role_id === 1
+  const filters = showMissed ? MEMBER_FILTERS : FILTERS
+
+  /* Ang mga event, may kinuwentang status.
+     Member: Completed + hindi nag-Join → Missed */
+  const withStatus = useMemo(
+    () =>
+      events.map((e) => {
+        let status = computeStatus(e, now)
+        if (showMissed && joinedLoaded && status === 'completed' && !joinedIds.has(e.id)) {
+          status = MISSED_STATUS.value
+        }
+        return { ...e, status }
+      }),
+    [events, now, showMissed, joinedLoaded, joinedIds],
+  )
   const [joiningId, setJoiningId] = useState(null)
 
   /* Aling event ang nasa "Sasali ka ba?" na dialog */
@@ -141,6 +171,7 @@ function Events() {
     if (!profileId) return
     try {
       setJoinedIds(await fetchMyJoinedEventIds(profileId))
+      setJoinedLoaded(true)
     } catch (err) {
       console.error('Hindi makuha ang mga sinalihan mo:', err)
     }
@@ -201,7 +232,7 @@ function Events() {
 
   /* Ang bilang sa bawat tab ay ayon sa search */
   const counts = useMemo(() => {
-    const c = { all: matched.length, upcoming: 0, ongoing: 0, completed: 0 }
+    const c = { all: matched.length, upcoming: 0, ongoing: 0, completed: 0, missed: 0 }
     matched.forEach((e) => {
       c[e.status] = (c[e.status] ?? 0) + 1
     })
@@ -313,7 +344,7 @@ function Events() {
           </div>
 
           <div className={styles.filters} role="tablist" aria-label="Salain ayon sa status">
-            {FILTERS.map((f) => (
+            {filters.map((f) => (
               <button
                 key={f.value}
                 type="button"
@@ -352,10 +383,11 @@ function Events() {
                 const isOpen = expanded.has(ev.id)
                 const longText = ev.description.length > 280
                 const joined = joinedIds.has(ev.id)
-                const isDone = ev.status === 'completed'
+                const isDone = isFinished(ev.status)
+                const missed = ev.status === MISSED_STATUS.value
                 const joinBusy = joiningId === ev.id
-                /* May Join o "Nakasali ka" na ipapakita */
-                const hasJoinAction = joinable && (joined || !isDone)
+                /* May Join, "Nakasali ka" o "Hindi ka nakasali" na ipapakita */
+                const hasJoinAction = joinable && (joined || !isDone || missed)
 
                 return (
                   <li key={ev.id} className={styles.card}>
@@ -425,6 +457,12 @@ function Events() {
                           {joinable && joined && (
                             <span className={styles.joinedGroup}>
                               <span className={styles.joinedBadge}>✓ Nakasali ka</span>
+                            </span>
+                          )}
+
+                          {missed && (
+                            <span className={styles.missedNote}>
+                              Natapos ang event nang hindi ka nakasali.
                             </span>
                           )}
                         </div>

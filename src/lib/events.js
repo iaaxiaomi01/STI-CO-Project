@@ -29,7 +29,14 @@ export const EVENT_STATUSES = [
   { value: 'completed', label: 'Completed' },
 ]
 
+/* "Missed" — HINDI ito status ng event mismo. Display lang ito
+   sa Events page ng Member: tapos na ang event at hindi siya
+   nag-Join. Kaya wala ito sa EVENT_STATUSES (ginagamit iyon ng
+   ibang page at ng ibang role). */
+export const MISSED_STATUS = { value: 'missed', label: 'Missed' }
+
 export function eventStatusLabel(value) {
+  if (value === MISSED_STATUS.value) return MISSED_STATUS.label
   return EVENT_STATUSES.find((s) => s.value === value)?.label ?? value
 }
 
