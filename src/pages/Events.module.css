@@ -192,7 +192,7 @@
   color: #3b4660;
 }
 
-/* Member lang: tapos na ang event at hindi siya nag-Join */
+/* Member at Officer: tapos na ang event at hindi siya nag-Join */
 .badge_missed {
   background-color: #fdecec;
   color: #b42318;
@@ -350,7 +350,7 @@
   font-size: 0.82rem;
   font-weight: 700;
 }
-/* "Natapos ang event nang hindi ka nakasali." (Member) */
+/* "Natapos ang event nang hindi ka nakasali." (Member at Officer) */
 .missedNote {
   font-size: 0.85rem;
   color: #b42318;

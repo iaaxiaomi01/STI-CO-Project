@@ -49,8 +49,8 @@ import styles from './Events.module.css'
    kinukuwenta mula sa Date at oras, at nire-refresh bawat
    30 segundo habang bukas ang page.
 
-   MISSED (Member lang): kapag Completed na ang event at HINDI
-   siya nag-Join, "Missed" ang ipinapakita imbes na "Completed",
+   MISSED (Member at Officer): kapag Completed na ang event at
+   HINDI siya nag-Join, "Missed" ang ipinapakita imbes na "Completed",
    at may sarili itong tab. Display lang ito — walang
    binabago sa database.
 
@@ -83,7 +83,7 @@ function sortEvents(list) {
 
 const FILTERS = [{ value: 'all', label: 'Lahat' }, ...EVENT_STATUSES]
 
-/* Member: may dagdag na tab na "Missed" */
+/* Member at Officer: may dagdag na tab na "Missed" */
 const MEMBER_FILTERS = [...FILTERS, MISSED_STATUS]
 
 function isFinished(status) {
@@ -130,12 +130,12 @@ function Events() {
      na-miss mo sa unang segundo. */
   const [joinedLoaded, setJoinedLoaded] = useState(false)
 
-  /* "Missed" — Member lang */
-  const showMissed = profile?.role_id === 1
+  /* "Missed" — Member at Officer (sila ang nagja-Join) */
+  const showMissed = profile?.role_id === 1 || profile?.role_id === 2
   const filters = showMissed ? MEMBER_FILTERS : FILTERS
 
   /* Ang mga event, may kinuwentang status.
-     Member: Completed + hindi nag-Join → Missed */
+     Member/Officer: Completed + hindi nag-Join → Missed */
   const withStatus = useMemo(
     () =>
       events.map((e) => {
