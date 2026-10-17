@@ -243,6 +243,15 @@ export const ROLES = {
         { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
+        /* Sariling attendance ng Officer (sa mga event na sinalihan
+           niya). Bubuksan ang tab na "Sinalihan ko" sa Attendance. */
+        {
+          label: 'Attendance rate mo',
+          value: '—',
+          to: '/attendance',
+          state: { tab: 'mine' },
+          key: 'myAttendanceRate',
+        },
       ],
       cards: [
         {

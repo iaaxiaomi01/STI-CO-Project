@@ -7,7 +7,7 @@ import { displayNameOf, firstNameOf } from '../lib/profile.js'
 import { countRecentAnnouncements } from '../lib/announcements.js'
 import { countPendingProposals } from '../lib/proposals.js'
 import { countEventsByStatus } from '../lib/events.js'
-import { fetchAttendanceRate } from '../lib/attendance.js'
+import { fetchAttendanceRates } from '../lib/attendance.js'
 import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import DashboardCalendar from '../components/DashboardCalendar.jsx'
@@ -142,30 +142,40 @@ function Dashboard() {
      key: 'attendanceRate'
        Member          → sa mga natapos na event na sinalihan mo
        Officer/Adviser → sa buong organisasyon
+     key: 'myAttendanceRate'
+       Officer         → sa mga natapos na event na sinalihan MO
+     Iisang tawag lang sa database para sa dalawa.
      Tingnan ang attendance_summary() sa QR_ATTENDANCE.sql. */
   const needsAttendanceRate = roleConfig.dashboard.stats.some(
-    (stat) => stat.key === 'attendanceRate',
+    (stat) => stat.key === 'attendanceRate' || stat.key === 'myAttendanceRate',
   )
   const orgWideRate = profile?.role_id === 2 || profile?.role_id === 3
-  const [attendanceRate, setAttendanceRate] = useState(null)
+  const [attendanceRates, setAttendanceRates] = useState(null)
 
   useEffect(() => {
     if (!needsAttendanceRate) return
     let active = true
 
-    fetchAttendanceRate({ orgWide: orgWideRate })
-      .then((rate) => {
-        if (active) setAttendanceRate(rate)
+    fetchAttendanceRates()
+      .then((rates) => {
+        if (active) setAttendanceRates(rates)
       })
       .catch((error) => {
         console.error('Hindi makuha ang attendance rate:', error)
-        if (active) setAttendanceRate('—')
+        if (active) setAttendanceRates({ mine: '—', org: '—' })
       })
 
     return () => {
       active = false
     }
-  }, [needsAttendanceRate, orgWideRate])
+  }, [needsAttendanceRate])
+
+  const attendanceRate = attendanceRates
+    ? orgWideRate
+      ? attendanceRates.org
+      : attendanceRates.mine
+    : null
+  const myAttendanceRate = attendanceRates?.mine ?? null
 
   /* Ang value sa config ay default lang; papalitan kapag
      may totoong numero na. */
@@ -175,6 +185,7 @@ function Dashboard() {
     if (stat.key === 'upcomingEvents') return eventCounts?.upcoming ?? '…'
     if (stat.key === 'pendingProposals') return pendingProposals ?? '…'
     if (stat.key === 'attendanceRate') return attendanceRate ?? '…'
+    if (stat.key === 'myAttendanceRate') return myAttendanceRate ?? '…'
     return stat.value
   }
 
@@ -204,7 +215,7 @@ function Dashboard() {
       {/* Stat tiles — nakalink sa kaukulang seksyon */}
       <div className={styles.statRow}>
         {roleConfig.dashboard.stats.map((stat) => (
-          <Link key={stat.label} to={stat.to} className={styles.stat}>
+          <Link key={stat.label} to={stat.to} state={stat.state} className={styles.stat}>
             <span className={styles.statValue}>{statValue(stat)}</span>
             <span className={styles.statLabel}>{stat.label}</span>
           </Link>

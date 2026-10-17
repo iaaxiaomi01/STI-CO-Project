@@ -202,20 +202,31 @@ export async function fetchAttendanceCounts() {
   return map
 }
 
-/* Attendance rate para sa Dashboard.
-   Member  → sa mga natapos na event na sinalihan mo, ilan ang
-             may Time In ka
-   Officer/Adviser → sa buong org
-   Ibinabalik ang "85%" o "—" kung wala pang natapos na event. */
-export async function fetchAttendanceRate({ orgWide }) {
+/* "85%" o "—" kung wala pang natapos na event na sinalihan */
+function percent(attended, joined) {
+  const j = Number(joined) || 0
+  const a = Number(attended) || 0
+  if (j === 0) return '—'
+  return `${Math.round((a / j) * 100)}%`
+}
+
+/* Attendance rate para sa Dashboard — iisang tawag lang sa
+   database, dalawang sagot:
+
+     mine → sa mga natapos na event na SINALIHAN MO, ilan ang
+            may Time In ka (Member at Officer)
+     org  → sa buong org (Officer/Adviser lang; "—" sa iba)
+
+   Ibinabalik: { mine: '85%' | '—', org: '72%' | '—' } */
+export async function fetchAttendanceRates() {
   const { data, error } = await supabase.rpc('attendance_summary')
   if (error) throw error
-  if (!data) return '—'
+  if (!data) return { mine: '—', org: '—' }
 
-  const joined = Number(orgWide ? data.org_joined : data.my_joined) || 0
-  const attended = Number(orgWide ? data.org_attended : data.my_attended) || 0
-  if (joined === 0) return '—'
-  return `${Math.round((attended / joined) * 100)}%`
+  return {
+    mine: percent(data.my_attended, data.my_joined),
+    org: percent(data.org_attended, data.org_joined),
+  }
 }
 
 /* ---------- MENSAHE ---------- */

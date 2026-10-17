@@ -86,9 +86,12 @@ function Attendance() {
   const joinable = canJoinEvents(profile)
   const viewer = canViewParticipants(profile)
 
-  /* Kung galing sa Join, buksan ang "Sinalihan ko" */
+  /* Kung galing sa Join, o sa "Attendance rate mo" sa Dashboard,
+     buksan ang "Sinalihan ko" */
   const [tab, setTab] = useState(() =>
-    joinable && (!viewer || location.state?.joinedTitle) ? TAB_MINE : TAB_PER_EVENT,
+    joinable && (!viewer || location.state?.joinedTitle || location.state?.tab === TAB_MINE)
+      ? TAB_MINE
+      : TAB_PER_EVENT,
   )
 
   const tabs = []
