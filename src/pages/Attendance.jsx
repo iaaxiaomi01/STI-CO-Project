@@ -41,6 +41,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import MyQrDialog from '../components/MyQrDialog.jsx'
 import AttendanceScanner from '../components/AttendanceScanner.jsx'
+import { exportEventAttendance } from '../lib/attendanceExport.js'
 import styles from './Attendance.module.css'
 
 /* ============================================================
@@ -68,7 +69,9 @@ import styles from './Attendance.module.css'
      "Sinalihan ko"       → "Ipakita ang QR"
      "Sasali bawat event" → "I-scan" (Officer/Adviser), at
                             manual na Time In/Out sa listahan
-                            para sa walang phone
+                            para sa walang phone, at
+                            "I-export" ng attendance bawat event
+                            (lib/attendanceExport.js)
 
      Oras (pareho sa QR, scan at manual):
        30 min bago ang Start → Start   Time In lang
@@ -425,6 +428,23 @@ function ParticipantsPerEvent({ profile }) {
   /* Pinapalitan para muling kunin ang mga nakabukas na listahan */
   const [listVersion, setListVersion] = useState(0)
 
+  /* EXPORT — ang event na kasalukuyang ine-export, at error kung meron */
+  const [exportingId, setExportingId] = useState(null)
+  const [exportError, setExportError] = useState({ id: null, text: '' })
+
+  async function handleExport(ev) {
+    setExportingId(ev.id)
+    setExportError({ id: null, text: '' })
+    try {
+      await exportEventAttendance(ev)
+    } catch (err) {
+      console.error('Hindi na-export ang attendance:', err)
+      setExportError({ id: ev.id, text: 'Hindi ma-export ang attendance. Subukan ulit.' })
+    } finally {
+      setExportingId(null)
+    }
+  }
+
   const canScan = canScanAttendance(profile)
   const now = useNow()
 
@@ -615,7 +635,24 @@ function ParticipantsPerEvent({ profile }) {
                         {isOpen ? 'Itago ang listahan ▴' : 'Tingnan ang sasali ▾'}
                       </button>
                     )}
+                    {total > 0 && (
+                      <button
+                        type="button"
+                        className={styles.exportBtn}
+                        disabled={exportingId === ev.id}
+                        onClick={() => handleExport(ev)}
+                        title="I-download ang attendance ng event na ito (.csv, bumubukas sa Excel)"
+                      >
+                        {exportingId === ev.id ? 'Ine-export…' : '⤓ I-export (Excel/CSV)'}
+                      </button>
+                    )}
                   </div>
+                )}
+
+                {exportError.id === ev.id && (
+                  <p className={styles.panelError} role="alert">
+                    {exportError.text}
+                  </p>
                 )}
 
                 {isOpen && (
