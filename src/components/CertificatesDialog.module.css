@@ -1,0 +1,230 @@
+/* Mas malapad nang kaunti sa karaniwang dialog dahil may
+   file box ang bawat tao */
+.modal {
+  max-width: 680px;
+}
+
+.muted {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+/* "Bukas pa ang Time Out…" */
+.pending {
+  margin: -0.5rem 0 1rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background-color: #fff7e0;
+  color: #7a5200;
+  font-size: 0.85rem;
+}
+
+.notice {
+  margin-bottom: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+  font-size: 0.9rem;
+}
+
+/* "3 sa 10 ang may certificate na" */
+.summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.summaryLeft {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #b42318;
+}
+
+.search {
+  margin-bottom: 0.85rem;
+}
+
+/* ---------- LISTAHAN ---------- */
+.list {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.row {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.8rem 0.9rem;
+  transition: background-color var(--transition);
+}
+
+.row + .row {
+  border-top: 1px solid var(--color-border);
+}
+
+/* May file na dina-drag papunta rito */
+.rowDrag {
+  background-color: var(--color-primary-soft);
+  outline: 2px dashed var(--color-primary);
+  outline-offset: -4px;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-size: 0.93rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.role {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.times {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* ---------- WALA PANG CERTIFICATE: ang drop box ---------- */
+.drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1.5px dashed var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.87rem;
+  font-weight: 600;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.drop:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+}
+
+.drop:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selfNote {
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  font-size: 0.83rem;
+  color: var(--color-muted);
+}
+
+/* ---------- MAY CERTIFICATE NA ---------- */
+.fileBox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #c7ead6;
+  border-radius: 10px;
+  background-color: #f3fbf6;
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background-color: #1c6b3f;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.fileName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMeta {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+}
+
+.fileActions {
+  display: flex;
+  gap: 0.15rem;
+  flex-wrap: wrap;
+}
+
+.action {
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.action:hover:not(:disabled) {
+  background-color: var(--color-primary-soft);
+}
+
+.action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.remove {
+  color: #b42318;
+}
+
+.remove:hover:not(:disabled) {
+  background-color: #fdecec;
+}
+
+@media (max-width: 480px) {
+  .times {
+    margin-left: 0;
+    width: 100%;
+  }
+}

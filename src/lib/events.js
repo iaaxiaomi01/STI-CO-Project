@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient.js'
 import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
 import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.js'
+import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js'
 
 /* ============================================================
    EVENTS — lahat ng pakikipag-usap sa database
@@ -281,6 +282,16 @@ export async function updateEvent(event, values, { imageFile = null, removeImage
 }
 
 export async function deleteEvent(event) {
+  /* Kunin muna ang mga certificate file habang umiiral pa ang mga
+     row — mabubura ang mga ito kasama ng event (cascade). Hindi
+     kritikal kapag pumalya: lumang file lang ang maiiwan. */
+  let certificatePaths = []
+  try {
+    certificatePaths = await fetchCertificatePaths(event.id)
+  } catch (err) {
+    console.warn('Hindi makuha ang mga certificate ng event:', err)
+  }
+
   const { data, error } = await supabase
     .from('events')
     .delete()
@@ -291,6 +302,7 @@ export async function deleteEvent(event) {
   if (!data || data.length === 0) throw new Error('not-allowed')
 
   await cleanupImages(event.organization_id, event.proposal_id, null)
+  await removeCertificateFiles(certificatePaths)
 }
 
 /* ============================================================

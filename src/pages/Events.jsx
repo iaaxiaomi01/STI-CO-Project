@@ -22,10 +22,17 @@ import {
   updateEvent,
   wasEdited,
 } from '../lib/events.js'
+import { PHASE_CLOSED, attendancePhase, fetchMyAttendance } from '../lib/attendance.js'
+import {
+  canManageCertificates,
+  downloadCertificate,
+  fetchMyCertificates,
+} from '../lib/certificates.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
 import JoinConfirmDialog from '../components/JoinConfirmDialog.jsx'
+import CertificatesDialog from '../components/CertificatesDialog.jsx'
 import styles from './Events.module.css'
 
 /* ============================================================
@@ -61,6 +68,15 @@ import styles from './Events.module.css'
      Walang bilang ng sasali dito para sa kahit anong role.
      Ang bilang at buong listahan ng sasali bawat event ay
      nasa Attendance page (Officer at Adviser).
+
+   CERTIFICATE (EVENT_CERTIFICATES.sql):
+     Officer at Adviser → "Certificates" sa event na tapos na.
+                          Bubukas ang drop box: tig-isang file
+                          para sa bawat nakakumpleto (may Time In
+                          at Time Out).
+     Member at Officer  → sa event na sinalihan at tapos na:
+                          "I-download ang Certificate" kapag
+                          meron na, o paalala kung wala pa.
 
    Ang RLS sa database ang totoong nagbabantay. Ang
    canEditEvent() at canDeleteEvent() dito ay para lang itago
@@ -149,6 +165,18 @@ function Events() {
   )
   const [joiningId, setJoiningId] = useState(null)
 
+  /* ---------- CERTIFICATE ---------- */
+
+  /* Sariling attendance at certificate → { [event_id]: row }.
+     Para sa Member at Officer (sila ang nagja-Join). */
+  const [myAttendance, setMyAttendance] = useState({})
+  const [myCerts, setMyCerts] = useState({})
+  const [certsLoaded, setCertsLoaded] = useState(false)
+  const [downloadingId, setDownloadingId] = useState(null)
+
+  /* Aling event ang nasa Certificates dialog (Officer at Adviser) */
+  const [certEvent, setCertEvent] = useState(null)
+
   /* Aling event ang nasa "Sasali ka ba?" na dialog */
   const [confirmingJoin, setConfirmingJoin] = useState(null)
 
@@ -175,7 +203,39 @@ function Events() {
     } catch (err) {
       console.error('Hindi makuha ang mga sinalihan mo:', err)
     }
-  }, [profileId])
+
+    /* Sariling attendance at certificate (Member at Officer).
+       Hiwalay din, para hindi madamay ang listahan kapag pumalya. */
+    if (!joinable) return
+    try {
+      const [attendance, certs] = await Promise.all([
+        fetchMyAttendance(profileId),
+        fetchMyCertificates(profileId),
+      ])
+      setMyAttendance(attendance)
+      setMyCerts(certs)
+      setCertsLoaded(true)
+    } catch (err) {
+      console.error('Hindi makuha ang certificate mo:', err)
+    }
+  }, [profileId, joinable])
+
+  async function handleDownloadCertificate(event) {
+    const cert = myCerts[event.id]
+    if (!cert) return
+    setNotice('')
+    setDownloadingId(event.id)
+    try {
+      await downloadCertificate(cert)
+    } catch (err) {
+      console.error('Hindi ma-download ang certificate:', err)
+      setNotice('Hindi ma-download ang certificate. Subukan ulit.')
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const closeCertificates = useCallback(() => setCertEvent(null), [])
 
   /* "Join" → bubuksan muna ang JoinConfirmDialog. Doon pa lang
      talagang sasali, pagkapindot ng "Oo, mag-Join". */
@@ -389,6 +449,15 @@ function Events() {
                 /* May Join, "Nakasali ka" o "Hindi ka nakasali" na ipapakita */
                 const hasJoinAction = joinable && (joined || !isDone || missed)
 
+                /* Certificate: drop box para sa Officer/Adviser ng org,
+                   at status ng sariling certificate para sa sumali */
+                const manageCerts = isDone && canManageCertificates(ev, profile)
+                const showCertStatus = joinable && joined && isDone && certsLoaded
+                const myCert = myCerts[ev.id]
+                const completedMine = Boolean(myAttendance[ev.id]?.time_out)
+                const attendanceClosed = attendancePhase(ev, now) === PHASE_CLOSED
+                const certBusy = downloadingId === ev.id
+
                 return (
                   <li key={ev.id} className={styles.card}>
                     {ev.image_url ? (
@@ -460,6 +529,29 @@ function Events() {
                             </span>
                           )}
 
+                          {/* ---------- CERTIFICATE MO ---------- */}
+                          {showCertStatus &&
+                            (myCert ? (
+                              <button
+                                type="button"
+                                className={styles.certButton}
+                                onClick={() => handleDownloadCertificate(ev)}
+                                disabled={certBusy}
+                              >
+                                <span aria-hidden="true">⤓</span>{' '}
+                                {certBusy ? 'Binubuksan…' : 'I-download ang Certificate'}
+                              </button>
+                            ) : completedMine ? (
+                              <span className={styles.certNote}>
+                                Kumpleto ang attendance mo. Wala pang certificate — ilalagay ito ng
+                                Officer o Adviser.
+                              </span>
+                            ) : attendanceClosed ? (
+                              <span className={styles.certNoteMuted}>
+                                Walang certificate — hindi kumpleto ang Time In at Time Out mo.
+                              </span>
+                            ) : null)}
+
                           {missed && (
                             <span className={styles.missedNote}>
                               Natapos ang event nang hindi ka nakasali.
@@ -474,8 +566,21 @@ function Events() {
                           {wasEdited(ev) && <span className={styles.edited}> · na-edit</span>}
                         </p>
 
-                        {(editable || deletable) && (
+                        {(editable || deletable || manageCerts) && (
                           <div className={styles.actions}>
+                            {manageCerts && (
+                              <button
+                                type="button"
+                                className={styles.linkButton}
+                                onClick={() => {
+                                  setNotice('')
+                                  setCertEvent(ev)
+                                }}
+                                disabled={busy}
+                              >
+                                Certificates
+                              </button>
+                            )}
                             {editable && (
                               <button
                                 type="button"
@@ -512,6 +617,8 @@ function Events() {
       )}
 
       {editing && <EventForm initial={editing} onSubmit={handleUpdate} onCancel={closeForm} />}
+
+      {certEvent && <CertificatesDialog event={certEvent} onClose={closeCertificates} />}
 
       {confirmingJoin && (
         <JoinConfirmDialog event={confirmingJoin} onConfirm={handleJoin} onCancel={closeJoin} />
