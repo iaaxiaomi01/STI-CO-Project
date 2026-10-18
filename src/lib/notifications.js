@@ -13,6 +13,9 @@ import { supabase } from './supabaseClient.js'
        - umusad ang proposal (approved, rejected, noted,
          ipina-revise) → ang Officer na nagpasa nito
          — PROPOSAL_NOTIFICATIONS.sql
+       - dumating ang proposal sa stage mo → Adviser ng org,
+         lahat ng SAO, o lahat ng School Head
+         — PROPOSAL_REVIEW_NOTIFICATIONS.sql
 
    REALTIME:
      subscribeToNotifications() → nakikinig sa Supabase Realtime.
@@ -70,15 +73,39 @@ export async function markAllNotificationsRead() {
                             walang makaligtaan
 
    Ibinabalik ang function na pantanggal ng subscription.
+
+   IISANG KONEKTA LANG para sa buong app: kahit ilang bahagi ang
+   nakikinig (bell, Proposals page, bilang sa Dashboard), iisang
+   realtime channel lang ang bukas. Ipinapasa sa lahat ng
+   nakikinig ang bawat bagong notification. Sasara ang channel
+   kapag wala nang nakikinig.
    ============================================================ */
-/* Natatanging pangalan bawat subscription, para hindi magbanggaan
-   kapag dalawang beses na-mount (hal. React StrictMode sa dev) */
+const listeners = new Set()
+let channel = null
+let channelProfileId = null
+let channelReady = false
+
+/* Natatanging pangalan bawat channel, para hindi magbanggaan
+   kapag mabilis na nabuksan-nasara (hal. React StrictMode sa dev) */
 let channelSeq = 0
 
-export function subscribeToNotifications(profileId, { onInsert, onReconnect }) {
+function closeChannel() {
+  if (channel) supabase.removeChannel(channel)
+  channel = null
+  channelProfileId = null
+  channelReady = false
+}
+
+function openChannel(profileId) {
+  if (channel && channelProfileId === profileId) return
+  closeChannel()
+
   channelSeq += 1
-  const channel = supabase
-    .channel(`notifications:${profileId}:${channelSeq}`)
+  channelProfileId = profileId
+  const mine = supabase.channel(`notifications:${profileId}:${channelSeq}`)
+  channel = mine
+
+  mine
     .on(
       'postgres_changes',
       {
@@ -87,18 +114,43 @@ export function subscribeToNotifications(profileId, { onInsert, onReconnect }) {
         table: 'notifications',
         filter: `recipient_id=eq.${profileId}`,
       },
-      (payload) => onInsert?.(payload.new),
+      (payload) => {
+        if (channel !== mine) return
+        listeners.forEach((l) => l.onInsert?.(payload.new))
+      },
     )
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') onReconnect?.()
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        console.warn('Realtime ng notifications:', status)
+      /* Balita mula sa lumang channel na isinara na — huwag pansinin */
+      if (channel !== mine) return
+      if (status === 'SUBSCRIBED') {
+        channelReady = true
+        listeners.forEach((l) => l.onReconnect?.())
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        channelReady = false
+        if (status !== 'CLOSED') console.warn('Realtime ng notifications:', status)
       }
     })
+}
+
+export function subscribeToNotifications(profileId, { onInsert, onReconnect } = {}) {
+  const entry = { onInsert, onReconnect }
+  listeners.add(entry)
+  openChannel(profileId)
+
+  /* Bukas na pala ang channel (may ibang nakikinig na) — sabihan
+     agad ang bago para makakuha ito ng unang listahan */
+  if (channelReady) setTimeout(() => entry.onReconnect?.(), 0)
 
   return () => {
-    supabase.removeChannel(channel)
+    listeners.delete(entry)
+    if (listeners.size === 0) closeChannel()
   }
+}
+
+/* Para sa mga page na kailangang mag-refresh kapag may galaw sa
+   proposal (bagong dating, umusad, ipina-revise) */
+export function isProposalNotification(row) {
+  return row?.type === 'proposal_update' || row?.type === 'proposal_review'
 }
 
 /* ---------- PAG-FORMAT ---------- */

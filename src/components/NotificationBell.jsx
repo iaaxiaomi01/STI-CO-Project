@@ -24,6 +24,9 @@ import styles from './NotificationBell.module.css'
      proposal_update → nasaan na ang proposal mo (Officer na
                        nagpasa): approved, rejected, noted, o
                        ipina-revise — PROPOSAL_NOTIFICATIONS.sql
+     proposal_review → may proposal na dumating sa stage mo
+                       (Adviser, SAO, School Head) —
+                       PROPOSAL_REVIEW_NOTIFICATIONS.sql
 
    REALTIME: nakikinig ang bell sa Supabase Realtime. Kapag may
    bagong notification:
@@ -42,6 +45,7 @@ const TOAST_SECONDS = 6
 const TYPE_ICON = {
   event_new: '◆',
   proposal_update: '✉',
+  proposal_review: '✎',
 }
 
 /* Kulay ng icon ayon sa "tone" ng notification (PROPOSAL_NOTIFICATIONS.sql):
@@ -257,7 +261,7 @@ function NotificationBell() {
               </span>
               <p className={styles.emptyTitle}>Wala pang notification</p>
               <p className={styles.emptyText}>
-                Dito lalabas ang mga bagong event at ang balita kung nasaan na ang proposal mo.
+                Dito lalabas ang mga bagong event at ang balita tungkol sa mga proposal.
               </p>
             </div>
           ) : (

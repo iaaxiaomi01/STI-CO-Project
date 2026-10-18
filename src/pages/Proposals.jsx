@@ -41,6 +41,7 @@ import ProposalLetter from '../components/ProposalLetter.jsx'
 import ReviewDialog from '../components/ReviewDialog.jsx'
 import ReviewTrail from '../components/ReviewTrail.jsx'
 import EventForm from '../components/EventForm.jsx'
+import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
 import styles from './Proposals.module.css'
 
 /* ============================================================
@@ -144,6 +145,22 @@ function Proposals() {
   useEffect(() => {
     load()
   }, [load])
+
+  /* ---------- REALTIME ----------
+     Kapag may notification tungkol sa proposal (bagong dating sa
+     stage mo, umusad ang proposal mo, ipina-revise), kinukuha ulit
+     ang listahan — kaya lumalabas agad dito nang walang refresh.
+     Galing ang notification sa mga trigger sa database
+     (PROPOSAL_NOTIFICATIONS.sql, PROPOSAL_REVIEW_NOTIFICATIONS.sql). */
+  const profileId = profile?.id
+  useEffect(() => {
+    if (!profileId) return undefined
+    return subscribeToNotifications(profileId, {
+      onInsert: (row) => {
+        if (isProposalNotification(row)) load()
+      },
+    })
+  }, [profileId, load])
 
   const closeForm = useCallback(() => setFormOpen(false), [])
   const closeRevise = useCallback(() => setRevising(null), [])

@@ -130,6 +130,12 @@ function staffRoleWithProposals(label, proposalsText) {
   const base = staffRole(label)
   return {
     ...base,
+
+    /* May notification bell sa Dashboard: realtime na dating ng
+       proposal na naghihintay ng aksyon nila
+       (PROPOSAL_REVIEW_NOTIFICATIONS.sql) */
+    notifications: true,
+
     can: { ...base.can, review: true },
     sidebar: [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
     dashboard: {

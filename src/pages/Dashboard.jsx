@@ -8,6 +8,7 @@ import { countRecentAnnouncements } from '../lib/announcements.js'
 import { countPendingProposals } from '../lib/proposals.js'
 import { countEventsByStatus } from '../lib/events.js'
 import { fetchAttendanceRates } from '../lib/attendance.js'
+import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
 import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import DashboardCalendar from '../components/DashboardCalendar.jsx'
@@ -121,22 +122,37 @@ function Dashboard() {
   )
   const [pendingProposals, setPendingProposals] = useState(null)
 
+  /* REALTIME: kinukuwenta ulit ang bilang kapag may notification
+     tungkol sa proposal (bagong dating, umusad, ipina-revise) */
   useEffect(() => {
-    if (!needsPendingProposals) return
+    if (!needsPendingProposals) return undefined
     let active = true
 
-    countPendingProposals(profile?.role_id)
-      .then((count) => {
-        if (active) setPendingProposals(count)
-      })
-      .catch((error) => {
-        console.error('Hindi makuha ang bilang ng proposals:', error)
-      })
+    function refresh() {
+      countPendingProposals(profile?.role_id)
+        .then((count) => {
+          if (active) setPendingProposals(count)
+        })
+        .catch((error) => {
+          console.error('Hindi makuha ang bilang ng proposals:', error)
+        })
+    }
+
+    refresh()
+
+    const unsubscribe = profile?.id
+      ? subscribeToNotifications(profile.id, {
+          onInsert: (row) => {
+            if (isProposalNotification(row)) refresh()
+          },
+        })
+      : () => {}
 
     return () => {
       active = false
+      unsubscribe()
     }
-  }, [needsPendingProposals, profile?.role_id])
+  }, [needsPendingProposals, profile?.role_id, profile?.id])
 
   /* TOTOONG DATA: attendance rate (galing sa QR Time In).
      key: 'attendanceRate'
@@ -203,8 +219,8 @@ function Dashboard() {
           <p className={styles.sub}>{roleConfig.dashboard.subtitle}</p>
         </div>
 
-        {/* Bell sa kanang itaas — Member, Officer, Adviser lang
-            (notifications: true sa config/roles.js) */}
+        {/* Bell sa kanang itaas — Member, Officer, Adviser, SAO at
+            School Head (notifications: true sa config/roles.js) */}
         {roleConfig.notifications && (
           <div className={styles.welcomeActions}>
             <NotificationBell />
