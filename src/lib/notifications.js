@@ -6,10 +6,13 @@ import { supabase } from './supabaseClient.js'
    Table: public.notifications (tingnan ang EVENT_NOTIFICATIONS.sql)
 
    SAAN GALING:
-     Hindi ang browser ang gumagawa ng notification. Kapag may
-     bagong event, ang TRIGGER sa database ang naglalagay ng
-     notification para sa bawat aktibong Member at Officer ng
-     org (maliban sa gumawa ng event).
+     Hindi ang browser ang gumagawa ng notification. Mga TRIGGER
+     sa database ang naglalagay nito:
+       - bagong event → bawat aktibong Member at Officer ng org
+         (maliban sa gumawa) — EVENT_NOTIFICATIONS.sql
+       - umusad ang proposal (approved, rejected, noted,
+         ipina-revise) → ang Officer na nagpasa nito
+         — PROPOSAL_NOTIFICATIONS.sql
 
    REALTIME:
      subscribeToNotifications() → nakikinig sa Supabase Realtime.
@@ -20,7 +23,7 @@ import { supabase } from './supabaseClient.js'
    na nabasa ay sa mga function lang sa database.
    ============================================================ */
 
-const COLUMNS = 'id, type, title, body, link, event_id, created_at, read_at'
+const COLUMNS = 'id, type, title, body, link, event_id, proposal_id, tone, created_at, read_at'
 
 /* Ilan ang ipapakita sa panel */
 export const NOTIFICATION_LIMIT = 30

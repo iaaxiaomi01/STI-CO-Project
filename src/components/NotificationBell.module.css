@@ -206,6 +206,34 @@
   background-color: var(--color-primary);
 }
 
+/* ---------- KULAY AYON SA TONE ---------- */
+.itemIcon.tone_success {
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+}
+
+.itemIcon.tone_danger {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
+.itemIcon.tone_warning {
+  background-color: #fff4dc;
+  color: #8a5a00;
+}
+
+.toast.tone_success {
+  border-left-color: #1c6b3f;
+}
+
+.toast.tone_danger {
+  border-left-color: #b42318;
+}
+
+.toast.tone_warning {
+  border-left-color: #c98a00;
+}
+
 /* ---------- KALEMBANG (bagong notification) ---------- */
 .ring svg {
   transform-origin: 50% 10%;

@@ -19,6 +19,12 @@ import styles from './NotificationBell.module.css'
    Ang database ang gumagawa ng notification kapag may bagong
    event; dito ay ipinapakita lang at minamarkahang nabasa.
 
+   MGA URI:
+     event_new       → may bagong event (Member at Officer)
+     proposal_update → nasaan na ang proposal mo (Officer na
+                       nagpasa): approved, rejected, noted, o
+                       ipina-revise — PROPOSAL_NOTIFICATIONS.sql
+
    REALTIME: nakikinig ang bell sa Supabase Realtime. Kapag may
    bagong notification:
      - tataas agad ang bilang sa pulang badge
@@ -35,6 +41,13 @@ const TOAST_SECONDS = 6
 
 const TYPE_ICON = {
   event_new: '◆',
+  proposal_update: '✉',
+}
+
+/* Kulay ng icon ayon sa "tone" ng notification (PROPOSAL_NOTIFICATIONS.sql):
+   success = approved · danger = rejected · warning = ipina-revise */
+function toneClass(n) {
+  return styles[`tone_${n.tone}`] ?? ''
 }
 
 function NotificationBell() {
@@ -212,7 +225,7 @@ function NotificationBell() {
       {toast && !open && (
         <button
           type="button"
-          className={styles.toast}
+          className={`${styles.toast} ${toneClass(toast)}`}
           onClick={() => openNotification(toast)}
           role="status"
         >
@@ -243,7 +256,9 @@ function NotificationBell() {
                 🔔
               </span>
               <p className={styles.emptyTitle}>Wala pang notification</p>
-              <p className={styles.emptyText}>Dito lalabas ang mga bagong event.</p>
+              <p className={styles.emptyText}>
+                Dito lalabas ang mga bagong event at ang balita kung nasaan na ang proposal mo.
+              </p>
             </div>
           ) : (
             <ul className={styles.list}>
@@ -254,7 +269,7 @@ function NotificationBell() {
                     className={`${styles.item} ${n.read_at ? '' : styles.unread}`}
                     onClick={() => openNotification(n)}
                   >
-                    <span className={styles.itemIcon} aria-hidden="true">
+                    <span className={`${styles.itemIcon} ${toneClass(n)}`} aria-hidden="true">
                       {TYPE_ICON[n.type] ?? '•'}
                     </span>
                     <span className={styles.itemText}>
