@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
@@ -28,6 +28,7 @@ import {
   downloadCertificate,
   fetchMyCertificates,
 } from '../lib/certificates.js'
+import { isCertificateNotification, subscribeToNotifications } from '../lib/notifications.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
@@ -77,6 +78,14 @@ import styles from './Events.module.css'
      Member at Officer  → sa event na sinalihan at tapos na:
                           "I-download ang Certificate" kapag
                           meron na, o paalala kung wala pa.
+
+   NOTIFICATION NG CERTIFICATE (CERTIFICATE_NOTIFICATIONS.sql):
+     Kapag na-upload ang certificate mo, may realtime notification
+     ka. Kung bukas ang page na ito, lalabas agad ang
+     "I-download ang Certificate" — walang refresh.
+     Kapag pinindot ang notification → /events?event=<id>:
+     ililipat sa tab na "Lahat", iki-clear ang search, at
+     dadalhin ka sa mismong event card (sandaling naka-highlight).
 
    Ang RLS sa database ang totoong nagbabantay. Ang
    canEditEvent() at canDeleteEvent() dito ay para lang itago
@@ -183,6 +192,31 @@ function Events() {
   const profileId = profile?.id
   const navigate = useNavigate()
 
+  /* Galing sa notification ng certificate: /events?event=<id> */
+  const [searchParams, setSearchParams] = useSearchParams()
+  const focusParam = searchParams.get('event')
+
+  /* Ang event card na sandaling naka-highlight */
+  const [highlightId, setHighlightId] = useState(null)
+
+  /* Sariling attendance at certificate (Member at Officer).
+     Hiwalay, para hindi madamay ang listahan kapag pumalya.
+     Tinatawag din kapag may bagong certificate notification. */
+  const loadMyCertificates = useCallback(async () => {
+    if (!profileId || !joinable) return
+    try {
+      const [attendance, certs] = await Promise.all([
+        fetchMyAttendance(profileId),
+        fetchMyCertificates(profileId),
+      ])
+      setMyAttendance(attendance)
+      setMyCerts(certs)
+      setCertsLoaded(true)
+    } catch (err) {
+      console.error('Hindi makuha ang certificate mo:', err)
+    }
+  }, [profileId, joinable])
+
   const load = useCallback(async () => {
     try {
       setEvents(await fetchEvents())
@@ -204,21 +238,8 @@ function Events() {
       console.error('Hindi makuha ang mga sinalihan mo:', err)
     }
 
-    /* Sariling attendance at certificate (Member at Officer).
-       Hiwalay din, para hindi madamay ang listahan kapag pumalya. */
-    if (!joinable) return
-    try {
-      const [attendance, certs] = await Promise.all([
-        fetchMyAttendance(profileId),
-        fetchMyCertificates(profileId),
-      ])
-      setMyAttendance(attendance)
-      setMyCerts(certs)
-      setCertsLoaded(true)
-    } catch (err) {
-      console.error('Hindi makuha ang certificate mo:', err)
-    }
-  }, [profileId, joinable])
+    await loadMyCertificates()
+  }, [profileId, loadMyCertificates])
 
   async function handleDownloadCertificate(event) {
     const cert = myCerts[event.id]
@@ -268,6 +289,39 @@ function Events() {
   useEffect(() => {
     load()
   }, [load])
+
+  /* REALTIME: may bagong certificate para sa iyo habang bukas
+     ang page → kunin ulit para lumabas agad ang "I-download" */
+  useEffect(() => {
+    if (!profileId || !joinable) return undefined
+    return subscribeToNotifications(profileId, {
+      onInsert: (row) => {
+        if (isCertificateNotification(row)) loadMyCertificates()
+      },
+    })
+  }, [profileId, joinable, loadMyCertificates])
+
+  /* Galing sa notification: ipakita ang event card. Hinihintay
+     munang matapos ang unang pagkuha ng events. */
+  useEffect(() => {
+    if (!focusParam || loading) return
+    setFilter('all')
+    setSearch('')
+    setHighlightId(focusParam)
+    setSearchParams({}, { replace: true })
+    /* Sigurado: kunin ulit kahit may nakaligtaang realtime */
+    loadMyCertificates()
+  }, [focusParam, loading, setSearchParams, loadMyCertificates])
+
+  /* I-scroll papunta sa card, tapos alisin ang highlight */
+  useEffect(() => {
+    if (!highlightId) return undefined
+    document
+      .getElementById(`event-${highlightId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => setHighlightId(null), 4000)
+    return () => clearTimeout(timer)
+  }, [highlightId])
 
   const closeForm = useCallback(() => setEditing(null), [])
 
@@ -459,7 +513,11 @@ function Events() {
                 const certBusy = downloadingId === ev.id
 
                 return (
-                  <li key={ev.id} className={styles.card}>
+                  <li
+                    key={ev.id}
+                    id={`event-${ev.id}`}
+                    className={`${styles.card} ${highlightId === ev.id ? styles.cardHighlight : ''}`}
+                  >
                     {ev.image_url ? (
                       <img className={styles.image} src={ev.image_url} alt="" loading="lazy" />
                     ) : (

@@ -8,8 +8,12 @@ import { supabase } from './supabaseClient.js'
    SAAN GALING:
      Hindi ang browser ang gumagawa ng notification. Mga TRIGGER
      sa database ang naglalagay nito:
-       - bagong event → bawat aktibong Member at Officer ng org
-         (maliban sa gumawa) — EVENT_NOTIFICATIONS.sql
+       - bagong event → bawat aktibong Member, Officer at Adviser
+         ng org (maliban sa gumawa) — EVENT_NOTIFICATIONS.sql,
+         ADVISER_EVENT_NOTIFICATIONS.sql
+       - na-upload (o napalitan) ang certificate mo → ikaw lang,
+         na nag-Join at nakakumpleto ng event
+         — CERTIFICATE_NOTIFICATIONS.sql
        - umusad ang proposal (approved, rejected, noted,
          ipina-revise) → ang Officer na nagpasa nito
          — PROPOSAL_NOTIFICATIONS.sql
@@ -151,6 +155,12 @@ export function subscribeToNotifications(profileId, { onInsert, onReconnect } = 
    proposal (bagong dating, umusad, ipina-revise) */
 export function isProposalNotification(row) {
   return row?.type === 'proposal_update' || row?.type === 'proposal_review'
+}
+
+/* Para sa Events page: kapag may bagong certificate, kunin ulit
+   ang mga certificate mo para lumabas agad ang "I-download" */
+export function isCertificateNotification(row) {
+  return row?.type === 'certificate_ready'
 }
 
 /* ---------- PAG-FORMAT ---------- */

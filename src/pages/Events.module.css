@@ -136,6 +136,29 @@
   box-shadow: var(--shadow);
 }
 
+/* Galing sa notification ng certificate: sandaling naka-highlight */
+.cardHighlight {
+  border-color: var(--color-primary);
+  animation: cardHighlight 4s ease-out;
+}
+
+@keyframes cardHighlight {
+  0%,
+  60% {
+    box-shadow: 0 0 0 4px var(--color-primary-soft), var(--shadow-lg);
+  }
+  100% {
+    box-shadow: var(--shadow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardHighlight {
+    animation: none;
+    box-shadow: 0 0 0 4px var(--color-primary-soft), var(--shadow-lg);
+  }
+}
+
 .image,
 .imagePlaceholder {
   width: 100%;

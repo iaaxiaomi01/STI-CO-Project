@@ -20,7 +20,12 @@ import styles from './NotificationBell.module.css'
    event; dito ay ipinapakita lang at minamarkahang nabasa.
 
    MGA URI:
-     event_new       → may bagong event (Member at Officer)
+     event_new       → may bagong event (Member, Officer at
+                       Adviser — ADVISER_EVENT_NOTIFICATIONS.sql)
+     certificate_ready → available na (o napalitan) ang
+                       certificate mo — CERTIFICATE_NOTIFICATIONS.sql.
+                       Ang link ay /events?event=<id>, kaya dadalhin
+                       ka sa mismong event card.
      proposal_update → nasaan na ang proposal mo (Officer na
                        nagpasa): approved, rejected, noted, o
                        ipina-revise — PROPOSAL_NOTIFICATIONS.sql
@@ -46,6 +51,7 @@ const TYPE_ICON = {
   event_new: '◆',
   proposal_update: '✉',
   proposal_review: '✎',
+  certificate_ready: '⤓',
 }
 
 /* Kulay ng icon ayon sa "tone" ng notification (PROPOSAL_NOTIFICATIONS.sql):
@@ -261,7 +267,8 @@ function NotificationBell() {
               </span>
               <p className={styles.emptyTitle}>Wala pang notification</p>
               <p className={styles.emptyText}>
-                Dito lalabas ang mga bagong event at ang balita tungkol sa mga proposal.
+                Dito lalabas ang mga bagong event, certificate at ang balita tungkol sa mga
+                proposal.
               </p>
             </div>
           ) : (
