@@ -54,7 +54,7 @@ function MemberLayout() {
             type="button"
             className={styles.burger}
             onClick={() => setMenuOpen(true)}
-            aria-label="Buksan ang menu"
+            aria-label="Open menu"
           >
             ☰
           </button>

@@ -49,7 +49,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
     const cleanMessage = message.trim()
 
     if (!cleanTitle || !cleanMessage) {
-      setError('Kailangan ang title at message.')
+      setError('Title and message are required.')
       return
     }
 
@@ -60,8 +60,8 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
       console.error('Hindi na-save ang announcement:', err)
       setError(
         err?.message === 'not-allowed'
-          ? 'Wala kang pahintulot na baguhin ang announcement na ito.'
-          : 'Hindi na-save. Subukan ulit.',
+          ? "You don't have permission to change this announcement."
+          : 'Could not save. Please try again.',
       )
       setSaving(false)
     }
@@ -82,7 +82,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
         aria-labelledby="announcement-form-title"
       >
         <h2 id="announcement-form-title" className={styles.heading}>
-          {isEdit ? 'I-edit ang announcement' : 'Bagong announcement'}
+          {isEdit ? 'Edit announcement' : 'New announcement'}
         </h2>
 
         <label className={styles.field}>
@@ -93,7 +93,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
             value={title}
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="hal. General Assembly sa Biyernes"
+            placeholder="e.g. General Assembly on Friday"
             required
           />
         </label>
@@ -139,10 +139,10 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
             onClick={onCancel}
             disabled={saving}
           >
-            Kanselahin
+            Cancel
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
-            {saving ? 'Sine-save…' : isEdit ? 'I-save ang pagbabago' : 'I-post'}
+            {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post'}
           </button>
         </div>
       </form>

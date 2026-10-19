@@ -56,12 +56,12 @@ function clockOfKey(key) {
 function closedMessage(event, phase) {
   const w = attendanceWindows(event)
   if (phase === PHASE_BEFORE) {
-    return `Hindi pa bukas. Time In mula ${clockOfKey(w.inOpens)} hanggang ${clockOfKey(w.inCloses)}.`
+    return `Not open yet. Time In is from ${clockOfKey(w.inOpens)} to ${clockOfKey(w.inCloses)}.`
   }
   if (nowKey() < w.outOpens) {
-    return `Nagaganap ang event — sarado ang Time In at Time Out. Bubukas ang Time Out ng ${clockOfKey(w.outOpens)} hanggang ${clockOfKey(w.outCloses)}.`
+    return `The event is in progress — Time In and Time Out are closed. Time Out opens from ${clockOfKey(w.outOpens)} to ${clockOfKey(w.outCloses)}.`
   }
-  return 'Sarado na ang attendance para sa event na ito.'
+  return 'Attendance for this event is already closed.'
 }
 
 /* Iisang camera lang sa buong app; dito pumipila ang
@@ -70,19 +70,19 @@ let cameraQueue = Promise.resolve()
 
 function cameraErrorMessage(err) {
   if (!window.isSecureContext) {
-    return 'Kailangan ng HTTPS para magamit ang camera. Buksan ang site gamit ang https:// (o localhost).'
+    return 'HTTPS is required to use the camera. Open the site using https:// (or localhost).'
   }
   const text = String(err?.name ?? err ?? '')
   if (text.includes('NotAllowed') || text.includes('Permission')) {
-    return 'Walang pahintulot sa camera. Payagan ang camera sa settings ng browser, tapos buksan ulit ang scanner.'
+    return 'No camera permission. Allow the camera in your browser settings, then reopen the scanner.'
   }
   if (text.includes('NotFound') || text.includes('DevicesNotFound')) {
-    return 'Walang nakitang camera sa device na ito.'
+    return 'No camera was found on this device.'
   }
   if (text.includes('NotReadable')) {
-    return 'Ginagamit ng ibang app ang camera. Isara muna iyon, tapos subukan ulit.'
+    return 'Another app is using the camera. Close it first, then try again.'
   }
-  return 'Hindi mabuksan ang camera. Subukan ulit.'
+  return 'Could not open the camera. Please try again.'
 }
 
 function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
@@ -132,7 +132,7 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
       if (!currentMode) {
         setResult({
           kind: 'error',
-          title: '✗ Sarado ang attendance',
+          title: '✗ Attendance is closed',
           text: closedMessage(event, attendancePhase(event, nowKey())),
         })
         return
@@ -142,14 +142,14 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
       if (!token) {
         setResult({
           kind: 'error',
-          title: 'Hindi ito QR ng attendance',
-          text: 'Ipabukas sa miyembro ang "Ipakita ang QR" sa Attendance page.',
+          title: 'This is not an attendance QR',
+          text: 'Ask the member to open "Show QR" on the Attendance page.',
         })
         return
       }
 
       busyRef.current = true
-      setResult({ kind: 'busy', title: 'Sinusuri…', text: '' })
+      setResult({ kind: 'busy', title: 'Checking…', text: '' })
 
       try {
         const r = await scanAttendance(token, event.id, currentMode)
@@ -169,13 +169,13 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
           setResult({
             kind: 'already',
             title: toTitleCase(r.name),
-            text: `Naka-${label} na kanina pa (${when}).`,
+            text: `${label} was already recorded earlier (${when}).`,
           })
         }
       } catch (err) {
         console.error('Hindi na-record ang scan:', err)
         navigator.vibrate?.([60, 60, 60])
-        setResult({ kind: 'error', title: '✗ Hindi na-record', text: attendanceErrorMessage(err) })
+        setResult({ kind: 'error', title: '✗ Not recorded', text: attendanceErrorMessage(err) })
       } finally {
         setTimeout(() => {
           busyRef.current = false
@@ -271,17 +271,17 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
         <div className={styles.header}>
           <div>
             <h2 id="scanner-title" className={styles.heading}>
-              I-scan ang attendance
+              Scan attendance
             </h2>
             <p className={styles.sub}>{event.title}</p>
           </div>
-          <button type="button" className={styles.close} onClick={close} aria-label="Isara">
+          <button type="button" className={styles.close} onClick={close} aria-label="Close">
             ×
           </button>
         </div>
 
         {/* Hindi na pinipindot — ipinapakita lang kung alin ang bukas ngayon */}
-        <div className={styles.modes} aria-label="Uri ng scan ngayon">
+        <div className={styles.modes} aria-label="Current scan type">
           <span
             className={`${styles.modeBtn} ${mode === MODE_IN ? styles.modeIn : ''}`}
             aria-current={mode === MODE_IN ? 'true' : undefined}
@@ -299,7 +299,7 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
         <div className={styles.camera}>
           <div id={regionId} style={{ width: '100%', height: '100%' }} />
           {!cameraReady && (
-            <div className={styles.cameraMsg}>{cameraError || 'Binubuksan ang camera…'}</div>
+            <div className={styles.cameraMsg}>{cameraError || 'Opening camera…'}</div>
           )}
         </div>
 
@@ -310,7 +310,7 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
               {result.text}
             </>
           ) : mode ? (
-            <>Itapat ang camera sa QR ng miyembro. Mode ngayon: {MODE_LABEL[mode]}.</>
+            <>Point the camera at the member's QR. Current mode: {MODE_LABEL[mode]}.</>
           ) : (
             <>{closedMessage(event, phase)}</>
           )}

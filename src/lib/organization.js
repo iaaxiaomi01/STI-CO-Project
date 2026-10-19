@@ -28,11 +28,11 @@ const COLUMNS = 'id, name, department, description, logo_url, is_active, updated
 
 /* Isinasalin ang error ng database sa mensaheng maiintindihan */
 export function orgErrorMessage(err) {
-  if (err?.code === '23505') return 'May ibang organisasyon na ganito ang pangalan.'
-  if (err?.message === 'not-allowed') return 'Wala kang pahintulot na baguhin ang organisasyong ito.'
+  if (err?.code === '23505') return 'Another organization already has this name.'
+  if (err?.message === 'not-allowed') return "You don't have permission to change this organization."
   /* Galing sa "raise exception" ng guard — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
-  return 'Hindi na-save. Subukan ulit.'
+  return 'Could not save. Please try again.'
 }
 
 export async function fetchOrganization(orgId) {

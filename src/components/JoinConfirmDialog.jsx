@@ -64,24 +64,24 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
         aria-describedby="join-confirm-warning"
       >
         <h2 id="join-confirm-title" className={base.heading}>
-          Sasali ka ba sa event na ito?
+          Do you want to join this event?
         </h2>
 
         <div className={styles.event}>
           <p className={styles.title}>{event.title}</p>
           <dl className={styles.details}>
             <div>
-              <dt>Petsa</dt>
+              <dt>Date</dt>
               <dd>{formatEventDate(event.event_date)}</dd>
             </div>
             <div>
-              <dt>Oras</dt>
+              <dt>Time</dt>
               <dd>
                 {formatTime(event.start_time)} – {formatTime(event.end_time)}
               </dd>
             </div>
             <div>
-              <dt>Lugar</dt>
+              <dt>Location</dt>
               <dd>{event.location}</dd>
             </div>
           </dl>
@@ -92,8 +92,8 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
             !
           </span>
           <p>
-            <strong>Paalala:</strong> Kapag nag-Join ka, <strong>hindi ka na makakaalis</strong> sa
-            event na ito. Siguraduhing makakadalo ka bago sumali.
+            <strong>Reminder:</strong> Once you join, <strong>you can no longer leave</strong> this
+            event. Make sure you can attend before joining.
           </p>
         </div>
 
@@ -107,7 +107,7 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
             onClick={onCancel}
             disabled={saving}
           >
-            Kanselahin
+            Cancel
           </button>
           <button
             type="button"
@@ -115,7 +115,7 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
             onClick={handleConfirm}
             disabled={saving}
           >
-            {saving ? 'Sumasali…' : 'Oo, mag-Join'}
+            {saving ? 'Joining…' : 'Yes, join'}
           </button>
         </div>
       </div>

@@ -51,7 +51,7 @@ export const CERT_ACCEPT = Object.keys(FILE_TYPES)
   .map((ext) => `.${ext}`)
   .join(',')
 
-export const CERT_ACCEPTED_LABEL = 'PDF, JPG o PNG'
+export const CERT_ACCEPTED_LABEL = 'PDF, JPG or PNG'
 
 /* Mensaheng maiintindihan ng user */
 export class CertificateError extends Error {}
@@ -64,15 +64,15 @@ function extensionOf(name) {
 }
 
 export function checkCertificateFile(file) {
-  if (!file) throw new CertificateError('Walang napiling file.')
+  if (!file) throw new CertificateError('No file selected.')
   if (!FILE_TYPES[extensionOf(file.name)]) {
-    throw new CertificateError(`${CERT_ACCEPTED_LABEL} lang ang tinatanggap.`)
+    throw new CertificateError(`Only ${CERT_ACCEPTED_LABEL} files are accepted.`)
   }
   if (file.size > MAX_CERT_BYTES) {
-    throw new CertificateError('Masyadong malaki ang file (hanggang 10 MB lang).')
+    throw new CertificateError('The file is too large (10 MB max).')
   }
   if (file.size === 0) {
-    throw new CertificateError('Walang laman ang file.')
+    throw new CertificateError('The file is empty.')
   }
 }
 
@@ -166,7 +166,7 @@ export async function uploadCertificate(event, profileId, file, existing = null)
   })
   if (uploadError) {
     console.error('Hindi na-upload ang certificate:', uploadError)
-    throw new CertificateError('Hindi na-upload ang file. Subukan ulit.')
+    throw new CertificateError('The file could not be uploaded. Please try again.')
   }
 
   /* Ang org, nag-upload at oras ay itinatakda ng trigger */
@@ -262,10 +262,10 @@ export function certificateErrorMessage(err) {
   if (err?.code === 'P0001' && err.message) return err.message
   /* Walang attendance row (FK) */
   if (err?.code === '23503') {
-    return 'Para lang sa may kumpletong attendance (Time In at Time Out) ang certificate.'
+    return 'Certificates are only for attendees with complete attendance (Time In and Time Out).'
   }
   if (err?.code === '42501' || err?.message === 'not-allowed') {
-    return 'Wala kang pahintulot na gawin ito.'
+    return "You don't have permission to do this."
   }
-  return 'May problema sa pagkonekta. Subukan ulit.'
+  return 'There was a connection problem. Please try again.'
 }

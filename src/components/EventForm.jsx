@@ -86,7 +86,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
       setImageFile(file)
       setRemoveImage(false)
     } catch (err) {
-      setError(err instanceof ImageError ? err.message : 'Hindi mabasa ang larawan.')
+      setError(err instanceof ImageError ? err.message : 'Could not read the image.')
     }
   }
 
@@ -117,12 +117,12 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
       !clean.endTime ||
       !clean.location
     ) {
-      setError('Kailangan ang lahat ng field maliban sa Picture.')
+      setError('All fields except Picture are required.')
       return
     }
 
     if (clean.endTime <= clean.startTime) {
-      setError('Dapat mas huli ang End Time kaysa sa Start Time.')
+      setError('End Time must be later than Start Time.')
       return
     }
 
@@ -151,12 +151,12 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
         aria-labelledby="event-form-title"
       >
         <h2 id="event-form-title" className={base.heading}>
-          {isEdit ? 'I-edit ang event' : 'Gumawa ng event'}
+          {isEdit ? 'Edit event' : 'Create event'}
         </h2>
 
         {proposal && (
           <p className={base.note}>
-            Mula sa approved na proposal: <strong>{proposal.title}</strong>
+            From approved proposal: <strong>{proposal.title}</strong>
           </p>
         )}
 
@@ -169,7 +169,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             value={title}
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="hal. Tech Summit 2026"
+            placeholder="e.g. Tech Summit 2026"
             required
           />
         </label>
@@ -188,7 +188,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             maxLength={DESCRIPTION_MAX}
             onChange={(e) => setDescription(e.target.value)}
             rows={6}
-            placeholder="Ano ang mangyayari sa event at sino ang pwedeng sumali."
+            placeholder="What will happen at the event and who can join."
             required
           />
         </label>
@@ -232,7 +232,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
         {eventDate && startTime && endTime && endTime > startTime && (
           <p className={styles.autoStatus}>
             Status: <strong>{eventStatusLabel(previewStatus)}</strong>
-            <span> · kusang magbabago ayon sa petsa at oras</span>
+            <span> · updates automatically based on date and time</span>
           </p>
         )}
 
@@ -244,7 +244,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             value={location}
             maxLength={LOCATION_MAX}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="hal. STI Gymnasium, 3rd Floor"
+            placeholder="e.g. STI Gymnasium, 3rd Floor"
             required
           />
         </label>
@@ -257,7 +257,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
 
           {preview ? (
             <div className={styles.preview}>
-              <img src={preview} alt="Preview ng picture ng event" />
+              <img src={preview} alt="Event picture preview" />
               <div className={styles.previewActions}>
                 <button
                   type="button"
@@ -265,7 +265,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
                   onClick={() => fileRef.current?.click()}
                   disabled={saving}
                 >
-                  Palitan
+                  Change
                 </button>
                 <button
                   type="button"
@@ -273,7 +273,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
                   onClick={handleRemoveImage}
                   disabled={saving}
                 >
-                  Alisin
+                  Remove
                 </button>
               </div>
             </div>
@@ -285,8 +285,8 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
               disabled={saving}
             >
               <span className={styles.dropIcon} aria-hidden="true">＋</span>
-              <span>Pumili ng larawan</span>
-              <span className={base.hint}>JPG, PNG o WEBP · hanggang 10 MB</span>
+              <span>Choose a picture</span>
+              <span className={base.hint}>JPG, PNG or WEBP · up to 10 MB</span>
             </button>
           )}
 
@@ -308,10 +308,10 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             onClick={onCancel}
             disabled={saving}
           >
-            Kanselahin
+            Cancel
           </button>
           <button type="submit" className={base.primary} disabled={saving}>
-            {saving ? 'Sine-save…' : isEdit ? 'I-save ang pagbabago' : 'Gumawa ng Event'}
+            {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create Event'}
           </button>
         </div>
       </form>

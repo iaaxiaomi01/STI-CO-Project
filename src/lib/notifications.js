@@ -169,14 +169,14 @@ export function isCertificateNotification(row) {
    "Okt 12" — maikli para sa panel */
 export function timeAgo(iso, now = Date.now()) {
   const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000))
-  if (seconds < 60) return 'Ngayon lang'
+  if (seconds < 60) return 'Just now'
   const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return `${minutes} minuto na`
+  if (minutes < 60) return `${minutes} min ago`
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours} oras na`
+  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
   const days = Math.round(hours / 24)
-  if (days === 1) return 'Kahapon'
-  if (days < 7) return `${days} araw na`
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
   return new Date(iso).toLocaleDateString('en-PH', {
     timeZone: 'Asia/Manila',
     month: 'short',

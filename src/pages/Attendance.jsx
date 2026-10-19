@@ -98,8 +98,8 @@ function Attendance() {
   )
 
   const tabs = []
-  if (joinable) tabs.push({ value: TAB_MINE, label: 'Sinalihan ko' })
-  if (viewer) tabs.push({ value: TAB_PER_EVENT, label: 'Sasali bawat event' })
+  if (joinable) tabs.push({ value: TAB_MINE, label: 'Joined by me' })
+  if (viewer) tabs.push({ value: TAB_PER_EVENT, label: 'Participants per event' })
 
   if (tabs.length === 0) {
     return (
@@ -107,8 +107,8 @@ function Attendance() {
         <PageHeader title="Attendance" />
         <EmptyState
           icon="✓"
-          title="Walang makikita dito"
-          message="Para sa mga miyembro, officer at adviser ng organisasyon ang page na ito."
+          title="Nothing to show here"
+          message="This page is for organization members, officers and advisers."
         />
       </>
     )
@@ -116,8 +116,8 @@ function Attendance() {
 
   const subtitle =
     tab === TAB_MINE
-      ? 'Mga event na sinalihan mo, at ang QR mo para sa Time In at Time Out.'
-      : 'Tingnan kung sino ang sasali sa bawat event, at i-scan ang Time In at Time Out nila.'
+      ? 'Events you joined, and your QR code for Time In and Time Out.'
+      : "See who is joining each event, and scan their Time In and Time Out."
 
   return (
     <>
@@ -205,7 +205,7 @@ function MyJoinedEvents({ profile }) {
   /* Mensahe galing sa Events pagkatapos mag-Join */
   const [notice] = useState(() =>
     location.state?.joinedTitle
-      ? `Sumali ka sa "${location.state.joinedTitle}". Nakalista na ito dito sa Attendance.`
+      ? `You joined "${location.state.joinedTitle}". It is now listed here in Attendance.`
       : '',
   )
 
@@ -267,30 +267,30 @@ function MyJoinedEvents({ profile }) {
         </p>
       )}
 
-      {loading && <p className={styles.muted}>Kinukuha ang mga sinalihan mo…</p>}
+      {loading && <p className={styles.muted}>Loading the events you joined…</p>}
 
       {!loading && error && (
         <EmptyState
           icon="!"
-          title="Hindi makuha ang attendance"
-          message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+          title="Could not load attendance"
+          message="There was a problem connecting to the database. Please try again later."
         />
       )}
 
       {!loading && !error && list.length === 0 && (
         <EmptyState
           icon="✓"
-          title="Wala ka pang sinalihang event"
-          message='Pumunta sa Events at pindutin ang "Join" sa event na gusto mong salihan.'
+          title="You haven't joined any events yet"
+          message='Go to Events and press "Join" on the event you want to join.'
         />
       )}
 
       {!loading && !error && list.length > 0 && (
         <>
           <p className={styles.summary}>
-            <strong>{list.length}</strong> event ang sinalihan mo ·{' '}
-            <strong>{activeCount}</strong> ang paparating o nagaganap ·{' '}
-            <Link to="/events">Maghanap pa ng event →</Link>
+            <strong>{list.length}</strong> joined ·{' '}
+            <strong>{activeCount}</strong> upcoming or ongoing ·{' '}
+            <Link to="/events">Find more events →</Link>
           </p>
 
           <ul className={styles.list}>
@@ -308,7 +308,7 @@ function MyJoinedEvents({ profile }) {
                     {formatTime(ev.end_time)}
                   </p>
                   <p className={styles.meta}>{ev.location}</p>
-                  <p className={styles.joined}>Sumali ka noong {formatDateTimeShort(ev.joined_at)}</p>
+                  <p className={styles.joined}>You joined on {formatDateTimeShort(ev.joined_at)}</p>
 
                   <MyAttendanceLine
                     event={ev}
@@ -358,23 +358,23 @@ function myAttendanceState(event, record, now) {
     case PHASE_BEFORE:
       return {
         qr: null,
-        hint: `Bubukas ang QR para sa Time In ng ${clockOfKey(w.inOpens)} hanggang ${clockOfKey(w.inCloses)}`,
+        hint: `The QR for Time In opens from ${clockOfKey(w.inOpens)} to ${clockOfKey(w.inCloses)}`,
       }
     case PHASE_IN:
       return hasIn
-        ? { qr: null, hint: `Naka-Time In ka na. Time Out: ${outRange}` }
-        : { qr: 'Time In', hint: `Hanggang ${clockOfKey(w.inCloses)} lang ang Time In` }
+        ? { qr: null, hint: `You're timed in. Time Out: ${outRange}` }
+        : { qr: 'Time In', hint: `Time In is only until ${clockOfKey(w.inCloses)}` }
     case PHASE_ONGOING:
       return hasIn
-        ? { qr: null, hint: `Nagaganap ang event. Time Out: ${outRange}` }
-        : { qr: null, hint: 'Hindi ka nakapag-Time In' }
+        ? { qr: null, hint: `The event is in progress. Time Out: ${outRange}` }
+        : { qr: null, hint: 'You did not time in' }
     case PHASE_OUT:
       return hasIn
-        ? { qr: 'Time Out', hint: `Hanggang ${clockOfKey(w.outCloses)} lang ang Time Out` }
-        : { qr: null, hint: 'Hindi ka nakapag-Time In' }
+        ? { qr: 'Time Out', hint: `Time Out is only until ${clockOfKey(w.outCloses)}` }
+        : { qr: null, hint: 'You did not time in' }
     case PHASE_CLOSED:
     default:
-      return { qr: null, hint: hasIn ? 'Hindi ka nakapag-Time Out' : 'Hindi ka nakapag-Time In' }
+      return { qr: null, hint: hasIn ? 'You did not time out' : 'You did not time in' }
   }
 }
 
@@ -393,7 +393,7 @@ function MyAttendanceLine({ event, record, now, hasQr, onShowQr }) {
 
       {hasQr && qr && (
         <button type="button" className={styles.qrBtn} onClick={onShowQr}>
-          ▣ Ipakita ang QR ({qr})
+          ▣ Show QR ({qr})
         </button>
       )}
 
@@ -409,7 +409,7 @@ function MyAttendanceLine({ event, record, now, hasQr, onShowQr }) {
    "Tingnan ang sasali" para buksan ang listahan ng event na
    iyon (kinukuha lang kapag binuksan).
    ============================================================ */
-const FILTERS = [{ value: 'all', label: 'Lahat' }, ...EVENT_STATUSES]
+const FILTERS = [{ value: 'all', label: 'All' }, ...EVENT_STATUSES]
 
 function ParticipantsPerEvent({ profile }) {
   const [events, setEvents] = useState([])
@@ -439,7 +439,7 @@ function ParticipantsPerEvent({ profile }) {
       await exportEventAttendance(ev)
     } catch (err) {
       console.error('Hindi na-export ang attendance:', err)
-      setExportError({ id: ev.id, text: 'Hindi ma-export ang attendance. Subukan ulit.' })
+      setExportError({ id: ev.id, text: 'Could not export attendance. Please try again.' })
     } finally {
       setExportingId(null)
     }
@@ -517,14 +517,14 @@ function ParticipantsPerEvent({ profile }) {
     })
   }
 
-  if (loading) return <p className={styles.muted}>Kinukuha ang mga event…</p>
+  if (loading) return <p className={styles.muted}>Loading events…</p>
 
   if (error) {
     return (
       <EmptyState
         icon="!"
-        title="Hindi makuha ang attendance"
-        message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+        title="Could not load attendance"
+        message="There was a problem connecting to the database. Please try again later."
       />
     )
   }
@@ -533,8 +533,8 @@ function ParticipantsPerEvent({ profile }) {
     return (
       <EmptyState
         icon="✓"
-        title="Wala pang event"
-        message="Kapag may event na ang organisasyon, dito makikita kung sino ang sasali sa bawat isa."
+        title="No events yet"
+        message="Once your organization has events, you can see who is joining each one here."
       />
     )
   }
@@ -542,11 +542,11 @@ function ParticipantsPerEvent({ profile }) {
   return (
     <>
       <p className={styles.summary}>
-        <strong>{events.length}</strong> event · <strong>{totalParticipants}</strong> kabuuang
-        sumali
+        <strong>{events.length}</strong> {events.length === 1 ? 'event' : 'events'} ·{' '}
+        <strong>{totalParticipants}</strong> total participants
       </p>
 
-      <div className={styles.filters} role="tablist" aria-label="Salain ayon sa status">
+      <div className={styles.filters} role="tablist" aria-label="Filter by status">
         {FILTERS.map((f) => (
           <button
             key={f.value}
@@ -563,7 +563,7 @@ function ParticipantsPerEvent({ profile }) {
       </div>
 
       {visible.length === 0 ? (
-        <p className={styles.muted}>Walang event na {eventStatusLabel(filter).toLowerCase()}.</p>
+        <p className={styles.muted}>No {eventStatusLabel(filter).toLowerCase()} events.</p>
       ) : (
         <ul className={styles.list}>
           {visible.map((ev) => {
@@ -580,7 +580,7 @@ function ParticipantsPerEvent({ profile }) {
               canScan && total > 0
                 ? {
                     [PHASE_BEFORE]: `Time In: ${clockOfKey(w.inOpens)} – ${clockOfKey(w.inCloses)}`,
-                    [PHASE_ONGOING]: `Sarado habang nagaganap. Time Out: ${clockOfKey(w.outOpens)} – ${clockOfKey(w.outCloses)}`,
+                    [PHASE_ONGOING]: `Closed while in progress. Time Out: ${clockOfKey(w.outOpens)} – ${clockOfKey(w.outCloses)}`,
                   }[phase] ?? ''
                 : ''
 
@@ -609,7 +609,7 @@ function ParticipantsPerEvent({ profile }) {
 
                   <div className={styles.countBox}>
                     <span className={styles.countNum}>{total}</span>
-                    <span className={styles.countLabel}>{isDone ? 'sumali' : 'sasali'}</span>
+                    <span className={styles.countLabel}>{isDone ? 'joined' : 'joining'}</span>
                   </div>
                 </div>
 
@@ -621,7 +621,7 @@ function ParticipantsPerEvent({ profile }) {
                         className={styles.scanBtn}
                         onClick={() => setScanEvent(ev)}
                       >
-                        ▣ I-scan ang {scanMode === MODE_IN ? 'Time In' : 'Time Out'}
+                        ▣ Scan {scanMode === MODE_IN ? 'Time In' : 'Time Out'}
                       </button>
                     )}
                     {scanHint && <span className={styles.hintSmall}>{scanHint}</span>}
@@ -632,7 +632,7 @@ function ParticipantsPerEvent({ profile }) {
                         aria-expanded={isOpen}
                         onClick={() => toggle(ev.id)}
                       >
-                        {isOpen ? 'Itago ang listahan ▴' : 'Tingnan ang sasali ▾'}
+                        {isOpen ? 'Hide list ▴' : 'View participants ▾'}
                       </button>
                     )}
                     {total > 0 && (
@@ -641,9 +641,9 @@ function ParticipantsPerEvent({ profile }) {
                         className={styles.exportBtn}
                         disabled={exportingId === ev.id}
                         onClick={() => handleExport(ev)}
-                        title="I-download ang attendance ng event na ito (.csv, bumubukas sa Excel)"
+                        title="Download this event's attendance (.csv, opens in Excel)"
                       >
-                        {exportingId === ev.id ? 'Ine-export…' : '⤓ I-export (Excel/CSV)'}
+                        {exportingId === ev.id ? 'Exporting…' : '⤓ Export (Excel/CSV)'}
                       </button>
                     )}
                   </div>
@@ -717,7 +717,7 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
       })
       .catch((err) => {
         console.error('Hindi makuha ang listahan ng sasali:', err)
-        if (active) setError('Hindi makuha ang listahan. Subukan ulit.')
+        if (active) setError('Could not load the list. Please try again.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -731,7 +731,7 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
   async function handleManual(p, mode) {
     const { name } = participantLabel(p)
     const label = mode === MODE_IN ? 'Time In' : 'Time Out'
-    if (!window.confirm(`I-${label} nang manual si ${name}?`)) return
+    if (!window.confirm(`Manually record ${label} for ${name}?`)) return
 
     setBusyId(p.profile_id)
     setActionError('')
@@ -758,9 +758,9 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
     }
   }
 
-  if (loading) return <p className={styles.panelMuted}>Kinukuha ang listahan…</p>
+  if (loading) return <p className={styles.panelMuted}>Loading the list…</p>
   if (error) return <p className={styles.panelError}>{error}</p>
-  if (list.length === 0) return <p className={styles.panelMuted}>Wala pang sumasali.</p>
+  if (list.length === 0) return <p className={styles.panelMuted}>No one has joined yet.</p>
 
   return (
     <>
@@ -809,7 +809,7 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
                 </button>
               )}
 
-              <span className={styles.when}>Sumali {formatDateTimeShort(p.joined_at)}</span>
+              <span className={styles.when}>Joined {formatDateTimeShort(p.joined_at)}</span>
             </li>
           )
         })}

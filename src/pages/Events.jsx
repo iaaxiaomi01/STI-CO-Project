@@ -106,7 +106,7 @@ function sortEvents(list) {
   })
 }
 
-const FILTERS = [{ value: 'all', label: 'Lahat' }, ...EVENT_STATUSES]
+const FILTERS = [{ value: 'all', label: 'All' }, ...EVENT_STATUSES]
 
 /* Member at Officer: may dagdag na tab na "Missed" */
 const MEMBER_FILTERS = [...FILTERS, MISSED_STATUS]
@@ -250,7 +250,7 @@ function Events() {
       await downloadCertificate(cert)
     } catch (err) {
       console.error('Hindi ma-download ang certificate:', err)
-      setNotice('Hindi ma-download ang certificate. Subukan ulit.')
+      setNotice('Could not download the certificate. Please try again.')
     } finally {
       setDownloadingId(null)
     }
@@ -362,11 +362,11 @@ function Events() {
     const updated = await updateEvent(editing, values, imageOptions)
     setEvents((list) => list.map((e) => (e.id === updated.id ? updated : e)))
     setEditing(null)
-    setNotice('Na-save ang pagbabago.')
+    setNotice('Changes saved.')
   }
 
   async function handleDelete(event) {
-    const ok = window.confirm(`Burahin ang event na "${event.title}"? Hindi na ito maibabalik.`)
+    const ok = window.confirm(`Delete the event "${event.title}"? This cannot be undone.`)
     if (!ok) return
 
     setNotice('')
@@ -374,7 +374,7 @@ function Events() {
     try {
       await deleteEvent(event)
       setEvents((list) => list.filter((e) => e.id !== event.id))
-      setNotice('Nabura ang event.')
+      setNotice('Event deleted.')
     } catch (err) {
       console.error('Hindi nabura ang event:', err)
       setNotice(eventErrorMessage(err))
@@ -392,11 +392,11 @@ function Events() {
     })
   }
 
-  let subtitle = 'Mga aktibidad ng organisasyon.'
+  let subtitle = "Your organization's activities."
   if (can.propose) {
-    subtitle = 'Ang event ay ginagawa mula sa approved mong proposal sa Proposals.'
+    subtitle = 'Events are created from your approved proposals in Proposals.'
   } else if (can.review) {
-    subtitle = 'Mga event ng organisasyon. Pwede mong i-edit o burahin ang alinman dito.'
+    subtitle = "Your organization's events. You can edit or delete any of them."
   }
 
   return (
@@ -409,24 +409,24 @@ function Events() {
         </p>
       )}
 
-      {loading && <p className={styles.loading}>Kinukuha ang events…</p>}
+      {loading && <p className={styles.loading}>Loading events…</p>}
 
       {!loading && error && (
         <EmptyState
           icon="!"
-          title="Hindi makuha ang events"
-          message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+          title="Could not load events"
+          message="There was a problem connecting to the database. Please try again later."
         />
       )}
 
       {!loading && !error && events.length === 0 && (
         <EmptyState
           icon="◆"
-          title="Wala pang naka-schedule na event"
+          title="No events scheduled yet"
           message={
             can.propose
-              ? 'Kapag na-approve ang proposal mo, pindutin ang "+ Gumawa ng Event" sa Proposals.'
-              : 'Kapag may naidagdag nang event, dito ito lalabas kasama ang petsa, oras at lugar.'
+              ? 'Once your proposal is approved, press "+ Create Event" in Proposals.'
+              : 'Once an event is added, it will appear here with its date, time and location.'
           }
         />
       )}
@@ -435,8 +435,8 @@ function Events() {
         <>
           {can.propose && (
             <p className={styles.hint}>
-              May approved kang proposal?{' '}
-              <Link to="/proposals">Pumunta sa Proposals</Link> para gawan ito ng event.
+              Have an approved proposal?{' '}
+              <Link to="/proposals">Go to Proposals</Link> to create an event for it.
             </p>
           )}
 
@@ -445,19 +445,19 @@ function Events() {
             <input
               type="search"
               className={styles.search}
-              placeholder="Hanapin ang event, lugar, petsa, o gumawa…"
-              aria-label="Hanapin ang event"
+              placeholder="Search by event, location, date, or creator…"
+              aria-label="Search events"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {query && (
               <span className={styles.searchCount}>
-                {matched.length} sa {withStatus.length}
+                {matched.length} of {withStatus.length}
               </span>
             )}
           </div>
 
-          <div className={styles.filters} role="tablist" aria-label="Salain ayon sa status">
+          <div className={styles.filters} role="tablist" aria-label="Filter by status">
             {filters.map((f) => (
               <button
                 key={f.value}
@@ -477,15 +477,15 @@ function Events() {
             <p className={styles.loading}>
               {query ? (
                 <>
-                  Walang event
-                  {filter !== 'all' && ` na ${eventStatusLabel(filter).toLowerCase()}`} na
-                  tumutugma sa &ldquo;{search.trim()}&rdquo;.{' '}
+                  No
+                  {filter !== 'all' && ` ${eventStatusLabel(filter).toLowerCase()}`} events
+                  match &ldquo;{search.trim()}&rdquo;.{' '}
                   <button type="button" className={styles.clearSearch} onClick={() => setSearch('')}>
-                    I-clear ang search
+                    Clear search
                   </button>
                 </>
               ) : (
-                `Walang event na ${eventStatusLabel(filter).toLowerCase()}.`
+                `No ${eventStatusLabel(filter).toLowerCase()} events.`
               )}
             </p>
           ) : (
@@ -535,17 +535,17 @@ function Events() {
 
                       <dl className={styles.details}>
                         <div>
-                          <dt>Petsa</dt>
+                          <dt>Date</dt>
                           <dd>{formatEventDate(ev.event_date)}</dd>
                         </div>
                         <div>
-                          <dt>Oras</dt>
+                          <dt>Time</dt>
                           <dd>
                             {formatTime(ev.start_time)} – {formatTime(ev.end_time)}
                           </dd>
                         </div>
                         <div>
-                          <dt>Lugar</dt>
+                          <dt>Location</dt>
                           <dd>{ev.location}</dd>
                         </div>
                       </dl>
@@ -563,7 +563,7 @@ function Events() {
                           className={styles.more}
                           onClick={() => toggleExpanded(ev.id)}
                         >
-                          {isOpen ? 'Itago' : 'Magbasa pa'}
+                          {isOpen ? 'Show less' : 'Read more'}
                         </button>
                       )}
 
@@ -577,13 +577,13 @@ function Events() {
                               onClick={() => openJoin(ev)}
                               disabled={joinBusy}
                             >
-                              {joinBusy ? 'Sumasali…' : 'Join'}
+                              {joinBusy ? 'Joining…' : 'Join'}
                             </button>
                           )}
 
                           {joinable && joined && (
                             <span className={styles.joinedGroup}>
-                              <span className={styles.joinedBadge}>✓ Nakasali ka</span>
+                              <span className={styles.joinedBadge}>✓ You joined</span>
                             </span>
                           )}
 
@@ -597,22 +597,22 @@ function Events() {
                                 disabled={certBusy}
                               >
                                 <span aria-hidden="true">⤓</span>{' '}
-                                {certBusy ? 'Binubuksan…' : 'I-download ang Certificate'}
+                                {certBusy ? 'Opening…' : 'Download Certificate'}
                               </button>
                             ) : completedMine ? (
                               <span className={styles.certNote}>
-                                Kumpleto ang attendance mo. Wala pang certificate — ilalagay ito ng
-                                Officer o Adviser.
+                                Your attendance is complete. No certificate yet — an Officer or the
+                                Adviser will upload it.
                               </span>
                             ) : attendanceClosed ? (
                               <span className={styles.certNoteMuted}>
-                                Walang certificate — hindi kumpleto ang Time In at Time Out mo.
+                                No certificate — your Time In and Time Out are incomplete.
                               </span>
                             ) : null)}
 
                           {missed && (
                             <span className={styles.missedNote}>
-                              Natapos ang event nang hindi ka nakasali.
+                              The event ended without you joining.
                             </span>
                           )}
                         </div>
@@ -621,7 +621,7 @@ function Events() {
                       <div className={styles.footer}>
                         <p className={styles.author}>
                           {authorLabel(ev)}
-                          {wasEdited(ev) && <span className={styles.edited}> · na-edit</span>}
+                          {wasEdited(ev) && <span className={styles.edited}> · edited</span>}
                         </p>
 
                         {(editable || deletable || manageCerts) && (
@@ -649,7 +649,7 @@ function Events() {
                                 }}
                                 disabled={busy}
                               >
-                                I-edit
+                                Edit
                               </button>
                             )}
                             {deletable && (
@@ -659,7 +659,7 @@ function Events() {
                                 onClick={() => handleDelete(ev)}
                                 disabled={busy}
                               >
-                                {busy ? 'Binubura…' : 'Burahin'}
+                                {busy ? 'Deleting…' : 'Delete'}
                               </button>
                             )}
                           </div>

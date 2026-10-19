@@ -162,11 +162,11 @@ function MyQrDialog({ event, profileId, onClose }) {
         <div className={styles.header}>
           <div>
             <h2 id="my-qr-title" className={styles.heading}>
-              Ang QR mo{mode ? ` · ${MODE_LABEL[mode]}` : ''}
+              Your QR{mode ? ` · ${MODE_LABEL[mode]}` : ''}
             </h2>
             <p className={styles.sub}>{event.title}</p>
           </div>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Isara">
+          <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -175,7 +175,7 @@ function MyQrDialog({ event, profileId, onClose }) {
           {token ? (
             <QRCodeSVG value={qrValueFor(token)} size={260} level="M" marginSize={2} />
           ) : (
-            <div className={styles.qrPlaceholder}>{error || 'Kinukuha ang QR…'}</div>
+            <div className={styles.qrPlaceholder}>{error || 'Getting your QR…'}</div>
           )}
         </div>
 
@@ -187,7 +187,7 @@ function MyQrDialog({ event, profileId, onClose }) {
                 style={{ width: `${(secondsLeft / QR_REFRESH_SECONDS) * 100}%` }}
               />
             </div>
-            <p className={styles.timerText}>Papalitan ang QR sa loob ng {secondsLeft}s</p>
+            <p className={styles.timerText}>QR refreshes in {secondsLeft}s</p>
           </>
         )}
 
@@ -203,8 +203,8 @@ function MyQrDialog({ event, profileId, onClose }) {
         </div>
 
         <p className={styles.help}>
-          Ipakita ito sa Officer o Adviser sa pasukan at labasan. Huwag i-screenshot — hindi ito
-          gagana pagkalipas ng ilang segundo.
+          Show this to an Officer or Adviser at the entrance and exit. Don't screenshot it — it
+          stops working after a few seconds.
         </p>
       </div>
     </div>

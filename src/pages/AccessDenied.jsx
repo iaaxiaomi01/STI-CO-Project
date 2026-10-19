@@ -17,15 +17,15 @@ function AccessDenied() {
   const { user, profile, profileError, refreshProfile } = useAuth()
 
   let message =
-    'Hindi nakalista ang iyong email sa talaan ng mga estudyante. ' +
-    'Makipag-ugnayan sa SAO o IT Administrator para maidagdag ka.'
+    'Your email is not on the student records list. ' +
+    'Please contact the SAO or IT Administrator to be added.'
 
   if (profileError) {
     message =
-      'Hindi makakonekta sa database ngayon. Subukan ulit mamaya.'
+      'Could not connect to the database right now. Please try again later.'
   } else if (profile && !profile.is_active) {
     message =
-      'Naka-deactivate ang iyong account. Makipag-ugnayan sa SAO o IT Administrator.'
+      'Your account has been deactivated. Please contact the SAO or IT Administrator.'
   }
 
   async function handleLogout() {
@@ -40,25 +40,25 @@ function AccessDenied() {
         </p>
 
         <div className={styles.cardHead}>
-          <h1 className={styles.title}>Walang access</h1>
+          <h1 className={styles.title}>No access</h1>
           <p className={styles.subtitle}>{message}</p>
         </div>
 
         {user?.email && (
           <p className={styles.helpText}>
-            Naka-sign in bilang <strong>{user.email}</strong>
+            Signed in as <strong>{user.email}</strong>
           </p>
         )}
 
         <div style={{ display: 'grid', gap: '0.75rem', marginTop: '1.5rem' }}>
           {profileError && (
             <button type="button" className={styles.msButton} onClick={refreshProfile}>
-              <span className={styles.msButtonText}>Subukan ulit</span>
+              <span className={styles.msButtonText}>Try again</span>
             </button>
           )}
 
           <button type="button" className={styles.msButton} onClick={handleLogout}>
-            <span className={styles.msButtonText}>Mag-logout</span>
+            <span className={styles.msButtonText}>Log out</span>
           </button>
         </div>
       </div>

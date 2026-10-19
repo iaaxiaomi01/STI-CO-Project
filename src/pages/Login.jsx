@@ -45,7 +45,7 @@ function Login() {
     })
 
     if (signInError) {
-      setError('Hindi natuloy ang sign-in. Subukan ulit.')
+      setError('Sign-in did not go through. Please try again.')
       console.error('Supabase OAuth error:', signInError)
       setBusy(false)
     }
@@ -63,7 +63,7 @@ function Login() {
         <div className={styles.cardHead}>
           <h1 className={styles.title}>Sign in</h1>
           <p className={styles.subtitle}>
-            Gamitin ang iyong Microsoft account para makapasok.
+            Use your Microsoft account to sign in.
           </p>
         </div>
 
@@ -75,15 +75,15 @@ function Login() {
         >
           <img src={msLogo} alt="" className={styles.msLogo} />
           <span className={styles.msButtonText}>
-            {busy ? 'Inihahatid sa Microsoft…' : 'Sign in with Microsoft'}
+            {busy ? 'Redirecting to Microsoft…' : 'Sign in with Microsoft'}
           </span>
         </button>
 
         {error && <p className={styles.errorNotice}>{error}</p>}
 
         <p className={styles.helpText}>
-          Kailangan mo ng STI Microsoft account para makapasok.
-          Kung wala ka pa nito, makipag-ugnayan sa IT support.
+          You need an STI Microsoft account to sign in.
+          If you don't have one yet, please contact IT support.
         </p>
       </div>
     </section>

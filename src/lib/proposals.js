@@ -46,7 +46,7 @@ import { toTitleCase } from './profile.js'
                 pa ito para sa "Noted")
      approved → nag-Approve ang lahat ng tatlo */
 export const STATUS_LABELS = {
-  pending: 'Naghihintay',
+  pending: 'Pending',
   approved: 'Approved',
   rejected: 'Rejected',
 }
@@ -60,7 +60,7 @@ export const DECISION_LABELS = {
   approved: 'Approved',
   rejected: 'Rejected',
   noted: 'Noted',
-  revision: 'Ipina-revise',
+  revision: 'Revision requested',
 }
 
 export function decisionLabel(decision) {
@@ -97,13 +97,13 @@ export function awaitsNoted(proposal) {
    dumadaan pa; "Approved" / "Rejected" kapag tapos na. */
 export function progressLabel(proposal) {
   if (isInRevision(proposal)) {
-    return `Ibinalik ng ${stageLabel(proposal.revision_from)} · I-revise`
+    return `Returned by ${stageLabel(proposal.revision_from)} · Revise`
   }
   if (awaitsNoted(proposal)) {
-    return `Rejected · Nasa ${stageLabel(proposal.stage)}`
+    return `Rejected · With ${stageLabel(proposal.stage)}`
   }
   if (proposal.status === 'pending' && isInReview(proposal)) {
-    return `Nasa ${stageLabel(proposal.stage)}`
+    return `With ${stageLabel(proposal.stage)}`
   }
   return statusLabel(proposal.status)
 }

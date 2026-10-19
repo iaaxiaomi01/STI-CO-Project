@@ -83,7 +83,7 @@ function OrgProfile() {
 
     const cleanName = name.trim()
     if (cleanName.length < NAME_MIN) {
-      setFormError(`Ang pangalan ay dapat ${NAME_MIN} hanggang ${NAME_MAX} characters.`)
+      setFormError(`The name must be ${NAME_MIN} to ${NAME_MAX} characters.`)
       return
     }
 
@@ -92,7 +92,7 @@ function OrgProfile() {
       const updated = await updateOrganizationDetails(org.id, { name: cleanName, description })
       setOrg(updated)
       setEditing(false)
-      setNotice('Na-save ang Org Profile.')
+      setNotice('Org Profile saved.')
       await refreshProfile()
     } catch (err) {
       console.error('Hindi na-save ang Org Profile:', err)
@@ -112,7 +112,7 @@ function OrgProfile() {
     setLogoBusy('upload')
     try {
       setOrg(await uploadOrgLogo(org.id, file))
-      setNotice('Napalitan ang logo.')
+      setNotice('Logo updated.')
     } catch (err) {
       console.error('Hindi na-upload ang logo:', err)
       setLogoError(err instanceof ImageError ? err.message : orgErrorMessage(err))
@@ -122,14 +122,14 @@ function OrgProfile() {
   }
 
   async function handleLogoRemove() {
-    if (!window.confirm('Alisin ang logo ng organisasyon?')) return
+    if (!window.confirm("Remove the organization's logo?")) return
 
     setLogoError('')
     setNotice('')
     setLogoBusy('remove')
     try {
       setOrg(await removeOrgLogo(org.id))
-      setNotice('Naalis ang logo.')
+      setNotice('Logo removed.')
     } catch (err) {
       console.error('Hindi naalis ang logo:', err)
       setLogoError(orgErrorMessage(err))
@@ -143,8 +143,8 @@ function OrgProfile() {
   const header = (
     <PageHeader
       title="Org Profile"
-      subtitle="Ang impormasyon ng organisasyong hawak mo."
-      action={org && !editing && <ActionButton onClick={startEdit}>I-edit</ActionButton>}
+      subtitle="Information about the organization you manage."
+      action={org && !editing && <ActionButton onClick={startEdit}>Edit</ActionButton>}
     />
   )
 
@@ -154,8 +154,8 @@ function OrgProfile() {
         {header}
         <EmptyState
           icon="◈"
-          title="Wala kang organisasyon"
-          message="Hindi ka pa naka-assign sa isang organisasyon. Makipag-ugnayan sa SAO o IT Administrator."
+          title="You have no organization"
+          message="You are not assigned to an organization yet. Please contact the SAO or IT Administrator."
         />
       </>
     )
@@ -165,7 +165,7 @@ function OrgProfile() {
     return (
       <>
         {header}
-        <p className={styles.status}>Kinukuha ang Org Profile…</p>
+        <p className={styles.status}>Loading Org Profile…</p>
       </>
     )
   }
@@ -176,8 +176,8 @@ function OrgProfile() {
         {header}
         <EmptyState
           icon="!"
-          title="Hindi makuha ang Org Profile"
-          message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+          title="Could not load Org Profile"
+          message="There was a problem connecting to the database. Please try again later."
         />
       </>
     )
@@ -211,7 +211,7 @@ function OrgProfile() {
               {showLogo ? (
                 <img
                   src={org.logo_url}
-                  alt={`Logo ng ${org.name}`}
+                  alt={`${org.name} logo`}
                   className={styles.logoImage}
                   onError={() => setLogoFailed(org.logo_url)}
                 />
@@ -239,10 +239,10 @@ function OrgProfile() {
               disabled={Boolean(logoBusy)}
             >
               {logoBusy === 'upload'
-                ? 'Ina-upload…'
+                ? 'Uploading…'
                 : org.logo_url
-                  ? 'Palitan ang logo'
-                  : 'Mag-upload ng logo'}
+                  ? 'Change logo'
+                  : 'Upload logo'}
             </button>
             {org.logo_url && (
               <button
@@ -251,7 +251,7 @@ function OrgProfile() {
                 onClick={handleLogoRemove}
                 disabled={Boolean(logoBusy)}
               >
-                {logoBusy === 'remove' ? 'Inaalis…' : 'Alisin'}
+                {logoBusy === 'remove' ? 'Removing…' : 'Remove'}
               </button>
             )}
           </div>
@@ -261,7 +261,7 @@ function OrgProfile() {
               {logoError}
             </p>
           ) : (
-            <p className={styles.hint}>JPG, PNG o WEBP · hanggang 10 MB</p>
+            <p className={styles.hint}>JPG, PNG or WEBP · up to 10 MB</p>
           )}
         </div>
 
@@ -289,7 +289,7 @@ function OrgProfile() {
                 readOnly
               />
               <span className={styles.hint}>
-                Hindi mababago dito. Makipag-ugnayan sa IT Administrator.
+                This can't be changed here. Please contact the IT Administrator.
               </span>
             </label>
 
@@ -306,7 +306,7 @@ function OrgProfile() {
                 maxLength={DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={6}
-                placeholder="Ano ang organisasyon, layunin nito, at para kanino ito."
+                placeholder="What the organization is, its purpose, and who it is for."
               />
             </label>
 
@@ -323,10 +323,10 @@ function OrgProfile() {
                 onClick={() => setEditing(false)}
                 disabled={saving}
               >
-                Kanselahin
+                Cancel
               </button>
               <button type="submit" className={styles.primary} disabled={saving}>
-                {saving ? 'Sine-save…' : 'I-save'}
+                {saving ? 'Saving…' : 'Save'}
               </button>
             </div>
           </form>
@@ -343,7 +343,7 @@ function OrgProfile() {
             <div className={styles.row}>
               <dt className={styles.label}>Description</dt>
               <dd className={org.description ? styles.description : styles.empty}>
-                {org.description || 'Wala pang description.'}
+                {org.description || 'No description yet.'}
               </dd>
             </div>
           </dl>

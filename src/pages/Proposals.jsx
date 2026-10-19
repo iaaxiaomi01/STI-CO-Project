@@ -192,7 +192,7 @@ function Proposals() {
       replaceProposal(updated)
       setReviewing(null)
       setNotice(
-        `Ibinalik ang proposal sa Officer para i-revise. Babalik ito sa iyo kapag naipasa na ulit.`,
+        `The proposal was returned to the Officer for revision. It will come back to you once resubmitted.`,
       )
       return
     }
@@ -202,21 +202,21 @@ function Proposals() {
     setReviewing(null)
 
     const last = isFinalReview(proposal)
-    const next = last ? '' : ` Naipasa na ito sa ${stageLabel(updated.stage)}.`
+    const next = last ? '' : ` It has been forwarded to ${stageLabel(updated.stage)}.`
 
     if (action === 'noted') {
-      setNotice(last ? 'Noted. Tapos na ang daan ng proposal.' : `Noted.${next}`)
+      setNotice(last ? "Noted. The proposal's review is complete." : `Noted.${next}`)
     } else if (action === 'rejected') {
       setNotice(
         last
-          ? 'Na-reject ang proposal (pinal).'
-          : `Na-reject ang proposal — Rejected na ito (pinal).${next} "Noted" na lang ang magagawa ng mga susunod.`,
+          ? 'The proposal was rejected (final).'
+          : `The proposal was rejected — it is now Rejected (final).${next} The next reviewers can only mark it "Noted".`,
       )
     } else {
       setNotice(
         last
-          ? 'Na-approve ang proposal (pinal). Makakagawa na ng event ang Officer.'
-          : `Na-approve mo ang proposal.${next}`,
+          ? 'The proposal was approved (final). The Officer can now create an event.'
+          : `You approved the proposal.${next}`,
       )
     }
   }
@@ -239,7 +239,7 @@ function Proposals() {
     const created = await createEventFromProposal(eventFor, values, imageFile)
     replaceProposal({ ...eventFor, events: { id: created.id } })
     setEventFor(null)
-    setNotice('Nagawa ang event. Makikita na ito ng mga miyembro sa Events.')
+    setNotice('Event created. Members can now see it in Events.')
   }
 
   /* Galing sa ProposalForm. Kapag nag-throw, doon lalabas ang
@@ -254,7 +254,7 @@ function Proposals() {
     try {
       const created = await createProposal({ ...values, attachment: uploaded })
       setProposals((list) => [created, ...list])
-      setNotice('Naipasa ang proposal.')
+      setNotice('Proposal submitted.')
     } catch (err) {
       if (uploaded) await deleteProposalFile(uploaded.path)
       throw err
@@ -297,7 +297,7 @@ function Proposals() {
     replaceProposal(updated)
     setRevising(null)
     setFilter('all')
-    setNotice(`Naipasa ulit ang proposal. Nasa ${stageLabel(updated.stage)} na ito ulit.`)
+    setNotice(`Proposal resubmitted. It is back with ${stageLabel(updated.stage)}.`)
   }
 
   async function handleDownload(proposal) {
@@ -307,7 +307,7 @@ function Proposals() {
       await downloadProposalFile(proposal)
     } catch (err) {
       console.error('Hindi ma-download ang file:', err)
-      setNotice('Hindi ma-download ang file. Subukan ulit.')
+      setNotice('Could not download the file. Please try again.')
     } finally {
       setDownloadingId(null)
     }
@@ -315,7 +315,7 @@ function Proposals() {
 
   async function handleDelete(proposal) {
     const ok = window.confirm(
-      `Burahin ang "${proposal.title}"? Hindi na ito maibabalik.`,
+      `Delete "${proposal.title}"? This cannot be undone.`,
     )
     if (!ok) return
 
@@ -325,13 +325,13 @@ function Proposals() {
       await deleteProposal(proposal.id)
       await deleteProposalFile(proposal.attachment_path)
       setProposals((list) => list.filter((p) => p.id !== proposal.id))
-      setNotice('Nabura ang proposal.')
+      setNotice('Proposal deleted.')
     } catch (err) {
       console.error('Hindi nabura ang proposal:', err)
       setNotice(
         err?.message === 'not-allowed'
-          ? 'Wala kang pahintulot na burahin ang proposal na ito.'
-          : 'Hindi nabura. Subukan ulit.',
+          ? "You don't have permission to delete this proposal."
+          : 'Could not delete. Please try again.',
       )
     } finally {
       setDeletingId(null)
@@ -344,12 +344,12 @@ function Proposals() {
         title="Proposals"
         subtitle={
           can.propose
-            ? 'Gumawa ng proposal para sa organisasyon mo. Dadaan ito sa Adviser, SAO, at School Head.'
+            ? 'Create a proposal for your organization. It will go through the Adviser, SAO, and School Head.'
             : profile?.role_id === 6
-              ? 'Ikaw ang huling sumusuri sa mga proposal ng lahat ng organisasyon. Kapag rejected na ng iba, "Noted" na lang ang aksyon mo.'
+              ? 'You are the final reviewer for proposals from all organizations. If someone else already rejected it, your only action is "Noted".'
               : isStaff
-                ? 'Suriin ang mga proposal ng lahat ng organisasyon. Kapag ni-reject mo, Rejected na agad; dadaan pa rin ito sa School Head para sa "Noted".'
-                : 'Suriin ang mga proposal ng organisasyon. Kapag ni-reject mo, Rejected na agad; dadaan pa rin ito sa SAO at School Head para sa "Noted".'
+                ? 'Review proposals from all organizations. If you reject one, it is Rejected immediately; it will still go to the School Head for "Noted".'
+                : "Review your organization's proposals. If you reject one, it is Rejected immediately; it will still go to the SAO and School Head for \"Noted\"."
         }
         action={
           can.propose && (
@@ -359,7 +359,7 @@ function Proposals() {
                 setFormOpen(true)
               }}
             >
-              + Gumawa ng Proposal
+              + Create Proposal
             </ActionButton>
           )
         }
@@ -372,7 +372,7 @@ function Proposals() {
       )}
 
       {showFilters && !loading && !error && (
-        <div className={styles.filters} role="tablist" aria-label="Salain ang proposals">
+        <div className={styles.filters} role="tablist" aria-label="Filter proposals">
           <button
             type="button"
             role="tab"
@@ -381,8 +381,8 @@ function Proposals() {
             onClick={() => setFilter('mine')}
           >
             {isReviewer
-              ? `Naghihintay ng aksyon mo (${mine.length})`
-              : `Para i-revise mo (${mine.length})`}
+              ? `Awaiting your action (${mine.length})`
+              : `For you to revise (${mine.length})`}
           </button>
           <button
             type="button"
@@ -391,39 +391,39 @@ function Proposals() {
             className={`${styles.filterChip} ${filter === 'all' ? styles.filterActive : ''}`}
             onClick={() => setFilter('all')}
           >
-            Lahat ({proposals.length})
+            All ({proposals.length})
           </button>
         </div>
       )}
 
-      {loading && <p className={styles.status}>Kinukuha ang proposals…</p>}
+      {loading && <p className={styles.status}>Loading proposals…</p>}
 
       {!loading && error && (
         <EmptyState
           icon="!"
-          title="Hindi makuha ang proposals"
-          message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+          title="Could not load proposals"
+          message="There was a problem connecting to the database. Please try again later."
         />
       )}
 
       {!loading && !error && proposals.length > 0 && shown.length === 0 && (
         <EmptyState
           icon="✓"
-          title="Wala kang kailangang aksyunan"
-          message='Walang proposal na naghihintay sa iyo ngayon. Pindutin ang "Lahat" para makita ang iba.'
+          title="Nothing needs your action"
+          message='No proposals are waiting for you right now. Press "All" to see the others.'
         />
       )}
 
       {!loading && !error && proposals.length === 0 && (
         <EmptyState
           icon="✉"
-          title="Wala pang proposal"
+          title="No proposals yet"
           message={
             can.propose
-              ? 'Pindutin ang "+ Gumawa ng Proposal" para gumawa ng unang sulat.'
+              ? 'Press "+ Create Proposal" to write your first letter.'
               : isStaff
-                ? 'Dito lalabas ang mga proposal na ipapasa ng mga Officer ng lahat ng organisasyon.'
-                : 'Dito lalabas ang mga proposal na ipapasa ng mga Officer ng organisasyon mo.'
+                ? 'Proposals submitted by Officers from all organizations will appear here.'
+                : "Proposals submitted by your organization's Officers will appear here."
           }
         />
       )}
@@ -471,14 +471,14 @@ function Proposals() {
                       className={styles.fileChip}
                       onClick={() => handleDownload(p)}
                       disabled={downloadingId === p.id}
-                      title="I-download ang file"
+                      title="Download file"
                     >
                       <span aria-hidden="true">📎</span>
                       <span className={styles.fileChipName}>{p.attachment_name}</span>
                       <span className={styles.fileChipMeta}>
                         {downloadingId === p.id
-                          ? 'Dina-download…'
-                          : `${formatFileSize(p.attachment_size)} · I-download`}
+                          ? 'Downloading…'
+                          : `${formatFileSize(p.attachment_size)} · Download`}
                       </span>
                     </button>
                   )}
@@ -493,7 +493,7 @@ function Proposals() {
                     className={styles.openButton}
                     onClick={() => setViewing(p)}
                   >
-                    Buksan ang sulat
+                    Open letter
                   </button>
 
                   {/* Rejected na: "Noted" lang ang aksyon */}
@@ -544,7 +544,7 @@ function Proposals() {
                         setRevising(p)
                       }}
                     >
-                      I-revise
+                      Revise
                     </button>
                   )}
 
@@ -557,13 +557,13 @@ function Proposals() {
                         setEventFor(p)
                       }}
                     >
-                      + Gumawa ng Event
+                      + Create Event
                     </button>
                   )}
 
                   {p.status === 'approved' && eventOfProposal(p) && (
                     <Link to="/events" className={styles.eventLink}>
-                      Tingnan ang Event →
+                      View Event →
                     </Link>
                   )}
 
@@ -574,7 +574,7 @@ function Proposals() {
                       onClick={() => handleDelete(p)}
                       disabled={busy}
                     >
-                      {busy ? 'Binubura…' : 'Burahin'}
+                      {busy ? 'Deleting…' : 'Delete'}
                     </button>
                   )}
                 </div>

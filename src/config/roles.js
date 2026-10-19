@@ -102,20 +102,20 @@ function staffRole(label) {
     can: { create: false, review: false, announce: false, propose: false },
     sidebar: [DASHBOARD, MEMBERS, PROFILE],
     dashboard: {
-      subtitle: 'Tanaw sa lahat ng organisasyon at miyembro.',
+      subtitle: 'An overview of all organizations and members.',
       stats: [],
       cards: [
         {
           to: '/members',
           icon: '▲',
           title: 'Members',
-          text: 'Tingnan ang mga miyembro ng lahat ng organisasyon.',
+          text: 'View the members of every organization.',
         },
         {
           to: '/profile',
           icon: '●',
           title: 'Profile',
-          text: 'Tingnan ang iyong impormasyon.',
+          text: 'View your information.',
         },
       ],
     },
@@ -142,7 +142,7 @@ function staffRoleWithProposals(label, proposalsText) {
       ...base.dashboard,
       stats: [
         {
-          label: 'Proposals na naghihintay ng aksyon mo',
+          label: 'Proposals awaiting your action',
           value: '0',
           to: '/proposals',
           key: 'pendingProposals',
@@ -183,29 +183,29 @@ export const ROLES = {
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, PROFILE],
 
     dashboard: {
-      subtitle: 'Narito ang mabilisang tanaw ng organisasyon.',
+      subtitle: "Here's a quick look at your organization.",
       stats: [
-        { label: 'Paparating na events', value: '0', to: '/events', key: 'upcomingEvents' },
+        { label: 'Upcoming events', value: '0', to: '/events', key: 'upcomingEvents' },
         {
-          label: 'Bagong announcements (7 araw)',
+          label: 'New announcements (7 days)',
           value: '0',
           to: '/announcements',
           key: 'newAnnouncements',
         },
-        { label: 'Attendance rate mo', value: '—', to: '/attendance', key: 'attendanceRate' },
+        { label: 'Your attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
       cards: [
         {
           to: '/announcements',
           icon: '★',
           title: 'Announcements',
-          text: 'Basahin ang pinakabagong balita mula sa organisasyon.',
+          text: 'Read the latest news from your organization.',
         },
         {
           to: '/attendance',
           icon: '✓',
           title: 'Attendance',
-          text: 'Suriin ang iyong record ng pagdalo at ipakita ang QR mo.',
+          text: 'Check your attendance record and show your QR code.',
         },
       ],
     },
@@ -244,15 +244,15 @@ export const ROLES = {
     ],
 
     dashboard: {
-      subtitle: 'Suriin at aksyunan ang mga proposal ng organisasyon.',
+      subtitle: "Review and act on your organization's proposals.",
       stats: [
-        { label: 'Naghihintay na proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
-        { label: 'Kabuuang miyembro', value: '0', to: '/members', key: 'memberCount' },
-        { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
+        { label: 'Pending proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
+        { label: 'Total members', value: '0', to: '/members', key: 'memberCount' },
+        { label: 'Org attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
         /* Sariling attendance ng Officer (sa mga event na sinalihan
            niya). Bubuksan ang tab na "Sinalihan ko" sa Attendance. */
         {
-          label: 'Attendance rate mo',
+          label: 'Your attendance rate',
           value: '—',
           to: '/attendance',
           state: { tab: 'mine' },
@@ -264,19 +264,19 @@ export const ROLES = {
           to: '/proposals',
           icon: '✉',
           title: 'Proposals',
-          text: 'Gumawa ng proposal para sa organisasyon mo.',
+          text: 'Create a proposal for your organization.',
         },
         {
           to: '/members',
           icon: '▲',
           title: 'Members',
-          text: 'Tingnan ang listahan ng mga miyembro ng organisasyon.',
+          text: "View your organization's member list.",
         },
         {
           to: '/announcements',
           icon: '★',
-          title: 'Magpaskil',
-          text: 'Maglabas ng balita at paalala sa mga miyembro.',
+          title: 'Post',
+          text: 'Share news and reminders with members.',
         },
       ],
     },
@@ -316,36 +316,36 @@ export const ROLES = {
     ],
 
     dashboard: {
-      subtitle: 'Pamahalaan at bantayan ang organisasyon.',
+      subtitle: 'Manage and oversee your organization.',
       stats: [
-        { label: 'Proposals na naghihintay ng aksyon mo', value: '0', to: '/proposals', key: 'pendingProposals' },
-        { label: 'Aktibong miyembro', value: '0', to: '/members', key: 'memberCount' },
-        { label: 'Attendance rate ng org', value: '—', to: '/attendance', key: 'attendanceRate' },
+        { label: 'Proposals awaiting your action', value: '0', to: '/proposals', key: 'pendingProposals' },
+        { label: 'Active members', value: '0', to: '/members', key: 'memberCount' },
+        { label: 'Org attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
       ],
       cards: [
         {
           to: '/org-profile',
           icon: '◈',
           title: 'Org Profile',
-          text: 'Baguhin ang pangalan, description at logo ng organisasyon.',
+          text: "Edit your organization's name, description and logo.",
         },
         {
           to: '/announcements',
           icon: '★',
-          title: 'Magpaskil',
-          text: 'Maglabas ng balita at paalala sa mga miyembro.',
+          title: 'Post',
+          text: 'Share news and reminders with members.',
         },
         {
           to: '/proposals',
           icon: '✉',
           title: 'Proposals',
-          text: 'Suriin ang mga proposal na naghihintay ng aksyon.',
+          text: 'Review proposals awaiting action.',
         },
         {
           to: '/attendance',
           icon: '✓',
           title: 'Attendance',
-          text: 'Tingnan ang pagdalo ng buong organisasyon.',
+          text: 'View attendance for the whole organization.',
         },
       ],
     },
@@ -377,11 +377,11 @@ export const ROLES = {
        PROPOSAL_THREE_STEP_REVIEW.sql     (makaaksyon) */
   [ROLE_KEYS.SAO]: staffRoleWithProposals(
     'SAO',
-    'Suriin ang mga proposal na naipasa na ng Adviser.',
+    'Review proposals already forwarded by the Adviser.',
   ),
   [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals(
     'School Head',
-    'Ibigay ang pinal na desisyon sa mga proposal.',
+    'Give the final decision on proposals.',
   ),
   [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
 }
@@ -390,7 +390,7 @@ export const ROLES = {
    walang role_id ang profile o hindi pa kilala ang role_id. Kaunti lang ang laman
    para hindi masira ang app. */
 export const FALLBACK_ROLE = {
-  label: 'Walang role',
+  label: 'No role',
   can: { create: false, review: false, announce: false, propose: false },
   sidebar: [DASHBOARD, PROFILE],
   dashboard: { subtitle: '', stats: [], cards: [] },

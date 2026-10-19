@@ -60,14 +60,14 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
             onClick={() => onDownload(proposal)}
             disabled={downloading}
           >
-            {downloading ? 'Dina-download…' : 'I-download ang file'}
+            {downloading ? 'Downloading…' : 'Download file'}
           </button>
         )}
         <button type="button" className={styles.toolButton} onClick={() => window.print()}>
-          I-print
+          Print
         </button>
         <button type="button" className={styles.toolButton} onClick={onClose}>
-          Isara
+          Close
         </button>
       </div>
 

@@ -215,7 +215,7 @@ function Dashboard() {
             {roleConfig.label}
             {profile?.organizations?.name && ` · ${profile.organizations.name}`}
           </p>
-          <h1 className={styles.title}>Kumusta, {firstName}!</h1>
+          <h1 className={styles.title}>Hello, {firstName}!</h1>
           <p className={styles.sub}>{roleConfig.dashboard.subtitle}</p>
         </div>
 
@@ -247,7 +247,7 @@ function Dashboard() {
         </section>
       )}
 
-      <h2 className={styles.sectionTitle}>Mga seksyon</h2>
+      <h2 className={styles.sectionTitle}>Sections</h2>
 
       <div className={styles.cardGrid}>
         {roleConfig.dashboard.cards.map((card) => (

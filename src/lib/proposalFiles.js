@@ -44,7 +44,7 @@ export const ACCEPT_ATTRIBUTE = Object.keys(FILE_TYPES)
   .map((ext) => `.${ext}`)
   .join(',')
 
-export const ACCEPTED_LABEL = 'PDF, Word, Excel, PowerPoint, JPG o PNG'
+export const ACCEPTED_LABEL = 'PDF, Word, Excel, PowerPoint, JPG or PNG'
 
 /* Mensaheng maiintindihan ng user */
 export class ProposalFileError extends Error {}
@@ -56,13 +56,13 @@ function extensionOf(name) {
 
 export function checkProposalFile(file) {
   if (!FILE_TYPES[extensionOf(file.name)]) {
-    throw new ProposalFileError(`${ACCEPTED_LABEL} lang ang tinatanggap.`)
+    throw new ProposalFileError(`Only ${ACCEPTED_LABEL} files are accepted.`)
   }
   if (file.size > MAX_FILE_BYTES) {
-    throw new ProposalFileError('Masyadong malaki ang file (hanggang 10 MB lang).')
+    throw new ProposalFileError('The file is too large (10 MB max).')
   }
   if (file.size === 0) {
-    throw new ProposalFileError('Walang laman ang file.')
+    throw new ProposalFileError('The file is empty.')
   }
 }
 
@@ -81,7 +81,7 @@ export async function uploadProposalFile(profile, file) {
 
   if (error) {
     console.error('Hindi na-upload ang file:', error)
-    throw new ProposalFileError('Hindi na-upload ang file. Subukan ulit.')
+    throw new ProposalFileError('The file could not be uploaded. Please try again.')
   }
 
   return { path, name: file.name.trim().slice(0, 255), size: file.size }

@@ -51,7 +51,7 @@ function Profile() {
       setAvatarError(
         err instanceof AvatarError
           ? err.message
-          : 'Hindi na-upload ang larawan. Subukan ulit.',
+          : 'The picture could not be uploaded. Please try again.',
       )
     } finally {
       setBusy(null)
@@ -60,7 +60,7 @@ function Profile() {
 
   async function handleRemove() {
     if (!profile) return
-    if (!window.confirm('Alisin ang iyong profile picture?')) return
+    if (!window.confirm('Remove your profile picture?')) return
 
     setAvatarError('')
     setBusy('remove')
@@ -69,7 +69,7 @@ function Profile() {
       await refreshProfile()
     } catch (err) {
       console.error('Hindi naalis ang avatar:', err)
-      setAvatarError('Hindi naalis ang larawan. Subukan ulit.')
+      setAvatarError('The picture could not be removed. Please try again.')
     } finally {
       setBusy(null)
     }
@@ -92,23 +92,23 @@ function Profile() {
     : '—'
 
   const DETAILS = [
-    { label: 'Buong pangalan', value: fullName },
+    { label: 'Full name', value: fullName },
     { label: 'Student ID', value: profile?.student_id || '—' },
     { label: 'Email', value: profile?.email ?? user?.email ?? '—' },
-    { label: 'Kurso', value: profile?.program || '—' },
+    { label: 'Program', value: profile?.program || '—' },
     { label: 'Year level', value: profile?.year_level || '—' },
-    { label: 'Organisasyon', value: organization },
+    { label: 'Organization', value: organization },
     { label: 'Role', value: profile?.roles?.name ?? roleConfig.label },
-    { label: 'Paraan ng pag-login', value: provider },
-    { label: 'Huling pag-sign in', value: lastSignIn },
-    { label: 'Miyembro mula', value: memberSince },
+    { label: 'Sign-in method', value: provider },
+    { label: 'Last sign-in', value: lastSignIn },
+    { label: 'Member since', value: memberSince },
   ]
 
   return (
     <>
       <PageHeader
         title="Profile"
-        subtitle="Ang impormasyon mo sa talaan ng paaralan."
+        subtitle="Your information in the school records."
       />
 
       <div className={styles.card}>
@@ -138,10 +138,10 @@ function Profile() {
                   disabled={Boolean(busy)}
                 >
                   {busy === 'upload'
-                    ? 'Ina-upload…'
+                    ? 'Uploading…'
                     : profile.avatar_url
-                      ? 'Palitan ang larawan'
-                      : 'Mag-upload ng larawan'}
+                      ? 'Change picture'
+                      : 'Upload picture'}
                 </button>
 
                 {profile.avatar_url && (
@@ -151,7 +151,7 @@ function Profile() {
                     onClick={handleRemove}
                     disabled={Boolean(busy)}
                   >
-                    {busy === 'remove' ? 'Inaalis…' : 'Alisin'}
+                    {busy === 'remove' ? 'Removing…' : 'Remove'}
                   </button>
                 )}
               </div>
@@ -162,7 +162,7 @@ function Profile() {
                 {avatarError}
               </p>
             ) : (
-              <p className={styles.avatarHint}>JPG, PNG o WEBP · hanggang 10 MB</p>
+              <p className={styles.avatarHint}>JPG, PNG or WEBP · up to 10 MB</p>
             )}
           </div>
         </div>
@@ -177,9 +177,9 @@ function Profile() {
         </dl>
 
         <p className={styles.note}>
-          Ang student ID, role, at organisasyon ay hawak ng SAO at IT
-          Administrator. Kung may mali, makipag-ugnayan sa kanila para
-          maitama sa talaan.
+          Your student ID, role, and organization are managed by the SAO and IT
+          Administrator. If anything is wrong, contact them to have
+          your record corrected.
         </p>
       </div>
     </>

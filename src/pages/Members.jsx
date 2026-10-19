@@ -72,24 +72,24 @@ function Members() {
     <>
       <PageHeader
         title="Members"
-        subtitle="Listahan ng mga miyembro ng organisasyon."
+        subtitle="List of organization members."
       />
 
-      {loading && <p className={styles.status}>Kinukuha ang mga miyembro…</p>}
+      {loading && <p className={styles.status}>Loading members…</p>}
 
       {!loading && error && (
         <EmptyState
           icon="!"
-          title="Hindi makuha ang listahan"
-          message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+          title="Could not load the list"
+          message="There was a problem connecting to the database. Please try again later."
         />
       )}
 
       {!loading && !error && members.length === 0 && (
         <EmptyState
           icon="▲"
-          title="Wala pang nakatalang miyembro"
-          message="Lalabas dito ang mga miyembro kapag nakapag-login na sila kahit isang beses."
+          title="No members yet"
+          message="Members will appear here once they have logged in at least once."
         />
       )}
 
@@ -99,7 +99,7 @@ function Members() {
             <input
               type="search"
               className={styles.search}
-              placeholder="Hanapin ang pangalan, student ID, o kurso…"
+              placeholder="Search by name, student ID, or program…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -112,12 +112,12 @@ function Members() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Pangalan</th>
+                  <th>Name</th>
                   <th>Student ID</th>
-                  <th>Kurso</th>
+                  <th>Program</th>
                   <th>Year</th>
                   <th>Role</th>
-                  {showOrg && <th>Organisasyon</th>}
+                  {showOrg && <th>Organization</th>}
                 </tr>
               </thead>
               <tbody>

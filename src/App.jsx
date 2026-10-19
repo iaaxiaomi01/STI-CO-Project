@@ -56,7 +56,7 @@ function App() {
   if (loading) {
     return (
       <div style={{ padding: '6rem 1.25rem', textAlign: 'center' }}>
-        Sinusuri ang iyong session…
+        Checking your session…
       </div>
     )
   }

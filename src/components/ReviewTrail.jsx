@@ -34,15 +34,15 @@ const DECISION_CLASS = {
 }
 
 const DECISION_VERB = {
-  approved: 'Inaprubahan',
-  rejected: 'Ni-reject',
+  approved: 'Approved',
+  rejected: 'Rejected',
   noted: 'Noted',
-  revision: 'Ipina-revise',
+  revision: 'Revision requested',
 }
 
 function stepLabel(step) {
   const label = decisionLabel(step.decision)
-  return step.final ? `Pinal: ${label}` : label
+  return step.final ? `Final: ${label}` : label
 }
 
 function ReviewTrail({ proposal, variant = 'card' }) {
@@ -67,14 +67,14 @@ function ReviewTrail({ proposal, variant = 'card' }) {
             <span className={styles.decision}>{stepLabel(step)}</span>
           </p>
           <p className={styles.by}>
-            {DECISION_VERB[step.decision] ?? ''} ni{' '}
+            {DECISION_VERB[step.decision] ?? ''} by{' '}
             <strong>{step.name || '—'}</strong>
             {step.at && ` · ${formatDateTime(step.at)}`}
           </p>
           {step.comment && <p className={styles.comment}>{step.comment}</p>}
           {step.resubmittedAt && (
             <p className={styles.resubmitted}>
-              ✓ Na-revise at naipasa ulit · {formatDateTime(step.resubmittedAt)}
+              ✓ Revised and resubmitted · {formatDateTime(step.resubmittedAt)}
             </p>
           )}
         </li>
@@ -85,19 +85,19 @@ function ReviewTrail({ proposal, variant = 'card' }) {
           <p className={styles.head}>
             <span className={styles.role}>{waiting}</span>
             <span className={styles.decision}>
-              {inRevision ? 'Nire-revise' : noted ? 'Para sa Noted' : 'Naghihintay'}
+              {inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}
             </span>
           </p>
           <p className={styles.by}>
             {noted
-              ? `Rejected na ng ${rejectedBy(proposal)}. Hinihintay ang "Noted" ng ${waiting}.`
+              ? `Already rejected by ${rejectedBy(proposal)}. Waiting for "Noted" from ${waiting}.`
               : inRevision
-              ? `Hinihintay na i-revise ni ${authorName(proposal)}. Babalik ito sa ${stageLabel(
+              ? `Waiting for ${authorName(proposal)} to revise. It will go back to ${stageLabel(
                   proposal.revision_from,
-                )} pagkatapos.`
+                )} afterwards.`
               : proposal.stage === 'school_head'
-                ? 'Hinihintay ang pinal na desisyon ng School Head.'
-                : `Hinihintay ang aksyon ng ${waiting}.`}
+                ? "Waiting for the School Head's final decision."
+                : `Waiting for action from ${waiting}.`}
           </p>
         </li>
       )}

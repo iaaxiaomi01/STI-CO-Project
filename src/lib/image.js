@@ -22,10 +22,10 @@ export class ImageError extends Error {}
 
 export function checkImageFile(file) {
   if (!ACCEPTED_TYPES.includes(file.type)) {
-    throw new ImageError('JPG, PNG o WEBP lang ang tinatanggap.')
+    throw new ImageError('Only JPG, PNG or WEBP files are accepted.')
   }
   if (file.size > MAX_INPUT_BYTES) {
-    throw new ImageError('Masyadong malaki ang file (hanggang 10 MB lang).')
+    throw new ImageError('The file is too large (10 MB max).')
   }
 }
 
@@ -34,7 +34,7 @@ export async function resizeToSquare(file, size, mode = 'cover') {
   try {
     bitmap = await createImageBitmap(file)
   } catch {
-    throw new ImageError('Hindi mabasa ang larawan. Subukan ang ibang file.')
+    throw new ImageError('Could not read the image. Try a different file.')
   }
 
   const canvas = document.createElement('canvas')
@@ -68,7 +68,7 @@ export async function resizeToSquare(file, size, mode = 'cover') {
       ? await toBlob('image/png')
       : await toBlob('image/jpeg', 0.88)
   }
-  if (!blob) throw new ImageError('Hindi maproseso ang larawan.')
+  if (!blob) throw new ImageError('Could not process the image.')
   return blob
 }
 
@@ -90,7 +90,7 @@ export async function resizeToFit(file, maxSide) {
   try {
     bitmap = await createImageBitmap(file)
   } catch {
-    throw new ImageError('Hindi mabasa ang larawan. Subukan ang ibang file.')
+    throw new ImageError('Could not read the image. Try a different file.')
   }
 
   const { width: w, height: h } = bitmap
@@ -113,6 +113,6 @@ export async function resizeToFit(file, maxSide) {
   if (!blob || blob.type !== 'image/webp') {
     blob = await toBlob('image/jpeg', 0.85)
   }
-  if (!blob) throw new ImageError('Hindi maproseso ang larawan.')
+  if (!blob) throw new ImageError('Could not process the image.')
   return blob
 }

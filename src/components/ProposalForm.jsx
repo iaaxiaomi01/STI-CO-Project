@@ -102,7 +102,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
     }
 
     if (!clean.title || !clean.description) {
-      setError('Kailangan ang Title at Description.')
+      setError('Title and Description are required.')
       return
     }
 
@@ -111,11 +111,11 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       await onSubmit(clean, { file, keepExisting: !file && keepExisting })
     } catch (err) {
       console.error('Hindi na-save ang proposal:', err)
-      let message = 'Hindi na-save. Subukan ulit.'
+      let message = 'Could not save. Please try again.'
       if (err instanceof ProposalFileError) {
         message = err.message
       } else if (err?.message === 'not-allowed') {
-        message = 'Wala kang pahintulot na i-revise ang proposal na ito.'
+        message = "You don't have permission to revise this proposal."
       } else if (err?.code === 'P0001' && err.message) {
         /* Mensahe galing sa resubmit_proposal() sa database */
         message = err.message
@@ -140,13 +140,13 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
         aria-labelledby="proposal-form-title"
       >
         <h2 id="proposal-form-title" className={styles.heading}>
-          {editing ? 'I-revise ang proposal' : 'Bagong proposal'}
+          {editing ? 'Revise proposal' : 'New proposal'}
         </h2>
 
         {revision && (
           <div className={styles.revisionBox}>
             <p className={styles.revisionHead}>
-              Ipina-revise ng {stageLabel(revision.stage)}
+              Revision requested by {stageLabel(revision.stage)}
             </p>
             <p className={styles.revisionBy}>
               {toTitleCase(revision.requester_name ?? '')} ·{' '}
@@ -159,11 +159,11 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
         <p className={styles.note}>
           {editing ? (
             <>
-              Baguhin ang kailangan, tapos pindutin ang &quot;Ipasa ulit&quot;. Babalik ito
-              sa <strong>{stageLabel(proposal.revision_from)}</strong> para suriin muli.
+              Make the needed changes, then press &quot;Resubmit&quot;. It will go back
+              to <strong>{stageLabel(proposal.revision_from)}</strong> for another review.
             </>
           ) : (
-            'Ang logo at pangalan ng organisasyon, at ang pangalan mo bilang nagpasa, ay kusang ilalagay sa sulat.'
+            "The organization's logo and name, and your name as the submitter, will be added to the letter automatically."
           )}
         </p>
 
@@ -175,10 +175,10 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             value={title}
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="hal. Tech Summit 2026"
+            placeholder="e.g. Tech Summit 2026"
             required
           />
-          <span className={styles.hint}>Ito ang magiging SUBJECT ng sulat.</span>
+          <span className={styles.hint}>This will be the SUBJECT of the letter.</span>
         </label>
 
         <label className={styles.field}>
@@ -194,7 +194,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             maxLength={DESCRIPTION_MAX}
             onChange={(e) => setDescription(e.target.value)}
             rows={10}
-            placeholder="Ano ang aktibidad, layunin, kailan, saan, at sino ang sasali."
+            placeholder="What the activity is, its objectives, when, where, and who will take part."
             required
           />
         </label>
@@ -202,7 +202,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
         {/* ---------- FILE (opsyonal) ---------- */}
         <div className={styles.field}>
           <span className={styles.label}>
-            File <span className={styles.optional}>(opsyonal)</span>
+            File <span className={styles.optional}>(optional)</span>
           </span>
 
           {file || keepExisting ? (
@@ -217,7 +217,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
                 <span className={styles.fileSize}>
                   {file
                     ? formatFileSize(file.size)
-                    : `${formatFileSize(proposal.attachment_size)} · dating file`}
+                    : `${formatFileSize(proposal.attachment_size)} · current file`}
                 </span>
               </span>
               <button
@@ -226,7 +226,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={saving}
               >
-                Palitan
+                Change
               </button>
               <button
                 type="button"
@@ -234,7 +234,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
                 onClick={clearFile}
                 disabled={saving}
               >
-                Alisin
+                Remove
               </button>
             </div>
           ) : (
@@ -262,8 +262,8 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             <span className={styles.fileError}>{fileError}</span>
           ) : (
             <span className={styles.hint}>
-              {ACCEPTED_LABEL} · hanggang 10 MB. Makikita at mada-download ito ng
-              Adviser.
+              {ACCEPTED_LABEL} · up to 10 MB. The Adviser will be able to view and
+              download it.
             </span>
           )}
         </div>
@@ -277,10 +277,10 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             onClick={onCancel}
             disabled={saving}
           >
-            Kanselahin
+            Cancel
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
-            {saving ? 'Sine-save…' : editing ? 'Ipasa ulit' : 'Ipasa'}
+            {saving ? 'Saving…' : editing ? 'Resubmit' : 'Submit'}
           </button>
         </div>
       </form>

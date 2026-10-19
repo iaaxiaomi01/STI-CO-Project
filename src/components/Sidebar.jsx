@@ -34,7 +34,7 @@ function Sidebar({ open, onClose, user, onLogout }) {
           type="button"
           className={styles.closeBtn}
           onClick={onClose}
-          aria-label="Isara ang menu"
+          aria-label="Close menu"
         >
           ✕
         </button>

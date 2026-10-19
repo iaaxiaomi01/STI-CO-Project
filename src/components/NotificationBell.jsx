@@ -88,7 +88,7 @@ function NotificationBell() {
       setError('')
     } catch (err) {
       console.error('Hindi makuha ang notifications:', err)
-      setError('Hindi makuha ang notifications. Subukan ulit.')
+      setError('Could not load notifications. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -206,7 +206,7 @@ function NotificationBell() {
         className={`${styles.bell} ${open ? styles.bellActive : ''} ${ringing ? styles.ring : ''}`}
         onClick={togglePanel}
         aria-label={
-          unreadCount > 0 ? `Mga notification, ${unreadCount} ang hindi pa nababasa` : 'Mga notification'
+          unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'
         }
         aria-haspopup="true"
         aria-expanded={open}
@@ -239,25 +239,25 @@ function NotificationBell() {
           onClick={() => openNotification(toast)}
           role="status"
         >
-          <span className={styles.toastLabel}>Bagong notification</span>
+          <span className={styles.toastLabel}>New notification</span>
           <span className={styles.toastTitle}>{toast.title}</span>
           {toast.body && <span className={styles.toastBody}>{toast.body}</span>}
         </button>
       )}
 
       {open && (
-        <div className={styles.panel} role="dialog" aria-label="Mga notification">
+        <div className={styles.panel} role="dialog" aria-label="Notifications">
           <div className={styles.panelHeader}>
-            <p className={styles.panelTitle}>Mga Notification</p>
+            <p className={styles.panelTitle}>Notifications</p>
             {unreadCount > 0 && (
               <button type="button" className={styles.markAll} onClick={handleMarkAll}>
-                Markahang nabasa lahat
+                Mark all as read
               </button>
             )}
           </div>
 
           {loading && items.length === 0 ? (
-            <p className={styles.status}>Kinukuha ang notifications…</p>
+            <p className={styles.status}>Loading notifications…</p>
           ) : error && items.length === 0 ? (
             <p className={`${styles.status} ${styles.statusError}`}>{error}</p>
           ) : items.length === 0 ? (
@@ -265,10 +265,10 @@ function NotificationBell() {
               <span className={styles.emptyIcon} aria-hidden="true">
                 🔔
               </span>
-              <p className={styles.emptyTitle}>Wala pang notification</p>
+              <p className={styles.emptyTitle}>No notifications yet</p>
               <p className={styles.emptyText}>
-                Dito lalabas ang mga bagong event, certificate at ang balita tungkol sa mga
-                proposal.
+                New events, certificates and proposal updates will
+                appear here.
               </p>
             </div>
           ) : (
@@ -288,7 +288,7 @@ function NotificationBell() {
                       {n.body && <span className={styles.itemBody}>{n.body}</span>}
                       <span className={styles.itemTime}>{timeAgo(n.created_at, now)}</span>
                     </span>
-                    {!n.read_at && <span className={styles.dot} aria-label="Hindi pa nababasa" />}
+                    {!n.read_at && <span className={styles.dot} aria-label="Unread" />}
                   </button>
                 </li>
               ))}

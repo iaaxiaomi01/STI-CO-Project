@@ -234,9 +234,9 @@ export async function fetchAttendanceRates() {
 export function attendanceErrorMessage(err) {
   /* Galing sa "raise exception" — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
-  if (err?.code === '22P02') return 'Hindi kilala ang QR na ito.'
-  if (err?.message === 'no-token') return 'Hindi makakuha ng QR. Subukan ulit.'
-  return 'May problema sa pagkonekta. Subukan ulit.'
+  if (err?.code === '22P02') return 'This QR code is not recognized.'
+  if (err?.message === 'no-token') return 'Could not get a QR code. Please try again.'
+  return 'There was a connection problem. Please try again.'
 }
 
 /* "1:05 PM" mula sa ISO timestamp, oras sa Pilipinas */

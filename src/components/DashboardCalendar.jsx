@@ -85,13 +85,13 @@ function DashboardCalendar() {
             onClick={goToToday}
             disabled={isCurrentMonth}
           >
-            Ngayon
+            Today
           </button>
           <button
             type="button"
             className={styles.navBtn}
             onClick={() => changeMonth(-1)}
-            aria-label="Nakaraang buwan"
+            aria-label="Previous month"
           >
             <ChevronLeft size={20} />
           </button>
@@ -99,7 +99,7 @@ function DashboardCalendar() {
             type="button"
             className={styles.navBtn}
             onClick={() => changeMonth(1)}
-            aria-label="Susunod na buwan"
+            aria-label="Next month"
           >
             <ChevronRight size={20} />
           </button>
@@ -136,7 +136,7 @@ function DashboardCalendar() {
         })}
       </div>
 
-      <p className={styles.note}>Wala pang events na nakalagay sa calendar.</p>
+      <p className={styles.note}>No events on the calendar yet.</p>
     </div>
   )
 }

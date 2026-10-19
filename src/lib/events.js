@@ -100,17 +100,17 @@ const COLUMNS = `
 /* Isinasalin ang error ng database sa mensaheng maiintindihan */
 export function eventErrorMessage(err) {
   if (err instanceof ImageError) return err.message
-  if (err?.code === '23505') return 'May event na para sa proposal na ito.'
+  if (err?.code === '23505') return 'An event already exists for this proposal.'
   if (err?.code === '23514') {
     if (err.message?.includes('events_time_order')) {
-      return 'Dapat mas huli ang End Time kaysa sa Start Time.'
+      return 'End Time must be later than Start Time.'
     }
-    return 'May mali sa inilagay mo. Suriin ang mga field.'
+    return 'Some of your input is invalid. Please check the fields.'
   }
-  if (err?.message === 'not-allowed') return 'Wala kang pahintulot na baguhin ang event na ito.'
+  if (err?.message === 'not-allowed') return "You don't have permission to change this event."
   /* Galing sa "raise exception" ng trigger — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
-  return 'Hindi na-save. Subukan ulit.'
+  return 'Could not save. Please try again.'
 }
 
 export async function fetchEvents() {
@@ -254,7 +254,7 @@ export async function updateEvent(event, values, { imageFile = null, removeImage
   let uploaded = null
   if (imageFile) {
     if (!event.proposal_id) {
-      throw new ImageError('Hindi na mapapalitan ang larawan ng event na ito.')
+      throw new ImageError("This event's picture can no longer be changed.")
     }
     uploaded = await uploadImage(event.organization_id, event.proposal_id, imageFile)
     row.image_url = uploaded.publicUrl
@@ -506,8 +506,8 @@ export function joinErrorMessage(err) {
   /* Galing sa trigger — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
   /* RLS: tapos na ang event o wala kang pahintulot */
-  if (err?.code === '42501') return 'Hindi ka na makakasali — tapos na ang event.'
-  return 'Hindi na-save. Subukan ulit.'
+  if (err?.code === '42501') return 'You can no longer join — the event has ended.'
+  return 'Could not save. Please try again.'
 }
 
 /* Mga event na sinalihan mo, kasama ang detalye ng event —

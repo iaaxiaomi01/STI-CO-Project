@@ -69,7 +69,7 @@ function CertificatesDialog({ event, onClose }) {
       setLoadError('')
     } catch (err) {
       console.error('Hindi makuha ang listahan ng certificate:', err)
-      setLoadError('Hindi makuha ang listahan. Subukan ulit.')
+      setLoadError('Could not load the list. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -112,7 +112,7 @@ function CertificatesDialog({ event, onClose }) {
       const saved = await uploadCertificate(event, row.profile_id, file, existing)
       setCerts((current) => ({ ...current, [row.profile_id]: saved }))
       setNotice(
-        existing ? `Napalitan ang certificate ni ${name}.` : `Na-upload ang certificate ni ${name}.`,
+        existing ? `Replaced ${name}'s certificate.` : `Uploaded ${name}'s certificate.`,
       )
     } catch (err) {
       console.error('Hindi na-upload ang certificate:', err)
@@ -126,7 +126,7 @@ function CertificatesDialog({ event, onClose }) {
     const cert = certs[row.profile_id]
     if (!cert || busy) return
     const { name } = completerLabel(row)
-    if (!window.confirm(`Alisin ang certificate ni ${name}?`)) return
+    if (!window.confirm(`Remove ${name}'s certificate?`)) return
 
     setError('')
     setNotice('')
@@ -138,7 +138,7 @@ function CertificatesDialog({ event, onClose }) {
         delete next[row.profile_id]
         return next
       })
-      setNotice(`Inalis ang certificate ni ${name}.`)
+      setNotice(`Removed ${name}'s certificate.`)
     } catch (err) {
       console.error('Hindi naalis ang certificate:', err)
       setError(`${name}: ${certificateErrorMessage(err)}`)
@@ -156,7 +156,7 @@ function CertificatesDialog({ event, onClose }) {
       await downloadCertificate(cert)
     } catch (err) {
       console.error('Hindi ma-download ang certificate:', err)
-      setError('Hindi ma-download ang certificate. Subukan ulit.')
+      setError('Could not download the certificate. Please try again.')
     } finally {
       setBusy(null)
     }
@@ -216,35 +216,35 @@ function CertificatesDialog({ event, onClose }) {
         <p className={base.note}>
           <strong>{event.title}</strong>
           <br />
-          Para lang sa mga nakakumpleto ng event (may Time In at Time Out). Tig-isang file bawat
-          tao — {CERT_ACCEPTED_LABEL}, hanggang 10 MB.
+          Only for attendees who completed the event (with Time In and Time Out). One file per
+          person — {CERT_ACCEPTED_LABEL}, up to 10 MB.
         </p>
 
         {timeOutOpen && (
           <p className={styles.pending}>
-            Bukas pa ang Time Out hanggang {formatTime(outCloses)}, kaya maaaring madagdagan pa ang
-            listahan.
+            Time Out is still open until {formatTime(outCloses)}, so more people may still be added to
+            the list.
           </p>
         )}
 
-        {loading && <p className={styles.muted}>Kinukuha ang listahan…</p>}
+        {loading && <p className={styles.muted}>Loading the list…</p>}
         {loadError && <p className={base.error}>{loadError}</p>}
 
         {!loading && !loadError && (
           <>
             {completers.length === 0 ? (
               <p className={styles.muted}>
-                Walang nakakumpleto ng event na ito (walang may Time In at Time Out pareho).
+                No one has completed this event (no one has both Time In and Time Out).
               </p>
             ) : (
               <>
                 <div className={styles.summary}>
                   <span>
-                    <strong>{withCert}</strong> sa {completers.length} ang may certificate na
+                    <strong>{withCert}</strong> of {completers.length} have a certificate
                   </span>
                   {withCert < completers.length && (
                     <span className={styles.summaryLeft}>
-                      {completers.length - withCert} pa ang wala
+                      {completers.length - withCert} still without
                     </span>
                   )}
                 </div>
@@ -253,8 +253,8 @@ function CertificatesDialog({ event, onClose }) {
                   <input
                     type="search"
                     className={`${base.input} ${styles.search}`}
-                    placeholder="Hanapin ang pangalan…"
-                    aria-label="Hanapin ang pangalan"
+                    placeholder="Search by name…"
+                    aria-label="Search by name"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -272,7 +272,7 @@ function CertificatesDialog({ event, onClose }) {
                 )}
 
                 {visible.length === 0 ? (
-                  <p className={styles.muted}>Walang tumutugma sa &ldquo;{search.trim()}&rdquo;.</p>
+                  <p className={styles.muted}>No matches for &ldquo;{search.trim()}&rdquo;.</p>
                 ) : (
                   <ol className={styles.list}>
                     {visible.map((row) => {
@@ -310,7 +310,7 @@ function CertificatesDialog({ event, onClose }) {
                                 </span>
                                 <span className={styles.fileMeta}>
                                   {formatFileSize(cert.file_size)}
-                                  {cert.uploaded_by_name && ` · ni ${cert.uploaded_by_name}`}
+                                  {cert.uploaded_by_name && ` · by ${cert.uploaded_by_name}`}
                                 </span>
                               </span>
                               <span className={styles.fileActions}>
@@ -320,7 +320,7 @@ function CertificatesDialog({ event, onClose }) {
                                   onClick={() => handleDownload(row)}
                                   disabled={anyBusy}
                                 >
-                                  {rowBusy && busy.action === 'download' ? 'Binubuksan…' : 'I-download'}
+                                  {rowBusy && busy.action === 'download' ? 'Opening…' : 'Download'}
                                 </button>
                                 {!isSelf && (
                                   <>
@@ -330,7 +330,7 @@ function CertificatesDialog({ event, onClose }) {
                                       onClick={() => pickFileFor(row)}
                                       disabled={anyBusy}
                                     >
-                                      {uploading ? 'Ina-upload…' : 'Palitan'}
+                                      {uploading ? 'Uploading…' : 'Replace'}
                                     </button>
                                     <button
                                       type="button"
@@ -338,7 +338,7 @@ function CertificatesDialog({ event, onClose }) {
                                       onClick={() => handleDelete(row)}
                                       disabled={anyBusy}
                                     >
-                                      {rowBusy && busy.action === 'delete' ? 'Inaalis…' : 'Alisin'}
+                                      {rowBusy && busy.action === 'delete' ? 'Removing…' : 'Remove'}
                                     </button>
                                   </>
                                 )}
@@ -346,8 +346,8 @@ function CertificatesDialog({ event, onClose }) {
                             </div>
                           ) : isSelf ? (
                             <p className={styles.selfNote}>
-                              Ikaw ito — ibang Officer o ang Adviser ang mag-a-upload ng
-                              certificate mo.
+                              This is you — another Officer or the Adviser will upload
+                              your certificate.
                             </p>
                           ) : (
                             <button
@@ -357,11 +357,11 @@ function CertificatesDialog({ event, onClose }) {
                               disabled={anyBusy}
                             >
                               {uploading ? (
-                                'Ina-upload…'
+                                'Uploading…'
                               ) : (
                                 <>
-                                  <span aria-hidden="true">⤒</span> Mag-upload o i-drop dito ang
-                                  certificate
+                                  <span aria-hidden="true">⤒</span> Upload or drop the
+                                  certificate here
                                 </>
                               )}
                             </button>
@@ -386,7 +386,7 @@ function CertificatesDialog({ event, onClose }) {
 
         <div className={base.actions}>
           <button type="button" className={base.secondary} onClick={onClose} disabled={Boolean(busy)}>
-            Isara
+            Close
           </button>
         </div>
       </div>

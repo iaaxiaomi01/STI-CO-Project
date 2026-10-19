@@ -71,10 +71,10 @@ function nameFor(participant, prof) {
 
 /* Status ng bawat tao, ayon sa oras ngayon */
 function statusFor(record, phase) {
-  if (record?.time_in && record?.time_out) return 'Kumpleto'
-  if (record?.time_in) return phase === PHASE_CLOSED ? 'Walang Time Out' : 'Naka-Time In'
-  if (phase === PHASE_BEFORE || phase === PHASE_IN) return 'Hindi pa nakaka-Time In'
-  return 'Hindi dumalo'
+  if (record?.time_in && record?.time_out) return 'Complete'
+  if (record?.time_in) return phase === PHASE_CLOSED ? 'No Time Out' : 'Timed In'
+  if (phase === PHASE_BEFORE || phase === PHASE_IN) return 'Not yet timed in'
+  return 'Did not attend'
 }
 
 /* Profile ng mga sumali → { [id]: profile } */
@@ -162,30 +162,30 @@ export async function exportEventAttendance(event) {
 
   const lines = [
     row([cell('Event'), cell(event.title)]),
-    row([cell('Petsa'), cell(formatEventDate(event.event_date))]),
-    row([cell('Oras'), cell(`${formatTime(event.start_time)} – ${formatTime(event.end_time)}`)]),
-    row([cell('Lugar'), cell(event.location)]),
+    row([cell('Date'), cell(formatEventDate(event.event_date))]),
+    row([cell('Time'), cell(`${formatTime(event.start_time)} – ${formatTime(event.end_time)}`)]),
+    row([cell('Location'), cell(event.location)]),
     row([
-      cell('Buod'),
-      cell(`Sumali: ${people.length}`),
-      cell(`Naka-Time In: ${timedIn}`),
-      cell(`Kumpleto (may Time Out): ${complete}`),
+      cell('Summary'),
+      cell(`Joined: ${people.length}`),
+      cell(`Timed In: ${timedIn}`),
+      cell(`Complete (with Time Out): ${complete}`),
     ]),
-    row([cell('Na-export noong'), cell(formatDateTimeShort(new Date().toISOString()))]),
+    row([cell('Exported on'), cell(formatDateTimeShort(new Date().toISOString()))]),
     '',
     row(
       [
-        'Blg.',
+        'No.',
         'Student ID',
-        'Pangalan',
+        'Name',
         'Role',
         'Program',
         'Year Level',
-        'Sumali noong',
+        'Joined on',
         'Time In',
-        'Paraan (In)',
+        'Method (In)',
         'Time Out',
-        'Paraan (Out)',
+        'Method (Out)',
         'Status',
       ].map(cell),
     ),

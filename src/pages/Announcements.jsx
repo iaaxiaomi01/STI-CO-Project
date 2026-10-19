@@ -69,20 +69,20 @@ function Announcements() {
     if (editing === 'new') {
       const created = await createAnnouncement(values)
       setAnnouncements((list) => [created, ...list])
-      setNotice('Nai-post ang announcement.')
+      setNotice('Announcement posted.')
     } else {
       const updated = await updateAnnouncement(editing.id, values)
       setAnnouncements((list) =>
         list.map((a) => (a.id === updated.id ? updated : a)),
       )
-      setNotice('Na-save ang pagbabago.')
+      setNotice('Changes saved.')
     }
     setEditing(null)
   }
 
   async function handleDelete(announcement) {
     const ok = window.confirm(
-      `Burahin ang "${announcement.title}"? Hindi na ito maibabalik.`,
+      `Delete "${announcement.title}"? This cannot be undone.`,
     )
     if (!ok) return
 
@@ -91,13 +91,13 @@ function Announcements() {
     try {
       await deleteAnnouncement(announcement.id)
       setAnnouncements((list) => list.filter((a) => a.id !== announcement.id))
-      setNotice('Nabura ang announcement.')
+      setNotice('Announcement deleted.')
     } catch (err) {
       console.error('Hindi nabura ang announcement:', err)
       setNotice(
         err?.message === 'not-allowed'
-          ? 'Wala kang pahintulot na burahin ang announcement na ito.'
-          : 'Hindi nabura. Subukan ulit.',
+          ? "You don't have permission to delete this announcement."
+          : 'Could not delete. Please try again.',
       )
     } finally {
       setDeletingId(null)
@@ -110,8 +110,8 @@ function Announcements() {
         title="Announcements"
         subtitle={
           can.announce
-            ? 'Maglabas ng balita at paalala sa mga miyembro ng organisasyon.'
-            : 'Pinakabagong balita at paalala mula sa organisasyon.'
+            ? 'Share news and reminders with your organization members.'
+            : 'The latest news and reminders from your organization.'
         }
         action={
           can.announce && (
@@ -121,7 +121,7 @@ function Announcements() {
                 setEditing('new')
               }}
             >
-              + Magpaskil
+              + Post
             </ActionButton>
           )
         }
@@ -133,24 +133,24 @@ function Announcements() {
         </p>
       )}
 
-      {loading && <p className={styles.status}>Kinukuha ang announcements…</p>}
+      {loading && <p className={styles.status}>Loading announcements…</p>}
 
       {!loading && error && (
         <EmptyState
           icon="!"
-          title="Hindi makuha ang announcements"
-          message="May problema sa pagkonekta sa database. Subukan ulit mamaya."
+          title="Could not load announcements"
+          message="There was a problem connecting to the database. Please try again later."
         />
       )}
 
       {!loading && !error && announcements.length === 0 && (
         <EmptyState
           icon="★"
-          title="Wala pang announcement"
+          title="No announcements yet"
           message={
             can.announce
-              ? 'Pindutin ang "+ Magpaskil" para gumawa ng unang announcement ng organisasyon.'
-              : 'Dito lalabas ang mga bagong paskil ng Officers at Adviser ng organisasyon mo.'
+              ? 'Press "+ Post" to create your organization\'s first announcement.'
+              : 'New posts from your organization\'s Officers and Adviser will appear here.'
           }
         />
       )}
@@ -172,9 +172,9 @@ function Announcements() {
                     {wasEdited(a) && (
                       <span
                         className={styles.edited}
-                        title={`Na-edit noong ${formatDate(a.updated_at)}`}
+                        title={`Edited on ${formatDate(a.updated_at)}`}
                       >
-                        {' '}· na-edit
+                        {' '}· edited
                       </span>
                     )}
                   </time>
@@ -197,7 +197,7 @@ function Announcements() {
                         }}
                         disabled={busy}
                       >
-                        I-edit
+                        Edit
                       </button>
                       <button
                         type="button"
@@ -205,7 +205,7 @@ function Announcements() {
                         onClick={() => handleDelete(a)}
                         disabled={busy}
                       >
-                        {busy ? 'Binubura…' : 'Burahin'}
+                        {busy ? 'Deleting…' : 'Delete'}
                       </button>
                     </div>
                   )}

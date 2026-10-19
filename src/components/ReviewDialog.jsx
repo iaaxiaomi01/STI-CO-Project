@@ -42,35 +42,35 @@ import styles from './ProposalForm.module.css'
 
 const TEXT = {
   approved: {
-    heading: 'I-approve ang proposal',
-    label: 'Dahilan ng pag-approve',
-    placeholder: 'hal. Malinaw ang layunin at kumpleto ang budget. Ituloy.',
-    required: 'Kailangan ang dahilan ng pag-approve.',
-    button: 'I-approve',
+    heading: 'Approve proposal',
+    label: 'Reason for approval',
+    placeholder: 'e.g. The objectives are clear and the budget is complete. Go ahead.',
+    required: 'A reason for approval is required.',
+    button: 'Approve',
     buttonClass: 'success',
   },
   rejected: {
-    heading: 'I-reject ang proposal',
-    label: 'Dahilan ng pag-reject',
-    placeholder: 'hal. Sabay ito sa midterm exam week. Ilipat sa Disyembre.',
-    required: 'Kailangan ang dahilan ng pag-reject.',
-    button: 'I-reject',
+    heading: 'Reject proposal',
+    label: 'Reason for rejection',
+    placeholder: 'e.g. This conflicts with midterm exam week. Move it to December.',
+    required: 'A reason for rejection is required.',
+    button: 'Reject',
     buttonClass: 'danger',
   },
   noted: {
-    heading: 'Noted ang proposal',
-    label: 'Komento',
-    placeholder: 'hal. Nakita ko na. Sang-ayon ako sa dahilan ng pag-reject.',
-    required: 'Kailangan ng komento.',
+    heading: 'Mark proposal as Noted',
+    label: 'Comment',
+    placeholder: 'e.g. Seen. I agree with the reason for rejection.',
+    required: 'A comment is required.',
     button: 'Noted',
     buttonClass: 'primary',
   },
   revision: {
-    heading: 'Ipa-revise ang proposal',
-    label: 'Ano ang kailangang baguhin',
-    placeholder: 'hal. Idagdag ang detalyadong budget at ang listahan ng mga kalahok.',
-    required: 'Isulat kung ano ang kailangang baguhin.',
-    button: 'Ipa-revise',
+    heading: 'Request revision',
+    label: 'What needs to be changed',
+    placeholder: 'e.g. Add a detailed budget and the list of participants.',
+    required: 'Please describe what needs to be changed.',
+    button: 'Request revision',
     buttonClass: 'warning',
   },
 }
@@ -113,9 +113,9 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
       await onSubmit(clean)
     } catch (err) {
       console.error('Hindi na-save ang aksyon sa proposal:', err)
-      let message = 'Hindi na-save. Subukan ulit.'
+      let message = 'Could not save. Please try again.'
       if (err?.message === 'not-allowed') {
-        message = 'Wala kang pahintulot na aksyunan ang proposal na ito.'
+        message = "You don't have permission to act on this proposal."
       } else if (err?.code === 'P0001' && err.message) {
         /* Mensahe galing sa review_proposal() sa database,
            hal. "Tapos na ang pagsusuri sa proposal na ito." */
@@ -149,47 +149,47 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
           <br />
           {action === 'revision' ? (
             <>
-              Ibabalik ito kay <strong>{authorName(proposal)}</strong> para i-edit.
-              Naka-hold ito habang nire-revise. Kapag naipasa na ulit, babalik ito sa{' '}
-              <strong>iyo ({stageLabel(proposal.stage)})</strong> para suriin muli.
+              This will be returned to <strong>{authorName(proposal)}</strong> for editing.
+              It stays on hold while being revised. Once resubmitted, it will come back to{' '}
+              <strong>you ({stageLabel(proposal.stage)})</strong> for another review.
             </>
           ) : action === 'noted' ? (
             <>
-              <strong>Rejected na ito ng {rejectedBy(proposal)}</strong> at hindi na
-              mababago. Ang &quot;Noted&quot; ay pagpapatunay na nakita mo na.{' '}
+              <strong>This was already rejected by {rejectedBy(proposal)}</strong> and can no longer
+              change. &quot;Noted&quot; confirms that you have seen it.{' '}
               {final ? (
-                'Dito na matatapos ang daan ng proposal.'
+                'This is where the proposal\'s review ends.'
               ) : (
                 <>
-                  Ipapasa pa ito sa <strong>{stageLabel(nextStage)}</strong> para sa
-                  kanyang &quot;Noted&quot;.
+                  It will still be forwarded to <strong>{stageLabel(nextStage)}</strong> for
+                  their &quot;Noted&quot;.
                 </>
               )}
             </>
           ) : action === 'rejected' ? (
             <>
-              <strong>REJECTED na AGAD ang proposal</strong> kapag ni-reject mo — pinal na ito
-              at walang event na magagawa mula rito.{' '}
+              <strong>The proposal is REJECTED IMMEDIATELY</strong> once you reject it — this is final
+              and no event can be created from it.{' '}
               {final ? null : (
                 <>
-                  Dadaan pa rin ito sa <strong>{stageLabel(nextStage)}</strong>
-                  {nextStage === 'sao' && ' at School Head'}, pero &quot;Noted&quot; na lang ang
-                  magagawa nila.
+                  It will still pass through <strong>{stageLabel(nextStage)}</strong>
+                  {nextStage === 'sao' && ' and School Head'}, but they can only mark it
+                  &quot;Noted&quot;.
                 </>
               )}
             </>
           ) : final ? (
             <>
-              <strong>Ito ang huling pag-apruba.</strong> Makakagawa na ng event ang Officer
-              mula sa proposal na ito.
+              <strong>This is the final approval.</strong> The Officer will be able to create an event
+              from this proposal.
             </>
           ) : (
             <>
-              Ipapasa ito sa <strong>{stageLabel(nextStage)}</strong> kasama ang dahilan mo.
+              This will be forwarded to <strong>{stageLabel(nextStage)}</strong> along with your reason.
             </>
           )}
           <br />
-          Makikita ng Officer na nagpasa ang dahilang isusulat mo.
+          The Officer who submitted this will see the reason you write.
         </p>
 
         <ReviewTrail proposal={proposal} />
@@ -222,10 +222,10 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
             onClick={onCancel}
             disabled={saving}
           >
-            Kanselahin
+            Cancel
           </button>
           <button type="submit" className={styles[text.buttonClass]} disabled={saving}>
-            {saving ? 'Sine-save…' : text.button}
+            {saving ? 'Saving…' : text.button}
           </button>
         </div>
       </form>
