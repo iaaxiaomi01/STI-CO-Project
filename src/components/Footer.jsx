@@ -11,15 +11,15 @@ import styles from './Footer.module.css'
 const CONTACTS = [
   {
     icon: MapPin,
-    lines: ['STI College San Pablo', 'San Pablo City, Laguna'],
+    lines: ['STI College San Pablo', 'Lim Chok Bldg., Lopez Jaena St., Brgy VII-B, San Pablo City'],
   },
   {
     icon: Phone,
-    lines: ['(049) 562-XXXX'],
+    lines: ['(049) 546-7397'],
   },
   {
     icon: Mail,
-    lines: ['sti.co@sticsanpablo.edu.ph'],
+    lines: ['stisanpablo.sti.edu'],
   },
 ]
 
@@ -43,8 +43,8 @@ function Footer() {
 
             <div className={styles.brandTitle}>
               <h2>STI-CO</h2>
-              <p>STUDENT ORGANIZATIONS</p>
               <p>STI COLLEGE SAN PABLO</p>
+              <p>CAMPUS ORGANIZATION</p>
             </div>
           </div>
 
