@@ -14,6 +14,7 @@ import {
 import PageHeader from '../components/PageHeader.jsx'
 import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import OfficerPositions from '../components/OfficerPositions.jsx'
 import styles from './OrgProfile.module.css'
 
 /* ============================================================
@@ -22,6 +23,10 @@ import styles from './OrgProfile.module.css'
    Ang organisasyong hawak ng Adviser (profiles.organization_id).
    Nababago: Name, Description, Logo
    Hindi nababago: Department (IT Administrator ang may hawak)
+
+   Sa ilalim nito ang OFFICER POSITIONS — ang listahan ng
+   position ng org (President, VP, atbp.). Tingnan ang
+   components/OfficerPositions.jsx.
 
    Pagkatapos palitan ang pangalan, tinatawag ang
    refreshProfile() para magbago rin ito sa Sidebar at
@@ -349,6 +354,8 @@ function OrgProfile() {
           </dl>
         )}
       </div>
+
+      <OfficerPositions orgId={org.id} />
     </>
   )
 }

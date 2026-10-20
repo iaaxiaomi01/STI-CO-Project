@@ -1,0 +1,342 @@
+/* Kapareho ng card ng Org Profile, para iisang pamilya ang itsura */
+.section {
+  max-width: 820px;
+  margin-top: 1.5rem;
+  padding: 1.75rem 1.9rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.title {
+  font-size: 1.15rem;
+  margin-bottom: 0.3rem;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  max-width: 560px;
+}
+
+.subtitle a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.count {
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.status {
+  padding: 0.75rem 0;
+  color: var(--color-muted);
+}
+
+.notice,
+.error {
+  margin-bottom: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.notice {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.error {
+  background-color: #fdecec;
+  color: #a61b1b;
+}
+
+.hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.linkButton {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ---------- Walang laman ---------- */
+.empty {
+  padding: 1.5rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  text-align: center;
+}
+
+.emptyTitle {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.emptyText {
+  max-width: 460px;
+  margin: 0 auto 1rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+/* ---------- Listahan ---------- */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.editing {
+  background-color: var(--color-surface);
+}
+
+.rank {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.holder {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+}
+
+/* Mas maliit na avatar dito kaysa sa Sidebar */
+.holder > span {
+  width: 26px;
+  height: 26px;
+  font-size: 0.75rem;
+}
+
+.vacant {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.iconButton,
+.smallButton {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--color-primary);
+  font-size: 0.83rem;
+  font-weight: 600;
+  transition: background-color var(--transition);
+}
+
+.iconButton {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 0.95rem;
+}
+
+.smallButton {
+  padding: 0.4rem 0.85rem;
+}
+
+.iconButton:hover:not(:disabled),
+.smallButton:hover:not(:disabled) {
+  background-color: var(--color-primary-soft);
+}
+
+.iconButton:disabled,
+.smallButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.danger {
+  color: #b42318;
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #fdecec;
+}
+
+/* ---------- Form (bago at edit) ---------- */
+.addForm,
+.editForm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
+.addForm {
+  margin-top: 1rem;
+}
+
+.editForm {
+  flex: 1;
+}
+
+.input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+  font-size: 0.93rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--color-text);
+}
+
+.input:focus {
+  outline: 2px solid var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.editActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.primary,
+.secondary {
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background-color var(--transition);
+}
+
+.primary {
+  border: none;
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.secondary {
+  border: 1px solid var(--color-border);
+  background-color: #fff;
+  color: var(--color-text);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: var(--color-surface);
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 640px) {
+  .section {
+    padding: 1.4rem 1.2rem;
+  }
+
+  .item {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

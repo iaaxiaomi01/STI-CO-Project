@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { roleKeyFromId } from '../config/roles.js'
+import { isPositionNotification, subscribeToNotifications } from '../lib/notifications.js'
 import { AuthContext } from './AuthContext.js'
 
 /* ============================================================
@@ -25,9 +26,10 @@ import { AuthContext } from './AuthContext.js'
 const PROFILE_COLUMNS = `
   id, student_id, email, last_name, first_name, middle_name,
   program, year_level, role_id, organization_id, is_active,
-  avatar_url, created_at,
+  avatar_url, created_at, position_id,
   roles ( id, name ),
-  organizations ( id, name, department )
+  organizations ( id, name, department ),
+  officer_positions ( id, name )
 `
 
 function AuthProvider({ children }) {
@@ -99,6 +101,24 @@ function AuthProvider({ children }) {
     }
     loadProfile(userId)
   }, [userId, loadProfile])
+
+  /* ---------- officer position ----------
+     Kapag binigyan (o tinanggalan) ng Adviser ng officer position
+     ang naka-login, may darating na notification na
+     'position_update'. Kukunin ulit ang profile para magbago agad
+     ang role, sidebar at mga route — hindi na kailangang
+     mag-refresh o mag-logout. Member at Officer lang ang
+     nakakatanggap nito. */
+  const canGetPosition = profile?.role_id === 1 || profile?.role_id === 2
+
+  useEffect(() => {
+    if (!userId || !canGetPosition) return undefined
+    return subscribeToNotifications(userId, {
+      onInsert: (row) => {
+        if (isPositionNotification(row)) loadProfile(userId)
+      },
+    })
+  }, [userId, canGetPosition, loadProfile])
 
   /* Tinatawag ng mga page pagkatapos nilang baguhin ang
      profile (hal. pag-upload ng avatar). */

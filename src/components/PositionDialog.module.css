@@ -1,0 +1,125 @@
+/* Position dialog — mas makitid kaysa sa ibang form */
+.modal {
+  max-width: 480px;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.name {
+  font-weight: 700;
+}
+
+.current {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.none {
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  font-size: 0.9rem;
+}
+
+.none a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ---------- Mga pagpipilian ---------- */
+.options {
+  display: grid;
+  gap: 0.4rem;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  margin-bottom: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.option:hover {
+  background-color: var(--color-surface);
+}
+
+.option input {
+  margin-top: 0.2rem;
+  accent-color: var(--color-primary);
+}
+
+.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+}
+
+.selected:hover {
+  background-color: var(--color-primary-soft);
+}
+
+.taken {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.taken:hover {
+  background-color: transparent;
+}
+
+.optionText {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.optionName {
+  font-weight: 600;
+}
+
+.optionHolder {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.hint {
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* "Remove position" sa kaliwa, malayo sa Save */
+.actions {
+  align-items: center;
+}
+
+.remove {
+  margin-right: auto;
+  color: #b42318;
+}
+
+.remove:hover:not(:disabled) {
+  background-color: #fdecec;
+}

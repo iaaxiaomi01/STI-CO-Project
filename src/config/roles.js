@@ -85,11 +85,19 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
               Hiwalay ito sa "create" dahil ang Officer ay
               nagpapaskil pero hindi gumagawa ng events.
 
+     assignPositions — nagbibigay ng officer position (President,
+              VP, atbp.) sa mga member ng org sa Members page.
+              May position → Officer; tinanggal → Member.
+              Tingnan ang lib/officerPositions.js at
+              OFFICER_POSITIONS.sql.
+
    Member  : tumitingin lang        → wala
    Officer : nagpapasa ng proposal at nagpapaskil ng
              announcement           → review + announce + propose
    Adviser : gumagawa ng events at announcements, at sumusuri
              rin                    → create + review + announce
+                                      + assignPositions
+   IT Admin: may hawak ng lahat ng account → assignPositions
 
    DITO KA MAGDAGDAG kapag nagkaroon na ng totoong function.
    Halimbawa, kung may role na makakabura: dagdagan ng
@@ -99,7 +107,7 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 function staffRole(label) {
   return {
     label,
-    can: { create: false, review: false, announce: false, propose: false },
+    can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
     sidebar: [DASHBOARD, MEMBERS, PROFILE],
     dashboard: {
       subtitle: 'An overview of all organizations and members.',
@@ -178,6 +186,7 @@ export const ROLES = {
       review: false,
       announce: false,
       propose: false,
+      assignPositions: false,
     },
 
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, PROFILE],
@@ -231,6 +240,7 @@ export const ROLES = {
       review: true,
       announce: true,
       propose: true,
+      assignPositions: false,
     },
 
     sidebar: [
@@ -302,6 +312,7 @@ export const ROLES = {
       review: true,
       announce: true,
       propose: false,
+      assignPositions: true,
     },
 
     sidebar: [
@@ -383,7 +394,12 @@ export const ROLES = {
     'School Head',
     'Give the final decision on proposals.',
   ),
-  [ROLE_KEYS.IT_ADMIN]: staffRole('IT Administrator'),
+  /* Kaya rin niyang magbigay ng officer position sa kahit anong
+     org (sa Members page). */
+  [ROLE_KEYS.IT_ADMIN]: (() => {
+    const base = staffRole('IT Administrator')
+    return { ...base, can: { ...base.can, assignPositions: true } }
+  })(),
 }
 
 /* Ginagamit kapag hindi kilala ang role — halimbawa, kung
@@ -391,7 +407,7 @@ export const ROLES = {
    para hindi masira ang app. */
 export const FALLBACK_ROLE = {
   label: 'No role',
-  can: { create: false, review: false, announce: false, propose: false },
+  can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
   sidebar: [DASHBOARD, PROFILE],
   dashboard: { subtitle: '', stats: [], cards: [] },
 }

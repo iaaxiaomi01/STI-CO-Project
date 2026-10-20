@@ -73,7 +73,8 @@ function Sidebar({ open, onClose, user, onLogout }) {
         {/* Ipinapakita ang role para alam agad kung bakit
             ganito ang nakikitang menu */}
         <p className={styles.roleTag}>
-          {roleConfig.label}
+          {/* "President · NEXI" kapag may officer position */}
+          {profile?.officer_positions?.name ?? roleConfig.label}
           {profile?.organizations?.name && ` · ${profile.organizations.name}`}
         </p>
 

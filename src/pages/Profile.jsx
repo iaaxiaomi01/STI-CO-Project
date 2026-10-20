@@ -99,6 +99,10 @@ function Profile() {
     { label: 'Year level', value: profile?.year_level || '—' },
     { label: 'Organization', value: organization },
     { label: 'Role', value: profile?.roles?.name ?? roleConfig.label },
+    /* Officer position (President, VP, atbp.) — ang Adviser ang nagbibigay */
+    ...(profile?.officer_positions?.name
+      ? [{ label: 'Position', value: profile.officer_positions.name }]
+      : []),
     { label: 'Sign-in method', value: provider },
     { label: 'Last sign-in', value: lastSignIn },
     { label: 'Member since', value: memberSince },
@@ -179,7 +183,8 @@ function Profile() {
         <p className={styles.note}>
           Your student ID, role, and organization are managed by the SAO and IT
           Administrator. If anything is wrong, contact them to have
-          your record corrected.
+          your record corrected. Officer positions are given by your
+          organization's adviser.
         </p>
       </div>
     </>

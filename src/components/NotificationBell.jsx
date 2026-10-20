@@ -52,6 +52,7 @@ const TYPE_ICON = {
   proposal_update: '✉',
   proposal_review: '✎',
   certificate_ready: '⤓',
+  position_update: '★',
 }
 
 /* Kulay ng icon ayon sa "tone" ng notification (PROPOSAL_NOTIFICATIONS.sql):

@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
+import { useAuth } from '../context/AuthContext.js'
+import { ROLE_KEYS, getRoleConfig } from '../config/roles.js'
 import { fullNameOf } from '../lib/profile.js'
+import { fetchPositions, setOfficerPosition } from '../lib/officerPositions.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Avatar from '../components/Avatar.jsx'
+import PositionDialog from '../components/PositionDialog.jsx'
 import styles from './Members.module.css'
 
 /* ============================================================
@@ -18,55 +22,121 @@ import styles from './Members.module.css'
    Tandaan: lalabas lang dito ang mga naka-login na KAHIT ISANG
    BESES, dahil sa unang login ginagawa ang profile. Ang mga
    nasa student_records na hindi pa nag-login ay wala pa rito.
+
+   OFFICER POSITION (OFFICER_POSITIONS.sql):
+   Sa "Role" column, ang position ang lalabas kapag mayroon
+   (hal. "President" imbes na "Officer"). Ang may
+   can.assignPositions (Adviser, IT Admin) ay may "Set position"
+   button sa bawat Member/Officer — tingnan ang PositionDialog.
    ============================================================ */
+
+const MEMBER_COLUMNS = `
+  id, student_id, email, first_name, middle_name, last_name,
+  program, year_level, is_active, avatar_url,
+  role_id, organization_id, position_id,
+  roles ( name ),
+  organizations ( name ),
+  officer_positions ( id, name, sort_order )
+`
+
+/* Member at Officer lang ang pwedeng bigyan ng position */
+function canHavePosition(m) {
+  return m.is_active && (m.role_id === 1 || m.role_id === 2) && Boolean(m.organization_id)
+}
+
 function Members() {
+  const { role } = useAuth()
+  const can = getRoleConfig(role).can
+
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
+  const [officersOnly, setOfficersOnly] = useState(false)
 
-  useEffect(() => {
-    let active = true
+  /* Para sa "Set position" */
+  const [positions, setPositions] = useState([])
+  const [editing, setEditing] = useState(null) // ang member na binibigyan ng position
+  const [notice, setNotice] = useState('')
 
-    supabase
+  const loadMembers = useCallback(async () => {
+    const { data, error: queryError } = await supabase
       .from('profiles')
-      .select(
-        `id, student_id, email, first_name, middle_name, last_name,
-         program, year_level, is_active, avatar_url,
-         roles ( name ),
-         organizations ( name )`,
-      )
+      .select(MEMBER_COLUMNS)
       .order('last_name', { ascending: true })
-      .then(({ data, error: queryError }) => {
-        if (!active) return
-        if (queryError) {
-          console.error('Hindi makuha ang members:', queryError)
-          setError(queryError)
-        } else {
-          setMembers(data ?? [])
-        }
-        setLoading(false)
-      })
 
-    return () => {
-      active = false
+    if (queryError) {
+      console.error('Hindi makuha ang members:', queryError)
+      setError(queryError)
+    } else {
+      setError(null)
+      setMembers(data ?? [])
     }
+    setLoading(false)
   }, [])
 
-  /* Paghahanap sa pangalan, student ID, email o kurso */
+  useEffect(() => {
+    loadMembers()
+  }, [loadMembers])
+
+  /* Ang listahan ng position (RLS: sariling org ng Adviser; lahat
+     para sa IT Admin). Kailangan lang kapag may "Set position". */
+  useEffect(() => {
+    if (!can.assignPositions) return
+    fetchPositions()
+      .then(setPositions)
+      .catch((err) => console.error('Hindi makuha ang officer positions:', err))
+  }, [can.assignPositions])
+
+  /* position id → [mga may hawak] */
+  const holdersByPosition = useMemo(() => {
+    const map = new Map()
+    members.forEach((m) => {
+      if (m.position_id) map.set(m.position_id, [...(map.get(m.position_id) ?? []), m])
+    })
+    return map
+  }, [members])
+
+  /* Paghahanap sa pangalan, student ID, email, kurso o position.
+     Kapag "Officers only": ayon sa pagkakasunod-sunod ng position
+     (President muna), tapos apelyido. */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return members
-    return members.filter((m) =>
-      [m.first_name, m.last_name, m.student_id, m.email, m.program]
+    let list = members
+
+    if (officersOnly) {
+      list = list
+        .filter((m) => m.role_id === 2)
+        .sort(
+          (a, b) =>
+            (a.officer_positions?.sort_order ?? Infinity) -
+              (b.officer_positions?.sort_order ?? Infinity) ||
+            a.last_name.localeCompare(b.last_name),
+        )
+    }
+
+    if (!q) return list
+    return list.filter((m) =>
+      [m.first_name, m.last_name, m.student_id, m.email, m.program, m.officer_positions?.name]
         .filter(Boolean)
         .some((field) => field.toLowerCase().includes(q)),
     )
-  }, [members, search])
+  }, [members, search, officersOnly])
 
   const showOrg = members.some(
     (m) => m.organizations?.name !== members[0]?.organizations?.name,
   )
+
+  async function handleSavePosition(positionId) {
+    const member = editing
+    await setOfficerPosition(member.id, positionId)
+
+    const name = fullNameOf(member)
+    const position = positions.find((p) => p.id === positionId)
+    setNotice(position ? `${name} is now ${position.name}.` : `${name} is now a Member.`)
+    setEditing(null)
+    await loadMembers()
+  }
 
   return (
     <>
@@ -74,6 +144,12 @@ function Members() {
         title="Members"
         subtitle="List of organization members."
       />
+
+      {notice && (
+        <p className={styles.notice} role="status">
+          {notice}
+        </p>
+      )}
 
       {loading && <p className={styles.status}>Loading members…</p>}
 
@@ -99,12 +175,20 @@ function Members() {
             <input
               type="search"
               className={styles.search}
-              placeholder="Search by name, student ID, or program…"
+              placeholder="Search by name, student ID, program, or position…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <label className={styles.filter}>
+              <input
+                type="checkbox"
+                checked={officersOnly}
+                onChange={(e) => setOfficersOnly(e.target.checked)}
+              />
+              Officers only
+            </label>
             <span className={styles.count}>
-              {filtered.length} sa {members.length}
+              {filtered.length} of {members.length}
             </span>
           </div>
 
@@ -118,6 +202,11 @@ function Members() {
                   <th>Year</th>
                   <th>Role</th>
                   {showOrg && <th>Organization</th>}
+                  {can.assignPositions && (
+                    <th>
+                      <span className={styles.srOnly}>Actions</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -137,14 +226,51 @@ function Members() {
                     <td>{m.student_id || '—'}</td>
                     <td>{m.program || '—'}</td>
                     <td>{m.year_level || '—'}</td>
-                    <td>{m.roles?.name ?? '—'}</td>
+                    {/* May position = Officer, kaya ang position na
+                        mismo ang ipinapakita (hal. "President") */}
+                    <td>
+                      {m.officer_positions?.name ? (
+                        <span className={styles.position} title="Officer">
+                          {m.officer_positions.name}
+                        </span>
+                      ) : (
+                        (m.roles?.name ?? '—')
+                      )}
+                    </td>
                     {showOrg && <td>{m.organizations?.name ?? '—'}</td>}
+                    {can.assignPositions && (
+                      <td className={styles.actionCell}>
+                        {canHavePosition(m) && (
+                          <button
+                            type="button"
+                            className={styles.rowButton}
+                            onClick={() => {
+                              setNotice('')
+                              setEditing(m)
+                            }}
+                          >
+                            Set position
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </>
+      )}
+
+      {editing && (
+        <PositionDialog
+          member={editing}
+          positions={positions.filter((p) => p.organization_id === editing.organization_id)}
+          holdersByPosition={holdersByPosition}
+          canManagePositions={role === ROLE_KEYS.ADVISER}
+          onSave={handleSavePosition}
+          onCancel={() => setEditing(null)}
+        />
       )}
     </>
   )

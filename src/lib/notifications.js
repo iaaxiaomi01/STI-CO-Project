@@ -163,6 +163,12 @@ export function isCertificateNotification(row) {
   return row?.type === 'certificate_ready'
 }
 
+/* Para sa AuthProvider: binigyan, pinalitan, o tinanggalan ka ng
+   officer position — kunin ulit ang profile (role at sidebar) */
+export function isPositionNotification(row) {
+  return row?.type === 'position_update'
+}
+
 /* ---------- PAG-FORMAT ---------- */
 
 /* "Ngayon lang", "5 minuto na", "2 oras na", "Kahapon",
