@@ -154,6 +154,102 @@
   color: #333;
 }
 
+/* ---------- LOGO FALLBACK (walang logo_url o sira ang larawan) ---------- */
+.logoFallback {
+  width: 70%;
+  aspect-ratio: 1;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sti-blue);
+  color: var(--sti-gold);
+  font-size: clamp(36px, 4vw, 64px);
+  font-weight: 900;
+  letter-spacing: 1px;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .logoFallback {
+  transform: scale(1.05);
+}
+
+/* ---------- LOADING SKELETON ---------- */
+.skeletonCard,
+.skeletonCard:hover {
+  transform: none;
+  box-shadow: 0 8px 20px rgba(20, 36, 92, 0.1);
+}
+
+.skeletonLogo,
+.skeletonLine {
+  background: linear-gradient(90deg, #eceae3 25%, #f6f4ee 50%, #eceae3 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+
+.skeletonLogo {
+  width: 70%;
+  aspect-ratio: 1;
+  max-height: 100%;
+  border-radius: 50%;
+}
+
+.skeletonLine {
+  height: 22px;
+  margin: 0 auto 18px;
+  width: 70%;
+  border-radius: 6px;
+}
+
+.skeletonLineShort {
+  height: 14px;
+  width: 50%;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonLogo,
+  .skeletonLine {
+    animation: none;
+  }
+}
+
+/* ---------- ERROR / EMPTY ---------- */
+.message {
+  width: 100%;
+  padding: 50px 20px;
+  text-align: center;
+  font-size: 18px;
+  color: #333;
+}
+
+.retryButton {
+  margin-top: 18px;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--sti-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.retryButton:hover {
+  background: var(--sti-gold);
+  color: var(--sti-blue);
+}
+
 /* ---------- ARROWS ---------- */
 .arrow {
   position: absolute;

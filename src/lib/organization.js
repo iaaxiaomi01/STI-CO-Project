@@ -46,6 +46,30 @@ export async function fetchOrganization(orgId) {
   return data
 }
 
+/* ------------------------------------------------------------
+   PUBLIC LISTING — para sa Organizations section ng landing page
+
+   Gumagana kahit hindi naka-login dahil sa RLS policy na
+   "orgs_read_public" (anon: is_active = true lang). Dinodoble
+   pa rin dito ang filter na is_active para pareho ang lalabas
+   kahit naka-login ang tumitingin (orgs_read: lahat ng org).
+
+   Public din ang org-logos bucket, kaya diretso nang magagamit
+   ang logo_url sa <img>.
+   ------------------------------------------------------------ */
+const PUBLIC_COLUMNS = 'id, name, department, description, logo_url'
+
+export async function fetchPublicOrganizations() {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select(PUBLIC_COLUMNS)
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+
+  if (error) throw error
+  return data ?? []
+}
+
 async function updateOrg(orgId, values) {
   const { data, error } = await supabase
     .from('organizations')
