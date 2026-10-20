@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { fetchPublicOrganizations } from '../../lib/organization.js'
 import styles from './Organizations.module.css'
@@ -6,16 +6,23 @@ import styles from './Organizations.module.css'
 /* ============================================================
    ORGANIZATIONS
 
-   Galing na sa public.organizations sa Supabase ang listahan
+   Galing sa public.organizations sa Supabase ang listahan
    (fetchPublicOrganizations sa lib/organization.js). Aktibong
    org lang ang lumalabas, naka-ayos ayon sa pangalan.
+
+   CAROUSEL:
+   Isang hilera ng card na nag-i-scroll pahalang (scroll-snap).
+     - Kasya lahat     → naka-gitna, walang arrow/dots
+     - Hindi kasya     → may arrow (desktop) at dots
+     - Phone           → i-swipe lang; may dots sa ibaba
+   Kaya kahit 1, 4 o 20 ang org, maayos pa rin ang itsura.
 
    Logo: ang logo_url na ina-upload ng Adviser sa Org Profile.
    Kapag wala pa (o hindi ma-load), inisyal ng pangalan ang
    ipinapakita imbes na sirang larawan.
    ============================================================ */
 
-/* Ilang placeholder card habang naglo-load (desktop) */
+/* Ilang placeholder card habang naglo-load */
 const SKELETON_COUNT = 4
 
 /* Hal. "STARTUP" → "ST", "Junior Philippine Computer Society" → "JP" */
@@ -26,13 +33,25 @@ function initialsOf(name) {
   return (words[0][0] + words[1][0]).toUpperCase()
 }
 
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
+/* ------------------------------------------------------------
+   ISANG CARD
+   ------------------------------------------------------------ */
 function OrganizationCard({ organization }) {
   const [logoFailed, setLogoFailed] = useState(false)
   const showLogo = organization.logo_url && !logoFailed
 
   return (
-    <article className={styles.card}>
-      <div className={styles.logoWrap}>
+    <article className={styles.card} role="listitem">
+      <div className={styles.cardBanner} aria-hidden="true" />
+
+      <div className={styles.logoRing}>
         {showLogo ? (
           <img
             src={organization.logo_url}
@@ -42,23 +61,49 @@ function OrganizationCard({ organization }) {
             onError={() => setLogoFailed(true)}
           />
         ) : (
-          <div className={styles.logoFallback} aria-hidden="true">
+          <span className={styles.logoFallback} aria-hidden="true">
             {initialsOf(organization.name)}
-          </div>
+          </span>
         )}
       </div>
 
       <div className={styles.cardContent}>
-        <h3>{organization.name}</h3>
-        <span className={styles.cardLine} />
-        {organization.department && <p>{organization.department}</p>}
+        <h3 className={styles.cardTitle} title={organization.name}>
+          {organization.name}
+        </h3>
+
+        {organization.department && (
+          <p className={styles.department}>{organization.department}</p>
+        )}
+
+        <span className={styles.cardLine} aria-hidden="true" />
+
+        {organization.description && (
+          <p className={styles.cardDescription}>{organization.description}</p>
+        )}
       </div>
     </article>
   )
 }
 
-/* Kinukuha ang orgs mula sa Supabase.
-   status: 'loading' | 'ready' | 'error' */
+function SkeletonCard() {
+  return (
+    <div className={`${styles.card} ${styles.skeletonCard}`} aria-hidden="true">
+      <div className={`${styles.cardBanner} ${styles.skeletonBanner}`} />
+      <div className={styles.logoRing}>
+        <span className={styles.skeletonLogo} />
+      </div>
+      <div className={styles.cardContent}>
+        <span className={styles.skeletonLine} />
+        <span className={`${styles.skeletonLine} ${styles.skeletonLineShort}`} />
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------
+   DATA — status: 'loading' | 'ready' | 'error'
+   ------------------------------------------------------------ */
 function usePublicOrganizations() {
   const [organizations, setOrganizations] = useState([])
   const [status, setStatus] = useState('loading')
@@ -88,49 +133,86 @@ function usePublicOrganizations() {
   return { organizations, status, retry: () => load() }
 }
 
-/* Ilang card bawat page. Dapat tugma ang breakpoint sa
-   Organizations.module.css (767px). */
-const CARDS_PER_PAGE_DESKTOP = 6
-const CARDS_PER_PAGE_MOBILE = 1
-const MOBILE_QUERY = '(max-width: 767px)'
+/* ------------------------------------------------------------
+   SCROLL STATE ng carousel
 
-/* true kapag mobile ang lapad ng screen; nag-a-update kapag nag-resize */
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches
-  )
+   Binabantayan ang lapad ng track para malaman kung kailangan
+   pa ng arrows/dots, at kung nasaang "page" na tayo.
+   Ang isang page = isang buong lapad ng nakikitang track.
+   ------------------------------------------------------------ */
+function useCarousel(itemCount) {
+  const trackRef = useRef(null)
+  const [state, setState] = useState({
+    overflowing: false,
+    atStart: true,
+    atEnd: true,
+    pageCount: 1,
+    activePage: 0,
+  })
 
-  useEffect(() => {
-    const media = window.matchMedia(MOBILE_QUERY)
-    const onChange = (event) => setIsMobile(event.matches)
+  const measure = useCallback(() => {
+    const track = trackRef.current
+    if (!track) return
 
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
+    const maxScroll = track.scrollWidth - track.clientWidth
+    const overflowing = maxScroll > 2
+    const pageCount = overflowing ? Math.ceil(track.scrollWidth / track.clientWidth - 0.05) : 1
+    const progress = overflowing ? track.scrollLeft / maxScroll : 0
+
+    setState({
+      overflowing,
+      atStart: track.scrollLeft <= 2,
+      atEnd: track.scrollLeft >= maxScroll - 2,
+      pageCount,
+      activePage: Math.round(progress * (pageCount - 1)),
+    })
   }, [])
 
-  return isMobile
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return undefined
+
+    measure()
+    track.addEventListener('scroll', measure, { passive: true })
+    const observer = new ResizeObserver(measure)
+    observer.observe(track)
+
+    return () => {
+      track.removeEventListener('scroll', measure)
+      observer.disconnect()
+    }
+  }, [measure, itemCount])
+
+  const behavior = () => (prefersReducedMotion() ? 'auto' : 'smooth')
+
+  const scrollByPage = (direction) => {
+    const track = trackRef.current
+    if (!track) return
+    /* Isang buong page = lapad ng track + isang gap */
+    const gap = parseFloat(getComputedStyle(track.firstElementChild).columnGap) || 0
+    track.scrollBy({ left: direction * (track.clientWidth + gap), behavior: behavior() })
+  }
+
+  const goToPage = (index) => {
+    const track = trackRef.current
+    if (!track) return
+    const maxScroll = track.scrollWidth - track.clientWidth
+    const left = state.pageCount > 1 ? (maxScroll * index) / (state.pageCount - 1) : 0
+    track.scrollTo({ left, behavior: behavior() })
+  }
+
+  return { trackRef, ...state, scrollByPage, goToPage }
 }
 
+/* ------------------------------------------------------------
+   SECTION
+   ------------------------------------------------------------ */
 function Organizations() {
-  const isMobile = useIsMobile()
   const { organizations, status, retry } = usePublicOrganizations()
-  const cardsPerPage = isMobile ? CARDS_PER_PAGE_MOBILE : CARDS_PER_PAGE_DESKTOP
 
-  const totalPages = Math.max(1, Math.ceil(organizations.length / cardsPerPage))
-
-  const [page, setPage] = useState(0)
-
-  /* Kapag lumipat mula mobile papuntang desktop, maaaring lumagpas
-     ang page sa bagong totalPages — kaya nililimitahan dito. */
-  const currentPage = Math.min(page, totalPages - 1)
-
-  const nextPage = () => setPage((currentPage + 1) % totalPages)
-  const previousPage = () => setPage((currentPage - 1 + totalPages) % totalPages)
-
-  const start = currentPage * cardsPerPage
-  const visibleOrganizations = organizations.slice(start, start + cardsPerPage)
-
-  const hasMultiplePages = status === 'ready' && totalPages > 1
+  const isReady = status === 'ready' && organizations.length > 0
+  const carousel = useCarousel(isReady ? organizations.length : 0)
+  const showNav = isReady && carousel.overflowing
 
   return (
     <section id="organizations" className={styles.section}>
@@ -159,33 +241,6 @@ function Organizations() {
 
       {/* ---------- CAROUSEL ---------- */}
       <div className={styles.carousel}>
-        {hasMultiplePages && (
-          <button
-            type="button"
-            className={`${styles.arrow} ${styles.arrowLeft}`}
-            onClick={previousPage}
-            aria-label="Previous organizations"
-          >
-            <ChevronLeft size={32} />
-          </button>
-        )}
-
-        {status === 'loading' && (
-          <div className={styles.grid} aria-busy="true" aria-label="Loading organizations">
-            {Array.from({ length: isMobile ? 1 : SKELETON_COUNT }, (_, index) => (
-              <div key={index} className={`${styles.card} ${styles.skeletonCard}`}>
-                <div className={styles.logoWrap}>
-                  <div className={styles.skeletonLogo} />
-                </div>
-                <div className={styles.cardContent}>
-                  <div className={styles.skeletonLine} />
-                  <div className={`${styles.skeletonLine} ${styles.skeletonLineShort}`} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
         {status === 'error' && (
           <div className={styles.message} role="alert">
             <p>Could not load the organizations right now.</p>
@@ -201,37 +256,70 @@ function Organizations() {
           </div>
         )}
 
-        {status === 'ready' && organizations.length > 0 && (
-          <div className={styles.grid}>
-            {visibleOrganizations.map((organization) => (
-              <OrganizationCard key={organization.id} organization={organization} />
-            ))}
+        {status === 'loading' && (
+          <div className={styles.track} aria-busy="true" aria-label="Loading organizations">
+            <div className={styles.row}>
+              {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+                <SkeletonCard key={index} />
+              ))}
+            </div>
           </div>
         )}
 
-        {hasMultiplePages && (
-          <button
-            type="button"
-            className={`${styles.arrow} ${styles.arrowRight}`}
-            onClick={nextPage}
-            aria-label="Next organizations"
-          >
-            <ChevronRight size={32} />
-          </button>
+        {isReady && (
+          <>
+            {showNav && (
+              <button
+                type="button"
+                className={`${styles.arrow} ${styles.arrowLeft}`}
+                onClick={() => carousel.scrollByPage(-1)}
+                disabled={carousel.atStart}
+                aria-label="Previous organizations"
+              >
+                <ChevronLeft size={28} />
+              </button>
+            )}
+
+            {/* tabIndex: para ma-scroll din gamit ang arrow keys ng keyboard */}
+            <div
+              ref={carousel.trackRef}
+              className={styles.track}
+              tabIndex={showNav ? 0 : -1}
+              aria-label="Student organizations"
+            >
+              <div className={styles.row} role="list">
+                {organizations.map((organization) => (
+                  <OrganizationCard key={organization.id} organization={organization} />
+                ))}
+              </div>
+            </div>
+
+            {showNav && (
+              <button
+                type="button"
+                className={`${styles.arrow} ${styles.arrowRight}`}
+                onClick={() => carousel.scrollByPage(1)}
+                disabled={carousel.atEnd}
+                aria-label="Next organizations"
+              >
+                <ChevronRight size={28} />
+              </button>
+            )}
+          </>
         )}
       </div>
 
       {/* ---------- PAGINATION DOTS ---------- */}
-      {hasMultiplePages && (
+      {showNav && carousel.pageCount > 1 && (
         <div className={styles.pagination}>
-          {Array.from({ length: totalPages }, (_, index) => (
+          {Array.from({ length: carousel.pageCount }, (_, index) => (
             <button
               type="button"
               key={index}
-              className={`${styles.dot} ${currentPage === index ? styles.dotActive : ''}`}
-              onClick={() => setPage(index)}
+              className={`${styles.dot} ${carousel.activePage === index ? styles.dotActive : ''}`}
+              onClick={() => carousel.goToPage(index)}
               aria-label={`Go to organization page ${index + 1}`}
-              aria-current={currentPage === index ? 'true' : undefined}
+              aria-current={carousel.activePage === index ? 'true' : undefined}
             />
           ))}
         </div>

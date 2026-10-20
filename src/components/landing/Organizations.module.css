@@ -4,7 +4,6 @@
 .section {
   position: relative;
   width: 100%;
-  min-height: 700px;
   padding: 75px 0 55px;
   background: var(--sti-cream);
   color: #14245c;
@@ -71,117 +70,221 @@
 
 /* ==========================================================
    CAROUSEL
+
+   .carousel → may hawak ng arrows (naka-absolute)
+   .track    → ang nag-i-scroll pahalang (scroll-snap)
+   .row      → ang hilera ng cards; margin auto = naka-gitna
+               kapag kasya, at normal na scroll kapag hindi
    ========================================================== */
 .carousel {
+  /* Ilang card ang kita sa isang "page" */
+  --per-view: 4;
+  --card-gap: 28px;
+
   position: relative;
   z-index: 3;
-  width: min(100% - 130px, 1450px);
-  margin: 55px auto 0;
+  width: min(100% - 160px, 1280px);
+  margin: 48px auto 0;
+}
+
+.track {
+  /* Para ang lapad ng card ay batay sa lapad ng track (cqi) */
+  container-type: inline-size;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 8px;
+  /* Espasyo para hindi maputol ang anino at hover lift */
+  padding: 14px 8px 30px;
+  margin: -14px -8px -30px;
+  scrollbar-width: none;
+  border-radius: 24px;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.track:focus-visible {
+  outline: 3px solid var(--sti-gold);
+  outline-offset: 4px;
+}
+
+.row {
   display: flex;
-  align-items: center;
+  gap: var(--card-gap);
+  width: max-content;
+  margin-inline: auto;
 }
 
-.grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 30px;
-}
-
-/* ---------- CARD ---------- */
+/* ==========================================================
+   CARD
+   ========================================================== */
 .card {
-  min-width: 0;
+  position: relative;
+  /* Eksaktong kasya ang --per-view na card sa track, kaya
+     walang card na napuputol sa gilid */
+  flex: 0 0 280px;
+  flex-basis: calc((100cqi - (var(--per-view) - 1) * var(--card-gap)) / var(--per-view));
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   overflow: hidden;
+  scroll-snap-align: start;
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 8px 20px rgba(20, 36, 92, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 10px 28px rgba(20, 36, 92, 0.09);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 18px 35px rgba(20, 36, 92, 0.16);
+/* Gintong guhit sa ibaba na lumalabas kapag hover */
+.card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: var(--sti-gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
 }
 
-.logoWrap {
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 38px rgba(20, 36, 92, 0.16);
+}
+
+.card:hover::after {
+  transform: scaleX(1);
+}
+
+/* Asul na banner sa itaas ng card */
+.cardBanner {
   width: 100%;
-  height: 260px;
+  height: 92px;
+  flex-shrink: 0;
+  background:
+    radial-gradient(circle at 92% -30%, rgba(255, 255, 255, 0.1) 0 42%, transparent 43%),
+    radial-gradient(circle at 4% 130%, rgba(255, 255, 255, 0.07) 0 30%, transparent 31%),
+    linear-gradient(135deg, var(--sti-blue-bright) 0%, var(--sti-blue) 55%, var(--sti-blue-deep) 100%);
+  border-bottom: 4px solid var(--sti-gold);
+}
+
+/* Bilog na lalagyan ng logo, nakapatong sa banner */
+.logoRing {
+  width: 124px;
+  height: 124px;
+  margin-top: -62px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
   overflow: hidden;
   background: #fff;
+  border: 5px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 8px 22px rgba(20, 36, 92, 0.18);
 }
 
 .logo {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  border-radius: 50%;
   transition: transform 0.3s ease;
 }
 
 .card:hover .logo {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
-.cardContent {
-  min-height: 155px;
-  padding: 20px 15px 25px;
-  text-align: center;
-}
-
-.cardContent h3 {
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: normal;
-  color: var(--sti-blue);
-}
-
-.cardLine {
-  display: block;
-  width: 40px;
-  height: 3px;
-  margin: 15px auto 17px;
-  background: var(--sti-gold);
-  border-radius: 10px;
-}
-
-.cardContent p {
-  font-size: 16px;
-  line-height: 1.4;
-  color: #333;
-}
-
-/* ---------- LOGO FALLBACK (walang logo_url o sira ang larawan) ---------- */
+/* Walang logo_url o sira ang larawan */
 .logoFallback {
-  width: 70%;
-  aspect-ratio: 1;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--sti-blue);
-  color: var(--sti-gold);
-  font-size: clamp(36px, 4vw, 64px);
+  background: var(--sti-cream);
+  border: 2px dashed rgba(6, 53, 140, 0.25);
+  color: var(--sti-blue);
+  font-size: 40px;
   font-weight: 900;
   letter-spacing: 1px;
-  transition: transform 0.3s ease;
 }
 
-.card:hover .logoFallback {
-  transform: scale(1.05);
+/* ---------- CARD CONTENT ---------- */
+.cardContent {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 22px 28px;
+  text-align: center;
 }
 
-/* ---------- LOADING SKELETON ---------- */
+.cardTitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+  color: var(--sti-blue);
+}
+
+.department {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #b07f00;
+}
+
+.cardLine {
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin: 14px auto 0;
+  background: var(--sti-gold);
+  border-radius: 10px;
+}
+
+.cardDescription {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #4a4f5c;
+}
+
+/* ==========================================================
+   LOADING SKELETON
+   ========================================================== */
 .skeletonCard,
 .skeletonCard:hover {
   transform: none;
-  box-shadow: 0 8px 20px rgba(20, 36, 92, 0.1);
+  box-shadow: 0 10px 28px rgba(20, 36, 92, 0.09);
 }
 
+.skeletonCard::after {
+  display: none;
+}
+
+.skeletonBanner,
 .skeletonLogo,
 .skeletonLine {
   background: linear-gradient(90deg, #eceae3 25%, #f6f4ee 50%, #eceae3 75%);
@@ -190,22 +293,22 @@
 }
 
 .skeletonLogo {
-  width: 70%;
-  aspect-ratio: 1;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
 }
 
 .skeletonLine {
-  height: 22px;
-  margin: 0 auto 18px;
+  display: block;
   width: 70%;
+  height: 22px;
+  margin-bottom: 14px;
   border-radius: 6px;
 }
 
 .skeletonLineShort {
-  height: 14px;
-  width: 50%;
+  width: 45%;
+  height: 12px;
 }
 
 @keyframes shimmer {
@@ -217,16 +320,10 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .skeletonLogo,
-  .skeletonLine {
-    animation: none;
-  }
-}
-
-/* ---------- ERROR / EMPTY ---------- */
+/* ==========================================================
+   ERROR / EMPTY
+   ========================================================== */
 .message {
-  width: 100%;
   padding: 50px 20px;
   text-align: center;
   font-size: 18px;
@@ -240,8 +337,8 @@
   border-radius: 999px;
   background: var(--sti-blue);
   color: #fff;
-  font-weight: 700;
   font-size: 16px;
+  font-weight: 700;
   transition: background 0.25s ease, color 0.25s ease;
 }
 
@@ -250,13 +347,15 @@
   color: var(--sti-blue);
 }
 
-/* ---------- ARROWS ---------- */
+/* ==========================================================
+   ARROWS — lumalabas lang kapag hindi kasya ang lahat
+   ========================================================== */
 .arrow {
   position: absolute;
   z-index: 10;
   top: 50%;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,53 +364,67 @@
   border-radius: 50%;
   background: var(--sti-blue);
   color: #fff;
+  box-shadow: 0 8px 20px rgba(20, 36, 92, 0.2);
   transform: translateY(-50%);
   transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease,
-    box-shadow 0.25s ease;
+    opacity 0.25s ease;
 }
 
-.arrow:hover {
+.arrow:hover:not(:disabled) {
   background: var(--sti-gold);
   color: var(--sti-blue);
-  transform: translateY(-50%) scale(1.05);
-  box-shadow: 0 8px 20px rgba(20, 36, 92, 0.2);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.arrow:focus-visible {
+  outline: 3px solid var(--sti-gold);
+  outline-offset: 3px;
+}
+
+.arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+  box-shadow: none;
 }
 
 .arrowLeft {
-  left: -85px;
+  left: -72px;
 }
 
 .arrowRight {
-  right: -85px;
+  right: -72px;
 }
 
-/* ---------- PAGINATION ---------- */
+/* ==========================================================
+   PAGINATION
+   ========================================================== */
 .pagination {
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-top: 45px;
+  gap: 10px;
+  margin-top: 36px;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #d5d5d5;
-  transition: width 0.25s ease, height 0.25s ease, background 0.25s ease,
-    transform 0.25s ease;
+  transition: width 0.3s ease, background 0.3s ease;
 }
 
 .dot:hover {
-  transform: scale(1.15);
+  background: #b9bfcc;
 }
 
-.dotActive {
-  width: 13px;
-  height: 13px;
+.dotActive,
+.dotActive:hover {
+  width: 30px;
   background: var(--sti-blue);
 }
 
@@ -372,30 +485,27 @@
    TABLET
    ========================================================== */
 @media (max-width: 1023px) {
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 25px;
-  }
+  .carousel {
+    --per-view: 3;
+    --card-gap: 22px;
 
-  .logoWrap {
-    height: 220px;
+    width: calc(100% - 130px);
   }
 
   .arrowLeft {
-    left: -65px;
+    left: -62px;
   }
 
   .arrowRight {
-    right: -65px;
+    right: -62px;
   }
 }
 
 /* ==========================================================
-   MOBILE — 1 card bawat page (tingnan ang Organizations.jsx)
+   MOBILE — swipe; walang arrows, may dots
    ========================================================== */
 @media (max-width: 767px) {
   .section {
-    min-height: auto;
     padding: 55px 0 45px;
   }
 
@@ -433,66 +543,37 @@
     display: none;
   }
 
-  /* 55px sa bawat gilid para buo ang arrows sa screen */
+  /* Buong lapad ang track para may "silip" ng susunod na card */
   .carousel {
-    width: calc(100% - 110px);
-    margin-top: 35px;
+    --card-gap: 16px;
+
+    width: 100%;
+    margin-top: 32px;
   }
 
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 0;
+  .track {
+    margin: -14px 0 -30px;
+    padding: 14px 24px 30px;
+    scroll-padding-inline: 24px;
+    border-radius: 0;
   }
 
-  .logoWrap {
-    height: 300px;
-    padding: 25px;
+  /* May "silip" ng susunod na card para alam na pwedeng i-swipe */
+  .card {
+    flex-basis: min(78vw, 300px);
+    scroll-snap-align: center;
   }
 
-  .cardContent {
-    min-height: 135px;
-    padding: 20px;
-  }
-
-  .cardContent h3 {
-    font-size: 25px;
-  }
-
-  .cardContent p {
-    font-size: 15px;
+  .card:hover {
+    transform: none;
   }
 
   .arrow {
-    width: 45px;
-    height: 45px;
-  }
-
-  .arrow svg {
-    width: 25px;
-    height: 25px;
-  }
-
-  .arrowLeft {
-    left: -50px;
-  }
-
-  .arrowRight {
-    right: -50px;
+    display: none;
   }
 
   .pagination {
-    gap: 10px;
-    margin-top: 30px;
-  }
-
-  .dot {
-    width: 9px;
-    height: 9px;
-  }
-
-  .dotActive {
-    width: 10px;
-    height: 10px;
+    margin-top: 26px;
   }
 
   .decorationTopLeft {
@@ -501,10 +582,34 @@
     top: -50px;
   }
 
+  /* Mas maliit na singsing para hindi tamaan ang "OUR" */
+  .decorationTopLeft::after {
+    width: 120px;
+    height: 85px;
+    top: 50px;
+    left: 75px;
+  }
+
   .decorationBottomRight {
     width: 200px;
     height: 130px;
     right: -80px;
     bottom: -70px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card::after,
+  .logo,
+  .arrow,
+  .dot {
+    transition: none;
+  }
+
+  .skeletonBanner,
+  .skeletonLogo,
+  .skeletonLine {
+    animation: none;
   }
 }
