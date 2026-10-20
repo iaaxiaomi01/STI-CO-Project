@@ -108,6 +108,26 @@
   margin-bottom: 1.5rem;
 }
 
+.details {
+  margin: -0.5rem 0 1.5rem;
+}
+
+.detailRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.detailRow dt {
+  min-width: 4.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.detailRow dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .subjectLabel {
   font-weight: 700;
   letter-spacing: 0.04em;

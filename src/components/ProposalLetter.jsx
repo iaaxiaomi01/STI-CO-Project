@@ -1,5 +1,12 @@
 import { useEffect } from 'react'
-import { authorName, authorRoleLabel, formatLetterDate } from '../lib/proposals.js'
+import {
+  authorName,
+  authorRoleLabel,
+  formatLetterDate,
+  hasSchedule,
+  scheduleDateLabel,
+  scheduleTimeLabel,
+} from '../lib/proposals.js'
 import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalLetter.module.css'
 
@@ -10,6 +17,8 @@ import styles from './ProposalLetter.module.css'
      Organization Logo at Name  → galing sa organizations
      Petsa                      → kailan ginawa
      Title                      → nagiging SUBJECT ng sulat
+     Venue, Date, Time          → kailan at saan ang activity
+                                  (wala sa mga lumang proposal)
      Description                → katawan ng sulat
      Proposed by                → ang gumawa, at ang role niya
      Attachment                 → pangalan ng file (kung meron);
@@ -102,6 +111,29 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
           <p className={styles.subject}>
             <span className={styles.subjectLabel}>SUBJECT:</span> {proposal.title}
           </p>
+
+          {(hasSchedule(proposal) || proposal.venue) && (
+            <dl className={styles.details}>
+              {proposal.venue && (
+                <div className={styles.detailRow}>
+                  <dt>Venue:</dt>
+                  <dd>{proposal.venue}</dd>
+                </div>
+              )}
+              {hasSchedule(proposal) && (
+                <>
+                  <div className={styles.detailRow}>
+                    <dt>Date:</dt>
+                    <dd>{scheduleDateLabel(proposal)}</dd>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <dt>Time:</dt>
+                    <dd>{scheduleTimeLabel(proposal)}</dd>
+                  </div>
+                </>
+              )}
+            </dl>
+          )}
 
           <div className={styles.text}>{proposal.description}</div>
 

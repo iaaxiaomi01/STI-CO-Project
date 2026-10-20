@@ -2,10 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import {
   DESCRIPTION_MAX,
   TITLE_MAX,
+  VENUE_MAX,
   formatDateTime,
+  isFutureSchedule,
   latestRevision,
   stageLabel,
+  todayKey,
 } from '../lib/proposals.js'
+import { toTimeInput } from '../lib/events.js'
 import { toTitleCase } from '../lib/profile.js'
 import {
   ACCEPT_ATTRIBUTE,
@@ -23,11 +27,12 @@ import styles from './ProposalForm.module.css'
      <ProposalForm onSubmit ... />                 → bago
      <ProposalForm proposal={p} onSubmit ... />    → i-revise
 
-   Sa pag-revise, nakalagay na ang dating Title, Description at
-   file, at nasa itaas ang komento ng nag-pa-revise. Pwedeng
+   Sa pag-revise, nakalagay na ang dating Title, Description,
+   Venue, Date, oras at file, at nasa itaas ang komento ng nag-pa-revise. Pwedeng
    panatilihin, palitan, o alisin ang file.
 
-   Tinatype: Title at Description. May opsyonal na File
+   Tinatype: Title, Description, Venue, Date, Start Time at
+   End Time (kailangan lahat). May opsyonal na File
    (isa lang) — hal. ang pirmadong proposal o budget.
    Ang Organization Name, Logo at Proposed by ay kusang
    nilalagay — galing sila sa org at sa account mo.
@@ -44,6 +49,10 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
 
   const [title, setTitle] = useState(proposal?.title ?? '')
   const [description, setDescription] = useState(proposal?.description ?? '')
+  const [venue, setVenue] = useState(proposal?.venue ?? '')
+  const [eventDate, setEventDate] = useState(proposal?.event_date ?? '')
+  const [startTime, setStartTime] = useState(toTimeInput(proposal?.start_time))
+  const [endTime, setEndTime] = useState(toTimeInput(proposal?.end_time))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -99,10 +108,31 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
     const clean = {
       title: title.trim(),
       description: description.trim(),
+      venue: venue.trim(),
+      eventDate,
+      startTime,
+      endTime,
     }
 
-    if (!clean.title || !clean.description) {
-      setError('Title and Description are required.')
+    if (
+      !clean.title ||
+      !clean.description ||
+      !clean.venue ||
+      !clean.eventDate ||
+      !clean.startTime ||
+      !clean.endTime
+    ) {
+      setError('All fields except File are required.')
+      return
+    }
+
+    if (clean.endTime <= clean.startTime) {
+      setError('End Time must be later than Start Time.')
+      return
+    }
+
+    if (!isFutureSchedule(clean.eventDate, clean.startTime)) {
+      setError('The date and time of the activity must be in the future.')
       return
     }
 
@@ -194,10 +224,60 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             maxLength={DESCRIPTION_MAX}
             onChange={(e) => setDescription(e.target.value)}
             rows={10}
-            placeholder="What the activity is, its objectives, when, where, and who will take part."
+            placeholder="What the activity is, its objectives, and who will take part."
             required
           />
         </label>
+
+        {/* ---------- VENUE ---------- */}
+        <label className={styles.field}>
+          <span className={styles.label}>Venue</span>
+          <input
+            className={styles.input}
+            value={venue}
+            maxLength={VENUE_MAX}
+            onChange={(e) => setVenue(e.target.value)}
+            placeholder="e.g. STI Gymnasium, 3rd Floor"
+            required
+          />
+        </label>
+
+        {/* ---------- DATE AT ORAS ---------- */}
+        <div className={styles.grid3}>
+          <label className={styles.field}>
+            <span className={styles.label}>Date</span>
+            <input
+              type="date"
+              className={styles.input}
+              value={eventDate}
+              min={todayKey()}
+              onChange={(e) => setEventDate(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.label}>Start Time</span>
+            <input
+              type="time"
+              className={styles.input}
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.label}>End Time</span>
+            <input
+              type="time"
+              className={styles.input}
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              required
+            />
+          </label>
+        </div>
 
         {/* ---------- FILE (opsyonal) ---------- */}
         <div className={styles.field}>

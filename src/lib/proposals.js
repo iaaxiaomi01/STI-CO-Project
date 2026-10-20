@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js'
 import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
+import { formatEventDate, formatTime, nowKey } from './events.js'
 
 /* ============================================================
    PROPOSALS — lahat ng pakikipag-usap sa database
@@ -10,8 +11,8 @@ import { toTitleCase } from './profile.js'
    Adviser: proposals lang ng SARILI nilang org. SAO at School
    Head: lahat ng org. Ang Member ay walang makukuha dito.
 
-   Sa paggawa, title, description at (kung meron) ang file
-   ang ipinapadala. Ang org, author at petsa ay itinatakda ng
+   Sa paggawa, title, description, venue, petsa, oras at (kung
+   meron) ang file ang ipinapadala. Ang org, author at petsa ay itinatakda ng
    trigger sa database — hindi mapepeke mula sa browser.
 
    Ang Organization Name at Logo sa sulat ay galing sa
@@ -111,9 +112,11 @@ export function progressLabel(proposal) {
 export const COMMENT_MAX = 2000
 export const TITLE_MAX = 150
 export const DESCRIPTION_MAX = 8000
+export const VENUE_MAX = 200
 
 const COLUMNS = `
   id, organization_id, title, description,
+  venue, event_date, start_time, end_time,
   attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
@@ -165,10 +168,27 @@ function attachmentColumns(attachment) {
   }
 }
 
-export async function createProposal({ title, description, attachment = null }) {
+/* Venue, petsa at oras ng activity (PROPOSAL_VENUE_DATE_TIME.sql).
+   Galing sa ProposalForm: eventDate "2026-10-05",
+   startTime/endTime "13:30". */
+function scheduleColumns({ venue, eventDate, startTime, endTime }) {
+  return {
+    venue,
+    event_date: eventDate,
+    start_time: startTime,
+    end_time: endTime,
+  }
+}
+
+export async function createProposal({ title, description, attachment = null, ...schedule }) {
   const { data, error } = await supabase
     .from('proposals')
-    .insert({ title, description, ...attachmentColumns(attachment) })
+    .insert({
+      title,
+      description,
+      ...scheduleColumns(schedule),
+      ...attachmentColumns(attachment),
+    })
     .select(COLUMNS)
     .single()
 
@@ -231,7 +251,10 @@ export async function requestRevision(id, comment) {
 /* Officer: ipasa ulit ang na-edit na proposal.
    attachment = { path, name, size } o null kapag walang file.
    Kapag pareho ang path sa dati, hindi binago ang file. */
-export async function resubmitProposal(id, { title, description, attachment = null }) {
+export async function resubmitProposal(
+  id,
+  { title, description, venue, eventDate, startTime, endTime, attachment = null },
+) {
   const { error } = await supabase.rpc('resubmit_proposal', {
     p_id: id,
     p_title: title,
@@ -239,6 +262,10 @@ export async function resubmitProposal(id, { title, description, attachment = nu
     p_attachment_path: attachment?.path ?? null,
     p_attachment_name: attachment?.name ?? null,
     p_attachment_size: attachment?.size ?? null,
+    p_venue: venue,
+    p_event_date: eventDate,
+    p_start_time: startTime,
+    p_end_time: endTime,
   })
 
   if (error) throw rpcError(error)
@@ -489,4 +516,36 @@ export async function countPendingProposals(roleId) {
 
   if (error) throw error
   return count ?? 0
+}
+
+/* ============================================================
+   VENUE, PETSA AT ORAS NG ACTIVITY
+
+   Ang mga LUMANG proposal (bago ang PROPOSAL_VENUE_DATE_TIME.sql)
+   ay walang laman dito — kaya laging suriin ang hasSchedule().
+   ============================================================ */
+export function hasSchedule(proposal) {
+  return Boolean(proposal?.event_date && proposal?.start_time && proposal?.end_time)
+}
+
+/* "Monday, October 5, 2026" */
+export function scheduleDateLabel(proposal) {
+  return hasSchedule(proposal) ? formatEventDate(proposal.event_date) : ''
+}
+
+/* "1:30 PM – 5:00 PM" */
+export function scheduleTimeLabel(proposal) {
+  if (!hasSchedule(proposal)) return ''
+  return `${formatTime(proposal.start_time)} – ${formatTime(proposal.end_time)}`
+}
+
+/* "2026-10-20" — ngayong araw sa Pilipinas, para sa min ng
+   <input type="date"> */
+export function todayKey() {
+  return nowKey().slice(0, 10)
+}
+
+/* Nasa hinaharap ba ang simula? Kapareho ng check sa database. */
+export function isFutureSchedule(eventDate, startTime) {
+  return `${eventDate} ${startTime.slice(0, 5)}` > nowKey()
 }

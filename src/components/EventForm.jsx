@@ -18,6 +18,9 @@ import styles from './EventForm.module.css'
    Gumawa  → may `proposal`: BLANGKO ang Title at Description —
              ang Officer ang magsusulat. Ang pamagat ng proposal
              ay ipinapakita lang sa itaas bilang sanggunian.
+             Ang Date, oras at Location ay KINUKUHA sa proposal
+             (venue, event_date, start_time, end_time), pero
+             pwede pang baguhin.
    Edit    → may `initial`: ang kasalukuyang event
 
    Laman: Title, Description, Date, Start Time, End Time,
@@ -34,10 +37,12 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
 
   const [title, setTitle] = useState(initial?.title ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
-  const [eventDate, setEventDate] = useState(initial?.event_date ?? '')
-  const [startTime, setStartTime] = useState(toTimeInput(initial?.start_time))
-  const [endTime, setEndTime] = useState(toTimeInput(initial?.end_time))
-  const [location, setLocation] = useState(initial?.location ?? '')
+  /* Edit → galing sa event. Gumawa → galing sa proposal. */
+  const source = initial ?? proposal
+  const [eventDate, setEventDate] = useState(source?.event_date ?? '')
+  const [startTime, setStartTime] = useState(toTimeInput(source?.start_time))
+  const [endTime, setEndTime] = useState(toTimeInput(source?.end_time))
+  const [location, setLocation] = useState(initial?.location ?? proposal?.venue ?? '')
 
   /* Picture: ang bagong pinili (file + preview), o ang dati */
   const [imageFile, setImageFile] = useState(null)

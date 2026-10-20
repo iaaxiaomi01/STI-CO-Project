@@ -70,6 +70,23 @@
   line-height: 1.55;
 }
 
+/* Date · Start Time · End Time sa iisang hilera */
+.grid3 {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 0 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .grid3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid3 > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .error {
   margin-bottom: 1rem;
   padding: 0.7rem 0.9rem;

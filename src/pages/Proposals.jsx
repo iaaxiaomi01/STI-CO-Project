@@ -14,12 +14,15 @@ import {
   deleteProposal,
   fetchProposals,
   formatDateTime,
+  hasSchedule,
   isFinalReview,
   isInRevision,
   progressLabel,
   requestRevision,
   resubmitProposal,
   reviewProposal,
+  scheduleDateLabel,
+  scheduleTimeLabel,
   stageLabel,
 } from '../lib/proposals.js'
 import {
@@ -459,6 +462,24 @@ function Proposals() {
                     Proposed by: <strong>{authorName(p)}</strong> ·{' '}
                     {authorRoleLabel(p)}
                   </p>
+
+                  {/* Kailan at saan ang activity (wala sa mga lumang proposal) */}
+                  {(hasSchedule(p) || p.venue) && (
+                    <p className={styles.meta}>
+                      {hasSchedule(p) && (
+                        <>
+                          When: <strong>{scheduleDateLabel(p)}</strong>,{' '}
+                          {scheduleTimeLabel(p)}
+                        </>
+                      )}
+                      {hasSchedule(p) && p.venue && ' · '}
+                      {p.venue && (
+                        <>
+                          Venue: <strong>{p.venue}</strong>
+                        </>
+                      )}
+                    </p>
+                  )}
 
                   <p className={styles.date}>
                     {formatDateTime(p.created_at)}
