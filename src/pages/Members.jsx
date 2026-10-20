@@ -48,6 +48,9 @@ function Members() {
   const { role } = useAuth()
   const can = getRoleConfig(role).can
 
+  /* Walang "Officers only" na filter ang SAO at School Head */
+  const showOfficersFilter = role !== ROLE_KEYS.SAO && role !== ROLE_KEYS.SCHOOL_HEAD
+
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -179,14 +182,16 @@ function Members() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <label className={styles.filter}>
-              <input
-                type="checkbox"
-                checked={officersOnly}
-                onChange={(e) => setOfficersOnly(e.target.checked)}
-              />
-              Officers only
-            </label>
+            {showOfficersFilter && (
+              <label className={styles.filter}>
+                <input
+                  type="checkbox"
+                  checked={officersOnly}
+                  onChange={(e) => setOfficersOnly(e.target.checked)}
+                />
+                Officers only
+              </label>
+            )}
             <span className={styles.count}>
               {filtered.length} of {members.length}
             </span>
