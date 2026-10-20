@@ -99,12 +99,42 @@
 
 .day {
   min-height: 84px;
+  min-width: 0;
   padding: 0.4rem;
+  border: none;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
+  background-color: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 0.25rem;
+  transition: background-color var(--transition);
+}
+
+.day:hover {
+  background-color: var(--color-primary-soft);
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Napiling araw — makikita sa ilalim ang mga event nito */
+.selected,
+.selected:hover {
+  background-color: var(--color-primary-soft);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+/* Habang kinukuha pa ang events ng bagong buwan */
+.loading .dayEvents {
+  opacity: 0.4;
 }
 
 .dayNumber {
@@ -119,7 +149,7 @@
 }
 
 /* Araw na hindi sakop ng buwang tinitingnan */
-.outsideMonth {
+.outsideMonth:not(.selected) {
   background-color: var(--color-surface);
 }
 
@@ -134,12 +164,183 @@
   color: #fff;
 }
 
-/* Nakahandang lugar para sa events (wala pang laman) */
+/* ---------- EVENTS SA LOOB NG ARAW ---------- */
 .dayEvents {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   min-width: 0;
+}
+
+/* --org-color: galing sa orgColor() sa DashboardCalendar.jsx */
+.chip {
+  display: block;
+  padding: 0.12rem 0.4rem;
+  border-left: 3px solid var(--org-color);
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--org-color) 12%, #fff);
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tapos na ang event */
+.past {
+  opacity: 0.55;
+}
+
+.more {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  padding-left: 0.2rem;
+}
+
+/* Sa mobile lang lumalabas (tingnan sa baba) */
+.dots {
+  display: none;
+  gap: 3px;
+  justify-content: center;
+}
+
+.dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--org-color);
+}
+
+/* ---------- LEGEND ---------- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* ---------- MGA EVENT NG NAPILING ARAW ---------- */
+.details {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.detailsTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.detailsEmpty {
+  font-size: 0.87rem;
+  color: var(--color-muted);
+}
+
+.detailsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detailsItem {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--org-color);
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.detailsHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.detailsHead strong {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.detailsOrg {
+  margin-top: 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--org-color);
+}
+
+.detailsMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+  margin-top: 0.45rem;
+  font-size: 0.83rem;
+  color: var(--color-muted);
+}
+
+.detailsMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.detailsLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Kapareho ng badge sa Events page */
+.status {
+  flex-shrink: 0;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.upcoming {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.ongoing {
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+}
+
+.completed {
+  background-color: #eef0f4;
+  color: #3b4660;
 }
 
 .note {
@@ -169,5 +370,15 @@
 
   .weekday {
     font-size: 0.68rem;
+  }
+
+  /* Masikip — tuldok na lang imbes na title */
+  .chip,
+  .more {
+    display: none;
+  }
+
+  .dots {
+    display: flex;
   }
 }

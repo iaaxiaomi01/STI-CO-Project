@@ -125,6 +125,27 @@ export async function fetchEvents() {
 }
 
 /* ============================================================
+   EVENT CALENDAR SA DASHBOARD — LAHAT NG ORG
+
+   Hindi ito dumadaan sa RLS ng events (sariling org lang iyon).
+   Ang function na calendar_events() sa Supabase ang nagbibigay
+   ng events ng LAHAT ng aktibong org, pero pang-calendar na
+   detalye lang: title, petsa, oras, lugar, at pangalan ng org.
+   Tingnan ang DASHBOARD_CALENDAR_ALL_ORGS.sql.
+
+   from/to: "YYYY-MM-DD", hanggang 62 araw ang pagitan.
+   ============================================================ */
+export async function fetchCalendarEvents(from, to) {
+  const { data, error } = await supabase.rpc('calendar_events', {
+    p_from: from,
+    p_to: to,
+  })
+
+  if (error) throw error
+  return data ?? []
+}
+
+/* ============================================================
    BILANG PARA SA DASHBOARD
 
    Automatic ang status (kinukuwenta sa browser), kaya hindi ito

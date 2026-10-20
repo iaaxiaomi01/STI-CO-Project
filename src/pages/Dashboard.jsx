@@ -239,7 +239,8 @@ function Dashboard() {
       </div>
 
       {/* Event Calendar — Member, Officer, Adviser lang
-          (calendar: true sa config/roles.js). UI lang muna. */}
+          (calendar: true sa config/roles.js). Events ng LAHAT
+          ng org ang lumalabas (DASHBOARD_CALENDAR_ALL_ORGS.sql). */}
       {roleConfig.calendar && (
         <section className={styles.calendarSection}>
           <h2 className={styles.sectionTitle}>Event Calendar</h2>

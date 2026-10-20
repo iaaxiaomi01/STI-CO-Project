@@ -1,20 +1,36 @@
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react'
+import {
+  computeStatus,
+  eventStatusLabel,
+  fetchCalendarEvents,
+  formatEventDate,
+  formatTime,
+  nowKey,
+} from '../lib/events.js'
 import styles from './DashboardCalendar.module.css'
 
 /* ============================================================
    DASHBOARD CALENDAR — Event Calendar sa Dashboard
    (Member, Officer, Adviser — calendar: true sa config/roles.js)
 
-   UI LANG MUNA: walang data at walang logic sa events.
-   Gumagana na ang paglipat ng buwan at naka-highlight ang
-   araw ngayon, pero walang event na lumalabas.
+   May laman na: events ng LAHAT ng organisasyon, hindi lang ng
+   sarili mong org. Galing sa function na calendar_events() sa
+   Supabase (DASHBOARD_CALENDAR_ALL_ORGS.sql) — pang-calendar na
+   detalye lang ang kasama: title, petsa, oras, lugar, at org.
 
-   KAPAG IKOKONEKTA NA SA DATA:
-     1. Kunin ang events ng buwang ito (hal. sa lib/events.js)
-     2. Ipasa bilang prop: <DashboardCalendar events={events} />
-     3. Sa bawat araw (cell), ipakita ang mga event na tugma
-        ang petsa — may nakahanda nang lugar: .dayEvents
+   Paano gumagana:
+     1. Kapag lumipat ng buwan, kinukuha ang events ng 42 araw
+        na nakikita sa calendar (kasama ang dulo/simula ng
+        katabing buwan).
+     2. Sa bawat araw, hanggang 2 event ang ipinapakita; ang
+        sobra ay "+N more".
+     3. I-click ang araw para makita sa ilalim ang buong listahan
+        ng events nito.
+
+   Kulay: sariling org = kulay ng app (--color-primary).
+   Ibang org = sariling kulay bawat org (tingnan ang ORG_COLORS).
    ============================================================ */
 
 const MONTHS = [
@@ -28,12 +44,36 @@ const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
    ng calendar kada buwan. */
 const TOTAL_CELLS = 42
 
+/* Ilang event ang kasya sa isang araw bago maging "+N more" */
+const MAX_PER_DAY = 2
+
+/* Kulay ng ibang org. Pareho ang kulay ng isang org kahit
+   saang buwan (galing sa id niya). PALITAN kung gusto mo. */
+const ORG_COLORS = [
+  '#e8590c', '#2f9e44', '#9c36b5', '#d6336c',
+  '#0c8599', '#f08c00', '#5f3dc4', '#c92a2a',
+]
+
+function orgColor(event) {
+  if (event.is_own_org) return 'var(--color-primary)'
+  let hash = 0
+  for (const ch of event.organization_id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
+  return ORG_COLORS[hash % ORG_COLORS.length]
+}
+
 function sameDay(a, b) {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   )
+}
+
+/* Date → "2026-10-20" (lokal na petsa, para tugma sa event_date) */
+function toYmd(date) {
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${m}-${d}`
 }
 
 /* Bumubuo ng 42 na araw: dulo ng nakaraang buwan, buong
@@ -44,30 +84,96 @@ function buildCalendarDays(year, month) {
 
   return Array.from({ length: TOTAL_CELLS }, (_, i) => {
     const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
-    return { date, inMonth: date.getMonth() === month, key: date.toDateString() }
+    return { date, inMonth: date.getMonth() === month, key: toYmd(date) }
   })
 }
 
 function DashboardCalendar() {
   const today = new Date()
+  const todayKey = toYmd(today)
 
   // Laging unang araw ng buwan ang naka-save — sapat na iyon
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
   )
+  const [selectedKey, setSelectedKey] = useState(todayKey)
+
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
-  const days = buildCalendarDays(year, month)
+  const days = useMemo(() => buildCalendarDays(year, month), [year, month])
 
+  const rangeFrom = days[0].key
+  const rangeTo = days[TOTAL_CELLS - 1].key
+
+  /* ---------- kunin ang events ng 42 araw na nakikita ---------- */
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError(null)
+
+    fetchCalendarEvents(rangeFrom, rangeTo)
+      .then((rows) => {
+        if (active) setEvents(rows)
+      })
+      .catch((err) => {
+        console.error('Hindi makuha ang events ng calendar:', err)
+        if (active) {
+          setEvents([])
+          setError('Could not load events. Please try again later.')
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [rangeFrom, rangeTo])
+
+  /* "2026-10-20" → [mga event ng araw na iyon] */
+  const eventsByDay = useMemo(() => {
+    const map = new Map()
+    for (const event of events) {
+      const list = map.get(event.event_date) ?? []
+      list.push(event)
+      map.set(event.event_date, list)
+    }
+    return map
+  }, [events])
+
+  /* Mga org na may event sa BUWANG ito — para sa legend.
+     Nauuna ang sariling org. */
+  const legend = useMemo(() => {
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}-`
+    const seen = new Map()
+    for (const event of events) {
+      if (!event.event_date.startsWith(monthPrefix)) continue
+      if (!seen.has(event.organization_id)) seen.set(event.organization_id, event)
+    }
+    return [...seen.values()].sort(
+      (a, b) =>
+        Number(b.is_own_org) - Number(a.is_own_org) ||
+        a.organization_name.localeCompare(b.organization_name),
+    )
+  }, [events, year, month])
+
+  const now = nowKey()
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth()
+  const selectedEvents = selectedKey ? eventsByDay.get(selectedKey) ?? [] : []
 
   function changeMonth(offset) {
     setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1))
+    setSelectedKey(null)
   }
 
   function goToToday() {
     setViewDate(new Date(today.getFullYear(), today.getMonth(), 1))
+    setSelectedKey(todayKey)
   }
 
   return (
@@ -83,7 +189,7 @@ function DashboardCalendar() {
             type="button"
             className={styles.todayBtn}
             onClick={goToToday}
-            disabled={isCurrentMonth}
+            disabled={isCurrentMonth && selectedKey === todayKey}
           >
             Today
           </button>
@@ -116,27 +222,139 @@ function DashboardCalendar() {
       </div>
 
       {/* ---------- MGA ARAW ---------- */}
-      <div className={styles.grid}>
+      <div className={[styles.grid, loading ? styles.loading : ''].join(' ')}>
         {days.map(({ date, inMonth, key }) => {
           const isToday = sameDay(date, today)
+          const dayEvents = eventsByDay.get(key) ?? []
+          const shown = dayEvents.slice(0, MAX_PER_DAY)
+          const extra = dayEvents.length - shown.length
+
           return (
-            <div
+            <button
+              type="button"
               key={key}
+              onClick={() => setSelectedKey(key)}
+              aria-pressed={selectedKey === key}
+              aria-label={`${formatEventDate(key)}, ${dayEvents.length} event${
+                dayEvents.length === 1 ? '' : 's'
+              }`}
               className={[
                 styles.day,
                 inMonth ? '' : styles.outsideMonth,
                 isToday ? styles.today : '',
+                selectedKey === key ? styles.selected : '',
               ].join(' ')}
             >
               <span className={styles.dayNumber}>{date.getDate()}</span>
-              {/* Dito ilalagay ang mga event ng araw na ito */}
-              <div className={styles.dayEvents} />
-            </div>
+
+              {dayEvents.length > 0 && (
+                <span className={styles.dayEvents}>
+                  {shown.map((event) => (
+                    <span
+                      key={event.id}
+                      className={[
+                        styles.chip,
+                        computeStatus(event, now) === 'completed' ? styles.past : '',
+                      ].join(' ')}
+                      style={{ '--org-color': orgColor(event) }}
+                      title={`${event.title} — ${event.organization_name}`}
+                    >
+                      {event.title}
+                    </span>
+                  ))}
+                  {extra > 0 && <span className={styles.more}>+{extra} more</span>}
+
+                  {/* Sa mobile: tuldok lang, dahil masikip */}
+                  <span className={styles.dots} aria-hidden="true">
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <span
+                        key={event.id}
+                        className={styles.dot}
+                        style={{ '--org-color': orgColor(event) }}
+                      />
+                    ))}
+                  </span>
+                </span>
+              )}
+            </button>
           )
         })}
       </div>
 
-      <p className={styles.note}>No events on the calendar yet.</p>
+      {/* ---------- LEGEND: mga org na may event ngayong buwan ---------- */}
+      {legend.length > 0 && (
+        <ul className={styles.legend}>
+          {legend.map((event) => (
+            <li key={event.organization_id}>
+              <span className={styles.dot} style={{ '--org-color': orgColor(event) }} />
+              {event.organization_name}
+              {event.is_own_org && <em> (your org)</em>}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* ---------- MGA EVENT NG NAPILING ARAW ---------- */}
+      {error ? (
+        <p className={styles.note}>{error}</p>
+      ) : selectedKey ? (
+        <div className={styles.details}>
+          <h4 className={styles.detailsTitle}>{formatEventDate(selectedKey)}</h4>
+
+          {selectedEvents.length === 0 ? (
+            <p className={styles.detailsEmpty}>
+              {loading ? 'Loading events…' : 'No events on this day.'}
+            </p>
+          ) : (
+            <ul className={styles.detailsList}>
+              {selectedEvents.map((event) => {
+                const status = computeStatus(event, now)
+                return (
+                  <li
+                    key={event.id}
+                    className={styles.detailsItem}
+                    style={{ '--org-color': orgColor(event) }}
+                  >
+                    <div className={styles.detailsHead}>
+                      <strong>{event.title}</strong>
+                      <span className={`${styles.status} ${styles[status]}`}>
+                        {eventStatusLabel(status)}
+                      </span>
+                    </div>
+                    <div className={styles.detailsOrg}>
+                      {event.organization_name}
+                      {event.is_own_org && ' (your org)'}
+                    </div>
+                    <div className={styles.detailsMeta}>
+                      <span>
+                        <Clock size={14} aria-hidden="true" />
+                        {formatTime(event.start_time)} – {formatTime(event.end_time)}
+                      </span>
+                      <span>
+                        <MapPin size={14} aria-hidden="true" />
+                        {event.location}
+                      </span>
+                    </div>
+                    {event.is_own_org && (
+                      <Link to="/events" className={styles.detailsLink}>
+                        View in Events →
+                      </Link>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <p className={styles.note}>
+          {loading
+            ? 'Loading events…'
+            : legend.length === 0
+              ? 'No events this month.'
+              : 'Click a day to see its events.'}
+        </p>
+      )}
     </div>
   )
 }
