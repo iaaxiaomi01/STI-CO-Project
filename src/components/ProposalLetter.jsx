@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import {
   authorName,
+  authorPositionLabel,
   authorRoleLabel,
   formatLetterDate,
   hasSchedule,
@@ -20,7 +21,8 @@ import styles from './ProposalLetter.module.css'
      Venue, Date, Time          → kailan at saan ang activity
                                   (wala sa mga lumang proposal)
      Description                → katawan ng sulat
-     Proposed by                → ang gumawa, at ang role niya
+     Proposed by                → ang gumawa, ang officer position
+                                  niya (kung meron), at ang role
      Attachment                 → pangalan ng file (kung meron);
                                   "I-download" sa itaas na toolbar
      Daan ng review             → Adviser → SAO → School Head,
@@ -140,6 +142,11 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
           <div className={styles.signature}>
             <p className={styles.closing}>Respectfully yours,</p>
             <p className={styles.signName}>{authorName(proposal)}</p>
+            {/* Officer position (hal. President) — wala sa mga
+                proposal ng walang position */}
+            {authorPositionLabel(proposal) && (
+              <p className={styles.signPosition}>{authorPositionLabel(proposal)}</p>
+            )}
             <p className={styles.signRole}>
               {authorRoleLabel(proposal)}
               {org?.name && `, ${org.name}`}

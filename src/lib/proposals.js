@@ -118,7 +118,7 @@ const COLUMNS = `
   id, organization_id, title, description,
   venue, event_date, start_time, end_time,
   attachment_path, attachment_name, attachment_size,
-  author_id, author_name, author_role_id,
+  author_id, author_name, author_role_id, author_position,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
   stage, head_decision,
   adviser_decision, adviser_comment, adviser_name, adviser_reviewed_at,
@@ -478,6 +478,14 @@ export function authorName(proposal) {
 /* "Officer" */
 export function authorRoleLabel(proposal) {
   return getRoleConfig(roleKeyFromId(proposal.author_role_id)).label
+}
+
+/* "President" — officer position ng nagpasa NOONG ipinasa ito.
+   Kinokopya ng trigger sa database (PROPOSAL_AUTHOR_POSITION.sql),
+   kaya hindi nagbabago kahit mapalitan ang position mamaya.
+   null kapag walang position. */
+export function authorPositionLabel(proposal) {
+  return proposal.author_position?.trim() || null
 }
 
 /* "September 28, 2026" — pang-sulat na petsa */

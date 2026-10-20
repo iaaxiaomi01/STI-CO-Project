@@ -153,6 +153,11 @@
   text-transform: uppercase;
 }
 
+/* Officer position — hal. "President" */
+.signPosition {
+  font-weight: 600;
+}
+
 .signRole {
   font-size: 0.95rem;
   font-style: italic;
