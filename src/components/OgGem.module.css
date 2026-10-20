@@ -1,0 +1,34 @@
+.gem {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -0.15em;
+}
+
+.body {
+  fill: var(--color-primary);
+}
+
+.top {
+  fill: #5b85f0;
+}
+
+.facet {
+  fill: #fff;
+  opacity: 0.28;
+}
+
+.amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.plus {
+  color: #1c6b3f;
+}
+
+.minus {
+  color: #b42318;
+}

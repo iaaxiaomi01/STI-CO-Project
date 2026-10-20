@@ -60,6 +60,11 @@ const PROPOSALS = { label: 'Proposals', to: '/proposals', icon: '✉' }
 const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
 const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 
+/* Organization Gems (OG) — Shop, Release OG, Event rewards, atbp.
+   Iba ang tab bawat role; tingnan ang pages/Rewards.jsx at
+   OG_REWARDS_SHOP.sql */
+const REWARDS = { label: 'Rewards', to: '/rewards', icon: '❖' }
+
 /* ============================================================
    MGA KAKAYAHAN (capabilities)
 
@@ -189,7 +194,7 @@ export const ROLES = {
       assignPositions: false,
     },
 
-    sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, PROFILE],
+    sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, REWARDS, PROFILE],
 
     dashboard: {
       subtitle: "Here's a quick look at your organization.",
@@ -202,8 +207,15 @@ export const ROLES = {
           key: 'newAnnouncements',
         },
         { label: 'Your attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
+        { label: 'Your Organization Gems', value: '0', to: '/rewards', key: 'ogBalance' },
       ],
       cards: [
+        {
+          to: '/rewards',
+          icon: '❖',
+          title: 'Rewards Shop',
+          text: 'Spend the OG you earned from attending events.',
+        },
         {
           to: '/announcements',
           icon: '★',
@@ -250,6 +262,7 @@ export const ROLES = {
       ATTENDANCE,
       MEMBERS,
       PROPOSALS,
+      REWARDS,
       PROFILE,
     ],
 
@@ -268,6 +281,7 @@ export const ROLES = {
           state: { tab: 'mine' },
           key: 'myAttendanceRate',
         },
+        { label: 'Your Organization Gems', value: '0', to: '/rewards', key: 'ogBalance' },
       ],
       cards: [
         {
@@ -287,6 +301,12 @@ export const ROLES = {
           icon: '★',
           title: 'Post',
           text: 'Share news and reminders with members.',
+        },
+        {
+          to: '/rewards',
+          icon: '❖',
+          title: 'Rewards',
+          text: 'Release the OG of finished events and hand out redeemed items.',
         },
       ],
     },
@@ -322,6 +342,7 @@ export const ROLES = {
       ATTENDANCE,
       MEMBERS,
       PROPOSALS,
+      REWARDS,
       ORG_PROFILE,
       PROFILE,
     ],
@@ -357,6 +378,12 @@ export const ROLES = {
           icon: '✓',
           title: 'Attendance',
           text: 'View attendance for the whole organization.',
+        },
+        {
+          to: '/rewards',
+          icon: '❖',
+          title: 'Rewards',
+          text: 'Set the OG reward of events and manage the Redemption Shop.',
         },
       ],
     },

@@ -8,7 +8,12 @@ import { countRecentAnnouncements } from '../lib/announcements.js'
 import { countPendingProposals } from '../lib/proposals.js'
 import { countEventsByStatus } from '../lib/events.js'
 import { fetchAttendanceRates } from '../lib/attendance.js'
-import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
+import {
+  isOgNotification,
+  isProposalNotification,
+  subscribeToNotifications,
+} from '../lib/notifications.js'
+import { fetchMyBalance } from '../lib/og.js'
 import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import DashboardCalendar from '../components/DashboardCalendar.jsx'
@@ -186,6 +191,45 @@ function Dashboard() {
     }
   }, [needsAttendanceRate])
 
+  /* TOTOONG DATA: Organization Gems (OG) mo sa org mo.
+     key: 'ogBalance' (Member at Officer)
+     REALTIME: kinukuha ulit kapag may OG notification (na-release
+     ang OG ng event, o na-cancel ang redemption mo).
+     Tingnan ang my_og_balance() sa OG_REWARDS_SHOP.sql. */
+  const needsOgBalance = roleConfig.dashboard.stats.some((stat) => stat.key === 'ogBalance')
+  const [ogBalance, setOgBalance] = useState(null)
+
+  useEffect(() => {
+    if (!needsOgBalance) return undefined
+    let active = true
+
+    function refresh() {
+      fetchMyBalance()
+        .then((n) => {
+          if (active) setOgBalance(n.toLocaleString('en-PH'))
+        })
+        .catch((error) => {
+          console.error('Hindi makuha ang OG balance:', error)
+          if (active) setOgBalance('—')
+        })
+    }
+
+    refresh()
+
+    const unsubscribe = profile?.id
+      ? subscribeToNotifications(profile.id, {
+          onInsert: (row) => {
+            if (isOgNotification(row)) refresh()
+          },
+        })
+      : () => {}
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [needsOgBalance, profile?.id])
+
   const attendanceRate = attendanceRates
     ? orgWideRate
       ? attendanceRates.org
@@ -202,6 +246,7 @@ function Dashboard() {
     if (stat.key === 'pendingProposals') return pendingProposals ?? '…'
     if (stat.key === 'attendanceRate') return attendanceRate ?? '…'
     if (stat.key === 'myAttendanceRate') return myAttendanceRate ?? '…'
+    if (stat.key === 'ogBalance') return ogBalance ?? '…'
     return stat.value
   }
 

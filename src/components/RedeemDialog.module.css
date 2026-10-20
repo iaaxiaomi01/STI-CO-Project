@@ -1,0 +1,163 @@
+.modal {
+  max-width: 440px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.thumb,
+.thumbPlaceholder {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+}
+
+.thumb {
+  object-fit: cover;
+  background-color: var(--color-surface);
+}
+
+.thumbPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-surface));
+}
+
+.itemText {
+  min-width: 0;
+}
+
+.itemName {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Kuwenta: OG ngayon − presyo = matitira */
+.math {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.95rem;
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  font-size: 0.9rem;
+}
+
+.math div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.math dt {
+  color: var(--color-muted);
+}
+
+.math dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.minus {
+  color: #b42318;
+}
+
+.total {
+  margin-top: 0.25rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.total dt,
+.total dd {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.note {
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* ---------- Tagumpay ---------- */
+.successIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  background-color: #e8f6ee;
+  color: #1c6b3f;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.centered {
+  text-align: center;
+}
+
+.heading {
+  margin-bottom: 0.5rem;
+}
+
+.successText {
+  margin: -0.75rem 0 1rem;
+  color: var(--color-muted);
+}
+
+.codeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 1.1rem 1rem;
+  border: 2px dashed var(--color-primary);
+  border-radius: 14px;
+  background-color: var(--color-primary-soft);
+  text-align: center;
+}
+
+.codeLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary-dark);
+}
+
+.code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: clamp(1.6rem, 7vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--color-text);
+  user-select: all;
+}
+
+.codeHint {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.left {
+  margin-bottom: 1.25rem;
+  font-size: 0.92rem;
+}
+
+.centerActions {
+  justify-content: center;
+}

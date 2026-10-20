@@ -169,6 +169,13 @@ export function isPositionNotification(row) {
   return row?.type === 'position_update'
 }
 
+/* Para sa Rewards page at Dashboard: na-release ang OG ng event o
+   na-cancel ang redemption mo — kunin ulit ang OG balance
+   (OG_REWARDS_SHOP.sql) */
+export function isOgNotification(row) {
+  return row?.type === 'og_update'
+}
+
 /* ---------- PAG-FORMAT ---------- */
 
 /* "Ngayon lang", "5 minuto na", "2 oras na", "Kahapon",

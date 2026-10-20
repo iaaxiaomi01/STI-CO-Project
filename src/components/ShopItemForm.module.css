@@ -1,0 +1,65 @@
+/* Dagdag sa ProposalForm.module.css at EventForm.module.css */
+
+.modal {
+  max-width: 560px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.55;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 0.75rem;
+}
+
+.grid3 > label {
+  margin-bottom: 0.4rem;
+}
+
+.fieldHint {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* Parisukat na preview, gaya ng sa shop */
+.preview img {
+  aspect-ratio: 1 / 1;
+  max-height: 220px;
+  width: auto;
+  margin: 0 auto;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.check input {
+  margin-top: 0.3rem;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary);
+}
+
+.check strong {
+  display: block;
+}
+
+@media (max-width: 520px) {
+  .grid3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid3 > :first-child {
+    grid-column: 1 / -1;
+  }
+}

@@ -32,6 +32,9 @@ import styles from './NotificationBell.module.css'
      proposal_review → may proposal na dumating sa stage mo
                        (Adviser, SAO, School Head) —
                        PROPOSAL_REVIEW_NOTIFICATIONS.sql
+     og_update       → nakatanggap ka ng OG mula sa event, o
+                       na-cancel ang redemption mo
+                       — OG_REWARDS_SHOP.sql
 
    REALTIME: nakikinig ang bell sa Supabase Realtime. Kapag may
    bagong notification:
@@ -53,6 +56,7 @@ const TYPE_ICON = {
   proposal_review: '✎',
   certificate_ready: '⤓',
   position_update: '★',
+  og_update: '❖',
 }
 
 /* Kulay ng icon ayon sa "tone" ng notification (PROPOSAL_NOTIFICATIONS.sql):
