@@ -115,42 +115,75 @@
   overflow-wrap: anywhere;
 }
 
-/* ---------- SA SULAT (pang-print) ---------- */
+/* ---------- SA SULAT (pang-print) ----------
+   SIMPLE: walang kahon at walang kulay — itim na teksto lang,
+   may manipis na guhit sa pagitan ng bawat hakbang, para
+   bumagay sa pormal na sulat at malinis kapag na-print.
+   Ang card (Proposals page, ReviewDialog) ay hindi apektado. */
 .letter {
   margin-top: 2.5rem;
-  gap: 0.75rem;
+  gap: 0;
+  border-top: 1px solid #c9ced8;
 }
 
 .letter .step {
-  padding: 0.8rem 1.1rem;
-  border: 2px solid #d9dee8;
-  border-radius: 8px;
+  padding: 0.7rem 0;
+  border: none;
+  border-bottom: 1px solid #e4e7ee;
+  border-radius: 0;
   background: none;
 }
 
-.letter .approved {
-  border-color: #1c6b3f;
+.letter .step:last-child {
+  border-bottom: none;
 }
 
-.letter .rejected {
-  border-color: #b42318;
+.letter .head {
+  gap: 0.35rem;
 }
 
-.letter .noted {
-  border-color: #8a93a6;
+.letter .role {
+  font-size: 0.8rem;
 }
 
-.letter .revision {
-  border-color: #b25e09;
+/* Desisyon: itim na teksto, may gitling bago ito
+   ("ADVISER — APPROVED") */
+.letter .decision,
+.letter .approved .decision,
+.letter .rejected .decision,
+.letter .noted .decision,
+.letter .revision .decision,
+.letter .waiting .decision {
+  color: var(--color-text, #1d2433);
+  font-weight: 600;
 }
 
-.letter .waiting {
-  border-style: dashed;
-  border-color: #c79a2b;
+.letter .decision::before {
+  content: '— ';
 }
 
-.letter .final {
-  border-width: 3px;
+/* Ang nagpasya (hal. "Final: Approved") — mas makapal lang */
+.letter .final .decision {
+  font-weight: 800;
+}
+
+.letter .comment {
+  font-style: italic;
+}
+
+.letter .resubmitted {
+  font-weight: 400;
+  color: var(--color-muted, #5b6478);
+}
+
+/* Naghihintay pa — naka-italic at malabo nang kaunti */
+.letter .waiting .by {
+  font-style: italic;
+}
+
+.letter .waiting .role,
+.letter .waiting .decision {
+  color: var(--color-muted, #5b6478);
 }
 
 @media print {
