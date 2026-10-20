@@ -65,6 +65,12 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
    OG_REWARDS_SHOP.sql */
 const REWARDS = { label: 'Rewards', to: '/rewards', icon: '❖' }
 
+/* Organization Health — score ng org, galing sa attendance sa
+   lahat ng natapos na event. Adviser: sariling org · SAO at
+   School Head: lahat ng org. Hindi kasama ang IT Admin.
+   Tingnan ang pages/OrgHealth.jsx at ORG_HEALTH.sql */
+const ORG_HEALTH = { label: 'Org Health', to: '/org-health', icon: '✚' }
+
 /* ============================================================
    MGA KAKAYAHAN (capabilities)
 
@@ -150,7 +156,7 @@ function staffRoleWithProposals(label, proposalsText) {
     notifications: true,
 
     can: { ...base.can, review: true },
-    sidebar: [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
+    sidebar: [DASHBOARD, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
     dashboard: {
       ...base.dashboard,
       stats: [
@@ -343,6 +349,7 @@ export const ROLES = {
       MEMBERS,
       PROPOSALS,
       REWARDS,
+      ORG_HEALTH,
       ORG_PROFILE,
       PROFILE,
     ],
@@ -378,6 +385,12 @@ export const ROLES = {
           icon: '✓',
           title: 'Attendance',
           text: 'View attendance for the whole organization.',
+        },
+        {
+          to: '/org-health',
+          icon: '✚',
+          title: 'Org Health',
+          text: "See your organization's health score.",
         },
         {
           to: '/rewards',

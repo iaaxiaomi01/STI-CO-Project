@@ -1,0 +1,359 @@
+/* ---------- KULAY NG BAWAT ANTAS ----------
+   Ang .healthy / .attention / .critical / .none ay nagtatakda
+   lang ng --tone at --tone-soft. Ang ibang class ang gumagamit
+   ng mga ito, kaya iisang lugar lang ang papalitan. */
+.healthy {
+  --tone: #15803d;
+  --tone-soft: #e6f6ec;
+}
+
+.attention {
+  --tone: #b45309;
+  --tone-soft: #fff3df;
+}
+
+.critical {
+  --tone: #c62828;
+  --tone-soft: #fdecec;
+}
+
+.none {
+  --tone: var(--color-muted);
+  --tone-soft: var(--color-surface);
+}
+
+.status {
+  padding: 2rem 0;
+  color: var(--color-muted);
+}
+
+/* ---------- REPORT (Adviser) ---------- */
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.scoreCard {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 1.85rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--tone);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.scoreText {
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.badge {
+  display: inline-block;
+  margin: 0.4rem 0 0.6rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  background-color: var(--tone-soft);
+  color: var(--tone);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.badgeSm {
+  margin: 0.2rem 0 0;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.scoreNote {
+  font-size: 0.94rem;
+  color: var(--color-muted);
+  max-width: 52ch;
+}
+
+.scoreNote strong {
+  color: var(--color-text);
+}
+
+/* ---------- RATE CARDS ---------- */
+.rateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.rateCard {
+  padding: 1.5rem 1.55rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.rateTitle {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.rateValue {
+  margin-top: 0.35rem;
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-primary);
+}
+
+.bar {
+  height: 8px;
+  margin: 0.9rem 0 0.75rem;
+  border-radius: 999px;
+  background-color: var(--color-primary-soft);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--color-primary);
+  transition: width 0.4s ease;
+}
+
+.rateDetail {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+/* ---------- SCORE RING ---------- */
+.ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.lg {
+  width: 148px;
+  height: 148px;
+}
+
+.sm {
+  width: 58px;
+  height: 58px;
+}
+
+.ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ringTrack {
+  fill: none;
+  stroke: var(--tone-soft);
+  stroke-width: 10;
+}
+
+.ringFill {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.ringValue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 38%;
+  font-weight: 800;
+  color: var(--tone);
+  line-height: 1;
+}
+
+.lg .ringValue {
+  font-size: 2.3rem;
+}
+
+.sm .ringValue {
+  padding-top: 0;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.ringMax {
+  margin-left: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+/* ---------- LAHAT NG ORG (Staff) ---------- */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summaryTile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 1.1rem 1.25rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--tone);
+  border-radius: var(--radius);
+}
+
+.summaryValue {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--tone);
+}
+
+.summaryLabel {
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+.listNote {
+  margin-bottom: 0.75rem;
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+.orgList {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.orgRow {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1rem 1.25rem;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.orgMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.orgName {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.orgRates {
+  display: flex;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.orgRates div {
+  text-align: right;
+}
+
+.orgRates dt {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+}
+
+.orgRates dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- LEGEND ---------- */
+.legend {
+  margin-top: 2rem;
+  padding: 1.35rem 1.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.legendTitle {
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.legendFormulas {
+  padding-left: 1.1rem;
+  margin-bottom: 0.85rem;
+}
+
+.legendFormulas strong,
+.legendLevels strong {
+  color: var(--color-text);
+}
+
+.legendLevels {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.legendLevels li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--tone);
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 560px) {
+  .scoreCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding: 1.5rem 1.3rem;
+  }
+
+  .orgRow {
+    flex-wrap: wrap;
+  }
+
+  .orgRates {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .orgRates div {
+    text-align: left;
+  }
+}

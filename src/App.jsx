@@ -14,6 +14,7 @@ import Proposals from './pages/Proposals.jsx'
 import Profile from './pages/Profile.jsx'
 import OrgProfile from './pages/OrgProfile.jsx'
 import Rewards from './pages/Rewards.jsx'
+import OrgHealth from './pages/OrgHealth.jsx'
 import AccessDenied from './pages/AccessDenied.jsx'
 
 /* ============================================================
@@ -35,6 +36,7 @@ const PAGE_COMPONENTS = {
   '/profile': Profile,
   '/org-profile': OrgProfile,
   '/rewards': Rewards,
+  '/org-health': OrgHealth,
 }
 
 /* ============================================================
