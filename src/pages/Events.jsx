@@ -28,7 +28,13 @@ import {
   downloadCertificate,
   fetchMyCertificates,
 } from '../lib/certificates.js'
-import { isCertificateNotification, subscribeToNotifications } from '../lib/notifications.js'
+import {
+  isCertificateNotification,
+  isOgNotification,
+  subscribeToNotifications,
+} from '../lib/notifications.js'
+import { fetchEventRewards, rewardFor } from '../lib/og.js'
+import { OgAmount } from '../components/OgGem.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
@@ -87,6 +93,22 @@ import styles from './Events.module.css'
      ililipat sa tab na "Lahat", iki-clear ang search, at
      dadalhin ka sa mismong event card (sandaling naka-highlight).
 
+   OG REWARD (OG_REWARDS_SHOP.sql — event_og_rewards):
+     Member, Officer, Adviser → may "Reward" sa detalye ng event:
+                          ilang OG ang buo (Time In + Time Out)
+                          at kalahati (Time In lang).
+     Adviser            → kapag wala pang reward: "None yet ·
+                          Set in Rewards" (doon itinatakda).
+     Member at Officer  → sa event na sinalihan at tapos na:
+                          ilang OG ang natanggap mo, o ilang OG
+                          ang matatanggap mo kapag na-release na
+                          ng Officer. Kinukuwenta mula sa sariling
+                          attendance gamit ang rewardFor() — pareho
+                          ng og_reward_for() sa database.
+     Kapag dumating ang "og_update" notification (na-release ang
+     OG) habang bukas ang page → kukunin ulit ang mga reward.
+     Basa lang ito; walang binabago sa database.
+
    Ang RLS sa database ang totoong nagbabantay. Ang
    canEditEvent() at canDeleteEvent() dito ay para lang itago
    ang mga button.
@@ -113,6 +135,42 @@ const MEMBER_FILTERS = [...FILTERS, MISSED_STATUS]
 
 function isFinished(status) {
   return status === 'completed' || status === MISSED_STATUS.value
+}
+
+/* Ilang OG ang sa iyo sa isang tapos na event na sinalihan mo.
+   Pareho ng release_event_og(): may Time In → may OG;
+   may Time Out din → buo, kung wala → kalahati.
+   Ibinabalik: { tone: 'got' | 'pending' | 'none', text } o null */
+function myOgStatus(reward, attendance, attendanceClosed) {
+  const timedIn = Boolean(attendance?.time_in)
+  const complete = Boolean(attendance?.time_out)
+  const amount = timedIn ? rewardFor(reward.amount, complete) : 0
+  const og = amount.toLocaleString('en-PH')
+  const full = Number(reward.amount).toLocaleString('en-PH')
+
+  if (reward.released_at) {
+    return amount > 0
+      ? { tone: 'got', text: `You received +${og} OG for this event.` }
+      : { tone: 'none', text: 'No OG — you had no Time In for this event.' }
+  }
+
+  if (attendanceClosed) {
+    return amount > 0
+      ? { tone: 'pending', text: `You'll receive ${og} OG once an Officer releases it.` }
+      : { tone: 'none', text: 'No OG — you had no Time In for this event.' }
+  }
+
+  /* Bukas pa ang attendance (hanggang 1 oras pagkatapos ng event) */
+  if (complete) {
+    return { tone: 'pending', text: `You'll receive ${og} OG once an Officer releases it.` }
+  }
+  if (timedIn) {
+    return {
+      tone: 'pending',
+      text: `Time In only so far: ${og} OG. Time Out before attendance closes to get the full ${full} OG.`,
+    }
+  }
+  return null
 }
 
 function Events() {
@@ -189,6 +247,21 @@ function Events() {
   /* Aling event ang nasa "Sasali ka ba?" na dialog */
   const [confirmingJoin, setConfirmingJoin] = useState(null)
 
+  /* ---------- OG REWARD ----------
+     { [event_id]: row } mula sa event_og_rewards (sariling org, RLS).
+     Hiwalay sa listahan ng events: kapag pumalya, walang Reward
+     na lalabas pero gagana pa rin ang page. */
+  const [rewards, setRewards] = useState({})
+  const isAdviser = profile?.role_id === 3
+
+  const loadRewards = useCallback(async () => {
+    try {
+      setRewards(await fetchEventRewards())
+    } catch (err) {
+      console.error('Hindi makuha ang OG reward ng events:', err)
+    }
+  }, [])
+
   const profileId = profile?.id
   const navigate = useNavigate()
 
@@ -228,6 +301,8 @@ function Events() {
       setLoading(false)
     }
 
+    loadRewards()
+
     /* Hiwalay para hindi masira ang listahan ng events kung
        pumalya ang pagkuha ng mga sinalihan mo */
     if (!profileId) return
@@ -239,7 +314,7 @@ function Events() {
     }
 
     await loadMyCertificates()
-  }, [profileId, loadMyCertificates])
+  }, [profileId, loadMyCertificates, loadRewards])
 
   async function handleDownloadCertificate(event) {
     const cert = myCerts[event.id]
@@ -291,15 +366,18 @@ function Events() {
   }, [load])
 
   /* REALTIME: may bagong certificate para sa iyo habang bukas
-     ang page → kunin ulit para lumabas agad ang "I-download" */
+     ang page → kunin ulit para lumabas agad ang "I-download".
+     Na-release ang OG mo → kunin ulit ang mga reward para
+     lumabas agad ang "You received … OG". */
   useEffect(() => {
     if (!profileId || !joinable) return undefined
     return subscribeToNotifications(profileId, {
       onInsert: (row) => {
         if (isCertificateNotification(row)) loadMyCertificates()
+        if (isOgNotification(row)) loadRewards()
       },
     })
-  }, [profileId, joinable, loadMyCertificates])
+  }, [profileId, joinable, loadMyCertificates, loadRewards])
 
   /* Galing sa notification: ipakita ang event card. Hinihintay
      munang matapos ang unang pagkuha ng events. */
@@ -505,6 +583,14 @@ function Events() {
                 const attendanceClosed = attendancePhase(ev, now) === PHASE_CLOSED
                 const certBusy = downloadingId === ev.id
 
+                /* OG reward ng event (null kung walang itinakda) */
+                const reward = rewards[ev.id] ?? null
+                const showRewardRow = Boolean(reward) || isAdviser
+                const myOg =
+                  joinable && joined && isDone && reward && certsLoaded
+                    ? myOgStatus(reward, myAttendance[ev.id], attendanceClosed)
+                    : null
+
                 return (
                   <li
                     key={ev.id}
@@ -541,6 +627,26 @@ function Events() {
                           <dt>Location</dt>
                           <dd>{ev.location}</dd>
                         </div>
+                        {showRewardRow && (
+                          <div>
+                            <dt>Reward</dt>
+                            <dd>
+                              {reward ? (
+                                <span className={styles.reward}>
+                                  <OgAmount value={reward.amount} size={15} />
+                                  <span className={styles.rewardSub}>
+                                    Time In + Time Out · {rewardFor(reward.amount, false)} OG
+                                    if Time In only
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className={styles.rewardNone}>
+                                  None yet · <Link to="/rewards">Set in Rewards</Link>
+                                </span>
+                              )}
+                            </dd>
+                          </div>
+                        )}
                       </dl>
 
                       <p
@@ -602,6 +708,21 @@ function Events() {
                                 No certificate — your Time In and Time Out are incomplete.
                               </span>
                             ) : null)}
+
+                          {/* ---------- OG MO ---------- */}
+                          {myOg && (
+                            <span
+                              className={
+                                myOg.tone === 'got'
+                                  ? styles.ogGot
+                                  : myOg.tone === 'pending'
+                                    ? styles.ogPending
+                                    : styles.ogNone
+                              }
+                            >
+                              {myOg.text}
+                            </span>
+                          )}
 
                           {missed && (
                             <span className={styles.missedNote}>

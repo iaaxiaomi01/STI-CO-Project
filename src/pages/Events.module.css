@@ -236,7 +236,7 @@
 
 .details > div {
   display: grid;
-  grid-template-columns: 3.6rem 1fr;
+  grid-template-columns: 4rem 1fr;
   gap: 0.5rem;
 }
 
@@ -414,4 +414,48 @@
   font-size: 0.85rem;
   color: #b42318;
   font-weight: 600;
+}
+
+/* ---------- OG REWARD ---------- */
+.reward {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  flex-wrap: wrap;
+  color: var(--color-primary-dark);
+}
+
+.rewardSub {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.rewardNone {
+  color: var(--color-muted);
+}
+
+.rewardNone a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* OG mo sa tapos na event (Member at Officer) */
+.ogGot,
+.ogPending,
+.ogNone {
+  flex-basis: 100%;
+  font-size: 0.83rem;
+}
+
+.ogGot {
+  color: #1c6b3f;
+  font-weight: 700;
+}
+
+.ogPending {
+  color: var(--color-primary-dark);
+}
+
+.ogNone {
+  color: var(--color-muted);
 }
