@@ -234,12 +234,6 @@
   gap: 0.4rem;
 }
 
-.legend em {
-  font-style: normal;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
 /* ---------- MGA EVENT NG NAPILING ARAW ---------- */
 .details {
   margin-top: 1.1rem;

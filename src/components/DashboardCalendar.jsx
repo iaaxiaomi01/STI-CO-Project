@@ -30,8 +30,10 @@ import styles from './DashboardCalendar.module.css'
         ng events nito.
 
    Kulay: bawat org, KASAMA ang sarili mong org, ay kumukuha sa
-   ORG_COLORS — pareho sa Landing calendar. Ang sariling org ay
-   may "(your org)" sa legend at sa listahan.
+   ORG_COLORS — pareho sa Landing calendar. Walang "(your org)"
+   na label; ang is_own_org ay ginagamit lang para mauna ang
+   sariling org sa legend at para sa "View in Events →" link
+   (sariling org lang ang makikita sa Events page dahil sa RLS).
    ============================================================ */
 
 const MONTHS = [
@@ -290,7 +292,6 @@ function DashboardCalendar() {
             <li key={event.organization_id}>
               <span className={styles.dot} style={{ '--org-color': orgColor(event) }} />
               {event.organization_name}
-              {event.is_own_org && <em> (your org)</em>}
             </li>
           ))}
         </ul>
@@ -325,7 +326,6 @@ function DashboardCalendar() {
                     </div>
                     <div className={styles.detailsOrg}>
                       {event.organization_name}
-                      {event.is_own_org && ' (your org)'}
                     </div>
                     <div className={styles.detailsMeta}>
                       <span>
