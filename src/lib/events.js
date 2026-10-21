@@ -146,6 +146,25 @@ export async function fetchCalendarEvents(from, to) {
 }
 
 /* ============================================================
+   EVENT CALENDAR SA LANDING PAGE — LAHAT NG ORG (hindi naka-login)
+
+   Tulad ng fetchCalendarEvents(), pero para sa anon. Galing sa
+   public_calendar_events() (LANDING_CALENDAR_PUBLIC.sql) —
+   parehong pang-calendar na detalye lang, walang is_own_org.
+
+   from/to: "YYYY-MM-DD", hanggang 62 araw ang pagitan.
+   ============================================================ */
+export async function fetchPublicCalendarEvents(from, to) {
+  const { data, error } = await supabase.rpc('public_calendar_events', {
+    p_from: from,
+    p_to: to,
+  })
+
+  if (error) throw error
+  return data ?? []
+}
+
+/* ============================================================
    BILANG PARA SA DASHBOARD
 
    Automatic ang status (kinukuwenta sa browser), kaya hindi ito

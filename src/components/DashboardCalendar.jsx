@@ -29,8 +29,9 @@ import styles from './DashboardCalendar.module.css'
      3. I-click ang araw para makita sa ilalim ang buong listahan
         ng events nito.
 
-   Kulay: sariling org = kulay ng app (--color-primary).
-   Ibang org = sariling kulay bawat org (tingnan ang ORG_COLORS).
+   Kulay: bawat org, KASAMA ang sarili mong org, ay kumukuha sa
+   ORG_COLORS — pareho sa Landing calendar. Ang sariling org ay
+   may "(your org)" sa legend at sa listahan.
    ============================================================ */
 
 const MONTHS = [
@@ -47,15 +48,16 @@ const TOTAL_CELLS = 42
 /* Ilang event ang kasya sa isang araw bago maging "+N more" */
 const MAX_PER_DAY = 2
 
-/* Kulay ng ibang org. Pareho ang kulay ng isang org kahit
-   saang buwan (galing sa id niya). PALITAN kung gusto mo. */
+/* Kulay ng bawat org. Pareho ang kulay ng isang org kahit
+   saang buwan (galing sa id niya). PALITAN kung gusto mo —
+   pero palitan din ang ORG_COLORS sa
+   components/landing/EventCalendar.jsx para pareho pa rin. */
 const ORG_COLORS = [
   '#e8590c', '#2f9e44', '#9c36b5', '#d6336c',
-  '#0c8599', '#f08c00', '#5f3dc4', '#c92a2a',
+  '#0c8599', '#f08c00', '#c92a2a', '#5f3dc4',
 ]
 
 function orgColor(event) {
-  if (event.is_own_org) return 'var(--color-primary)'
   let hash = 0
   for (const ch of event.organization_id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
   return ORG_COLORS[hash % ORG_COLORS.length]
