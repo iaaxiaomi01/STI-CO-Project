@@ -75,6 +75,12 @@ export function ogErrorMessage(err) {
   if (err?.code === '42501' || err?.message === 'not-allowed') {
     return "You don't have permission to do this."
   }
+  /* Ibang error galing sa database (may code, hal. 42883) — hindi ito
+     problema sa internet, kaya ipinapakita ang code para madaling
+     hanapin ang sanhi */
+  if (err?.code && /^[0-9A-Z]{5}$/.test(err.code)) {
+    return `Something went wrong in the database (error ${err.code}). Please try again later or tell your IT Admin.`
+  }
   return 'There was a connection problem. Please try again.'
 }
 
