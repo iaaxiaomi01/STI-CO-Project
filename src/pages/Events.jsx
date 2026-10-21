@@ -392,16 +392,9 @@ function Events() {
     })
   }
 
-  let subtitle = "Your organization's activities."
-  if (can.propose) {
-    subtitle = 'Events are created from your approved proposals in Proposals.'
-  } else if (can.review) {
-    subtitle = "Your organization's events. You can edit or delete any of them."
-  }
-
   return (
     <>
-      <PageHeader title="Events" subtitle={subtitle} />
+      <PageHeader title="Events" />
 
       {notice && (
         <p className={styles.notice} role="status">

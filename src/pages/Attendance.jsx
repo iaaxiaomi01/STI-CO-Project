@@ -114,14 +114,9 @@ function Attendance() {
     )
   }
 
-  const subtitle =
-    tab === TAB_MINE
-      ? 'Events you joined, and your QR code for Time In and Time Out.'
-      : "See who is joining each event, and scan their Time In and Time Out."
-
   return (
     <>
-      <PageHeader title="Attendance" subtitle={subtitle} />
+      <PageHeader title="Attendance" />
 
       {tabs.length > 1 && (
         <div className={styles.tabs} role="tablist" aria-label="Attendance">

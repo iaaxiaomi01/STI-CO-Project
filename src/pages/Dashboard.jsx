@@ -261,7 +261,6 @@ function Dashboard() {
             {profile?.organizations?.name && ` · ${profile.organizations.name}`}
           </p>
           <h1 className={styles.title}>Hello, {firstName}!</h1>
-          <p className={styles.sub}>{roleConfig.dashboard.subtitle}</p>
         </div>
 
         {/* Bell sa kanang itaas — Member, Officer, Adviser, SAO at

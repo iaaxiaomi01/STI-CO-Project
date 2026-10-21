@@ -110,10 +110,7 @@ function Profile() {
 
   return (
     <>
-      <PageHeader
-        title="Profile"
-        subtitle="Your information in the school records."
-      />
+      <PageHeader title="Profile" />
 
       <div className={styles.card}>
         <div className={styles.identity}>

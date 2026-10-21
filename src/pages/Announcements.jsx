@@ -108,11 +108,6 @@ function Announcements() {
     <>
       <PageHeader
         title="Announcements"
-        subtitle={
-          can.announce
-            ? 'Share news and reminders with your organization members.'
-            : 'The latest news and reminders from your organization.'
-        }
         action={
           can.announce && (
             <ActionButton

@@ -44,12 +44,6 @@
   font-weight: 800;
 }
 
-.sub {
-  margin-top: 0.2rem;
-  font-size: 0.95rem;
-  color: var(--color-muted);
-}
-
 /* ---------- STAT TILES ---------- */
 .statRow {
   display: grid;

@@ -121,7 +121,6 @@ function staffRole(label) {
     can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
     sidebar: [DASHBOARD, MEMBERS, PROFILE],
     dashboard: {
-      subtitle: 'An overview of all organizations and members.',
       stats: [],
       cards: [
         {
@@ -203,7 +202,6 @@ export const ROLES = {
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, REWARDS, PROFILE],
 
     dashboard: {
-      subtitle: "Here's a quick look at your organization.",
       stats: [
         { label: 'Upcoming events', value: '0', to: '/events', key: 'upcomingEvents' },
         {
@@ -273,7 +271,6 @@ export const ROLES = {
     ],
 
     dashboard: {
-      subtitle: "Review and act on your organization's proposals.",
       stats: [
         { label: 'Pending proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Total members', value: '0', to: '/members', key: 'memberCount' },
@@ -355,7 +352,6 @@ export const ROLES = {
     ],
 
     dashboard: {
-      subtitle: 'Manage and oversee your organization.',
       stats: [
         { label: 'Proposals awaiting your action', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Active members', value: '0', to: '/members', key: 'memberCount' },
@@ -449,7 +445,7 @@ export const FALLBACK_ROLE = {
   label: 'No role',
   can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
   sidebar: [DASHBOARD, PROFILE],
-  dashboard: { subtitle: '', stats: [], cards: [] },
+  dashboard: { stats: [], cards: [] },
 }
 
 /* Laging gamitin ito imbes na direktang ROLES[role] —

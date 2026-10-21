@@ -148,7 +148,6 @@ function OrgProfile() {
   const header = (
     <PageHeader
       title="Org Profile"
-      subtitle="Information about the organization you manage."
       action={org && !editing && <ActionButton onClick={startEdit}>Edit</ActionButton>}
     />
   )

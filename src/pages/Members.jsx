@@ -143,10 +143,7 @@ function Members() {
 
   return (
     <>
-      <PageHeader
-        title="Members"
-        subtitle="List of organization members."
-      />
+      <PageHeader title="Members" />
 
       {notice && (
         <p className={styles.notice} role="status">

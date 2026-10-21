@@ -345,15 +345,6 @@ function Proposals() {
     <>
       <PageHeader
         title="Proposals"
-        subtitle={
-          can.propose
-            ? 'Create a proposal for your organization. It will go through the Adviser, SAO, and School Head.'
-            : profile?.role_id === 6
-              ? 'You are the final reviewer for proposals from all organizations. If someone else already rejected it, your only action is "Noted".'
-              : isStaff
-                ? 'Review proposals from all organizations. If you reject one, it is Rejected immediately; it will still go to the School Head for "Noted".'
-                : "Review your organization's proposals. If you reject one, it is Rejected immediately; it will still go to the SAO and School Head for \"Noted\"."
-        }
         action={
           can.propose && (
             <ActionButton
