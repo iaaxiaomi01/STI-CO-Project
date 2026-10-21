@@ -6,6 +6,7 @@ import {
   computeStatus,
   eventErrorMessage,
   eventStatusLabel,
+  isScheduleFromProposal,
   toTimeInput,
 } from '../lib/events.js'
 import { ACCEPTED_TYPES, ImageError, checkImageFile } from '../lib/image.js'
@@ -19,9 +20,13 @@ import styles from './EventForm.module.css'
              ang Officer ang magsusulat. Ang pamagat ng proposal
              ay ipinapakita lang sa itaas bilang sanggunian.
              Ang Date, oras at Location ay KINUKUHA sa proposal
-             (venue, event_date, start_time, end_time), pero
-             pwede pang baguhin.
-   Edit    → may `initial`: ang kasalukuyang event
+             (venue, event_date, start_time, end_time) at
+             NAKA-LOCK — hindi na mababago.
+   Edit    → may `initial`: ang kasalukuyang event. Naka-lock din
+             ang Date, oras at Location kapag galing ang event sa
+             proposal na may schedule (initial.proposals).
+
+   Ang lumang proposal na walang schedule ay hindi naka-lock.
 
    Laman: Title, Description, Date, Start Time, End Time,
           Location, Picture (optional)
@@ -43,6 +48,10 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
   const [startTime, setStartTime] = useState(toTimeInput(source?.start_time))
   const [endTime, setEndTime] = useState(toTimeInput(source?.end_time))
   const [location, setLocation] = useState(initial?.location ?? proposal?.venue ?? '')
+
+  /* Naka-lock ang Date, oras at Location kapag itinakda na ng proposal */
+  const scheduleLocked = isScheduleFromProposal(isEdit ? initial?.proposals : proposal)
+  const lockedClass = scheduleLocked ? ` ${styles.locked}` : ''
 
   /* Picture: ang bagong pinili (file + preview), o ang dati */
   const [imageFile, setImageFile] = useState(null)
@@ -174,7 +183,6 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             value={title}
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Tech Summit 2026"
             required
           />
         </label>
@@ -193,7 +201,6 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             maxLength={DESCRIPTION_MAX}
             onChange={(e) => setDescription(e.target.value)}
             rows={6}
-            placeholder="What will happen at the event and who can join."
             required
           />
         </label>
@@ -204,9 +211,10 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             <span className={base.label}>Date</span>
             <input
               type="date"
-              className={base.input}
+              className={`${base.input}${lockedClass}`}
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
+              disabled={scheduleLocked}
               required
             />
           </label>
@@ -215,9 +223,10 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             <span className={base.label}>Start Time</span>
             <input
               type="time"
-              className={base.input}
+              className={`${base.input}${lockedClass}`}
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
+              disabled={scheduleLocked}
               required
             />
           </label>
@@ -226,9 +235,10 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             <span className={base.label}>End Time</span>
             <input
               type="time"
-              className={base.input}
+              className={`${base.input}${lockedClass}`}
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
+              disabled={scheduleLocked}
               required
             />
           </label>
@@ -245,11 +255,11 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
         <label className={base.field}>
           <span className={base.label}>Location</span>
           <input
-            className={base.input}
+            className={`${base.input}${lockedClass}`}
             value={location}
             maxLength={LOCATION_MAX}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g. STI Gymnasium, 3rd Floor"
+            disabled={scheduleLocked}
             required
           />
         </label>

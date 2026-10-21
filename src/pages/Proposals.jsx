@@ -100,6 +100,10 @@ function Proposals() {
      na naghihintay ng AKSYON NILA. */
   const isReviewer = [3, 4, 6].includes(profile?.role_id)
 
+  /* SAO at School Head: may organization filter, dahil proposals
+     ng LAHAT ng org ang nakikita nila. */
+  const showOrgFilter = [4, 6].includes(profile?.role_id)
+
   /* Officer: may sariling hanay ng proposal na ibinalik sa
      kanya para i-revise. */
   const isProposer = Boolean(can.propose)
@@ -108,6 +112,9 @@ function Proposals() {
      Reviewer: 'mine' agad. Officer: 'all' muna, dahil kadalasan
      ay wala siyang kailangang i-revise. */
   const [filter, setFilter] = useState(isReviewer ? 'mine' : 'all')
+
+  /* '' = lahat ng org, o ang id ng napiling org */
+  const [orgFilter, setOrgFilter] = useState('')
 
   const [proposals, setProposals] = useState([])
   const [loading, setLoading] = useState(true)
@@ -237,17 +244,46 @@ function Proposals() {
     }
   }
 
+  /* Mga pagpipilian sa organization filter. Galing sa mismong
+     listahan, kaya ang lalabas lang ay ang mga org na may proposal,
+     kasama ang bilang ng bawat isa. */
+  const orgOptions = useMemo(() => {
+    if (!showOrgFilter) return []
+    const map = new Map()
+    proposals.forEach((p) => {
+      if (!p.organization_id) return
+      const entry = map.get(p.organization_id) ?? {
+        id: p.organization_id,
+        name: p.organizations?.name ?? 'Unnamed organization',
+        count: 0,
+      }
+      entry.count += 1
+      map.set(p.organization_id, entry)
+    })
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
+  }, [proposals, showOrgFilter])
+
+  /* Kapag nawala sa listahan ang napiling org (hal. nabura ang
+     nag-iisang proposal nito), balik sa lahat ng org. */
+  const activeOrg = orgOptions.some((o) => o.id === orgFilter) ? orgFilter : ''
+
+  /* Ang mga proposal na saklaw ng napiling org */
+  const orgScoped = useMemo(
+    () => (activeOrg ? proposals.filter((p) => p.organization_id === activeOrg) : proposals),
+    [proposals, activeOrg],
+  )
+
   /* Mga proposal na naghihintay ng aksyon mo:
      Reviewer → nasa stage mo · Officer → ibinalik sa iyo para i-revise */
   const mine = useMemo(
     () =>
-      proposals.filter((p) =>
+      orgScoped.filter((p) =>
         isReviewer ? canReviewProposal(p, profile) : canReviseProposal(p, profile),
       ),
-    [proposals, profile, isReviewer],
+    [orgScoped, profile, isReviewer],
   )
   const showFilters = isReviewer || (isProposer && mine.length > 0)
-  const shown = showFilters && filter === 'mine' ? mine : proposals
+  const shown = showFilters && filter === 'mine' ? mine : orgScoped
 
   /* Galing sa EventForm. Kapag nag-throw, doon lalabas ang
      error at mananatiling bukas ang form. */
@@ -379,27 +415,45 @@ function Proposals() {
       )}
 
       {showFilters && !loading && !error && (
-        <div className={styles.filters} role="tablist" aria-label="Filter proposals">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={filter === 'mine'}
-            className={`${styles.filterChip} ${filter === 'mine' ? styles.filterActive : ''}`}
-            onClick={() => setFilter('mine')}
-          >
-            {isReviewer
-              ? `Awaiting your action (${mine.length})`
-              : `For you to revise (${mine.length})`}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={filter === 'all'}
-            className={`${styles.filterChip} ${filter === 'all' ? styles.filterActive : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All ({proposals.length})
-          </button>
+        <div className={styles.filters}>
+          <div className={styles.chipGroup} role="tablist" aria-label="Filter proposals">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === 'mine'}
+              className={`${styles.filterChip} ${filter === 'mine' ? styles.filterActive : ''}`}
+              onClick={() => setFilter('mine')}
+            >
+              {isReviewer
+                ? `Awaiting your action (${mine.length})`
+                : `For you to revise (${mine.length})`}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === 'all'}
+              className={`${styles.filterChip} ${filter === 'all' ? styles.filterActive : ''}`}
+              onClick={() => setFilter('all')}
+            >
+              All ({orgScoped.length})
+            </button>
+          </div>
+
+          {showOrgFilter && orgOptions.length > 0 && (
+            <select
+              className={styles.orgSelect}
+              aria-label="Filter by organization"
+              value={activeOrg}
+              onChange={(e) => setOrgFilter(e.target.value)}
+            >
+              <option value="">All organizations</option>
+              {orgOptions.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name} ({org.count})
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
@@ -417,7 +471,6 @@ function Proposals() {
         <EmptyState
           icon="✓"
           title="Nothing needs your action"
-          message='No proposals are waiting for you right now. Press "All" to see the others.'
         />
       )}
 

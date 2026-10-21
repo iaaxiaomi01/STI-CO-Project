@@ -320,9 +320,43 @@
 /* ---------- SALAIN: naghihintay sa akin / lahat ---------- */
 .filters {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.5rem 1rem;
   flex-wrap: wrap;
   margin-bottom: 1rem;
+}
+
+.chipGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Organization filter (SAO, School Head) — nasa kanan ng chips */
+.orgSelect {
+  margin-left: auto;
+  min-width: 200px;
+  max-width: 100%;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.87rem;
+  color: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.orgSelect:focus {
+  outline: 2px solid var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+@media (max-width: 600px) {
+  .orgSelect {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 .filterChip {

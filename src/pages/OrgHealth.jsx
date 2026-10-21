@@ -71,11 +71,6 @@ function OrgHealth() {
     <>
       <PageHeader
         title="Organization Health"
-        subtitle={
-          isStaff
-            ? 'How active each organization is, based on attendance in its completed events.'
-            : 'How active your organization is, based on attendance in its completed events.'
-        }
       />
 
       {loading && <p className={styles.status}>Computing organization health…</p>}
@@ -109,7 +104,6 @@ function OrgReport({ health }) {
       <EmptyState
         icon="✚"
         title="Insufficient data"
-        message="Your organization has no completed events with participants yet. The health score will appear once at least one event with participants has ended."
       />
     )
   }

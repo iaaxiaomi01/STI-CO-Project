@@ -12,17 +12,6 @@
   font-size: 0.9rem;
 }
 
-.hint {
-  margin-bottom: 1rem;
-  font-size: 0.88rem;
-  color: var(--color-muted);
-}
-
-.hint a {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
 /* ---------- FILTER ---------- */
 /* ---------- SEARCH ---------- */
 .searchBar {
@@ -423,11 +412,6 @@
   gap: 0.25rem 0.5rem;
   flex-wrap: wrap;
   color: var(--color-primary-dark);
-}
-
-.rewardSub {
-  font-size: 0.8rem;
-  color: var(--color-muted);
 }
 
 .rewardNone {

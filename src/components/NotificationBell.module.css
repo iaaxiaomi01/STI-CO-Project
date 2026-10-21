@@ -321,9 +321,3 @@
   font-size: 0.95rem;
   font-weight: 700;
 }
-
-.emptyText {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-  color: var(--color-muted);
-}

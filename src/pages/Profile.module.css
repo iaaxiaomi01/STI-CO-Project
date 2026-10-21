@@ -132,15 +132,6 @@
   overflow-wrap: break-word;
 }
 
-.note {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--color-border);
-  font-size: 0.87rem;
-  line-height: 1.55;
-  color: var(--color-muted);
-}
-
 /* ---------- MOBILE ---------- */
 @media (max-width: 560px) {
   .card {

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   CERT_ACCEPT,
-  CERT_ACCEPTED_LABEL,
   canUploadCertificateFor,
   certificateErrorMessage,
   completerLabel,
@@ -215,9 +214,6 @@ function CertificatesDialog({ event, onClose }) {
         </h2>
         <p className={base.note}>
           <strong>{event.title}</strong>
-          <br />
-          Only for attendees who completed the event (with Time In and Time Out). One file per
-          person — {CERT_ACCEPTED_LABEL}, up to 10 MB.
         </p>
 
         {timeOutOpen && (
@@ -234,7 +230,7 @@ function CertificatesDialog({ event, onClose }) {
           <>
             {completers.length === 0 ? (
               <p className={styles.muted}>
-                No one has completed this event (no one has both Time In and Time Out).
+                No one has completed this event
               </p>
             ) : (
               <>

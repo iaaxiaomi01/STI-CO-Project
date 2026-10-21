@@ -75,8 +75,6 @@ function Profile() {
     }
   }
 
-  const provider = user?.app_metadata?.provider ?? '—'
-
   const lastSignIn = user?.last_sign_in_at
     ? new Date(user.last_sign_in_at).toLocaleString()
     : '—'
@@ -103,7 +101,6 @@ function Profile() {
     ...(profile?.officer_positions?.name
       ? [{ label: 'Position', value: profile.officer_positions.name }]
       : []),
-    { label: 'Sign-in method', value: provider },
     { label: 'Last sign-in', value: lastSignIn },
     { label: 'Member since', value: memberSince },
   ]
@@ -176,13 +173,6 @@ function Profile() {
             </div>
           ))}
         </dl>
-
-        <p className={styles.note}>
-          Your student ID, role, and organization are managed by the SAO and IT
-          Administrator. If anything is wrong, contact them to have
-          your record corrected. Officer positions are given by your
-          organization's adviser.
-        </p>
       </div>
     </>
   )

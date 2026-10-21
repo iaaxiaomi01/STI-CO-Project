@@ -504,12 +504,6 @@ function Events() {
 
       {!loading && !error && events.length > 0 && (
         <>
-          {can.propose && (
-            <p className={styles.hint}>
-              Have an approved proposal?{' '}
-              <Link to="/proposals">Go to Proposals</Link> to create an event for it.
-            </p>
-          )}
 
           {/* ---------- SEARCH ---------- */}
           <div className={styles.searchBar}>
@@ -634,10 +628,6 @@ function Events() {
                               {reward ? (
                                 <span className={styles.reward}>
                                   <OgAmount value={reward.amount} size={15} />
-                                  <span className={styles.rewardSub}>
-                                    Time In + Time Out · {rewardFor(reward.amount, false)} OG
-                                    if Time In only
-                                  </span>
                                 </span>
                               ) : (
                                 <span className={styles.rewardNone}>

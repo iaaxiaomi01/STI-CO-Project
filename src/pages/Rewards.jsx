@@ -98,17 +98,6 @@ function tabsFor(profile) {
   return tabs
 }
 
-const SUBTITLES = {
-  [TAB_SHOP]: 'Spend the Organization Gems you earned from joining events.',
-  [TAB_MINE]: 'Items you redeemed, and the claim codes to pick them up.',
-  [TAB_HISTORY]: 'Every OG you earned and spent.',
-  [TAB_RELEASE]: 'Give out the OG of finished events to everyone who attended.',
-  [TAB_CLAIMS]: 'Enter the claim code a member shows you, then hand out the item.',
-  [TAB_MANAGE]: "Add and edit the items in your organization's shop.",
-  [TAB_REWARDS]: 'Set how many OG each event gives. Officers release it after the event.',
-  [TAB_MEMBERS]: 'How many OG each member has right now.',
-}
-
 /* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo */
 function useNow() {
   const [now, setNow] = useState(() => nowKey())
@@ -175,7 +164,7 @@ function Rewards() {
 
   return (
     <>
-      <PageHeader title="Rewards" subtitle={SUBTITLES[tab]} />
+      <PageHeader title="Rewards" />
 
       {earns && <BalanceCard balance={balance} orgName={profile?.organizations?.name} />}
 
@@ -299,7 +288,6 @@ function ShopTab({ profile, balance, onRedeemed, onOpenMine }) {
       <EmptyState
         icon="◆"
         title="The shop is empty for now"
-        message="Your Adviser hasn't added any items yet. Keep earning OG — you can spend it once items are added."
       />
     )
   }
@@ -436,7 +424,6 @@ function MyRedemptionsTab({ profile, onChanged }) {
       <EmptyState
         icon="◆"
         title="No redemptions yet"
-        message="Items you redeem from the Shop will appear here with their claim codes."
       />
     )
   }
@@ -580,8 +567,7 @@ function HistoryTab({ profile, balance }) {
     return (
       <EmptyState
         icon="◆"
-        title="No OG yet"
-        message="Join events and complete your Time In and Time Out. Once an Officer releases the event's OG, it will show up here."
+        title="OG's History"
       />
     )
   }
@@ -731,12 +717,6 @@ function EventRewardsTab({ profile }) {
 
   return (
     <>
-      <p className={styles.summary}>
-        Full reward for <strong>Time In + Time Out</strong> · half for <strong>Time In only</strong>{' '}
-        · nothing without Time In. OG can be released once, after attendance closes (1 hour after
-        the event ends).
-      </p>
-
       <div className={styles.filters} role="tablist" aria-label="Filter events">
         {REWARD_FILTERS.map((f) => (
           <button
@@ -1037,7 +1017,6 @@ function ManageShopTab({ profile }) {
         <EmptyState
           icon="◆"
           title="Your shop has no items yet"
-          message="Add items like t-shirts, stickers or snacks that members can redeem with their OG."
         />
       ) : (
         <ul className={styles.itemGrid}>

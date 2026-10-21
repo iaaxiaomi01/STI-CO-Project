@@ -205,7 +205,6 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             value={title}
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Tech Summit 2026"
             required
           />
           <span className={styles.hint}>This will be the SUBJECT of the letter.</span>
@@ -224,7 +223,6 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             maxLength={DESCRIPTION_MAX}
             onChange={(e) => setDescription(e.target.value)}
             rows={10}
-            placeholder="What the activity is, its objectives, and who will take part."
             required
           />
         </label>
@@ -237,7 +235,6 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             value={venue}
             maxLength={VENUE_MAX}
             onChange={(e) => setVenue(e.target.value)}
-            placeholder="e.g. STI Gymnasium, 3rd Floor"
             required
           />
         </label>
@@ -342,8 +339,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             <span className={styles.fileError}>{fileError}</span>
           ) : (
             <span className={styles.hint}>
-              {ACCEPTED_LABEL} · up to 10 MB. The Adviser will be able to view and
-              download it.
+              {ACCEPTED_LABEL} · up to 10 MB.
             </span>
           )}
         </div>

@@ -276,7 +276,6 @@ function MyJoinedEvents({ profile }) {
         <EmptyState
           icon="✓"
           title="You haven't joined any events yet"
-          message='Go to Events and press "Join" on the event you want to join.'
         />
       )}
 
@@ -498,11 +497,6 @@ function ParticipantsPerEvent({ profile }) {
     [withStatus, filter],
   )
 
-  const totalParticipants = useMemo(
-    () => events.reduce((sum, e) => sum + (counts[e.id] ?? 0), 0),
-    [events, counts],
-  )
-
   function toggle(id) {
     setOpenIds((current) => {
       const next = new Set(current)
@@ -536,10 +530,6 @@ function ParticipantsPerEvent({ profile }) {
 
   return (
     <>
-      <p className={styles.summary}>
-        <strong>{events.length}</strong> {events.length === 1 ? 'event' : 'events'} ·{' '}
-        <strong>{totalParticipants}</strong> total participants
-      </p>
 
       <div className={styles.filters} role="tablist" aria-label="Filter by status">
         {FILTERS.map((f) => (

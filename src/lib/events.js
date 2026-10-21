@@ -94,8 +94,22 @@ const COLUMNS = `
   id, organization_id, proposal_id,
   status, title, description, event_date, start_time, end_time, location, image_url,
   author_id, author_name, author_role_id,
-  created_at, updated_at, updated_by
+  created_at, updated_at, updated_by,
+  proposals ( venue, event_date, start_time, end_time )
 `
+
+/* May itinakdang Venue, Date, Start Time at End Time ang proposal?
+   Kapag mayroon, NAKA-LOCK ang mga ito sa event — hindi na mababago
+   sa Event Form, sa paggawa man o sa pag-edit. Ang trigger na
+   events_lock_schedule sa database ang totoong nagbabantay.
+
+   Ang mga lumang proposal na walang schedule ay hindi naka-lock.
+   Pwedeng ang proposal mismo o ang event.proposals ang ibigay. */
+export function isScheduleFromProposal(proposal) {
+  return Boolean(
+    proposal?.venue && proposal?.event_date && proposal?.start_time && proposal?.end_time,
+  )
+}
 
 /* Isinasalin ang error ng database sa mensaheng maiintindihan */
 export function eventErrorMessage(err) {

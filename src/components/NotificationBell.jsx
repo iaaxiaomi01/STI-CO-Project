@@ -271,10 +271,6 @@ function NotificationBell() {
                 🔔
               </span>
               <p className={styles.emptyTitle}>No notifications yet</p>
-              <p className={styles.emptyText}>
-                New events, certificates and proposal updates will
-                appear here.
-              </p>
             </div>
           ) : (
             <ul className={styles.list}>

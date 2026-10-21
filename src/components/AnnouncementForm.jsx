@@ -93,7 +93,6 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
             value={title}
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. General Assembly on Friday"
             required
           />
         </label>
