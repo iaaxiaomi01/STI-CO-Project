@@ -145,8 +145,11 @@ function staffRole(label) {
    lib/proposals.js).
 
    orgHealth: true — may Org Health sa sidebar (School Head lang;
-   inalis na sa SAO). */
-function staffRoleWithProposals(label, proposalsText, { orgHealth = false } = {}) {
+   inalis na sa SAO).
+
+   Walang hiwalay na Proposals card sa Dashboard nila — ang stat na
+   "Proposals awaiting your action" na ang link papunta sa Proposals. */
+function staffRoleWithProposals(label, { orgHealth = false } = {}) {
   const base = staffRole(label)
   return {
     ...base,
@@ -169,16 +172,6 @@ function staffRoleWithProposals(label, proposalsText, { orgHealth = false } = {}
           to: '/proposals',
           key: 'pendingProposals',
         },
-      ],
-      cards: [
-        base.dashboard.cards[0],
-        {
-          to: '/proposals',
-          icon: '✉',
-          title: 'Proposals',
-          text: proposalsText,
-        },
-        base.dashboard.cards[1],
       ],
     },
   }
@@ -413,15 +406,8 @@ export const ROLES = {
      Kailangan sa Supabase:
        ADD_SCHOOL_HEAD_PROPOSALS_READ.sql (makabasa)
        PROPOSAL_THREE_STEP_REVIEW.sql     (makaaksyon) */
-  [ROLE_KEYS.SAO]: staffRoleWithProposals(
-    'SAO',
-    'Review proposals already forwarded by the Adviser.',
-  ),
-  [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals(
-    'School Head',
-    'Give the final decision on proposals.',
-    { orgHealth: true },
-  ),
+  [ROLE_KEYS.SAO]: staffRoleWithProposals('SAO'),
+  [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals('School Head', { orgHealth: true }),
   /* Kaya rin niyang magbigay ng officer position sa kahit anong
      org (sa Members page). */
   [ROLE_KEYS.IT_ADMIN]: (() => {
