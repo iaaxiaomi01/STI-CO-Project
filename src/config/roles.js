@@ -66,8 +66,9 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 const REWARDS = { label: 'Rewards', to: '/rewards', icon: '❖' }
 
 /* Organization Health — score ng org, galing sa attendance sa
-   lahat ng natapos na event. Adviser: sariling org · SAO at
-   School Head: lahat ng org. Hindi kasama ang IT Admin.
+   lahat ng natapos na event. Adviser: sariling org · School
+   Head: lahat ng org. Hindi kasama ang SAO at IT Admin
+   (inalis sa SAO — REMOVE_SAO_ORG_HEALTH.sql).
    Tingnan ang pages/OrgHealth.jsx at ORG_HEALTH.sql */
 const ORG_HEALTH = { label: 'Org Health', to: '/org-health', icon: '✚' }
 
@@ -143,8 +144,11 @@ function staffRole(label) {
 /* Staff na sumusuri rin ng Proposals (SAO, School Head).
    review: true — may Approve/Reject sila kapag nasa stage nila
    ang proposal (tingnan ang canReviewProposal() sa
-   lib/proposals.js). */
-function staffRoleWithProposals(label, proposalsText) {
+   lib/proposals.js).
+
+   orgHealth: true — may Org Health sa sidebar (School Head lang;
+   inalis na sa SAO). */
+function staffRoleWithProposals(label, proposalsText, { orgHealth = false } = {}) {
   const base = staffRole(label)
   return {
     ...base,
@@ -155,7 +159,9 @@ function staffRoleWithProposals(label, proposalsText) {
     notifications: true,
 
     can: { ...base.can, review: true },
-    sidebar: [DASHBOARD, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
+    sidebar: orgHealth
+      ? [DASHBOARD, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE]
+      : [DASHBOARD, MEMBERS, PROPOSALS, PROFILE],
     dashboard: {
       ...base.dashboard,
       stats: [
@@ -429,6 +435,7 @@ export const ROLES = {
   [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals(
     'School Head',
     'Give the final decision on proposals.',
+    { orgHealth: true },
   ),
   /* Kaya rin niyang magbigay ng officer position sa kahit anong
      org (sa Members page). */

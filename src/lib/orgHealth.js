@@ -13,13 +13,16 @@ import { supabase } from './supabaseClient.js'
      Health Score       = average ng dalawa
 
      Adviser           → fetchOrgHealth()     sariling org
-     SAO, School Head  → fetchAllOrgHealth()  lahat ng org
+     School Head       → fetchAllOrgHealth()  lahat ng org
+
+   Inalis na ito sa SAO (REMOVE_SAO_ORG_HEALTH.sql).
    ============================================================ */
 
-/* SAO (4) at School Head (6) ang may listahan ng lahat ng org.
-   KAPAREHO ng pagsusuri sa org_health_all() sa ORG_HEALTH.sql. */
+/* School Head (6) lang ang may listahan ng lahat ng org.
+   KAPAREHO ng pagsusuri sa org_health_all() sa
+   REMOVE_SAO_ORG_HEALTH.sql. */
 export function seesAllOrgHealth(profile) {
-  return profile?.role_id === 4 || profile?.role_id === 6
+  return profile?.role_id === 6
 }
 
 /* ---------- KLASIPIKASYON ----------
@@ -39,14 +42,14 @@ export function toneOf(classification) {
 /* ---------- DATABASE ---------- */
 
 /* Adviser: health ng sariling org.
-   SAO/School Head: ipasa ang orgId. */
+   School Head: ipasa ang orgId. */
 export async function fetchOrgHealth(orgId = null) {
   const { data, error } = await supabase.rpc('org_health', { p_org: orgId })
   if (error) throw error
   return data
 }
 
-/* SAO/School Head: health ng LAHAT ng aktibong org (iisang tawag) */
+/* School Head: health ng LAHAT ng aktibong org (iisang tawag) */
 export async function fetchAllOrgHealth() {
   const { data, error } = await supabase.rpc('org_health_all')
   if (error) throw error
