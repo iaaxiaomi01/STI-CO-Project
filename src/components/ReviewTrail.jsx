@@ -4,6 +4,7 @@ import {
   decisionLabel,
   formatDateTime,
   rejectedBy,
+  reviewProgress,
   reviewSteps,
   stageLabel,
 } from '../lib/proposals.js'
@@ -19,8 +20,12 @@ import styles from './ReviewTrail.module.css'
    i-revise.
 
    Ang hakbang na NAGPASYA ang may "Pinal": ang unang nag-Reject,
-   o ang Approve ng School Head. Ang mga sumunod sa isang
+   o ang huling Approve ng School Head. Ang mga sumunod sa isang
    Reject ay "Noted" na lang.
+
+   MARAMING SAO / SCHOOL HEAD: may sariling linya ang bawat isa
+   na nakaaksyon na. Sa huling linya, nakalista kung SINO pa ang
+   hinihintay (hal. "1 of 3 · Waiting for: Ana Cruz, Ben Reyes").
 
      <ReviewTrail proposal={p} />            → para sa card
      <ReviewTrail proposal={p} variant="letter" /> → para sa sulat
@@ -50,6 +55,8 @@ function ReviewTrail({ proposal, variant = 'card' }) {
   const inRevision = proposal.status === 'pending' && proposal.stage === 'revision'
   const noted = awaitsNoted(proposal)
   const waiting = inRevision ? 'Officer' : stageLabel(proposal.stage)
+  const progress = inRevision ? null : reviewProgress(proposal)
+  const names = progress?.pending.map((r) => r.name).filter(Boolean).join(', ')
 
   if (steps.length === 0 && !waiting) return null
 
@@ -86,11 +93,18 @@ function ReviewTrail({ proposal, variant = 'card' }) {
             <span className={styles.role}>{waiting}</span>
             <span className={styles.decision}>
               {inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}
+              {progress && progress.total > 1 && ` · ${progress.done} of ${progress.total}`}
             </span>
           </p>
           <p className={styles.by}>
-            {noted
-              ? `Already rejected by ${rejectedBy(proposal)}. Waiting for "Noted" from ${waiting}.`
+            {progress && progress.total === 0
+              ? `No active ${waiting} account yet. It will continue once one is assigned.`
+              : noted
+              ? `Already rejected by ${rejectedBy(proposal)}. Waiting for "Noted" from ${
+                  names || waiting
+                }.`
+              : names
+              ? `Waiting for: ${names}.`
               : inRevision
               ? `Waiting for ${authorName(proposal)} to revise. It will go back to ${stageLabel(
                   proposal.revision_from,

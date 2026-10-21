@@ -15,7 +15,6 @@ import {
   fetchProposals,
   formatDateTime,
   hasSchedule,
-  isFinalReview,
   isInRevision,
   progressLabel,
   requestRevision,
@@ -58,8 +57,11 @@ import styles from './Proposals.module.css'
                  gumawa ng bago.
    Adviser     → Approve/Reject/Revise ng proposals ng org niya.
    SAO         → Approve/Reject/Revise ng proposals ng lahat ng
-                 org, pagkatapos ng Adviser.
-   School Head → huling Approve/Reject, pagkatapos ng SAO.
+                 org, pagkatapos ng Adviser. LAHAT ng SAO ay
+                 dadaanan (sabay-sabay); lilipat lang sa School
+                 Head kapag nakaaksyon na ang lahat.
+   School Head → huling Approve/Reject, pagkatapos ng LAHAT ng
+                 SAO. LAHAT din ng School Head ay dadaanan.
    Member      → wala. Wala ito sa sidebar niya, at hinaharang
                  din siya ng RLS sa database.
 
@@ -204,8 +206,19 @@ function Proposals() {
     replaceProposal(updated)
     setReviewing(null)
 
-    const last = isFinalReview(proposal)
-    const next = last ? '' : ` It has been forwarded to ${stageLabel(updated.stage)}.`
+    /* last  → tapos na ang buong daan
+       moved → lumipat sa susunod na stage
+       kung hindi → may iba pang SAO / School Head na hinihintay */
+    const last = updated.stage === 'done'
+    const moved = updated.stage !== proposal.stage
+    const waitingCount = updated.pending_reviewers?.length ?? 0
+    const next = last
+      ? ''
+      : moved
+        ? ` It has been forwarded to ${stageLabel(updated.stage)}.`
+        : ` Waiting for ${
+            waitingCount > 0 ? `${waitingCount} more` : 'the other'
+          } ${stageLabel(updated.stage)} before it moves on.`
 
     if (action === 'noted') {
       setNotice(last ? "Noted. The proposal's review is complete." : `Noted.${next}`)
@@ -213,7 +226,7 @@ function Proposals() {
       setNotice(
         last
           ? 'The proposal was rejected (final).'
-          : `The proposal was rejected — it is now Rejected (final).${next} The next reviewers can only mark it "Noted".`,
+          : `The proposal was rejected — it is now Rejected (final).${next} The remaining reviewers can only mark it "Noted".`,
       )
     } else {
       setNotice(

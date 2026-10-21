@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../context/AuthContext.js'
 import {
   COMMENT_MAX,
   authorName,
+  completesStage,
   isFinalReview,
+  othersPendingCount,
   rejectedBy,
   stageLabel,
 } from '../lib/proposals.js'
@@ -35,6 +38,10 @@ import styles from './ProposalForm.module.css'
    REVISE: ibinabalik ang proposal sa Officer na nagpasa para
    i-edit. Nakahold ito hanggang maipasa niya ulit, at saka
    BABALIK sa nag-pa-revise — hindi na uulit sa simula.
+
+   MARAMING SAO / SCHOOL HEAD: lilipat lang ang proposal sa
+   susunod na stage kapag ikaw na ang HULING hinihintay. Kung may
+   iba pa, sinasabi ng dialog na hihintayin pa sila.
 
    Ginagamit nito ang istilo ng ProposalForm para pare-pareho
    ang itsura ng mga modal.
@@ -76,9 +83,24 @@ const TEXT = {
 }
 
 function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
+  const { profile } = useAuth()
   const text = TEXT[action] ?? TEXT.rejected
-  const final = isFinalReview(proposal)
+  const final = isFinalReview(proposal, profile?.id)
   const nextStage = proposal.stage === 'adviser' ? 'sao' : 'school_head'
+  const stageName = stageLabel(proposal.stage)
+
+  /* Ilan pang SAO / School Head ang hinihintay bukod sa iyo */
+  const others = othersPendingCount(proposal, profile?.id)
+  const lastInStage = completesStage(proposal, profile?.id)
+  const othersText = `the other ${others === 1 ? '' : `${others} `}${stageName}`
+  const othersVerb = others === 1 ? 'has' : 'have'
+
+  /* Sino pa ang dadaanan pagkatapos mo (para sa Reject) */
+  const stillPasses = [
+    others > 0 && othersText,
+    proposal.stage === 'adviser' && 'SAO',
+    proposal.stage !== 'school_head' && 'School Head',
+  ].filter(Boolean)
 
   const [comment, setComment] = useState('')
   const [saving, setSaving] = useState(false)
@@ -151,7 +173,9 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
             <>
               This will be returned to <strong>{authorName(proposal)}</strong> for editing.
               It stays on hold while being revised. Once resubmitted, it will come back to{' '}
-              <strong>you ({stageLabel(proposal.stage)})</strong> for another review.
+              <strong>you ({stageName})</strong> for another review.
+              {proposal.stage === 'sao' &&
+                ' SAO who already approved keep their approval; only you and those who have not acted yet will review it again.'}
             </>
           ) : action === 'noted' ? (
             <>
@@ -159,6 +183,10 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
               change. &quot;Noted&quot; confirms that you have seen it.{' '}
               {final ? (
                 'This is where the proposal\'s review ends.'
+              ) : !lastInStage ? (
+                <>
+                  It moves on once <strong>{othersText}</strong> {othersVerb} also marked it.
+                </>
               ) : (
                 <>
                   It will still be forwarded to <strong>{stageLabel(nextStage)}</strong> for
@@ -170,11 +198,10 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
             <>
               <strong>The proposal is REJECTED IMMEDIATELY</strong> once you reject it — this is final
               and no event can be created from it.{' '}
-              {final ? null : (
+              {stillPasses.length > 0 && (
                 <>
-                  It will still pass through <strong>{stageLabel(nextStage)}</strong>
-                  {nextStage === 'sao' && ' and School Head'}, but they can only mark it
-                  &quot;Noted&quot;.
+                  It will still pass through <strong>{stillPasses.join(' and ')}</strong>, but
+                  they can only mark it &quot;Noted&quot;.
                 </>
               )}
             </>
@@ -182,6 +209,11 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
             <>
               <strong>This is the final approval.</strong> The Officer will be able to create an event
               from this proposal.
+            </>
+          ) : !lastInStage ? (
+            <>
+              Your approval will be recorded. It moves on once <strong>{othersText}</strong>{' '}
+              {othersVerb} also acted.
             </>
           ) : (
             <>

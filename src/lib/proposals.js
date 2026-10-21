@@ -32,12 +32,24 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
    LAHAT ng tatlo ay nag-Approve — saka lang makakagawa ng
    event ang Officer.
 
+   MARAMING SAO AT SCHOOL HEAD (PROPOSAL_MULTI_SAO_SCHOOL_HEAD.sql)
+     Dumadaan ang proposal sa LAHAT ng aktibong SAO, saka sa LAHAT
+     ng aktibong School Head — sabay-sabay, kahit sino ang mauna.
+     Lilipat lang sa susunod na stage kapag nakaaksyon na ang
+     lahat. Ang aksyon ng bawat isa ay nasa proposal_reviews; ang
+     mga hinihintay pa ay galing sa RPC na
+     proposal_pending_reviewers() (pending_reviewers sa bawat
+     proposal). Isang Adviser lang ng org, tulad ng dati.
+
    REVISE (PROPOSAL_REVISE.sql)
      Bukod sa Approve/Reject, ang Adviser at SAO ay may "Revise".
      Ibinabalik nito ang proposal sa Officer na NAGPASA para
      i-edit (stage = 'revision'). Nakahold ito — walang ibang
      makakaaksyon. Kapag naipasa ulit ng Officer, BABALIK ito sa
      nag-pa-revise (revision_from), hindi na uulit sa simula.
+     Sa SAO: mananatili ang Approve ng mga SAO na nakaaksyon na;
+     ang nag-pa-revise at ang hindi pa umaaksyon na lang ang
+     susuri.
    ============================================================ */
 
 /* ---------- STATUS ----------
@@ -81,6 +93,50 @@ export function stageLabel(stage) {
   return STAGES[stage]?.label ?? ''
 }
 
+/* Mga stage na LAHAT ng may role ang dadaanan (hindi isa lang) */
+export const MULTI_STAGES = ['sao', 'school_head']
+
+export function isMultiStage(stage) {
+  return MULTI_STAGES.includes(stage)
+}
+
+/* Mga aksyon sa isang stage (SAO o School Head), mula pinakaluma */
+export function stageReviews(proposal, stage = proposal.stage) {
+  return (proposal.proposal_reviews ?? [])
+    .filter((r) => r.stage === stage)
+    .sort((a, b) => new Date(a.reviewed_at) - new Date(b.reviewed_at))
+}
+
+/* Nakaaksyon ka na ba sa stage na ito? */
+export function hasReviewed(proposal, profileId, stage = proposal.stage) {
+  return stageReviews(proposal, stage).some((r) => r.reviewer_id === profileId)
+}
+
+/* Sino pa ang hinihintay sa kasalukuyang stage (SAO / School Head):
+   [{ id, name }]. null kapag hindi alam (hal. hindi makuha). */
+export function pendingReviewers(proposal) {
+  return proposal.pending_reviewers ?? null
+}
+
+/* Ilan na ang umaksyon sa kasalukuyang stage, at ilan lahat.
+   null kapag hindi SAO / School Head ang stage o hindi alam. */
+export function reviewProgress(proposal) {
+  if (!isMultiStage(proposal.stage)) return null
+  const pending = pendingReviewers(proposal)
+  if (!pending) return null
+  const done = stageReviews(proposal).length
+  return { done, total: done + pending.length, pending }
+}
+
+/* Ilan pa ang hinihintay BUKOD sa iyo (para malaman kung ikaw na
+   ang huli sa stage). 0 kapag Adviser stage. */
+export function othersPendingCount(proposal, profileId) {
+  if (!isMultiStage(proposal.stage)) return 0
+  const pending = pendingReviewers(proposal)
+  if (!pending) return 0
+  return pending.filter((r) => r.id !== profileId).length
+}
+
 /* Nasa daan pa ba (may hinihintay pang aksyon)? Kasama ang
    rejected na dumadaan pa para sa "Noted". */
 export function isInReview(proposal) {
@@ -104,7 +160,10 @@ export function progressLabel(proposal) {
     return `Rejected · With ${stageLabel(proposal.stage)}`
   }
   if (proposal.status === 'pending' && isInReview(proposal)) {
-    return `With ${stageLabel(proposal.stage)}`
+    const progress = reviewProgress(proposal)
+    return progress && progress.total > 1
+      ? `With ${stageLabel(proposal.stage)} · ${progress.done}/${progress.total}`
+      : `With ${stageLabel(proposal.stage)}`
   }
   return statusLabel(proposal.status)
 }
@@ -127,8 +186,40 @@ const COLUMNS = `
   created_at, updated_at, updated_by,
   organizations ( name, department, logo_url ),
   events ( id ),
-  proposal_revisions ( id, stage, requester_name, comment, requested_at, resubmitted_at )
+  proposal_revisions ( id, stage, requester_name, comment, requested_at, resubmitted_at ),
+  proposal_reviews ( id, stage, reviewer_id, reviewer_name, decision, comment, reviewed_at )
 `
+
+/* Idinadagdag sa bawat proposal ang pending_reviewers: ang mga SAO /
+   School Head na hinihintay pa. Galing sa RPC dahil hindi nababasa
+   ng Officer ang profiles ng staff (RLS).
+
+   Kapag pumalya, null ang ilalagay — gagana pa rin ang page, hindi
+   lang maipapakita kung sino ang hinihintay. */
+async function withPendingReviewers(list) {
+  const ids = list.filter((p) => isMultiStage(p.stage)).map((p) => p.id)
+  if (ids.length === 0) return list.map((p) => ({ ...p, pending_reviewers: [] }))
+
+  const { data, error } = await supabase.rpc('proposal_pending_reviewers', { p_ids: ids })
+  if (error) {
+    console.error('Hindi makuha ang mga hinihintay na reviewer:', error)
+    return list.map((p) => ({ ...p, pending_reviewers: null }))
+  }
+
+  const byProposal = new Map()
+  for (const row of data ?? []) {
+    if (!byProposal.has(row.proposal_id)) byProposal.set(row.proposal_id, [])
+    byProposal.get(row.proposal_id).push({
+      id: row.reviewer_id,
+      name: toTitleCase(row.reviewer_name ?? ''),
+    })
+  }
+
+  return list.map((p) => ({
+    ...p,
+    pending_reviewers: isMultiStage(p.stage) ? (byProposal.get(p.id) ?? []) : [],
+  }))
+}
 
 async function fetchOne(id) {
   const { data, error } = await supabase
@@ -138,7 +229,8 @@ async function fetchOne(id) {
     .single()
 
   if (error) throw error
-  return data
+  const [withPending] = await withPendingReviewers([data])
+  return withPending
 }
 
 /* Mensahe galing sa database (raise exception) → Error na may
@@ -155,7 +247,7 @@ export async function fetchProposals() {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data ?? []
+  return withPendingReviewers(data ?? [])
 }
 
 /* attachment = { path, name, size } galing sa uploadProposalFile()
@@ -193,7 +285,7 @@ export async function createProposal({ title, description, attachment = null, ..
     .single()
 
   if (error) throw error
-  return data
+  return { ...data, pending_reviewers: [] }
 }
 
 export async function deleteProposal(id) {
@@ -291,8 +383,8 @@ export function revisionsOf(proposal) {
 }
 
 /* Pwede ka bang mag-Revise ngayon? Adviser at SAO lang, kapag
-   nasa stage mo ang proposal (hindi ang School Head), at hindi
-   pa ito rejected. */
+   nasa stage mo ang proposal (hindi ang School Head), hindi pa
+   ito rejected, at hindi ka pa nakaaksyon dito. */
 export function canRequestRevision(proposal, profile) {
   return (
     proposal.status === 'pending' &&
@@ -314,8 +406,8 @@ export function canReviseProposal(proposal, profile) {
 
 /* Ikaw ba ang dapat umaksyon ngayon?
      stage 'adviser'     → Adviser ng org na iyon
-     stage 'sao'         → SAO
-     stage 'school_head' → School Head
+     stage 'sao'         → bawat SAO na HINDI pa nakaaksyon
+     stage 'school_head' → bawat School Head na HINDI pa nakaaksyon
    Kasama ang rejected na — "Noted" ang aksyon doon
    (tingnan ang awaitsNoted()). */
 export function canReviewProposal(proposal, profile) {
@@ -327,19 +419,36 @@ export function canReviewProposal(proposal, profile) {
   if (proposal.stage === 'adviser') {
     return proposal.organization_id === profile.organization_id
   }
-  return true
+  return !hasReviewed(proposal, profile.id)
 }
 
-/* Ang School Head ang huling hakbang */
-export function isFinalReview(proposal) {
-  return proposal.stage === 'school_head'
+/* Ikaw ba ang HULING aksyon sa buong daan? School Head stage, at
+   wala nang ibang School Head na hinihintay. */
+export function isFinalReview(proposal, profileId) {
+  return proposal.stage === 'school_head' && othersPendingCount(proposal, profileId) === 0
 }
 
-/* Sino ang nag-reject: 'Adviser' / 'SAO' / 'School Head', o ''.
+/* Uusad ba ang proposal sa susunod na stage pagkatapos ng aksyon
+   mo? Adviser: laging oo. SAO / School Head: kapag ikaw na ang huli. */
+export function completesStage(proposal, profileId) {
+  return othersPendingCount(proposal, profileId) === 0
+}
+
+/* Sino ang nag-reject: 'Adviser', 'SAO (Juan Cruz)',
+   'School Head (Maria Santos)', o ''.
    Ang UNA lang ang mahalaga — iyon ang nagpasya. */
 export function rejectedBy(proposal) {
   if (proposal.status !== 'rejected') return ''
   if (proposal.adviser_decision === 'rejected') return 'Adviser'
+
+  for (const stage of MULTI_STAGES) {
+    const first = stageReviews(proposal, stage).find((r) => r.decision === 'rejected')
+    if (first) {
+      const name = toTitleCase(first.reviewer_name ?? '')
+      return name && name !== '—' ? `${stageLabel(stage)} (${name})` : stageLabel(stage)
+    }
+  }
+
   if (proposal.sao_decision === 'rejected') return 'SAO'
   return 'School Head'
 }
@@ -351,13 +460,16 @@ export function rejectedBy(proposal) {
    Ang 'revision' ay galing sa proposal_revisions; may
    resubmittedAt kapag naipasa na ulit ng Officer.
 
+   Ang bawat SAO at School Head ay may sariling hakbang (galing sa
+   proposal_reviews), kaya kung tatlo ang SAO, tatlo rin ang linya.
+
    final = true sa hakbang na NAGPASYA:
-     approved → ang Approve ng School Head
+     approved → ang HULING Approve ng School Head
      rejected → ang UNANG nag-Reject (Adviser, SAO o School Head)
 
    Ang mga LUMANG proposal (bago ang 3-step review) ay walang
-   adviser_decision at sao_decision. Ang Adviser ang nag-review
-   sa kanila, at iyon na ang pinal. */
+   adviser_decision at walang proposal_reviews. Ang Adviser ang
+   nag-review sa kanila, at iyon na ang pinal. */
 export function reviewSteps(proposal) {
   const steps = []
 
@@ -377,6 +489,7 @@ export function reviewSteps(proposal) {
   if (proposal.adviser_decision) {
     steps.push({
       key: 'adviser',
+      stage: 'adviser',
       role: 'Adviser',
       decision: proposal.adviser_decision,
       comment: proposal.adviser_comment,
@@ -386,42 +499,51 @@ export function reviewSteps(proposal) {
     })
   }
 
-  if (proposal.sao_decision) {
+  const reviews = proposal.proposal_reviews ?? []
+  for (const review of reviews) {
     steps.push({
-      key: 'sao',
-      role: 'SAO',
-      decision: proposal.sao_decision,
-      comment: proposal.sao_comment,
-      name: toTitleCase(proposal.sao_name ?? ''),
-      at: proposal.sao_reviewed_at,
+      key: `review-${review.id}`,
+      stage: review.stage,
+      role: stageLabel(review.stage),
+      decision: review.decision,
+      comment: review.comment,
+      name: toTitleCase(review.reviewer_name ?? ''),
+      at: review.reviewed_at,
       final: false,
     })
   }
 
-  /* Ang aksyon ng School Head (o ng Adviser sa mga LUMANG
-     proposal) — kapag tapos na ang daan. Walang head_decision
-     ang mga lumang proposal; ang status ang desisyon nila. */
-  if (proposal.stage === 'done') {
-    const legacy = !proposal.adviser_decision && !proposal.sao_decision
+  /* LUMANG proposal: Adviser lang ang nag-review, at pinal na iyon.
+     Walang head_decision; ang status ang desisyon. */
+  if (proposal.stage === 'done' && !proposal.adviser_decision && reviews.length === 0) {
     steps.push({
-      key: 'final',
-      role: legacy ? 'Adviser' : 'School Head',
+      key: 'legacy',
+      stage: 'legacy',
+      role: 'Adviser',
       decision: proposal.head_decision ?? proposal.status,
       comment: proposal.review_comment,
       name: reviewerName(proposal),
       at: proposal.reviewed_at,
-      final: false,
+      final: proposal.status !== 'pending',
     })
   }
 
+  const byTime = (a, b) =>
+    (a.at ? new Date(a.at).getTime() : 0) - (b.at ? new Date(b.at).getTime() : 0)
+
   /* Alin ang nagpasya */
   if (proposal.status === 'approved') {
-    const head = steps.find((s) => s.key === 'final')
-    if (head) head.final = true
+    const heads = steps
+      .filter((s) => s.stage === 'school_head' && s.decision === 'approved')
+      .sort(byTime)
+    if (heads.length) heads[heads.length - 1].final = true
   } else if (proposal.status === 'rejected') {
-    const first = ['adviser', 'sao', 'final']
-      .map((key) => steps.find((s) => s.key === key))
-      .find((s) => s?.decision === 'rejected')
+    const adviser = steps.find((s) => s.stage === 'adviser' && s.decision === 'rejected')
+    const first =
+      adviser ??
+      steps
+        .filter((s) => isMultiStage(s.stage) && s.decision === 'rejected')
+        .sort(byTime)[0]
     if (first) first.final = true
   }
 
@@ -508,15 +630,34 @@ export function formatDateTime(iso) {
 /* Para sa stat tile sa Dashboard.
      Officer                   → lahat ng naghihintay pa sa org niya
                                  (kasama ang nakabalik para i-revise)
-     Adviser, SAO, School Head → ang naghihintay ng AKSYON NIYA
-                                 (Approve/Reject o Noted)
+     Adviser                   → lahat ng nasa Adviser stage ng org niya
+     SAO, School Head          → ang nasa stage niya na HINDI pa niya
+                                 naaaksyunan (Approve/Reject o Noted)
    Ang RLS na ang nagsasala kung aling org ang kasama. */
-export async function countPendingProposals(roleId) {
+export async function countPendingProposals(roleId, profileId) {
   const stage = Object.keys(STAGES).find((key) => STAGES[key].roleId === roleId)
+
+  /* SAO / School Head: bawasan ng mga naaksyunan na niya */
+  if (isMultiStage(stage)) {
+    const [atStage, mine] = await Promise.all([
+      supabase.from('proposals').select('id').eq('stage', stage),
+      supabase
+        .from('proposal_reviews')
+        .select('proposal_id')
+        .eq('stage', stage)
+        .eq('reviewer_id', profileId),
+    ])
+
+    if (atStage.error) throw atStage.error
+    if (mine.error) throw mine.error
+
+    const done = new Set((mine.data ?? []).map((r) => r.proposal_id))
+    return (atStage.data ?? []).filter((p) => !done.has(p.id)).length
+  }
 
   let query = supabase.from('proposals').select('id', { count: 'exact', head: true })
 
-  /* Reviewer: lahat ng nasa stage niya, kasama ang rejected na
+  /* Adviser: lahat ng nasa stage niya, kasama ang rejected na
      naghihintay ng "Noted". Officer: ang hindi pa napapasyahan. */
   query = stage ? query.eq('stage', stage) : query.eq('status', 'pending')
 

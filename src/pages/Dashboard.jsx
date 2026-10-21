@@ -121,7 +121,9 @@ function Dashboard() {
   /* TOTOONG DATA: ilang proposal ang naghihintay pa ng aksyon.
      key: 'pendingProposals'
        Officer                   → lahat ng naghihintay pa sa org niya
-       Adviser, SAO, School Head → ang naghihintay ng AKSYON NIYA */
+       Adviser, SAO, School Head → ang naghihintay ng AKSYON NIYA
+                                   (SAO/School Head: hindi kasama ang
+                                   naaksyunan na niya) */
   const needsPendingProposals = roleConfig.dashboard.stats.some(
     (stat) => stat.key === 'pendingProposals',
   )
@@ -134,7 +136,7 @@ function Dashboard() {
     let active = true
 
     function refresh() {
-      countPendingProposals(profile?.role_id)
+      countPendingProposals(profile?.role_id, profile?.id)
         .then((count) => {
           if (active) setPendingProposals(count)
         })
