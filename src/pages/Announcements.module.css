@@ -64,6 +64,18 @@
   color: #a61b1b;
 }
 
+/* Galing sa org na may can_announce_all — para sa lahat ng org */
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.global {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
 .date {
   font-size: 0.82rem;
   color: var(--color-muted);
@@ -76,6 +88,15 @@
 .title {
   font-size: 1.12rem;
   margin-bottom: 0.45rem;
+}
+
+/* "To: Student Council, Org A" — kapag Selected organizations */
+.audience {
+  margin-top: -0.2rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-muted);
 }
 
 /* pre-wrap: para lumabas ang mga bagong linya na tinype sa form */

@@ -28,7 +28,7 @@ const PROFILE_COLUMNS = `
   program, year_level, role_id, organization_id, is_active,
   avatar_url, created_at, position_id,
   roles ( id, name ),
-  organizations ( id, name, department ),
+  organizations ( id, name, department, can_announce_all ),
   officer_positions ( id, name )
 `
 

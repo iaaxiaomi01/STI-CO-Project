@@ -4,10 +4,13 @@ import { getRoleConfig } from '../config/roles.js'
 import {
   authorLabel,
   canManageAnnouncement,
+  audienceOf,
+  canPostToAllOrgs,
   createAnnouncement,
   deleteAnnouncement,
   fetchAnnouncements,
   formatDate,
+  selectedOrgsLabel,
   typeLabel,
   updateAnnouncement,
   wasEdited,
@@ -27,6 +30,12 @@ import styles from './Announcements.module.css'
    Adviser → nakikita lahat sa org niya, nagpapaskil,
              nag-e-edit/nagde-delete ng sarili at ng Officers
 
+   LAHAT NG ORG: nakikita rin ng lahat ang mga global post
+   (is_global) at ang mga post na pinili ang org mo
+   (announcement_orgs). Ang Officer/Adviser ng org na may
+   can_announce_all ay pwedeng mag-post para sa sariling org,
+   sa lahat, o sa mga piniling org lang.
+
    Ang RLS sa database ang totoong nagbabantay. Ang
    can.announce at canManageAnnouncement() dito ay para lang
    itago ang mga button na hindi mo magagamit.
@@ -34,6 +43,9 @@ import styles from './Announcements.module.css'
 function Announcements() {
   const { role, profile } = useAuth()
   const { can } = getRoleConfig(role)
+
+  /* May "Post to" na pagpipilian (sariling org / lahat / pinili) */
+  const audience = canPostToAllOrgs(profile, can) ? 'choose' : 'own'
 
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -154,8 +166,20 @@ function Announcements() {
             return (
               <li key={a.id} className={styles.card}>
                 <div className={styles.cardTop}>
-                  <span className={`${styles.type} ${styles[`type_${a.type}`] ?? ''}`}>
-                    {typeLabel(a.type)}
+                  <span className={styles.badges}>
+                    <span className={`${styles.type} ${styles[`type_${a.type}`] ?? ''}`}>
+                      {typeLabel(a.type)}
+                    </span>
+                    {audienceOf(a) === 'all' && (
+                      <span className={`${styles.type} ${styles.global}`}>
+                        All organizations
+                      </span>
+                    )}
+                    {audienceOf(a) === 'selected' && (
+                      <span className={`${styles.type} ${styles.global}`}>
+                        Selected organizations
+                      </span>
+                    )}
                   </span>
                   <time className={styles.date} dateTime={a.created_at}>
                     {formatDate(a.created_at)}
@@ -171,6 +195,9 @@ function Announcements() {
                 </div>
 
                 <h2 className={styles.title}>{a.title}</h2>
+                {audienceOf(a) === 'selected' && (
+                  <p className={styles.audience}>To: {selectedOrgsLabel(a)}</p>
+                )}
                 <p className={styles.message}>{a.message}</p>
 
                 <div className={styles.cardBottom}>
@@ -209,6 +236,8 @@ function Announcements() {
       {editing && (
         <AnnouncementForm
           initial={editing === 'new' ? null : editing}
+          audience={audience}
+          ownOrgId={profile?.organization_id}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />

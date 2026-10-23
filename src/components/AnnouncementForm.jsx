@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ANNOUNCEMENT_TYPES,
+  AUDIENCES,
   MESSAGE_MAX,
   TITLE_MAX,
+  audienceOf,
+  fetchTargetOrganizations,
+  selectedOrgsLabel,
 } from '../lib/announcements.js'
 import styles from './AnnouncementForm.module.css'
 
@@ -16,13 +20,25 @@ import styles from './AnnouncementForm.module.css'
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
    onSubmit(values) — ang page ang tatawag sa database.
    Kapag nag-throw ang onSubmit, dito lalabas ang error.
+
+   audience — para kanino ang BAGONG post:
+     'own'    → sariling org lang (walang pagpipilian)
+     'choose' → may pagpipilian: sariling org, lahat ng org, o
+                mga piniling org (Officer/Adviser ng org na may
+                can_announce_all). Kailangan ang ownOrgId para
+                hindi isama ang sariling org sa listahan.
+   Kapag nag-e-edit, hindi na mababago kung para kanino.
    ============================================================ */
-function AnnouncementForm({ initial, onSubmit, onCancel }) {
+function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
   const [title, setTitle] = useState(initial?.title ?? '')
   const [type, setType] = useState(initial?.type ?? 'meeting')
   const [message, setMessage] = useState(initial?.message ?? '')
+  const [postTo, setPostTo] = useState('own')
+  const [orgIds, setOrgIds] = useState([])
+  const [orgOptions, setOrgOptions] = useState(null) // null = kinukuha pa
+  const [orgLoadError, setOrgLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -31,6 +47,28 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
   useEffect(() => {
     titleRef.current?.focus()
   }, [])
+
+  /* Listahan ng org para sa "Selected organizations" */
+  const canChoose = !isEdit && audience === 'choose'
+  useEffect(() => {
+    if (!canChoose) return undefined
+    let active = true
+    fetchTargetOrganizations(ownOrgId)
+      .then((list) => active && setOrgOptions(list))
+      .catch((err) => {
+        console.error('Hindi makuha ang mga org:', err)
+        if (active) setOrgLoadError(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [canChoose, ownOrgId])
+
+  function toggleOrg(id) {
+    setOrgIds((list) =>
+      list.includes(id) ? list.filter((x) => x !== id) : [...list, id],
+    )
+  }
 
   /* Esc para isara — pero hindi habang nagse-save */
   useEffect(() => {
@@ -53,9 +91,20 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
       return
     }
 
+    if (canChoose && postTo === 'selected' && orgIds.length === 0) {
+      setError('Choose at least one organization.')
+      return
+    }
+
     setSaving(true)
     try {
-      await onSubmit({ title: cleanTitle, message: cleanMessage, type })
+      await onSubmit({
+        title: cleanTitle,
+        message: cleanMessage,
+        type,
+        audience: canChoose ? postTo : 'own',
+        orgIds: canChoose && postTo === 'selected' ? orgIds : [],
+      })
     } catch (err) {
       console.error('Hindi na-save ang announcement:', err)
       setError(
@@ -96,6 +145,67 @@ function AnnouncementForm({ initial, onSubmit, onCancel }) {
             required
           />
         </label>
+
+        {canChoose && (
+          <label className={styles.field}>
+            <span className={styles.label}>Post to</span>
+            <select
+              className={styles.input}
+              value={postTo}
+              onChange={(e) => setPostTo(e.target.value)}
+            >
+              {AUDIENCES.map((a) => (
+                <option key={a.value} value={a.value}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {canChoose && postTo === 'selected' && (
+          <fieldset className={styles.field}>
+            <legend className={styles.labelRow}>
+              <span className={styles.label}>Organizations</span>
+              <span className={styles.counter}>{orgIds.length} selected</span>
+            </legend>
+            {orgLoadError && (
+              <p className={styles.error}>Could not load organizations.</p>
+            )}
+            {!orgLoadError && orgOptions === null && (
+              <p className={styles.counter}>Loading organizations…</p>
+            )}
+            {orgOptions && (
+              <div className={styles.orgList}>
+                {orgOptions.map((o) => (
+                  <label key={o.id} className={styles.orgOption}>
+                    <input
+                      type="checkbox"
+                      checked={orgIds.includes(o.id)}
+                      onChange={() => toggleOrg(o.id)}
+                    />
+                    <span>{o.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <p className={styles.counter}>
+              Your organization will also see this.
+            </p>
+          </fieldset>
+        )}
+
+        {isEdit && audienceOf(initial) === 'all' && (
+          <p className={styles.hint}>
+            This announcement is visible to all organizations.
+          </p>
+        )}
+
+        {isEdit && audienceOf(initial) === 'selected' && (
+          <p className={styles.hint}>
+            Visible to: {selectedOrgsLabel(initial)}
+          </p>
+        )}
 
         <label className={styles.field}>
           <span className={styles.label}>Type</span>
