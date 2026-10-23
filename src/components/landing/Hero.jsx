@@ -2,7 +2,7 @@ import heroStudents from '../../assets/hero-students.png'
 import styles from './Hero.module.css'
 
 /* Kung saang section tatalon ang scroll-down button */
-const NEXT_SECTION_ID = 'announcements'
+const NEXT_SECTION_ID = 'organizations'
 
 function Hero() {
   const scrollToNext = () => {
@@ -36,7 +36,7 @@ function Hero() {
           type="button"
           className={styles.scrollDown}
           onClick={scrollToNext}
-          aria-label="Scroll down to announcements"
+          aria-label="Scroll down to organizations"
         >
           <span className={styles.chevron} />
         </button>

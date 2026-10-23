@@ -523,7 +523,6 @@ function ParticipantsPerEvent({ profile }) {
       <EmptyState
         icon="✓"
         title="No events yet"
-        message="Once your organization has events, you can see who is joining each one here."
       />
     )
   }

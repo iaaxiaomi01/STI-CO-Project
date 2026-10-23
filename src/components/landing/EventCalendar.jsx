@@ -182,10 +182,6 @@ function EventCalendar() {
             </div>
           </div>
 
-          <p className={styles.description}>
-            Stay updated with upcoming events and activities.
-          </p>
-
           {/* Illustration (CSS lang, walang larawan) */}
           <div className={styles.illustration} aria-hidden="true">
             <div className={styles.illustrationCalendar}>

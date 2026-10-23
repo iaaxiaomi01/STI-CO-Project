@@ -142,11 +142,6 @@ function Announcements() {
         <EmptyState
           icon="★"
           title="No announcements yet"
-          message={
-            can.announce
-              ? 'Press "+ Post" to create your organization\'s first announcement.'
-              : 'New posts from your organization\'s Officers and Adviser will appear here.'
-          }
         />
       )}
 

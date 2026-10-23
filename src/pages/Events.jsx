@@ -494,11 +494,6 @@ function Events() {
         <EmptyState
           icon="◆"
           title="No events scheduled yet"
-          message={
-            can.propose
-              ? 'Once your proposal is approved, press "+ Create Event" in Proposals.'
-              : 'Once an event is added, it will appear here with its date, time and location.'
-          }
         />
       )}
 

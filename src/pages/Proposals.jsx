@@ -487,15 +487,6 @@ function Proposals() {
         <EmptyState
           icon="✉"
           title="No proposals yet"
-          message={
-            can.propose
-              ? 'Press "+ Create Proposal" to write your first letter.'
-              : isSchoolAdmin
-                ? 'Proposals with a budget from all organizations will appear here.'
-                : isStaff
-                ? 'Proposals submitted by Officers from all organizations will appear here.'
-                : "Proposals submitted by your organization's Officers will appear here."
-          }
         />
       )}
 

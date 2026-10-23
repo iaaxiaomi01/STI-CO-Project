@@ -710,7 +710,6 @@ function EventRewardsTab({ profile }) {
       <EmptyState
         icon="◆"
         title="No events yet"
-        message="Once your organization has events, you can set and release their OG rewards here."
       />
     )
   }

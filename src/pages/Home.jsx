@@ -1,6 +1,4 @@
 import Hero from '../components/landing/Hero.jsx'
-import AnnouncementBar from '../components/landing/AnnouncementBar.jsx'
-import About from '../components/landing/About.jsx'
 import Organizations from '../components/landing/Organizations.jsx'
 import EventCalendar from '../components/landing/EventCalendar.jsx'
 
@@ -18,8 +16,6 @@ function Home() {
   return (
     <>
       <Hero />
-      <AnnouncementBar />
-      <About />
       <Organizations />
       <EventCalendar />
     </>

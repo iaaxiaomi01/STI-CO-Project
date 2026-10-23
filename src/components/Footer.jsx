@@ -49,12 +49,6 @@ function Footer() {
           </div>
 
           <div className={styles.brandLine} />
-
-          <p className={styles.tagline}>
-            Empowering students today,
-            <br />
-            leading the change tomorrow.
-          </p>
         </div>
 
         {/* CONTACT */}
