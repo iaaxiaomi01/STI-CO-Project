@@ -14,6 +14,11 @@ import {
   subscribeToNotifications,
 } from '../lib/notifications.js'
 import { fetchMyBalance } from '../lib/og.js'
+import {
+  fetchSchoolAdminOverview,
+  isSchoolAdminStat,
+  schoolAdminStatValue,
+} from '../lib/schoolAdmin.js'
 import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import DashboardCalendar from '../components/DashboardCalendar.jsx'
@@ -232,6 +237,52 @@ function Dashboard() {
     }
   }, [needsOgBalance, profile?.id])
 
+  /* TOTOONG DATA: School Administrator — budget proposals at
+     bilang ng org/members/officers ng buong school.
+     key: 'saOnTheWay', 'saApproved', 'saRejected',
+          'saOrganizations', 'saMembers', 'saOfficers'
+     Iisang tawag lang para sa lahat (school_admin_overview()).
+     REALTIME: kinukuha ulit kapag may notification tungkol sa
+     proposal, tulad ng pendingProposals. */
+  const needsSchoolAdminOverview = roleConfig.dashboard.stats.some((stat) =>
+    isSchoolAdminStat(stat.key),
+  )
+  const [schoolAdminOverview, setSchoolAdminOverview] = useState(null)
+  const [schoolAdminError, setSchoolAdminError] = useState(false)
+
+  useEffect(() => {
+    if (!needsSchoolAdminOverview) return undefined
+    let active = true
+
+    function refresh() {
+      fetchSchoolAdminOverview()
+        .then((overview) => {
+          if (!active) return
+          setSchoolAdminOverview(overview)
+          setSchoolAdminError(false)
+        })
+        .catch((error) => {
+          console.error('Hindi makuha ang overview ng School Administrator:', error)
+          if (active) setSchoolAdminError(true)
+        })
+    }
+
+    refresh()
+
+    const unsubscribe = profile?.id
+      ? subscribeToNotifications(profile.id, {
+          onInsert: (row) => {
+            if (isProposalNotification(row)) refresh()
+          },
+        })
+      : () => {}
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [needsSchoolAdminOverview, profile?.id])
+
   const attendanceRate = attendanceRates
     ? orgWideRate
       ? attendanceRates.org
@@ -249,7 +300,25 @@ function Dashboard() {
     if (stat.key === 'attendanceRate') return attendanceRate ?? '…'
     if (stat.key === 'myAttendanceRate') return myAttendanceRate ?? '…'
     if (stat.key === 'ogBalance') return ogBalance ?? '…'
+    if (isSchoolAdminStat(stat.key)) {
+      if (schoolAdminError) return '—'
+      return schoolAdminStatValue(schoolAdminOverview, stat.key) ?? '…'
+    }
     return stat.value
+  }
+
+  /* Mga stat na may "group" (hal. School Administrator) → may
+     sariling heading ang bawat grupo. Kapag walang group, iisang
+     hanay lang tulad ng dati. */
+  const statGroups = groupStats(roleConfig.dashboard.stats)
+
+  function renderStat(stat) {
+    return (
+      <Link key={stat.label} to={stat.to} state={stat.state} className={styles.stat}>
+        <span className={styles.statValue}>{statValue(stat)}</span>
+        <span className={styles.statLabel}>{stat.label}</span>
+      </Link>
+    )
   }
 
   return (
@@ -275,14 +344,18 @@ function Dashboard() {
       </div>
 
       {/* Stat tiles — nakalink sa kaukulang seksyon */}
-      <div className={styles.statRow}>
-        {roleConfig.dashboard.stats.map((stat) => (
-          <Link key={stat.label} to={stat.to} state={stat.state} className={styles.stat}>
-            <span className={styles.statValue}>{statValue(stat)}</span>
-            <span className={styles.statLabel}>{stat.label}</span>
-          </Link>
-        ))}
-      </div>
+      {statGroups.some((group) => group.title) ? (
+        <div className={styles.statGroups}>
+          {statGroups.map((group) => (
+            <section key={group.title ?? 'other'}>
+              {group.title && <h2 className={styles.sectionTitle}>{group.title}</h2>}
+              <div className={styles.statRow}>{group.stats.map(renderStat)}</div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.statRow}>{roleConfig.dashboard.stats.map(renderStat)}</div>
+      )}
 
       {/* Event Calendar — Member, Officer, Adviser lang
           (calendar: true sa config/roles.js). Events ng LAHAT
@@ -309,6 +382,20 @@ function Dashboard() {
       </div>
     </>
   )
+}
+
+/* [{ group: 'A', ... }, { group: 'A' }, { group: 'B' }]
+     → [{ title: 'A', stats: [..] }, { title: 'B', stats: [..] }]
+   Walang group → [{ title: null, stats: lahat }] */
+function groupStats(stats) {
+  const groups = []
+  for (const stat of stats) {
+    const title = stat.group ?? null
+    const last = groups[groups.length - 1]
+    if (last && last.title === title) last.stats.push(stat)
+    else groups.push({ title, stats: [stat] })
+  }
+  return groups
 }
 
 export default Dashboard

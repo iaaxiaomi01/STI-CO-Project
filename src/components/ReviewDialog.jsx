@@ -5,19 +5,22 @@ import {
   authorName,
   completesStage,
   isFinalReview,
+  nextStageOf,
   othersPendingCount,
   rejectedBy,
+  remainingStages,
   stageLabel,
 } from '../lib/proposals.js'
 import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
-   REVIEW DIALOG — para sa Adviser, SAO at School Head
-                   (Approve, Reject, Revise at Noted)
+   REVIEW DIALOG — para sa Adviser, SAO, School Head at School
+                   Administrator (Approve, Reject, Revise at Noted)
 
-   Approve → ipapasa sa susunod (sa School Head: Approved na,
-             makakagawa na ng event ang Officer).
+   Approve → ipapasa sa susunod (sa huling stage — School Head, o
+             SA kapag may budget — Approved na, makakagawa na ng
+             event ang Officer).
    Reject  → REJECTED na AGAD (pinal), kahit sino sa tatlo.
              Tuloy pa rin sa mga susunod para sa "Noted".
    Noted   → para sa proposal na rejected na: "nakita ko na".
@@ -82,11 +85,17 @@ const TEXT = {
   },
 }
 
+/* ['A', 'B', 'C'] → "A, B and C" */
+function joinNames(list) {
+  if (list.length <= 1) return list.join('')
+  return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
+}
+
 function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
   const { profile } = useAuth()
   const text = TEXT[action] ?? TEXT.rejected
   const final = isFinalReview(proposal, profile?.id)
-  const nextStage = proposal.stage === 'adviser' ? 'sao' : 'school_head'
+  const nextStage = nextStageOf(proposal)
   const stageName = stageLabel(proposal.stage)
 
   /* Ilan pang SAO / School Head ang hinihintay bukod sa iyo */
@@ -95,11 +104,11 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
   const othersText = `the other ${others === 1 ? '' : `${others} `}${stageName}`
   const othersVerb = others === 1 ? 'has' : 'have'
 
-  /* Sino pa ang dadaanan pagkatapos mo (para sa Reject) */
+  /* Sino pa ang dadaanan pagkatapos mo (para sa Reject). Kasama
+     ang School Administrator kapag may budget ang proposal. */
   const stillPasses = [
     others > 0 && othersText,
-    proposal.stage === 'adviser' && 'SAO',
-    proposal.stage !== 'school_head' && 'School Head',
+    ...remainingStages(proposal).map(stageLabel),
   ].filter(Boolean)
 
   const [comment, setComment] = useState('')
@@ -200,7 +209,7 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
               and no event can be created from it.{' '}
               {stillPasses.length > 0 && (
                 <>
-                  It will still pass through <strong>{stillPasses.join(' and ')}</strong>, but
+                  It will still pass through <strong>{joinNames(stillPasses)}</strong>, but
                   they can only mark it &quot;Noted&quot;.
                 </>
               )}

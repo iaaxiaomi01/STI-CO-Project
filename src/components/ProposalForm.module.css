@@ -346,3 +346,26 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* ---------- "This proposal has a budget" ----------
+   Kapareho ng .check sa ShopItemForm.module.css */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.check input {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary);
+}
+
+.check strong {
+  display: block;
+}

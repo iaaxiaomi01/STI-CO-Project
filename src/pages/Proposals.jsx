@@ -50,6 +50,7 @@ import styles from './Proposals.module.css'
    PROPOSALS — TOTOONG DATA mula sa public.proposals
 
    ANG DALOY:  Officer → Adviser → SAO → School Head
+               (→ School Administrator kapag MAY BUDGET)
 
    Officer     → gumagawa ng proposal, at nagde-delete ng SARILI
                  niyang proposal habang WALA PANG umaaksyon.
@@ -60,8 +61,13 @@ import styles from './Proposals.module.css'
                  org, pagkatapos ng Adviser. LAHAT ng SAO ay
                  dadaanan (sabay-sabay); lilipat lang sa School
                  Head kapag nakaaksyon na ang lahat.
-   School Head → huling Approve/Reject, pagkatapos ng LAHAT ng
-                 SAO. LAHAT din ng School Head ay dadaanan.
+   School Head → Approve/Reject pagkatapos ng LAHAT ng SAO. LAHAT
+                 din ng School Head ay dadaanan. Siya ang pinal
+                 kapag WALANG budget.
+   School Admin→ PINAL na Approve/Reject ng proposal na MAY BUDGET,
+                 pagkatapos ng LAHAT ng School Head. LAHAT ng SA ay
+                 dadaanan. Ang may budget LANG ang nakikita niya
+                 (ADD_SCHOOL_ADMINISTRATOR.sql).
    Member      → wala. Wala ito sa sidebar niya, at hinaharang
                  din siya ng RLS sa database.
 
@@ -96,13 +102,16 @@ function Proposals() {
      nakikita, kaya ipinapakita rin kung aling org ang bawat isa. */
   const isStaff = (profile?.role_id ?? 0) >= 4
 
-  /* Adviser, SAO, School Head: may sariling hanay ng proposal
-     na naghihintay ng AKSYON NILA. */
-  const isReviewer = [3, 4, 6].includes(profile?.role_id)
+  /* Adviser, SAO, School Head, School Administrator: may sariling
+     hanay ng proposal na naghihintay ng AKSYON NILA. */
+  const isReviewer = [3, 4, 6, 8].includes(profile?.role_id)
 
-  /* SAO at School Head: may organization filter, dahil proposals
-     ng LAHAT ng org ang nakikita nila. */
-  const showOrgFilter = [4, 6].includes(profile?.role_id)
+  /* SAO, School Head at School Administrator: may organization
+     filter, dahil proposals ng LAHAT ng org ang nakikita nila. */
+  const showOrgFilter = [4, 6, 8].includes(profile?.role_id)
+
+  /* School Administrator: ang may budget lang ang nakikita */
+  const isSchoolAdmin = profile?.role_id === 8
 
   /* Officer: may sariling hanay ng proposal na ibinalik sa
      kanya para i-revise. */
@@ -481,7 +490,9 @@ function Proposals() {
           message={
             can.propose
               ? 'Press "+ Create Proposal" to write your first letter.'
-              : isStaff
+              : isSchoolAdmin
+                ? 'Proposals with a budget from all organizations will appear here.'
+                : isStaff
                 ? 'Proposals submitted by Officers from all organizations will appear here.'
                 : "Proposals submitted by your organization's Officers will appear here."
           }
@@ -506,6 +517,7 @@ function Proposals() {
                     >
                       {progressLabel(p)}
                     </span>
+                    {p.has_budget && <span className={styles.budgetTag}>With budget</span>}
                   </div>
 
                   {isStaff && p.organizations?.name && (
@@ -561,7 +573,7 @@ function Proposals() {
                     </button>
                   )}
 
-                  {/* Adviser → SAO → School Head */}
+                  {/* Adviser → SAO → School Head (→ School Administrator) */}
                   <ReviewTrail proposal={p} />
                 </div>
 

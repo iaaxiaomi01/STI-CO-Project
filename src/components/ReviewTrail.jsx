@@ -2,7 +2,9 @@ import {
   authorName,
   awaitsNoted,
   decisionLabel,
+  finalStage,
   formatDateTime,
+  hasBudget,
   rejectedBy,
   reviewProgress,
   reviewSteps,
@@ -12,6 +14,7 @@ import styles from './ReviewTrail.module.css'
 
 /* ============================================================
    REVIEW TRAIL — ang daan ng proposal: Adviser → SAO → School Head
+                  (→ School Administrator kapag may budget)
 
    Ipinapakita ang bawat aksyong nagawa na (Approved, Rejected,
    Noted o Ipina-revise, sino, kailan, at ang dahilan). Kapag
@@ -109,9 +112,11 @@ function ReviewTrail({ proposal, variant = 'card' }) {
               ? `Waiting for ${authorName(proposal)} to revise. It will go back to ${stageLabel(
                   proposal.revision_from,
                 )} afterwards.`
-              : proposal.stage === 'school_head'
-                ? "Waiting for the School Head's final decision."
-                : `Waiting for action from ${waiting}.`}
+              : proposal.stage === finalStage(proposal)
+                ? `Waiting for the ${waiting}'s final decision.`
+                : proposal.stage === 'school_head' && hasBudget(proposal)
+                  ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
+                  : `Waiting for action from ${waiting}.`}
           </p>
         </li>
       )}

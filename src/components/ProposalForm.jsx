@@ -34,6 +34,11 @@ import styles from './ProposalForm.module.css'
    Tinatype: Title, Description, Venue, Date, Start Time at
    End Time (kailangan lahat). May opsyonal na File
    (isa lang) — hal. ang pirmadong proposal o budget.
+
+   May checkbox na "This proposal has a budget" (has_budget).
+   Kapag naka-check, dadaan pa ito sa School Administrator
+   pagkatapos ng School Head (ADD_SCHOOL_ADMINISTRATOR.sql).
+   Pwede itong baguhin habang nire-revise.
    Ang Organization Name, Logo at Proposed by ay kusang
    nilalagay — galing sila sa org at sa account mo.
 
@@ -53,6 +58,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const [eventDate, setEventDate] = useState(proposal?.event_date ?? '')
   const [startTime, setStartTime] = useState(toTimeInput(proposal?.start_time))
   const [endTime, setEndTime] = useState(toTimeInput(proposal?.end_time))
+  const [hasBudget, setHasBudget] = useState(Boolean(proposal?.has_budget))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -112,6 +118,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       eventDate,
       startTime,
       endTime,
+      hasBudget,
     }
 
     if (
@@ -207,7 +214,6 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             onChange={(e) => setTitle(e.target.value)}
             required
           />
-          <span className={styles.hint}>This will be the SUBJECT of the letter.</span>
         </label>
 
         <label className={styles.field}>
@@ -275,6 +281,24 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             />
           </label>
         </div>
+
+        {/* ---------- MAY BUDGET? ---------- */}
+        <label className={styles.check}>
+          <input
+            type="checkbox"
+            checked={hasBudget}
+            onChange={(e) => setHasBudget(e.target.checked)}
+            disabled={saving}
+          />
+          <span>
+            <strong>This proposal has a budget</strong>
+            <span className={styles.hint}>
+              {hasBudget
+                ? 'Review: Adviser → SAO → School Head → School Administrator'
+                : 'Review: Adviser → SAO → School Head'}
+            </span>
+          </span>
+        </label>
 
         {/* ---------- FILE (opsyonal) ---------- */}
         <div className={styles.field}>

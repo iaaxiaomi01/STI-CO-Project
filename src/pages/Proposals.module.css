@@ -148,6 +148,19 @@
   color: #a61b1b;
 }
 
+/* "With budget" — dadaan pa sa School Administrator */
+.budgetTag {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
 /* ---------- AKSYON NG ADVISER SA CARD ---------- */
 .review {
   margin-top: 0.85rem;

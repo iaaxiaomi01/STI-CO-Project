@@ -28,6 +28,7 @@ export const ROLE_KEYS = {
   ADVISER: 'adviser',
   SAO: 'sao',
   SCHOOL_HEAD: 'school_head',
+  SCHOOL_ADMIN: 'school_admin',
   IT_ADMIN: 'it_admin',
 }
 
@@ -36,7 +37,11 @@ export const ROLE_KEYS = {
 
    Walang 5: inalis na ang SHS/Tertiary coordinator (tingnan ang
    REMOVE_SHS_TERTIARY.sql). Hindi inilipat ang 6 at 7 para hindi
-   masira ang mga role_id na nakasulat na sa database. */
+   masira ang mga role_id na nakasulat na sa database.
+
+   8 = School Administrator (ADD_SCHOOL_ADMINISTRATOR.sql). Kasunod
+   ng School Head sa daloy ng proposal, pero 8 dahil 7 na ang IT
+   Admin. */
 export const ROLE_ID_TO_KEY = {
   1: ROLE_KEYS.MEMBER,
   2: ROLE_KEYS.OFFICER,
@@ -44,6 +49,7 @@ export const ROLE_ID_TO_KEY = {
   4: ROLE_KEYS.SAO,
   6: ROLE_KEYS.SCHOOL_HEAD,
   7: ROLE_KEYS.IT_ADMIN,
+  8: ROLE_KEYS.SCHOOL_ADMIN,
 }
 
 export function roleKeyFromId(roleId) {
@@ -398,16 +404,91 @@ export const ROLES = {
   /* SAO at School Head: tulad ng ibang staff, pero may
      Proposals din, ng LAHAT ng organisasyon.
 
-     Daloy: Officer → Adviser → SAO → School Head
+     Daloy: Officer → Adviser → SAO → School Head (→ SA kapag may budget)
        SAO         → Approve/Reject pagkatapos ng Adviser;
                      tuloy pa rin sa School Head anuman ang piliin
-       School Head → PINAL na Approve/Reject
+       School Head → PINAL na Approve/Reject kapag WALANG budget;
+                     kapag MAY budget, tuloy pa sa School Administrator
 
      Kailangan sa Supabase:
        ADD_SCHOOL_HEAD_PROPOSALS_READ.sql (makabasa)
        PROPOSAL_THREE_STEP_REVIEW.sql     (makaaksyon) */
   [ROLE_KEYS.SAO]: staffRoleWithProposals('SAO'),
   [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals('School Head', { orgHealth: true }),
+
+  /* School Administrator — PINAL na Approve/Reject ng mga proposal
+     na MAY BUDGET (Adviser → SAO → School Head → SA). Ang walang
+     budget ay hindi na dumadaan sa kanya, at hindi rin niya nakikita
+     (RLS: proposals_read_staff).
+
+     Dashboard: dalawang grupo ng stat (may "group" ang bawat isa —
+     tingnan ang Dashboard.jsx). Lahat ng numero ay galing sa iisang
+     tawag: school_admin_overview() (lib/schoolAdmin.js), maliban sa
+     "awaiting your action" na kapareho ng sa SAO / School Head.
+
+     Kailangan sa Supabase: ADD_SCHOOL_ADMINISTRATOR.sql */
+  [ROLE_KEYS.SCHOOL_ADMIN]: (() => {
+    const base = staffRoleWithProposals('School Administrator')
+    const PROPOSALS_GROUP = 'Budget proposals'
+    const SCHOOL_GROUP = 'School overview'
+    return {
+      ...base,
+      dashboard: {
+        ...base.dashboard,
+        stats: [
+          {
+            label: 'Awaiting your action',
+            value: '0',
+            to: '/proposals',
+            key: 'pendingProposals',
+            group: PROPOSALS_GROUP,
+          },
+          {
+            label: 'Still with Adviser / SAO / School Head',
+            value: '0',
+            to: '/proposals',
+            key: 'saOnTheWay',
+            group: PROPOSALS_GROUP,
+          },
+          {
+            label: 'Approved',
+            value: '0',
+            to: '/proposals',
+            key: 'saApproved',
+            group: PROPOSALS_GROUP,
+          },
+          {
+            label: 'Rejected',
+            value: '0',
+            to: '/proposals',
+            key: 'saRejected',
+            group: PROPOSALS_GROUP,
+          },
+          {
+            label: 'Active organizations',
+            value: '0',
+            to: '/members',
+            key: 'saOrganizations',
+            group: SCHOOL_GROUP,
+          },
+          {
+            label: 'Active members',
+            value: '0',
+            to: '/members',
+            key: 'saMembers',
+            group: SCHOOL_GROUP,
+          },
+          {
+            label: 'Officers',
+            value: '0',
+            to: '/members',
+            key: 'saOfficers',
+            group: SCHOOL_GROUP,
+          },
+        ],
+      },
+    }
+  })(),
   /* Kaya rin niyang magbigay ng officer position sa kahit anong
      org (sa Members page). */
   [ROLE_KEYS.IT_ADMIN]: (() => {

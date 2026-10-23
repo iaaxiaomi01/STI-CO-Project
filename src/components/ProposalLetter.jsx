@@ -25,10 +25,12 @@ import styles from './ProposalLetter.module.css'
                                   niya (kung meron), at ang role
      Attachment                 → pangalan ng file (kung meron);
                                   "I-download" sa itaas na toolbar
-     Daan ng review             → Adviser → SAO → School Head,
-                                  bawat isa ay may Approved/
-                                  Rejected at dahilan. Ang
-                                  School Head ang pinal.
+     Budget                     → "With budget" kapag naka-check
+     Daan ng review             → Adviser → SAO → School Head
+                                  (→ School Administrator kapag
+                                  may budget), bawat isa ay may
+                                  Approved/Rejected at dahilan.
+                                  Ang huli ang pinal.
 
    Ang Logo at Organization Name ay hindi nakakopya sa
    proposal. Galing sila sa Org Profile, kaya kusang nag-a-update.
@@ -114,7 +116,7 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
             <span className={styles.subjectLabel}>SUBJECT:</span> {proposal.title}
           </p>
 
-          {(hasSchedule(proposal) || proposal.venue) && (
+          {(hasSchedule(proposal) || proposal.venue || proposal.has_budget) && (
             <dl className={styles.details}>
               {proposal.venue && (
                 <div className={styles.detailRow}>
@@ -133,6 +135,12 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
                     <dd>{scheduleTimeLabel(proposal)}</dd>
                   </div>
                 </>
+              )}
+              {proposal.has_budget && (
+                <div className={styles.detailRow}>
+                  <dt>Budget:</dt>
+                  <dd>(Please see the attached file)</dd>
+                </div>
               )}
             </dl>
           )}

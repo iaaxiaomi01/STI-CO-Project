@@ -80,6 +80,16 @@
   color: var(--color-muted);
 }
 
+/* Mga grupo ng stat (hal. School Administrator: "Budget proposals"
+   at "School overview"), bawat isa may heading */
+.statGroups {
+  margin-bottom: 0.75rem;
+}
+
+.statGroups .statRow {
+  margin-bottom: 1.75rem;
+}
+
 /* ---------- EVENT CALENDAR ---------- */
 .calendarSection {
   margin-bottom: 2.5rem;

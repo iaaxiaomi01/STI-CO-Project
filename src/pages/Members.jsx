@@ -52,14 +52,20 @@ function Members() {
   const { role } = useAuth()
   const can = getRoleConfig(role).can
 
-  /* Walang "Officers only" na filter ang SAO at School Head */
-  const showOfficersFilter = role !== ROLE_KEYS.SAO && role !== ROLE_KEYS.SCHOOL_HEAD
+  /* Walang "Officers only" na filter ang SAO, School Head at
+     School Administrator */
+  const showOfficersFilter =
+    role !== ROLE_KEYS.SAO && role !== ROLE_KEYS.SCHOOL_HEAD && role !== ROLE_KEYS.SCHOOL_ADMIN
 
-  /* Organization filter: para sa SAO, School Head at IT Admin, na
-     nakakakita ng LAHAT ng org (profiles_read_staff). Ang Officer at
-     Adviser ay sariling org lang ang nakikita kaya hindi na kailangan. */
+  /* Organization filter: para sa SAO, School Head, School
+     Administrator at IT Admin, na nakakakita ng LAHAT ng org
+     (profiles_read_staff). Ang Officer at Adviser ay sariling org
+     lang ang nakikita kaya hindi na kailangan. */
   const showOrgFilter =
-    role === ROLE_KEYS.SAO || role === ROLE_KEYS.SCHOOL_HEAD || role === ROLE_KEYS.IT_ADMIN
+    role === ROLE_KEYS.SAO ||
+    role === ROLE_KEYS.SCHOOL_HEAD ||
+    role === ROLE_KEYS.SCHOOL_ADMIN ||
+    role === ROLE_KEYS.IT_ADMIN
 
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)

@@ -24,11 +24,7 @@ function Hero() {
             <span>One Campus.</span>
             <span className={styles.subtitleAccent}>One Platform.</span>
           </h2>
-
-          <p className={styles.description}>
-            A centralized platform designed to help student organizations
-            manage activities, announcements, and student engagement.
-          </p>
+          
         </div>
 
         {/* Right image */}
