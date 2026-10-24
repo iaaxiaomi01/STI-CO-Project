@@ -1,5 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  ArrowRight,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  CalendarPlus,
+  Check,
+  Coins,
+  Eye,
+  Hourglass,
+  MapPin,
+  Paperclip,
+  Pencil,
+  RotateCcw,
+  Trash2,
+  User,
+  X,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
@@ -19,7 +37,9 @@ import {
   progressLabel,
   requestRevision,
   resubmitProposal,
+  reviewPath,
   reviewProposal,
+  reviewSteps,
   scheduleDateLabel,
   scheduleTimeLabel,
   stageLabel,
@@ -93,7 +113,106 @@ import styles from './Proposals.module.css'
    Ang RLS sa database ang totoong nagbabantay. Ang
    can.propose at canManageProposal() dito ay para lang itago
    ang mga button na hindi mo magagamit.
+
+   ITSURA ("route line" — UI lang, walang binago sa data o aksyon):
+     - bawat proposal ay nasa malambot na box (hindi matapang na
+       puti), may bilog na status sa kaliwa
+     - ROUTE MAP: Officer → Adviser → SAO → School Head
+       (→ School Admin) na parang mapa ng tren. Galing sa parehong
+       data ng ReviewTrail (reviewPath + reviewSteps) — display lang.
    ============================================================ */
+
+/* Kulay at icon ng bawat proposal ayon sa kalagayan nito */
+function toneOf(p) {
+  if (isInRevision(p)) return 'revision'
+  if (p.status === 'approved') return 'approved'
+  if (p.status === 'rejected') return 'rejected'
+  return 'pending'
+}
+
+const TONE_ICON = {
+  pending: Hourglass,
+  revision: RotateCcw,
+  approved: Check,
+  rejected: X,
+}
+
+/* Maikling pangalan ng bawat istasyon sa route map */
+const ROUTE_LABEL = {
+  adviser: 'Adviser',
+  sao: 'SAO',
+  school_head: 'School Head',
+  school_admin: 'School Admin',
+}
+
+const STATION_TEXT = {
+  done: 'Submitted',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  noted: 'Noted',
+  current: 'In progress',
+  revision: 'Being revised',
+  upcoming: 'Not yet',
+}
+
+/* Mga istasyon ng route map (display lang):
+     Officer      → "done" (naipasa), o "revision" kapag ibinalik
+     bawat stage  → "current" kapag naroon ngayon, o ang huling
+                    desisyon doon (approved/rejected/noted), o
+                    "upcoming" kapag hindi pa nararating */
+function stationsOf(p) {
+  const steps = reviewSteps(p)
+  const lastDecision = (stage) => {
+    let decision = null
+    for (const step of steps) {
+      const stepStage = step.stage === 'legacy' ? 'adviser' : step.stage
+      if (stepStage === stage && step.decision !== 'revision') decision = step.decision
+    }
+    return decision
+  }
+
+  const officer = { key: 'officer', label: 'Officer', state: isInRevision(p) ? 'revision' : 'done' }
+  const stages = reviewPath(p).map((stage) => ({
+    key: stage,
+    label: ROUTE_LABEL[stage] ?? stageLabel(stage),
+    state: p.stage === stage ? 'current' : lastDecision(stage) ?? 'upcoming',
+  }))
+  return [officer, ...stages]
+}
+
+const STATION_ICON = {
+  done: Check,
+  approved: Check,
+  rejected: X,
+  noted: Eye,
+  revision: RotateCcw,
+}
+
+function RouteMap({ proposal }) {
+  const stations = stationsOf(proposal)
+  return (
+    <ol className={styles.route} aria-label="Review route">
+      {stations.map((s) => {
+        const Icon = STATION_ICON[s.state]
+        return (
+          <li
+            key={s.key}
+            className={`${styles.station} ${styles[`st_${s.state}`] ?? ''}`}
+            aria-label={`${s.label}: ${STATION_TEXT[s.state] ?? ''}`}
+          >
+            <span className={styles.stationDot} aria-hidden="true">
+              {Icon && <Icon size={13} strokeWidth={3} />}
+            </span>
+            <span className={styles.stationLabel} aria-hidden="true">
+              {s.label}
+            </span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
 function Proposals() {
   const { role, profile } = useAuth()
   const { can } = getRoleConfig(role)
@@ -400,7 +519,7 @@ function Proposals() {
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader
         title="Proposals"
         action={
@@ -495,55 +614,80 @@ function Proposals() {
           {shown.map((p) => {
             const manageable = canManageProposal(p, profile)
             const busy = deletingId === p.id
+            const tone = toneOf(p)
+            const ToneIcon = TONE_ICON[tone]
+            const yourTurn = canReviewProposal(p, profile) || canReviseProposal(p, profile)
 
             return (
-              <li key={p.id} className={styles.card}>
+              <li
+                key={p.id}
+                className={`${styles.card} ${styles[`tone_${tone}`] ?? ''} ${
+                  yourTurn ? styles.yourTurn : ''
+                }`}
+              >
+                {/* ---------- RAIL: bilog na status ---------- */}
+                <span className={styles.rail} aria-hidden="true">
+                  <span className={styles.railDot}>
+                    <ToneIcon size={18} strokeWidth={2.6} />
+                  </span>
+                </span>
+
                 <div className={styles.cardMain}>
                   <div className={styles.titleRow}>
-                    <h2 className={styles.title}>{p.title}</h2>
                     <span
-                      className={`${styles.status} ${
+                      className={`${styles.statusPill} ${
                         styles[isInRevision(p) ? 'status_revision' : `status_${p.status}`] ?? ''
                       }`}
                     >
                       {progressLabel(p)}
                     </span>
-                    {p.has_budget && <span className={styles.budgetTag}>With budget</span>}
+                    {p.has_budget && (
+                      <span className={styles.budgetTag}>
+                        <Coins size={13} strokeWidth={2.6} aria-hidden="true" />
+                        With budget
+                      </span>
+                    )}
+                    <span className={styles.date}>{formatDateTime(p.created_at)}</span>
                   </div>
 
-                  {isStaff && p.organizations?.name && (
-                    <p className={styles.meta}>
-                      <strong>{p.organizations.name}</strong>
-                      {p.organizations.department && ` · ${p.organizations.department}`}
-                    </p>
-                  )}
+                  <h2 className={styles.title}>{p.title}</h2>
 
-                  <p className={styles.meta}>
-                    Proposed by: <strong>{authorName(p)}</strong> ·{' '}
-                    {authorRoleLabel(p)}
-                  </p>
+                  <ul className={styles.metaList}>
+                    {isStaff && p.organizations?.name && (
+                      <li className={styles.meta}>
+                        <Building2 size={15} strokeWidth={2.2} aria-hidden="true" />
+                        <span>
+                          <strong>{p.organizations.name}</strong>
+                          {p.organizations.department && ` · ${p.organizations.department}`}
+                        </span>
+                      </li>
+                    )}
 
-                  {/* Kailan at saan ang activity (wala sa mga lumang proposal) */}
-                  {(hasSchedule(p) || p.venue) && (
-                    <p className={styles.meta}>
-                      {hasSchedule(p) && (
-                        <>
-                          When: <strong>{scheduleDateLabel(p)}</strong>,{' '}
-                          {scheduleTimeLabel(p)}
-                        </>
-                      )}
-                      {hasSchedule(p) && p.venue && ' · '}
-                      {p.venue && (
-                        <>
+                    <li className={styles.meta}>
+                      <User size={15} strokeWidth={2.2} aria-hidden="true" />
+                      <span>
+                        Proposed by: <strong>{authorName(p)}</strong> · {authorRoleLabel(p)}
+                      </span>
+                    </li>
+
+                    {/* Kailan at saan ang activity (wala sa mga lumang proposal) */}
+                    {hasSchedule(p) && (
+                      <li className={styles.meta}>
+                        <CalendarDays size={15} strokeWidth={2.2} aria-hidden="true" />
+                        <span>
+                          When: <strong>{scheduleDateLabel(p)}</strong>, {scheduleTimeLabel(p)}
+                        </span>
+                      </li>
+                    )}
+                    {p.venue && (
+                      <li className={styles.meta}>
+                        <MapPin size={15} strokeWidth={2.2} aria-hidden="true" />
+                        <span>
                           Venue: <strong>{p.venue}</strong>
-                        </>
-                      )}
-                    </p>
-                  )}
-
-                  <p className={styles.date}>
-                    {formatDateTime(p.created_at)}
-                  </p>
+                        </span>
+                      </li>
+                    )}
+                  </ul>
 
                   {/* Naka-attach na file — pindutin para i-download */}
                   {p.attachment_path && (
@@ -554,7 +698,7 @@ function Proposals() {
                       disabled={downloadingId === p.id}
                       title="Download file"
                     >
-                      <span aria-hidden="true">📎</span>
+                      <Paperclip size={15} strokeWidth={2.3} aria-hidden="true" />
                       <span className={styles.fileChipName}>{p.attachment_name}</span>
                       <span className={styles.fileChipMeta}>
                         {downloadingId === p.id
@@ -564,8 +708,13 @@ function Proposals() {
                     </button>
                   )}
 
+                  {/* Route map: Officer → Adviser → SAO → School Head (→ SA) */}
+                  <RouteMap proposal={p} />
+
                   {/* Adviser → SAO → School Head (→ School Administrator) */}
-                  <ReviewTrail proposal={p} />
+                  <div className={styles.trailWrap}>
+                    <ReviewTrail proposal={p} />
+                  </div>
                 </div>
 
                 <div className={styles.cardActions}>
@@ -574,6 +723,7 @@ function Proposals() {
                     className={styles.openButton}
                     onClick={() => setViewing(p)}
                   >
+                    <BookOpen size={16} strokeWidth={2.3} aria-hidden="true" />
                     Open letter
                   </button>
 
@@ -584,6 +734,7 @@ function Proposals() {
                       className={styles.notedButton}
                       onClick={() => openReview(p, 'noted')}
                     >
+                      <Eye size={16} strokeWidth={2.3} aria-hidden="true" />
                       Noted
                     </button>
                   )}
@@ -595,6 +746,7 @@ function Proposals() {
                         className={styles.approveButton}
                         onClick={() => openReview(p, 'approved')}
                       >
+                        <Check size={16} strokeWidth={2.8} aria-hidden="true" />
                         Approve
                       </button>
                       {canRequestRevision(p, profile) && (
@@ -603,6 +755,7 @@ function Proposals() {
                           className={styles.reviseButton}
                           onClick={() => openReview(p, 'revision')}
                         >
+                          <RotateCcw size={15} strokeWidth={2.5} aria-hidden="true" />
                           Revise
                         </button>
                       )}
@@ -611,6 +764,7 @@ function Proposals() {
                         className={styles.rejectButton}
                         onClick={() => openReview(p, 'rejected')}
                       >
+                        <X size={16} strokeWidth={2.8} aria-hidden="true" />
                         Reject
                       </button>
                     </>
@@ -625,6 +779,7 @@ function Proposals() {
                         setRevising(p)
                       }}
                     >
+                      <Pencil size={15} strokeWidth={2.4} aria-hidden="true" />
                       Revise
                     </button>
                   )}
@@ -638,13 +793,15 @@ function Proposals() {
                         setEventFor(p)
                       }}
                     >
-                      + Create Event
+                      <CalendarPlus size={16} strokeWidth={2.4} aria-hidden="true" />
+                      Create Event
                     </button>
                   )}
 
                   {p.status === 'approved' && eventOfProposal(p) && (
                     <Link to="/events" className={styles.eventLink}>
-                      View Event →
+                      View Event
+                      <ArrowRight size={15} strokeWidth={2.5} aria-hidden="true" />
                     </Link>
                   )}
 
@@ -655,6 +812,7 @@ function Proposals() {
                       onClick={() => handleDelete(p)}
                       disabled={busy}
                     >
+                      <Trash2 size={15} strokeWidth={2.3} aria-hidden="true" />
                       {busy ? 'Deleting…' : 'Delete'}
                     </button>
                   )}
@@ -705,7 +863,7 @@ function Proposals() {
           onCancel={closeReview}
         />
       )}
-    </>
+    </div>
   )
 }
 

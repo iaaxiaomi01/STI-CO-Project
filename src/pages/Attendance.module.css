@@ -1,258 +1,802 @@
-/* ---------- TABS (Officer) ---------- */
+/* ================================================================
+   ATTENDANCE — "check-in tracker" na disenyo
+
+   Iba sa Dashboard (bento), Events (ticket) at Announcements
+   (alert): may manipis na border ang mga card, at ang bida ay ang
+   Time In → Time Out tracker at ang attendance meter.
+
+     [ Joined by me | Participants per event ]   ← segmented switch
+     [ larawan+petsa | detalye           | bilang ]
+                     | ●──────○ tracker  |
+   ================================================================ */
+.page {
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+
+  --line: #e3e8f1;
+  --soft: #f4f6fb;
+  --in: #1f9d55;
+  --in-soft: #e2f5ea;
+  --out: #e8590c;
+  --out-soft: #fff0e4;
+}
+
+/* ---------- SEGMENTED SWITCH (Officer: dalawang tab) ---------- */
 .tabs {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--color-border);
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  max-width: 100%;
+  margin-bottom: 22px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background-color: #fff;
+}
+
+/* Ang gumagalaw na navy na "pill" — dalawa lang ang tab */
+.tabThumb {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc((100% - 10px) / 2);
+  border-radius: 13px;
+  background-color: var(--dash-navy-deep);
+  box-shadow: 0 6px 16px rgba(3, 27, 75, 0.22);
+  transform: translateX(calc(var(--tab-index, 0) * 100%));
+  transition: transform 0.35s cubic-bezier(0.3, 1.3, 0.5, 1);
 }
 
 .tab {
-  margin-bottom: -1px;
-  padding: 0.6rem 1rem;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-radius: 13px;
   background: none;
-  color: var(--color-muted);
-  font-size: 0.92rem;
-  font-weight: 600;
-  transition: color var(--transition), border-color var(--transition);
+  color: #3a4766;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: color 0.25s ease;
 }
 
-.tab:hover {
-  color: var(--color-text);
+.tab:hover:not(.tabActive) {
+  color: var(--dash-navy);
 }
 
 .tabActive {
-  border-bottom-color: var(--color-primary);
-  color: var(--color-primary-dark);
+  color: #fff;
 }
 
+.tabActive svg {
+  color: var(--dash-yellow);
+}
+
+/* ---------- MENSAHE / LOADING ---------- */
 .notice {
-  margin-bottom: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  background-color: #e8f6ee;
-  color: #1c6b3f;
-  font-size: 0.9rem;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #bfe6cf;
+  border-radius: 16px;
+  background-color: var(--in-soft);
+  color: #17683a;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .muted {
   padding: 2rem 0;
-  color: var(--color-muted);
-}
-
-.summary {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.summary strong {
-  color: var(--color-text);
-}
-
-.summary a {
-  color: var(--color-primary);
+  color: var(--dash-muted);
   font-weight: 600;
 }
 
-.list {
+/* ---------- BUOD (Joined by me) ---------- */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background-color: #fff;
+}
+
+.stat strong {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.stat span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dash-muted);
+}
+
+.statActive {
+  border-color: var(--dash-navy);
+  background-color: var(--dash-navy);
+}
+
+.statActive strong {
+  color: var(--dash-yellow);
+}
+
+.statActive span {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.findMore {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background-color: #fff;
+  color: var(--dash-navy);
+  font-size: 14px;
+  font-weight: 800;
+  transition: background-color var(--transition), color var(--transition),
+    border-color var(--transition);
+}
+
+.findMore:hover {
+  border-color: var(--dash-navy);
+  background-color: var(--dash-navy);
+  color: #fff;
+}
+
+.findMore svg {
+  transition: transform var(--transition);
+}
+
+.findMore:hover svg {
+  transform: translateX(3px);
+}
+
+/* ---------- FILTER (Participants per event) ---------- */
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filter {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 8px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: #fff;
+  color: #3a4766;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.filter:hover {
+  border-color: #c3cbdb;
+}
+
+.filterActive,
+.filterActive:hover {
+  border-color: var(--dash-yellow);
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.filterCount {
   display: grid;
-  gap: 0.75rem;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background-color: var(--soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.filterActive .filterCount {
+  background-color: var(--dash-navy-deep);
+  color: var(--dash-yellow);
+}
+
+/* ---------- LISTAHAN AT CARD ---------- */
+.list {
+  container-type: inline-size;
+  display: grid;
+  gap: 14px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* Ang kahon ng bawat item */
 .card {
-  padding: 0.9rem 1.1rem;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-/* Ang ayos sa loob: larawan · detalye · bilang */
+.card:hover {
+  border-color: #cdd5e4;
+  box-shadow: 0 10px 28px rgba(3, 27, 75, 0.06);
+}
+
+/* Ongoing: may manipis na berdeng singsing — "nangyayari ngayon" */
+.s_ongoing {
+  border-color: #9fd9b6;
+  box-shadow: 0 0 0 3px var(--in-soft);
+}
+
+.cardOpen {
+  border-color: #c3cbdb;
+}
+
+/* Joined by me: larawan · detalye */
+.mineCard {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* Participants per event: larawan · detalye · bilang */
 .row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+/* ---------- LARAWAN + PETSA ---------- */
+.media {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  overflow: hidden;
+  border-radius: 16px;
 }
 
 .thumb,
 .thumbPlaceholder {
-  flex-shrink: 0;
-  width: 88px;
-  height: 66px;
-  border-radius: 10px;
+  width: 100%;
+  height: 100%;
 }
 
 .thumb {
   object-fit: cover;
-  background-color: var(--color-surface);
+  background-color: var(--soft);
 }
 
 .thumbPlaceholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-surface));
-  color: var(--color-primary);
-  font-size: 1.3rem;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.16), transparent 55%),
+    linear-gradient(145deg, var(--dash-navy), var(--dash-navy-deep));
+  color: var(--dash-yellow);
+  font-size: 28px;
+  /* Iniaangat ang diamond para hindi matakpan ng petsa */
+  padding-bottom: 30px;
 }
 
+.dateTag {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.94);
+  color: var(--dash-navy-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 2px 8px rgba(3, 27, 75, 0.15);
+}
+
+.dateTag b {
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- DETALYE ---------- */
 .main {
-  flex: 1;
   min-width: 0;
 }
 
 .titleRow {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 8px 10px;
   flex-wrap: wrap;
-  margin-bottom: 0.25rem;
+  margin-bottom: 8px;
 }
 
 .title {
-  font-size: 1.02rem;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
 
 .badge {
-  padding: 0.15rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  background-color: var(--soft);
+  color: #3b4660;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  background-color: var(--color-surface);
-  color: var(--color-muted);
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
 }
 
 .badge_upcoming {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background-color: #e8eefc;
+  color: var(--dash-navy);
 }
 
 .badge_ongoing {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+  background-color: var(--in-soft);
+  color: #17683a;
+}
+
+.badge_ongoing .badgeDot {
+  animation: livePulse 1.4s ease-in-out infinite;
 }
 
 .badge_completed {
   background-color: #eef0f4;
-  color: #3b4660;
+  color: #59647c;
 }
 
-.meta {
-  font-size: 0.87rem;
-  color: var(--color-muted);
+.metaList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metaList li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dash-muted);
   overflow-wrap: anywhere;
 }
 
+.metaList svg {
+  flex-shrink: 0;
+  color: #8a96ae;
+}
+
 .joined {
-  margin-top: 0.3rem;
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
   font-style: italic;
+  color: #8a96ae;
 }
 
-/* ---------- SASALI BAWAT EVENT ---------- */
-.filters {
+/* ================================================================
+   TRACKER — Time In → Time Out (Joined by me)
+   ================================================================ */
+.attend {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background-color: var(--soft);
+}
+
+/* [● Time In ─ ─ ─ ─ ─ ○ Time Out]
+   Ang linya ay ::after ng unang hakbang, kaya laging nasa
+   pagitan ng teksto ng Time In at ng tuldok ng Time Out. */
+.track {
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.1rem;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.filter {
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.step:first-child {
+  flex: 1 1 auto;
+}
+
+.step:first-child::after {
+  content: '';
+  flex: 1 1 auto;
+  min-width: 20px;
+  height: 3px;
+  margin: 0 12px 0 4px;
+  border-radius: 3px;
+  background-image: linear-gradient(90deg, #cbd3e1 50%, transparent 50%);
+  background-size: 10px 3px;
+}
+
+/* May Time In na → kalahating puno papunta sa Time Out */
+.trackHalf .step:first-child::after {
+  background-image:
+    linear-gradient(90deg, var(--in) 0 55%, transparent 55%),
+    linear-gradient(90deg, #cbd3e1 50%, transparent 50%);
+  background-size: 100% 3px, 10px 3px;
+}
+
+/* May Time Out na → buo */
+.trackFull .step:first-child::after {
+  background-image: none;
+  background-color: var(--in);
+}
+
+.stepDot {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #d3dae7;
+  border-radius: 50%;
+  background-color: #fff;
+  color: #8a96ae;
+}
+
+.stepDone .stepDot {
+  border-color: var(--in);
+  background-color: var(--in);
+  color: #fff;
+}
+
+.step:last-child.stepDone .stepDot {
+  border-color: var(--out);
+  background-color: var(--out);
+}
+
+/* Ang susunod na kailangan mong gawin — kumikislap */
+.stepNext .stepDot {
+  border-color: var(--dash-navy);
+  color: var(--dash-navy);
+}
+
+.stepNext .stepDot::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px solid var(--dash-navy);
+  border-radius: 50%;
+  opacity: 0;
+  animation: stepPulse 1.8s ease-out infinite;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stepLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dash-muted);
+}
+
+.stepValue {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.attendFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #d6dce8;
+}
+
+.hintSmall {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--dash-muted);
+}
+
+.qrBtn,
+.scanBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.95rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background-color: #fff;
-  color: var(--color-muted);
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition), border-color var(--transition);
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color var(--transition), transform var(--transition);
 }
 
-.filter:hover {
-  border-color: var(--color-primary);
+.qrBtn {
+  margin-left: auto;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  box-shadow: 0 6px 16px rgba(255, 210, 0, 0.35);
 }
 
-.filterActive {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+.qrBtn:hover {
+  background-color: #ffdc3d;
+  transform: translateY(-1px);
 }
 
-.filterCount {
-  min-width: 1.4rem;
-  padding: 0 0.4rem;
-  border-radius: 999px;
-  background-color: var(--color-surface);
-  font-size: 0.75rem;
-  text-align: center;
+.scanBtn {
+  background-color: var(--dash-navy-deep);
+  color: #fff;
 }
 
-.filterActive .filterCount {
-  background-color: #fff;
+.scanBtn:hover {
+  background-color: var(--dash-navy);
 }
 
+.scanBtn svg {
+  color: var(--dash-yellow);
+}
+
+.qrBtn:focus-visible,
+.scanBtn:focus-visible,
+.toggle:focus-visible,
+.exportBtn:focus-visible,
+.manualBtn:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   PARTICIPANTS PER EVENT — Officer at Adviser
+   ================================================================ */
+
+/* Bilang ng sasali — tile sa kanan */
 .countBox {
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 4.5rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 10px;
-  background-color: var(--color-surface);
+  justify-content: center;
+  gap: 2px;
+  min-width: 96px;
+  min-height: 116px;
+  padding: 12px;
+  border-radius: 16px;
+  background-color: var(--soft);
+}
+
+.countIcon {
+  color: #8a96ae;
 }
 
 .countNum {
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
 }
 
 .countLabel {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--dash-muted);
+}
+
+.s_ongoing .countBox {
+  background-color: var(--dash-navy);
+  color: #fff;
+}
+
+.s_ongoing .countIcon,
+.s_ongoing .countLabel {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Attendance meter: teksto + dalawang bar (In, Out) */
+.meter {
+  margin-top: 12px;
+  max-width: 420px;
+}
+
+.attendMeta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dash-muted);
+}
+
+.attendMeta strong {
+  color: var(--dash-ink);
+  font-weight: 800;
+}
+
+.bars {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #edf0f6;
+}
+
+.barIn,
+.barOut {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.6s ease;
+}
+
+.barIn {
+  background-color: var(--in);
+}
+
+.barOut {
+  background-color: var(--out);
+}
+
+/* ---------- MGA BUTTON SA IBABA NG CARD ---------- */
+.cardActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1f6;
+}
+
+.toggle,
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color var(--transition), border-color var(--transition),
+    color var(--transition);
 }
 
 .toggle {
-  margin-top: 0.75rem;
-  padding: 0.35rem 0.75rem;
   border: none;
-  border-radius: 8px;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.87rem;
-  font-weight: 600;
+  background-color: var(--soft);
+  color: var(--dash-navy);
 }
 
 .toggle:hover {
-  background-color: var(--color-primary-soft);
+  background-color: #e8eefc;
+}
+
+.toggle svg,
+.exportBtn svg,
+.scanBtn svg,
+.qrBtn svg {
+  flex-shrink: 0;
+}
+
+.chevron {
+  transition: transform 0.25s ease;
+}
+
+.toggle[aria-expanded='true'] .chevron {
+  transform: rotate(180deg);
+}
+
+.exportBtn {
+  margin-left: auto;
+  border: 1.5px solid var(--line);
+  background-color: #fff;
+  color: var(--dash-navy);
+}
+
+.exportBtn:hover:not(:disabled) {
+  border-color: var(--dash-navy);
+}
+
+.exportBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .panelMuted,
 .panelError {
-  margin-top: 0.6rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 10px;
-  background-color: var(--color-surface);
-  font-size: 0.87rem;
-  color: var(--color-muted);
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background-color: var(--soft);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dash-muted);
 }
 
 .panelError {
@@ -260,200 +804,142 @@
   color: #b42318;
 }
 
+/* ---------- ROSTER (listahan ng sasali) ---------- */
 .people {
-  margin: 0.6rem 0 0;
-  padding: 0;
-  list-style: none;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  max-height: 22rem;
+  margin: 12px 0 0;
+  padding: 4px;
+  max-height: 26rem;
   overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background-color: #fbfcfe;
 }
 
 .person {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px 38px minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.9rem;
-  font-size: 0.9rem;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+.person:hover {
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(3, 27, 75, 0.05);
 }
 
 .person + .person {
-  border-top: 1px solid var(--color-border);
+  margin-top: 2px;
 }
 
 .num {
-  min-width: 1.5rem;
-  font-size: 0.8rem;
-  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+  color: #a3adc2;
   text-align: right;
 }
 
-.name {
-  flex: 1;
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--dash-navy);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   min-width: 0;
-  font-weight: 600;
+}
+
+.name {
+  font-size: 14.5px;
+  font-weight: 800;
   overflow-wrap: anywhere;
 }
 
-.role {
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background-color: var(--color-surface);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-muted);
-}
-
-.when {
-  font-size: 0.78rem;
-  color: var(--color-muted);
-  white-space: nowrap;
-}
-
-@media (max-width: 520px) {
-  .row {
-    flex-wrap: wrap;
-  }
-
-  .thumb,
-  .thumbPlaceholder {
-    width: 64px;
-    height: 48px;
-  }
-
-  /* Sa maliit na screen, sa ilalim na ang bilang */
-  .main {
-    flex-basis: calc(100% - 64px - 1rem);
-  }
-
-  .countBox {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 0.35rem;
-    width: 100%;
-  }
-
-  .person {
-    flex-wrap: wrap;
-  }
-
-  .when {
-    width: 100%;
-    padding-left: 2.25rem;
-  }
-}
-/* ============================================================
-   QR ATTENDANCE (Time In / Time Out)
-   ============================================================ */
-
-/* Linya ng Time In / Time Out sa "Sinalihan ko" */
-.attendLine {
+.whoMeta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.55rem;
+  gap: 4px 8px;
+}
+
+.role {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: #e8eefc;
+  color: var(--dash-navy);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.when {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a96ae;
+}
+
+.times {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .chip {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.2rem;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  background-color: var(--color-surface);
-  color: var(--color-muted);
-  font-size: 0.76rem;
-  font-weight: 600;
+  gap: 3px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background-color: var(--soft);
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 800;
   white-space: nowrap;
 }
 
 .chipIn {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+  background-color: var(--in-soft);
+  color: #17683a;
 }
 
 .chipOut {
-  background-color: #fff1e0;
-  color: #9a4a00;
+  background-color: var(--out-soft);
+  color: #a33f00;
 }
 
 .manualTag {
-  font-size: 0.68rem;
-  font-weight: 500;
+  font-size: 10.5px;
+  font-weight: 700;
   opacity: 0.8;
 }
 
-.qrBtn,
-.scanBtn {
-  padding: 0.4rem 0.9rem;
-  border: none;
-  border-radius: 999px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  transition: background-color var(--transition);
-}
-
-.qrBtn:hover,
-.scanBtn:hover {
-  background-color: var(--color-primary-dark);
-}
-
-.hintSmall {
-  font-size: 0.76rem;
-  color: var(--color-muted);
-  font-style: italic;
-}
-
-/* Bilang ng Time In / Out sa bawat event (Officer/Adviser) */
-.attendMeta {
-  margin-top: 0.2rem;
-  font-size: 0.82rem;
-  color: var(--color-muted);
-}
-
-.attendMeta strong {
-  color: var(--color-text);
-}
-
-.cardActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-}
-
-.cardActions .toggle {
-  margin-top: 0;
-}
-
-/* Sa listahan: laging pwedeng bumaba sa susunod na linya */
-.person {
-  flex-wrap: wrap;
-}
-
-.times {
-  display: inline-flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
-
 .manualBtn {
-  padding: 0.25rem 0.7rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 999px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1.5px solid var(--dash-navy);
+  border-radius: 12px;
   background-color: #fff;
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 700;
+  color: var(--dash-navy);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color var(--transition), color var(--transition);
 }
 
 .manualBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
+  background-color: var(--dash-navy);
+  color: #fff;
 }
 
 .manualBtn:disabled {
@@ -461,30 +947,221 @@
   cursor: not-allowed;
 }
 
-.person .when {
-  width: 100%;
-  padding-left: 2.25rem;
+/* ---------- ANIMATION ---------- */
+@keyframes livePulse {
+  50% {
+    opacity: 0.3;
+  }
 }
 
-/* "I-export" ng attendance bawat event (Officer/Adviser) */
-.exportBtn {
-  margin-left: auto;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 8px;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background-color var(--transition);
+@keyframes stepPulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
 }
 
-.exportBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
+/* ================================================================
+   TABLET (makitid na listahan)
+   ================================================================ */
+@container (max-width: 720px) {
+  .mineCard,
+  .row {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .media {
+    width: 92px;
+    height: 92px;
+  }
+
+  /* Ang bilang ay bumababa sa sariling hanay, pahalang */
+  .countBox {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px 14px;
+  }
+
+  .countIcon {
+    align-self: center;
+  }
+
+  .countNum {
+    font-size: 26px;
+  }
+
+  .meter {
+    max-width: none;
+  }
+
+  /* Roster: oras at button sa ilalim ng pangalan */
+  .person {
+    grid-template-columns: 24px 38px minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .times,
+  .manualBtn {
+    grid-column: 3;
+  }
+
+  .manualBtn {
+    justify-self: start;
+  }
 }
 
-.exportBtn:disabled {
-  opacity: 0.6;
-  cursor: wait;
+/* ================================================================
+   PHONE
+   ================================================================ */
+@container (max-width: 520px) {
+  .card {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .mineCard,
+  .row {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .media {
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+  }
+
+  .dateTag {
+    left: 5px;
+    bottom: 5px;
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+
+  .dateTag b {
+    font-size: 14px;
+  }
+
+  .thumbPlaceholder {
+    padding-bottom: 22px;
+    font-size: 22px;
+  }
+
+  .title {
+    font-size: 17px;
+  }
+
+  .metaList {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Tracker at QR: buong lapad ng card (hindi lang sa ilalim
+     ng detalye) para may luwag */
+  .attend {
+    margin-left: -84px;
+    padding: 12px;
+  }
+
+  .stepValue {
+    font-size: 16px;
+  }
+
+  .attendFoot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .qrBtn {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Mga button: Scan buong lapad, View at Export magkatabi */
+  .scanBtn {
+    flex: 1 1 100%;
+  }
+
+  /* Magkatabi kapag kasya; kapag hindi, kanya-kanyang hanay */
+  .toggle,
+  .exportBtn {
+    flex: 1 1 150px;
+    margin-left: 0;
+    padding: 0 12px;
+    font-size: 13.5px;
+  }
+
+  .cardActions .hintSmall {
+    flex-basis: 100%;
+  }
+
+  .people {
+    padding: 2px;
+  }
+
+  .person {
+    grid-template-columns: 20px 34px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 8px;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+}
+
+/* Buod at tabs sa phone (@media dahil wala sa loob ng .list) */
+@media (max-width: 560px) {
+  .tabs {
+    display: grid;
+    width: 100%;
+  }
+
+  .tab {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat {
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+  }
+
+  .findMore {
+    grid-column: 1 / -1;
+    justify-content: center;
+    min-height: 46px;
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabThumb,
+  .barIn,
+  .barOut,
+  .chevron {
+    transition: none;
+  }
+
+  .badge_ongoing .badgeDot,
+  .stepNext .stepDot::after {
+    animation: none;
+  }
 }

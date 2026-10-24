@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  Activity,
+  ArrowUpRight,
+  Building2,
+  CalendarDays,
+  ClipboardCheck,
+  FileText,
+  Gem,
+  Megaphone,
+  Users,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
-import { getRoleConfig } from '../config/roles.js'
+import { getRoleConfig, ROLE_KEYS } from '../config/roles.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { displayNameOf, firstNameOf } from '../lib/profile.js'
 import { countRecentAnnouncements } from '../lib/announcements.js'
@@ -321,6 +332,178 @@ function Dashboard() {
     )
   }
 
+  /* ============================================================
+     BENTO LAYOUT — layout: 'bento' sa config/roles.js
+     (Member, Officer, Adviser)
+
+     Pareho ang data at mga numero sa itaas (statValue); ibang
+     hugis lang ng tile ayon sa key (BENTO_TILES):
+       upcomingEvents, newAnnouncements,
+       pendingProposals, memberCount    → malaking numero + icon
+       ogBalance                        → dilaw na tile na may gem
+       attendanceRate, myAttendanceRate → ring gauge
+
+     Ang PUWESTO ng bawat tile sa grid ay nasa BENTO_LAYOUTS
+     (iba-iba bawat role, dahil iba-iba ang bilang ng stat).
+     ============================================================ */
+  if (roleConfig.dashboard.layout === 'bento') {
+    const bento = BENTO_LAYOUTS[role] ?? BENTO_LAYOUTS[ROLE_KEYS.MEMBER]
+    const orgName = profile?.organizations?.name
+    const cards = roleConfig.dashboard.cards
+
+    return (
+      <div className={styles.bentoPage}>
+        <div className={styles.bentoWrap}>
+          <div className={`${styles.bento} ${bento.gridClass ?? ''}`}>
+            <div
+              className={`${styles.tile} ${styles.hero} ${
+                bento.identity ? styles.heroWithMeta : ''
+              }`}
+            >
+              <span className={styles.heroArt} aria-hidden="true">
+                <svg width="360" height="360" viewBox="0 0 360 360" fill="none">
+                  <circle cx="180" cy="180" r="170" stroke="#fff" strokeOpacity="0.07" strokeWidth="2" />
+                  <circle cx="180" cy="180" r="125" stroke="#fff" strokeOpacity="0.09" strokeWidth="2" />
+                  <circle cx="180" cy="180" r="80" stroke="#fff" strokeOpacity="0.11" strokeWidth="2" />
+                  <circle className={styles.heroDot} cx="64" cy="132" r="9" fill="var(--dash-yellow)" />
+                </svg>
+              </span>
+
+              {/* Bell sa kanang itaas (notifications: true sa config) */}
+              {roleConfig.notifications && (
+                <div className={styles.heroBell}>
+                  <NotificationBell variant="onDark" />
+                </div>
+              )}
+
+              {/* Officer at Adviser: avatar + role · org (galing sa
+                  lumang welcome card — hindi inalis, inilipat lang) */}
+              {bento.identity && (
+                <div className={styles.heroMeta}>
+                  <Avatar
+                    src={profile?.avatar_url}
+                    name={fullName}
+                    size="sm"
+                    className={styles.heroAvatar}
+                  />
+                  <p className={styles.heroBadge}>
+                    {roleConfig.label}
+                    {orgName && ` · ${orgName}`}
+                  </p>
+                </div>
+              )}
+
+              <h1 className={styles.heroTitle}>
+                Hello,
+                <br />
+                <span>{firstName}!</span>
+              </h1>
+            </div>
+
+            {roleConfig.dashboard.stats.map((stat) => renderBentoTile(stat, bento))}
+          </div>
+        </div>
+
+        {roleConfig.calendar && <DashboardCalendar eyebrow="Event Calendar" />}
+
+        {/* Sections cards — Officer at Adviser (walang laman ang
+            cards ng Member, kaya hindi lumalabas sa kanya) */}
+        {cards.length > 0 && (
+          <section className={styles.sections}>
+            <h2 className={styles.sectionsTitle}>Sections</h2>
+
+            <div className={styles.sectionsGrid}>
+              {cards.map((card) => {
+                const Icon = SECTION_ICONS[card.to]
+                return (
+                  <Link key={card.to} to={card.to} className={styles.sectionCard}>
+                    <span className={styles.sectionGo} aria-hidden="true">
+                      <ArrowUpRight size={16} strokeWidth={2.4} />
+                    </span>
+                    <span className={styles.sectionIcon} aria-hidden="true">
+                      {Icon ? <Icon size={22} /> : card.icon}
+                    </span>
+                    <div>
+                      <h3 className={styles.sectionName}>{card.title}</h3>
+                      {card.text && <p className={styles.sectionText}>{card.text}</p>}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
+      </div>
+    )
+  }
+
+  function renderBentoTile(stat, bento) {
+    const value = statValue(stat)
+    const tile = BENTO_TILES[stat.key] ?? {}
+    const place = bento.tiles[stat.key] ?? ''
+
+    return (
+      <Link
+        key={stat.key ?? stat.label}
+        to={stat.to}
+        state={stat.state}
+        className={`${styles.tile} ${styles.statTile} ${tile.className ?? ''} ${place}`}
+      >
+        <span className={styles.go} aria-hidden="true">
+          <ArrowUpRight size={18} strokeWidth={2.4} />
+        </span>
+
+        {tile.kind === 'gem' ? (
+          <>
+            <span className={styles.gemArt} aria-hidden="true">
+              <svg viewBox="0 0 230 200" fill="none">
+                <path d="M55 10h120l50 60-110 125L5 70Z" fill="var(--dash-gold)" />
+                <path
+                  d="M55 10 85 70 115 10 145 70 175 10M5 70h220M85 70l30 125 30-125"
+                  stroke="var(--dash-navy-deep)"
+                  strokeOpacity="0.22"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M55 10h120l50 60-110 125L5 70Z"
+                  stroke="var(--dash-navy-deep)"
+                  strokeOpacity="0.28"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className={`${styles.tileLabel} ${styles.topLabel}`}>{stat.label}</span>
+            <span className={styles.ogValue}>
+              <span className={`${styles.num} ${styles.ogNum}`}>{value}</span>
+              <span className={styles.tileLabel}>OG</span>
+            </span>
+          </>
+        ) : tile.kind === 'ring' ? (
+          <>
+            <span className={`${styles.tileLabel} ${styles.topLabel}`}>{stat.label}</span>
+            <AttendanceRing value={value} />
+            <span />
+          </>
+        ) : (
+          <>
+            <span className={styles.tileIcon} aria-hidden="true">
+              {tile.Icon && <tile.Icon size={22} />}
+            </span>
+            <span className={styles.numRow}>
+              <span className={styles.num}>{value}</span>
+              <span className={styles.tileLabel}>
+                {stat.label}
+                {stat.tag && <span className={styles.tileTag}>{stat.tag}</span>}
+              </span>
+            </span>
+          </>
+        )}
+      </Link>
+    )
+  }
+
   return (
     <>
       <div className={styles.welcomeCard}>
@@ -396,6 +579,110 @@ function groupStats(stats) {
     else groups.push({ title, stats: [stat] })
   }
   return groups
+}
+
+/* HUGIS ng bawat stat tile sa bento (key → tile).
+   Pareho sa lahat ng role na naka-bento. */
+const BENTO_TILES = {
+  upcomingEvents: { Icon: CalendarDays },
+  newAnnouncements: { Icon: Megaphone },
+  pendingProposals: { Icon: FileText },
+  memberCount: { Icon: Users },
+  ogBalance: { className: styles.tileGem, kind: 'gem' },
+  attendanceRate: { kind: 'ring' },
+  myAttendanceRate: { kind: 'ring' },
+}
+
+/* PUWESTO ng bawat stat tile sa grid, bawat role (key → class).
+   Ang mismong grid-column/grid-row ay nasa Dashboard.module.css.
+
+     gridClass — dagdag na class sa .bento (ibang taas ng row)
+     identity  — ipakita ang avatar at "Role · Org" sa pagbati
+                 (dating nasa welcome card ng Officer/Adviser)
+
+   Member : pagbati + 2 stat sa kaliwa, Gems at attendance sa kanan
+   Officer: pagbati + proposals + members sa itaas;
+            Gems, org attendance, at sariling attendance sa ibaba
+   Adviser: pagbati + proposals + members sa kaliwa;
+            org attendance na matangkad sa kanan */
+const BENTO_LAYOUTS = {
+  [ROLE_KEYS.MEMBER]: {
+    tiles: {
+      upcomingEvents: styles.tEvents,
+      newAnnouncements: styles.tAnn,
+      ogBalance: styles.tOg,
+      attendanceRate: styles.tAtt,
+    },
+  },
+  [ROLE_KEYS.OFFICER]: {
+    gridClass: styles.bentoOfficer,
+    identity: true,
+    tiles: {
+      pendingProposals: styles.oProposals,
+      memberCount: styles.oMembers,
+      attendanceRate: styles.oOrgAtt,
+      myAttendanceRate: styles.oMyAtt,
+      ogBalance: styles.oOg,
+    },
+  },
+  [ROLE_KEYS.ADVISER]: {
+    gridClass: styles.bentoAdviser,
+    identity: true,
+    tiles: {
+      pendingProposals: styles.aProposals,
+      memberCount: styles.aMembers,
+      attendanceRate: styles.aAtt,
+    },
+  },
+}
+
+/* Icon ng Sections cards (card.to → icon). Kapag wala rito,
+   ang icon sa config/roles.js ang gagamitin. */
+const SECTION_ICONS = {
+  '/proposals': FileText,
+  '/members': Users,
+  '/announcements': Megaphone,
+  '/rewards': Gem,
+  '/attendance': ClipboardCheck,
+  '/org-health': Activity,
+  '/org-profile': Building2,
+  '/events': CalendarDays,
+}
+
+/* Circumference ng ring (r = 78 sa viewBox na 184) */
+const RING_LENGTH = 2 * Math.PI * 78
+
+/* "86%" → 86 · "—" o "…" → null
+   (string ang ibinabalik ng fetchAttendanceRates(), kaya dito
+   na lang kinukuha ang numero para sa ring) */
+function percentOf(value) {
+  const n = parseFloat(String(value))
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null
+}
+
+function AttendanceRing({ value }) {
+  const pct = percentOf(value)
+
+  return (
+    <span className={styles.ring}>
+      <svg viewBox="0 0 184 184" aria-hidden="true">
+        <circle className={styles.ringTrack} cx="92" cy="92" r="78" />
+        {pct > 0 && (
+          <circle
+            className={styles.ringBar}
+            cx="92"
+            cy="92"
+            r="78"
+            strokeDasharray={`${(pct / 100) * RING_LENGTH} ${RING_LENGTH}`}
+          />
+        )}
+      </svg>
+      <span className={styles.ringValue}>
+        <b>{value}</b>
+        {pct !== null && <small>attended</small>}
+      </span>
+    </span>
+  )
 }
 
 export default Dashboard

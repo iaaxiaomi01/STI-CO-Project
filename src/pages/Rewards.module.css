@@ -1,80 +1,183 @@
-/* ============================================================
-   REWARDS — kapareho ng hitsura ng Attendance at Events
-   ============================================================ */
+/* ================================================================
+   REWARDS — "Gem Vault"
 
-/* ---------- BALANCE CARD ---------- */
-.balanceCard {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  margin-bottom: 1.5rem;
-  padding: 1.15rem 1.35rem;
-  border: 1px solid #d6e1fc;
-  border-radius: var(--radius);
-  background:
-    radial-gradient(circle at 92% 20%, rgba(255, 200, 44, 0.22), transparent 38%),
-    linear-gradient(120deg, var(--color-primary-soft), #fff 75%);
-  box-shadow: var(--shadow);
+   Para sa mga estudyante: masaya at makulay ang pagkakita sa OG.
+   Kulay ng STI-CO: navy, deep navy, dilaw at gold.
+   Walang card/tile: ang OG ay nasa "night sky" na kurbado ang
+   ilalim, ang shop ay parang shelf, at ang mga listahan ay
+   hinahati lang ng guhit.
+   ================================================================ */
+.page {
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+
+  --navy: var(--dash-navy);
+  --deep: var(--dash-navy-deep);
+  --yellow: var(--dash-yellow);
+  --gold: var(--dash-gold);
+  --muted: var(--dash-muted);
+  --hair: rgba(3, 27, 75, 0.12);
+  --tint: #e2e8f5;
+  --green: #1b8a4c;
+  --green-soft: #e1f4e8;
+  --red: #c4231a;
+  --red-soft: #fde3e0;
 }
 
-.balanceGem {
+.muted {
+  padding: 2rem 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ================================================================
+   OG MO — "night sky" na may kumikinang na gem
+   ================================================================ */
+.balanceCard {
+  position: relative;
+  isolation: isolate;
   display: flex;
-  flex-shrink: 0;
   align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
+  gap: 30px;
+  padding: 36px 40px 64px;
+  overflow: hidden;
+  /* Kurbado ang ilalim — hindi kahon */
+  border-radius: 36px 36px 50% 50% / 36px 36px 70px 70px;
+  background:
+    radial-gradient(circle at 16% 45%, rgba(255, 210, 0, 0.28), transparent 32%),
+    radial-gradient(circle at 88% -10%, rgba(91, 133, 240, 0.55), transparent 45%),
+    linear-gradient(160deg, #0b44ad 0%, var(--navy) 35%, var(--deep) 80%);
+  color: #fff;
+}
+
+/* Mga bituin */
+.sky {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.sky i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
   background-color: #fff;
-  box-shadow: 0 6px 18px rgba(30, 79, 216, 0.18);
+  opacity: 0.7;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.sky i:nth-child(1) { top: 18%; left: 42%; animation-delay: 0s; }
+.sky i:nth-child(2) { top: 30%; left: 78%; animation-delay: 0.6s; width: 3px; height: 3px; }
+.sky i:nth-child(3) { top: 62%; left: 60%; animation-delay: 1.2s; }
+.sky i:nth-child(4) { top: 14%; left: 90%; animation-delay: 1.8s; width: 5px; height: 5px; background-color: var(--yellow); }
+.sky i:nth-child(5) { top: 74%; left: 86%; animation-delay: 0.9s; width: 3px; height: 3px; }
+.sky i:nth-child(6) { top: 46%; left: 30%; animation-delay: 2.2s; width: 3px; height: 3px; background-color: var(--yellow); }
+
+/* Ang gem */
+.balanceGem {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  animation: gemFloat 4s ease-in-out infinite;
+}
+
+.gemGlow {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 210, 0, 0.55), rgba(255, 210, 0, 0) 70%);
+  filter: blur(6px);
+  animation: glow 3s ease-in-out infinite;
 }
 
 .balanceGemSvg {
-  filter: drop-shadow(0 2px 3px rgba(23, 64, 173, 0.25));
+  position: relative;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+}
+
+/* Gawing dilaw/gold ang gem dito (asul ito sa ibang lugar) */
+.balanceGem path:nth-of-type(1) {
+  fill: var(--gold);
+}
+
+.balanceGem path:nth-of-type(2) {
+  fill: #ffe45c;
+}
+
+.balanceGem path:nth-of-type(3) {
+  fill: #fff;
+  opacity: 0.5;
+}
+
+.gemSpark {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  color: #fff6c2;
+  animation: twinkle 2.4s ease-in-out infinite;
 }
 
 .balanceText {
+  position: relative;
   min-width: 0;
 }
 
 .balanceLabel {
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--color-primary-dark);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
+/* Malaking gold na numero */
 .balanceValue {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
-  font-size: clamp(1.9rem, 6vw, 2.4rem);
+  gap: 10px;
+  margin-top: 6px;
+  background: linear-gradient(180deg, #fff6c2 0%, var(--yellow) 55%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: clamp(56px, 8vw, 84px);
   font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--color-text);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
 .balanceUnit {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-primary);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 24px;
+  letter-spacing: 0;
 }
 
 .balanceHint {
-  margin-top: 0.15rem;
-  font-size: 0.84rem;
-  color: var(--color-muted);
+  margin-top: 10px;
+  max-width: 44ch;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-/* ---------- TABS ---------- */
+/* ================================================================
+   TABS — pill dock (lumulutang sa kurba ng langit)
+   ================================================================ */
 .tabs {
   display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--color-border);
+  gap: 8px;
+  margin: 0 0 26px;
+  padding: 6px 2px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -83,216 +186,173 @@
   display: none;
 }
 
-.tab {
-  flex-shrink: 0;
-  margin-bottom: -1px;
-  padding: 0.6rem 1rem;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  color: var(--color-muted);
-  font-size: 0.92rem;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: color var(--transition), border-color var(--transition);
+/* Kapag may "langit" sa itaas: pataas nang kaunti, nakapatong sa kurba */
+.balanceCard + .tabs {
+  position: relative;
+  z-index: 1;
+  margin-top: -32px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-.tab:hover {
-  color: var(--color-text);
+.tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 999px;
+  background-color: #e6ebf7;
+  color: var(--deep);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(3, 27, 75, 0.1);
+  cursor: pointer;
+  transition: background-color var(--transition), transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.tab:hover:not(.tabActive) {
+  background-color: #d8e0f2;
+  transform: translateY(-1px);
 }
 
 .tabActive {
-  border-bottom-color: var(--color-primary);
-  color: var(--color-primary-dark);
+  background-color: var(--yellow);
+  color: var(--deep);
+  box-shadow: 0 8px 22px rgba(247, 185, 0, 0.45);
 }
 
-/* ---------- KARANIWAN ---------- */
+.tab:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   MENSAHE AT MALILIIT NA BAHAGI
+   ================================================================ */
 .notice {
-  margin-bottom: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  background-color: #e8f6ee;
-  color: #1c6b3f;
-  font-size: 0.9rem;
-  font-weight: 600;
+  margin-bottom: 22px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #fff1a6, #ffe27a);
+  color: var(--deep);
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .linkButton {
   padding: 0;
   border: none;
   background: none;
-  color: inherit;
-  font-weight: 700;
+  color: var(--deep);
+  font: inherit;
+  font-weight: 800;
   text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
-.muted {
-  padding: 2rem 0;
-  color: var(--color-muted);
+.summary {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
-.summary,
-.summaryInline {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.summaryInline {
-  margin: 0;
-}
-
-.summary strong,
-.summaryInline strong {
-  color: var(--color-text);
+.summary strong {
+  padding: 0 3px;
+  background: linear-gradient(transparent 58%, rgba(255, 210, 0, 0.7) 58%);
+  color: var(--deep);
+  font-weight: 800;
 }
 
 .hintSmall {
-  font-size: 0.78rem;
-  color: var(--color-muted);
-  font-style: italic;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
-.list {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0;
-  list-style: none;
-}
-
-.card {
-  padding: 0.9rem 1.1rem;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
-}
-
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.25rem;
-}
-
-.title {
-  font-size: 1.02rem;
-  overflow-wrap: anywhere;
-}
-
-.meta {
-  font-size: 0.87rem;
-  color: var(--color-muted);
-  overflow-wrap: anywhere;
-}
-
-.attendMeta {
-  margin-top: 0.2rem;
-  font-size: 0.82rem;
-  color: var(--color-muted);
-}
-
-.attendMeta strong {
-  color: var(--color-text);
-}
-
-/* ---------- BADGES ---------- */
-.badge {
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
+.panelError,
+.panelOk {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  background-color: var(--color-surface);
-  color: var(--color-muted);
 }
 
-.badge_upcoming,
-.badge_pending {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+.panelError {
+  background-color: var(--red-soft);
+  color: #a61b1b;
 }
 
-.badge_ongoing,
-.badge_claimed {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+.panelOk {
+  background-color: var(--green-soft);
+  color: #17683a;
 }
 
-.badge_completed {
-  background-color: #eef0f4;
+/* ---------- BADGE ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--tint);
   color: #3b4660;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* "To claim" */
+.badge_pending {
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.badge_claimed {
+  background-color: var(--green-soft);
+  color: #17683a;
 }
 
 .badge_cancelled {
-  background-color: #fdecec;
-  color: #b42318;
+  background-color: #eceef3;
+  color: #6b7387;
 }
 
-/* ---------- FILTERS ---------- */
-.filters {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.1rem;
+.badge_upcoming {
+  background-color: #dfe7fb;
+  color: var(--navy);
 }
 
-.filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.95rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background-color: #fff;
-  color: var(--color-muted);
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition), border-color var(--transition);
+.badge_ongoing {
+  background-color: var(--green-soft);
+  color: #17683a;
 }
 
-.filter:hover {
-  border-color: var(--color-primary);
+.badge_completed {
+  background-color: #eceef3;
+  color: #59647c;
 }
 
-.filterActive {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-}
-
-.filterCount {
-  min-width: 1.4rem;
-  padding: 0 0.4rem;
-  border-radius: 999px;
-  background-color: var(--color-surface);
-  font-size: 0.75rem;
-  text-align: center;
-}
-
-.filterActive .filterCount {
-  background-color: #fff;
-}
-
-/* ---------- SHOP GRID ---------- */
+/* ================================================================
+   SHOP — parang shelf (walang card)
+   ================================================================ */
 .itemGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 38px 26px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -300,165 +360,268 @@
 .itemCard {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  min-width: 0;
 }
 
-.itemHidden {
-  opacity: 0.65;
+.itemMedia {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.itemCard:hover .itemMedia {
+  transform: translateY(-4px) rotate(-1deg);
 }
 
 .itemImage,
 .itemPlaceholder {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
+  border-radius: 26px;
+  box-shadow: 0 14px 30px rgba(3, 27, 75, 0.16);
 }
 
 .itemImage {
   object-fit: cover;
-  background-color: var(--color-surface);
+  background-color: var(--tint);
 }
 
 .itemPlaceholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-surface));
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 210, 0, 0.35), transparent 45%),
+    linear-gradient(150deg, var(--navy), var(--deep));
+}
+
+.itemPlaceholder svg {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+
+.itemPlaceholder path:nth-of-type(1) {
+  fill: var(--gold);
+}
+
+.itemPlaceholder path:nth-of-type(2) {
+  fill: #ffe45c;
+}
+
+/* Price tag — dilaw na pill sa kanto ng larawan */
+.itemPrice {
+  position: absolute;
+  left: 14px;
+  bottom: -14px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background-color: var(--yellow);
+  color: var(--deep);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(247, 185, 0, 0.45);
+}
+
+.itemPrice path:nth-of-type(1) {
+  fill: var(--deep);
+}
+
+.itemPrice path:nth-of-type(2) {
+  fill: var(--navy);
 }
 
 .itemBody {
-  flex: 1;
-  padding: 0.85rem 1rem 0.4rem;
+  padding-top: 26px;
 }
 
 .itemName {
-  font-size: 1rem;
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
 
 .itemDesc {
-  display: -webkit-box;
-  margin-top: 0.2rem;
-  overflow: hidden;
-  font-size: 0.85rem;
-  color: var(--color-muted);
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  margin-top: 6px;
+  color: #3a4766;
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
 .itemFacts {
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
 }
 
 .itemFooter {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  padding: 0.5rem 1rem 0.9rem;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
 }
 
-.itemPrice {
-  font-size: 1.05rem;
-  color: var(--color-text);
+/* Gaano ka na kalapit sa presyo */
+.progress {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #dbe2f0;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), var(--yellow));
 }
 
 .redeemBtn {
-  padding: 0.45rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 14px;
   border: none;
-  border-radius: 999px;
-  background-color: var(--color-primary);
+  border-radius: 14px;
+  background-color: var(--deep);
   color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  transition: background-color var(--transition);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), transform var(--transition);
+}
+
+.redeemBtn svg {
+  color: var(--yellow);
 }
 
 .redeemBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
+  background-color: var(--navy);
+  transform: translateY(-1px);
 }
 
 .redeemBtn:disabled {
-  background-color: var(--color-surface);
-  color: var(--color-muted);
+  border: 1.5px dashed rgba(3, 27, 75, 0.25);
+  background-color: transparent;
+  color: var(--muted);
   cursor: not-allowed;
 }
 
-/* ---------- MANAGE SHOP ---------- */
+.redeemBtn:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* Kaya mo nang i-redeem → kumikinang ang larawan */
+.itemReady .itemImage,
+.itemReady .itemPlaceholder {
+  box-shadow: 0 0 0 3px var(--yellow), 0 14px 30px rgba(247, 185, 0, 0.3);
+}
+
+/* ---------- MANAGE SHOP (Adviser) ---------- */
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 26px;
 }
 
-.addBtn,
-.smallPrimary,
-.claimBtn,
-.releaseBtn {
-  padding: 0.5rem 1.1rem;
+.summaryInline {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.summaryInline strong {
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 0 20px;
   border: none;
   border-radius: 999px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: 0.88rem;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background-color var(--transition);
+  background-color: var(--yellow);
+  color: var(--deep);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(247, 185, 0, 0.4);
+  cursor: pointer;
+  transition: transform var(--transition), background-color var(--transition);
 }
 
-.addBtn:hover,
-.smallPrimary:hover:not(:disabled),
-.claimBtn:hover:not(:disabled),
-.releaseBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
+.addBtn:hover {
+  background-color: #ffdc33;
+  transform: translateY(-1px);
 }
 
-.smallPrimary:disabled,
-.claimBtn:disabled,
-.releaseBtn:disabled {
+.itemHidden {
   opacity: 0.55;
-  cursor: not-allowed;
+}
+
+.itemHidden .itemImage,
+.itemHidden .itemPlaceholder {
+  filter: grayscale(0.8);
 }
 
 .manageActions {
   display: flex;
-  gap: 0.25rem;
-  padding: 0 0.6rem 0.7rem;
-  border-top: 1px solid var(--color-border);
-  padding-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 14px;
 }
 
 .textBtn,
 .textDanger {
-  padding: 0.3rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0;
   border: none;
-  border-radius: 8px;
   background: none;
-  color: var(--color-primary);
-  font-size: 0.85rem;
-  font-weight: 600;
+  color: var(--deep);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  background-image: linear-gradient(var(--yellow), var(--yellow));
+  background-repeat: no-repeat;
+  background-position: 0 85%;
+  background-size: 0 3px;
+  transition: background-size 0.25s ease;
 }
 
 .textBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
+  background-size: 100% 3px;
 }
 
 .textDanger {
-  color: #b42318;
+  color: var(--red);
+  background-image: linear-gradient(#f3a29b, #f3a29b);
 }
 
 .textDanger:hover:not(:disabled) {
-  background-color: #fdecec;
+  background-size: 100% 3px;
 }
 
 .textBtn:disabled,
@@ -467,462 +630,921 @@
   cursor: not-allowed;
 }
 
-/* ---------- MY REDEMPTIONS ---------- */
+.textBtn:focus-visible,
+.textDanger:focus-visible,
+.linkButton:focus-visible,
+.addBtn:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   LISTAHAN (My redemptions, Event rewards) — dashed na guhit lang
+   ================================================================ */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  padding: 22px 0;
+  border-bottom: 1.5px dashed rgba(3, 27, 75, 0.18);
+}
+
+.card:first-child {
+  padding-top: 4px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+.title {
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.outcome {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.reason {
+  display: block;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* ---------- MY REDEMPTIONS: claim code na parang coupon ---------- */
 .redemption {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 14px 24px;
 }
 
 .redemptionMain {
-  flex: 1;
-  min-width: 14rem;
+  flex: 1 1 260px;
+  min-width: 0;
 }
 
 .redemptionSide {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.6rem 0.9rem;
-  border: 1.5px dashed var(--color-primary);
-  border-radius: 12px;
-  background-color: var(--color-primary-soft);
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .codeSmallLabel {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-primary-dark);
-}
-
-.codeSmall,
-.codeChip {
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  color: var(--muted);
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .codeSmall {
-  font-size: 1.2rem;
-  user-select: all;
+  padding: 0 6px;
+  background: linear-gradient(transparent 52%, var(--yellow) 52%);
+  color: var(--deep);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 
 .redemptionSide .textDanger {
-  font-size: 0.78rem;
+  margin-top: 4px;
+  font-size: 12.5px;
 }
 
-.outcome {
-  margin-top: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--color-muted);
-}
-
-.reason {
-  display: block;
-  margin-top: 0.15rem;
-  font-style: italic;
-  color: var(--color-text);
-  overflow-wrap: anywhere;
-}
-
-/* ---------- OG HISTORY ---------- */
+/* ================================================================
+   OG HISTORY — malalaking numero + timeline
+   ================================================================ */
 .statRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 0;
+  margin-bottom: 26px;
 }
 
 .stat {
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background-color: #fff;
+  padding: 2px 30px;
+  border-left: 2px solid var(--hair);
+}
+
+.stat:first-child {
+  padding-left: 0;
+  border-left: none;
 }
 
 .statValue {
-  font-size: 1.35rem;
+  font-family: var(--font-display);
+  font-size: 40px;
   font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.stat:nth-child(1) .statValue {
+  color: var(--green);
+}
+
+.stat:nth-child(2) .statValue {
+  color: var(--red);
+}
+
+.stat:nth-child(3) .statValue {
+  padding: 0 4px;
+  background: linear-gradient(transparent 60%, var(--yellow) 60%);
+  color: var(--deep);
 }
 
 .statLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-muted);
 }
 
 .ledger {
+  position: relative;
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background-color: #fff;
+}
+
+/* Patayong linya ng timeline */
+.ledger::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 19px;
+  width: 2px;
+  background-color: var(--hair);
 }
 
 .ledgerRow {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.7rem 0.95rem;
-}
-
-.ledgerRow + .ledgerRow {
-  border-top: 1px solid var(--color-border);
+  gap: 14px;
+  padding: 10px 0;
 }
 
 .ledgerIcon {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: var(--color-surface);
-  color: var(--color-muted);
-  font-size: 0.9rem;
+  background-color: #dfe7fb;
+  color: var(--navy);
+  box-shadow: 0 0 0 4px var(--dash-ground);
 }
 
 .kind_event_reward {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
+  background-color: var(--yellow);
+  color: var(--deep);
 }
 
 .kind_refund {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+  background-color: var(--green-soft);
+  color: var(--green);
 }
 
 .ledgerText {
   display: flex;
-  flex: 1;
   flex-direction: column;
   min-width: 0;
 }
 
 .ledgerDesc {
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--deep);
+  font-size: 14.5px;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
 .ledgerWhen {
-  font-size: 0.76rem;
-  color: var(--color-muted);
-}
-
-/* ---------- EVENT REWARDS ---------- */
-.rewardBox {
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: center;
-  min-width: 6rem;
-  padding: 0.45rem 0.7rem;
-  border-radius: 10px;
-  background-color: var(--color-surface);
-}
-
-.rewardSub {
-  font-size: 0.72rem;
-  color: var(--color-muted);
-}
-
-.rewardNone {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-muted);
-}
-
-.released {
-  margin-top: 0.65rem;
-  padding: 0.5rem 0.8rem;
-  border-radius: 10px;
-  background-color: #e8f6ee;
-  color: #1c6b3f;
-  font-size: 0.84rem;
+  color: var(--muted);
+  font-size: 12px;
   font-weight: 600;
 }
 
-.rewardForm {
+.ledgerRow > :last-child {
+  font-size: 15px;
+}
+
+/* ================================================================
+   FILTER (Event rewards, Hand out items)
+   ================================================================ */
+.filters {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--color-border);
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 2px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.rewardLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.rewardInput {
-  width: 5.5rem;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font: inherit;
-  font-size: 0.92rem;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.rewardInput:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
-}
-
-.cardActions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-}
-
-.cardActions:empty {
+.filters::-webkit-scrollbar {
   display: none;
 }
 
-.panelError,
-.panelOk,
-.claimOk {
-  margin-top: 0.6rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 10px;
-  font-size: 0.87rem;
+.filter {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 6px 0 14px;
+  border: 1.5px solid rgba(3, 27, 75, 0.16);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--deep);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
 }
 
-.panelError {
-  background-color: #fdecec;
-  color: #b42318;
+.filter:hover {
+  border-color: rgba(3, 27, 75, 0.35);
 }
 
-.panelOk {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+.filterActive,
+.filterActive:hover {
+  border-color: var(--deep);
+  background-color: var(--deep);
+  color: #fff;
 }
 
-/* ---------- HAND OUT ITEMS ---------- */
+.filterCount {
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background-color: var(--tint);
+  color: var(--deep);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.filterActive .filterCount {
+  background-color: var(--yellow);
+}
+
+.filter:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   EVENT REWARDS — Adviser (nagtatakda) at Officer (nagre-release)
+   ================================================================ */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.attendMeta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.attendMeta strong {
+  color: var(--deep);
+  font-weight: 800;
+}
+
+/* Ang reward ng event — malaking numero na may gem */
+.rewardBox {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.rewardBox > :first-child:not(.rewardNone) {
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.rewardSub {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rewardNone {
+  padding: 6px 12px;
+  border: 1.5px dashed rgba(3, 27, 75, 0.25);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.released {
+  margin-top: 10px;
+  color: var(--green);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* Adviser: itakda ang reward */
+.rewardForm {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 16px;
+}
+
+.rewardLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.rewardInput {
+  width: 120px;
+  padding: 4px 0;
+  border: none;
+  border-bottom: 3px solid rgba(3, 27, 75, 0.25);
+  border-radius: 0;
+  background: transparent;
+  color: var(--deep);
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  transition: border-color var(--transition);
+}
+
+.rewardInput:focus {
+  outline: none;
+  border-bottom-color: var(--yellow);
+}
+
+.smallPrimary {
+  min-height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--deep);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), opacity var(--transition);
+}
+
+.smallPrimary:hover:not(:disabled) {
+  background-color: var(--navy);
+}
+
+.smallPrimary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rewardForm .hintSmall {
+  flex-basis: 100%;
+}
+
+/* Officer: i-release */
+.cardActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 16px;
+}
+
+.releaseBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 14px;
+  background-color: var(--yellow);
+  color: var(--deep);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  animation: releaseGlow 2.2s ease-in-out infinite;
+  transition: transform var(--transition);
+}
+
+.releaseBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.releaseBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  animation: none;
+}
+
+.smallPrimary:focus-visible,
+.releaseBtn:focus-visible,
+.claimBtn:focus-visible,
+.manualBtn:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   HAND OUT ITEMS — malaking claim code
+   ================================================================ */
 .claimForm {
-  margin-bottom: 0.5rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background-color: #fff;
-  box-shadow: var(--shadow);
+  margin-bottom: 20px;
 }
 
 .claimLabel {
   display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.85rem;
-  font-weight: 700;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .claimRow {
   display: flex;
-  gap: 0.6rem;
-  margin-bottom: 0.4rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin: 4px 0 8px;
 }
 
 .claimInput {
-  flex: 1;
+  flex: 1 1 240px;
   min-width: 0;
-  padding: 0.65rem 0.9rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  max-width: 380px;
+  padding: 6px 0;
+  border: none;
+  border-bottom: 3px solid var(--deep);
+  border-radius: 0;
+  background: transparent;
+  color: var(--deep);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  transition: border-color var(--transition);
+}
+
+.claimInput::placeholder {
+  color: rgba(3, 27, 75, 0.25);
 }
 
 .claimInput:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
+  outline: none;
+  border-bottom-color: var(--yellow);
+}
+
+.claimBtn {
+  min-height: 52px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 16px;
+  background-color: var(--deep);
+  color: var(--yellow);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), opacity var(--transition);
+}
+
+.claimBtn:hover:not(:disabled) {
+  background-color: var(--navy);
+}
+
+.claimBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .claimOk {
-  margin: 0 0 1rem;
-  background-color: #e8f6ee;
-  color: #1c6b3f;
-  font-size: 0.95rem;
-  font-weight: 700;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background-color: var(--green-soft);
+  color: #17683a;
+  font-size: 14.5px;
+  font-weight: 800;
 }
 
-.claimForm + .panelError {
-  margin: 0 0 1rem;
-}
-
+/* ================================================================
+   MGA TAO (Hand out items, Members' OG)
+   ================================================================ */
 .people {
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background-color: #fff;
 }
 
 .person {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.7rem 0.95rem;
-  font-size: 0.9rem;
-}
-
-.person + .person {
-  border-top: 1px solid var(--color-border);
+  gap: 10px 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hair);
 }
 
 .codeChip {
-  padding: 0.2rem 0.55rem;
-  border-radius: 8px;
-  background-color: var(--color-surface);
-  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: var(--deep);
+  color: var(--yellow);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
 
 .personMain {
   display: flex;
-  flex: 1;
+  flex: 1 1 220px;
   flex-direction: column;
-  min-width: 10rem;
-}
-
-.personSub {
-  font-size: 0.78rem;
-  color: var(--color-muted);
-}
-
-.personMain .outcome {
-  margin-top: 0.1rem;
+  min-width: 0;
 }
 
 .name {
-  flex: 1;
-  min-width: 0;
-  font-weight: 600;
+  color: var(--deep);
+  font-size: 15px;
+  font-weight: 800;
   overflow-wrap: anywhere;
+}
+
+.personSub {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.personMain .outcome {
+  margin-top: 2px;
+  font-size: 12.5px;
 }
 
 .personActions {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 14px;
 }
 
 .manualBtn {
-  padding: 0.3rem 0.8rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 999px;
-  background-color: #fff;
-  color: var(--color-primary);
-  font-size: 0.8rem;
-  font-weight: 700;
+  min-height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--yellow);
+  color: var(--deep);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition);
 }
 
 .manualBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
+  background-color: #ffdc33;
 }
 
 .manualBtn:disabled {
-  opacity: 0.55;
+  background-color: #e6e9f0;
+  color: var(--muted);
   cursor: not-allowed;
 }
 
-/* ---------- MEMBERS' OG ---------- */
+/* ---------- MEMBERS' OG — leaderboard ---------- */
 .num {
-  min-width: 1.5rem;
-  font-size: 0.8rem;
-  color: var(--color-muted);
-  text-align: right;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--tint);
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.person > .name {
+  flex: 1 1 160px;
+  min-width: 0;
 }
 
 .role {
-  padding: 0.15rem 0.6rem;
+  padding: 3px 9px;
   border-radius: 999px;
-  background-color: var(--color-surface);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-muted);
+  background-color: #dfe7fb;
+  color: var(--navy);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .earned {
-  font-size: 0.78rem;
-  color: var(--color-muted);
-  white-space: nowrap;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
 }
 
-@media (max-width: 520px) {
+.person > :last-child {
+  font-size: 16px;
+}
+
+/* Top 3 */
+.rank1 .num {
+  background: linear-gradient(145deg, #fff1a6, var(--gold));
+  box-shadow: 0 6px 16px rgba(247, 185, 0, 0.5);
+}
+
+.rank2 .num {
+  background: linear-gradient(145deg, #f4f6fa, #b9c2d3);
+  box-shadow: 0 6px 14px rgba(120, 132, 155, 0.35);
+}
+
+.rank3 .num {
+  background: linear-gradient(145deg, #f6d2b0, #d1874b);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(209, 135, 75, 0.4);
+}
+
+.rank1 .name {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.rank1 > :last-child {
+  font-size: 19px;
+}
+
+/* ================================================================
+   ANIMATION
+   ================================================================ */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes gemFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes releaseGlow {
+  0%,
+  100% {
+    box-shadow: 0 6px 16px rgba(247, 185, 0, 0.35);
+  }
+  50% {
+    box-shadow: 0 6px 26px rgba(247, 185, 0, 0.75);
+  }
+}
+
+/* ================================================================
+   TABLET
+   ================================================================ */
+@media (max-width: 760px) {
   .balanceCard {
-    padding: 1rem;
+    gap: 20px;
+    padding: 30px 26px 58px;
   }
 
   .balanceGem {
-    width: 52px;
-    height: 52px;
+    width: 104px;
+    height: 104px;
+  }
+
+  .balanceGemSvg {
+    width: 76px;
+    height: 76px;
   }
 
   .itemGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.65rem;
-  }
-
-  .itemBody {
-    padding: 0.7rem 0.75rem 0.3rem;
-  }
-
-  .itemFooter {
-    padding: 0.4rem 0.75rem 0.75rem;
-  }
-
-  .redeemBtn {
-    width: 100%;
-    padding: 0.45rem 0.5rem;
-    font-size: 0.78rem;
-  }
-
-  .statRow {
-    gap: 0.5rem;
-  }
-
-  .stat {
-    padding: 0.6rem 0.7rem;
-  }
-
-  .statValue {
-    font-size: 1.1rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 32px 18px;
   }
 
   .row {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .rewardBox {
     flex-direction: row;
-    gap: 0.5rem;
+    align-items: baseline;
+    gap: 10px;
+  }
+}
+
+/* ================================================================
+   PHONE
+   ================================================================ */
+@media (max-width: 520px) {
+  .balanceCard {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    padding: 26px 20px 56px;
+    border-radius: 28px 28px 50% 50% / 28px 28px 50px 50px;
+  }
+
+  .balanceValue {
+    justify-content: center;
+    font-size: 58px;
+  }
+
+  .balanceHint {
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 13.5px;
+  }
+
+  .balanceCard + .tabs {
+    margin-top: -28px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tab {
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  /* Shop: dalawa bawat hanay */
+  .itemGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 30px 14px;
+  }
+
+  .itemImage,
+  .itemPlaceholder {
+    border-radius: 20px;
+  }
+
+  .itemPrice {
+    left: 8px;
+    bottom: -12px;
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .itemName {
+    font-size: 16px;
+  }
+
+  .itemDesc {
+    font-size: 13px;
+  }
+
+  .redeemBtn {
+    min-height: 42px;
+    padding: 0 8px;
+    font-size: 12.5px;
+  }
+
+  /* My redemptions: claim code sa ilalim */
+  .redemptionSide {
+    align-items: flex-start;
     width: 100%;
   }
 
-  .redemptionSide {
+  /* OG history */
+  .stat {
+    padding: 2px 16px;
+  }
+
+  .statValue {
+    font-size: 30px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .claimInput {
+    font-size: 24px;
+  }
+
+  .claimBtn {
+    flex: 1 1 100%;
+  }
+
+  .personActions {
     width: 100%;
+  }
+
+  .manualBtn {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky i,
+  .balanceGem,
+  .gemGlow,
+  .gemSpark,
+  .releaseBtn {
+    animation: none;
+  }
+
+  .itemMedia,
+  .tab,
+  .redeemBtn {
+    transition: none;
+  }
+
+  .itemCard:hover .itemMedia {
+    transform: none;
   }
 }

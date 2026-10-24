@@ -1,5 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import {
+  ArrowRight,
+  CalendarCheck,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Clock,
+  Download,
+  LogIn,
+  LogOut,
+  MapPin,
+  QrCode,
+  ScanLine,
+  Users,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   EVENT_STATUSES,
@@ -77,10 +92,37 @@ import styles from './Attendance.module.css'
        30 min bago ang Start → Start   Time In lang
        Start → End                     sarado (nagaganap)
        End → 1 oras pagkatapos         Time Out lang
+
+   ITSURA ("check-in tracker" — UI lang, walang binago sa data):
+     - segmented switch para sa dalawang tab
+     - bawat sinalihang event: Time In → Time Out na tracker
+     - bawat event (Officer/Adviser): attendance meter at roster
    ============================================================ */
 
 const TAB_MINE = 'mine'
 const TAB_PER_EVENT = 'per-event'
+
+/* Icon ng bawat tab */
+const TAB_ICONS = {
+  [TAB_MINE]: CalendarCheck,
+  [TAB_PER_EVENT]: Users,
+}
+
+/* "2026-10-07" → { day: '07', month: 'OCT' } — para sa petsa
+   sa ibabaw ng larawan. Display lang. */
+function dateParts(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  return {
+    day: String(d).padStart(2, '0'),
+    month: date.toLocaleDateString('en-PH', { month: 'short' }).toUpperCase(),
+  }
+}
+
+/* Unang letra ng pangalan — para sa bilog na avatar sa roster */
+function initialOf(name) {
+  return (name ?? '').trim().charAt(0).toUpperCase() || '?'
+}
 
 function Attendance() {
   const { profile } = useAuth()
@@ -103,35 +145,46 @@ function Attendance() {
 
   if (tabs.length === 0) {
     return (
-      <>
+      <div className={styles.page}>
         <PageHeader title="Attendance" />
         <EmptyState
           icon="✓"
           title="Nothing to show here"
           message="This page is for organization members, officers and advisers."
         />
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader title="Attendance" />
 
       {tabs.length > 1 && (
-        <div className={styles.tabs} role="tablist" aria-label="Attendance">
-          {tabs.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.value}
-              className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''}`}
-              onClick={() => setTab(t.value)}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="Attendance"
+          style={{ '--tab-index': Math.max(0, tabs.findIndex((t) => t.value === tab)) }}
+        >
+          {/* Ang gumagalaw na puting "pill" sa likod ng napiling tab */}
+          <span className={styles.tabThumb} aria-hidden="true" />
+          {tabs.map((t) => {
+            const Icon = TAB_ICONS[t.value]
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.value}
+                className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''}`}
+                onClick={() => setTab(t.value)}
+              >
+                {Icon && <Icon size={17} strokeWidth={2.3} aria-hidden="true" />}
+                {t.label}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -140,7 +193,7 @@ function Attendance() {
       ) : (
         <ParticipantsPerEvent profile={profile} />
       )}
-    </>
+    </div>
   )
 }
 
@@ -168,12 +221,22 @@ function useNow() {
   return now
 }
 
+/* Larawan ng event (o diamond kapag wala), may petsa sa ibabaw */
 function EventThumb({ event }) {
-  return event.image_url ? (
-    <img className={styles.thumb} src={event.image_url} alt="" loading="lazy" />
-  ) : (
-    <div className={styles.thumbPlaceholder} aria-hidden="true">
-      ◆
+  const date = dateParts(event.event_date)
+  return (
+    <div className={styles.media}>
+      {event.image_url ? (
+        <img className={styles.thumb} src={event.image_url} alt="" loading="lazy" />
+      ) : (
+        <div className={styles.thumbPlaceholder} aria-hidden="true">
+          ◆
+        </div>
+      )}
+      <span className={styles.dateTag} aria-hidden="true">
+        <b>{date.day}</b>
+        {date.month}
+      </span>
     </div>
   )
 }
@@ -181,8 +244,29 @@ function EventThumb({ event }) {
 function StatusBadge({ status }) {
   return (
     <span className={`${styles.badge} ${styles[`badge_${status}`] ?? ''}`}>
+      <span className={styles.badgeDot} aria-hidden="true" />
       {eventStatusLabel(status)}
     </span>
+  )
+}
+
+/* Petsa · oras · lugar, bawat isa may icon */
+function EventMeta({ event }) {
+  return (
+    <ul className={styles.metaList}>
+      <li>
+        <CalendarDays size={15} strokeWidth={2.2} aria-hidden="true" />
+        {formatEventDate(event.event_date)}
+      </li>
+      <li>
+        <Clock size={15} strokeWidth={2.2} aria-hidden="true" />
+        {formatTime(event.start_time)} – {formatTime(event.end_time)}
+      </li>
+      <li>
+        <MapPin size={15} strokeWidth={2.2} aria-hidden="true" />
+        {event.location}
+      </li>
+    </ul>
   )
 }
 
@@ -281,15 +365,28 @@ function MyJoinedEvents({ profile }) {
 
       {!loading && !error && list.length > 0 && (
         <>
-          <p className={styles.summary}>
-            <strong>{list.length}</strong> joined ·{' '}
-            <strong>{activeCount}</strong> upcoming or ongoing ·{' '}
-            <Link to="/events">Find more events →</Link>
-          </p>
+          {/* ---------- BUOD ---------- */}
+          <div className={styles.summary}>
+            <p className={styles.stat}>
+              <strong>{list.length}</strong>
+              <span>joined</span>
+            </p>
+            <p className={`${styles.stat} ${styles.statActive}`}>
+              <strong>{activeCount}</strong>
+              <span>upcoming or ongoing</span>
+            </p>
+            <Link to="/events" className={styles.findMore}>
+              Find more events
+              <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
+            </Link>
+          </div>
 
           <ul className={styles.list}>
             {list.map((ev) => (
-              <li key={ev.id} className={`${styles.card} ${styles.row}`}>
+              <li
+                key={ev.id}
+                className={`${styles.card} ${styles.mineCard} ${styles[`s_${ev.status}`] ?? ''}`}
+              >
                 <EventThumb event={ev} />
 
                 <div className={styles.main}>
@@ -297,11 +394,7 @@ function MyJoinedEvents({ profile }) {
                     <h2 className={styles.title}>{ev.title}</h2>
                     <StatusBadge status={ev.status} />
                   </div>
-                  <p className={styles.meta}>
-                    {formatEventDate(ev.event_date)} · {formatTime(ev.start_time)} –{' '}
-                    {formatTime(ev.end_time)}
-                  </p>
-                  <p className={styles.meta}>{ev.location}</p>
+                  <EventMeta event={ev} />
                   <p className={styles.joined}>You joined on {formatDateTimeShort(ev.joined_at)}</p>
 
                   <MyAttendanceLine
@@ -372,26 +465,66 @@ function myAttendanceState(event, record, now) {
   }
 }
 
-/* Time In / Time Out mo, at ang button na "Ipakita ang QR" */
+/* Time In / Time Out mo, at ang button na "Ipakita ang QR".
+   Itsura: tracker na Time In → Time Out (parang delivery tracker). */
 function MyAttendanceLine({ event, record, now, hasQr, onShowQr }) {
   const { qr, hint } = myAttendanceState(event, record, now)
+  const hasIn = Boolean(record?.time_in)
+  const hasOut = Boolean(record?.time_out)
+
+  /* Aling hakbang ang "susunod" (kumikislap) */
+  const nextStep = qr === 'Time In' ? 'in' : qr === 'Time Out' ? 'out' : null
 
   return (
-    <div className={styles.attendLine}>
-      <span className={`${styles.chip} ${record?.time_in ? styles.chipIn : ''}`}>
-        In: {record?.time_in ? formatClock(record.time_in) : '—'}
-      </span>
-      <span className={`${styles.chip} ${record?.time_out ? styles.chipOut : ''}`}>
-        Out: {record?.time_out ? formatClock(record.time_out) : '—'}
-      </span>
+    <div className={styles.attend}>
+      <ol
+        className={`${styles.track} ${hasIn ? styles.trackHalf : ''} ${hasOut ? styles.trackFull : ''}`}
+        aria-label="Your attendance"
+      >
+        <li
+          className={`${styles.step} ${hasIn ? styles.stepDone : ''} ${
+            nextStep === 'in' ? styles.stepNext : ''
+          }`}
+        >
+          <span className={styles.stepDot} aria-hidden="true">
+            {hasIn ? <Check size={16} strokeWidth={3} /> : <LogIn size={15} strokeWidth={2.4} />}
+          </span>
+          <span className={styles.stepText}>
+            <span className={styles.stepLabel}>Time In</span>
+            <span className={styles.stepValue}>
+              {hasIn ? formatClock(record.time_in) : '—'}
+            </span>
+          </span>
+        </li>
 
-      {hasQr && qr && (
-        <button type="button" className={styles.qrBtn} onClick={onShowQr}>
-          ▣ Show QR ({qr})
-        </button>
+        <li
+          className={`${styles.step} ${hasOut ? styles.stepDone : ''} ${
+            nextStep === 'out' ? styles.stepNext : ''
+          }`}
+        >
+          <span className={styles.stepDot} aria-hidden="true">
+            {hasOut ? <Check size={16} strokeWidth={3} /> : <LogOut size={15} strokeWidth={2.4} />}
+          </span>
+          <span className={styles.stepText}>
+            <span className={styles.stepLabel}>Time Out</span>
+            <span className={styles.stepValue}>
+              {hasOut ? formatClock(record.time_out) : '—'}
+            </span>
+          </span>
+        </li>
+      </ol>
+
+      {hasQr && (qr || hint) && (
+        <div className={styles.attendFoot}>
+          {hint && <span className={styles.hintSmall}>{hint}</span>}
+          {qr && (
+            <button type="button" className={styles.qrBtn} onClick={onShowQr}>
+              <QrCode size={18} strokeWidth={2.2} aria-hidden="true" />
+              Show QR ({qr})
+            </button>
+          )}
+        </div>
       )}
-
-      {hasQr && hint && <span className={styles.hintSmall}>{hint}</span>}
     </div>
   )
 }
@@ -568,8 +701,17 @@ function ParticipantsPerEvent({ profile }) {
                   }[phase] ?? ''
                 : ''
 
+            /* Para sa meter (itsura lang): ilang % ang naka-Time In / Out */
+            const inPct = total > 0 ? Math.min(100, (att.timedIn / total) * 100) : 0
+            const outPct = total > 0 ? Math.min(100, (att.timedOut / total) * 100) : 0
+
             return (
-              <li key={ev.id} className={styles.card}>
+              <li
+                key={ev.id}
+                className={`${styles.card} ${styles.eventCard} ${styles[`s_${ev.status}`] ?? ''} ${
+                  isOpen ? styles.cardOpen : ''
+                }`}
+              >
                 <div className={styles.row}>
                   <EventThumb event={ev} />
 
@@ -578,20 +720,27 @@ function ParticipantsPerEvent({ profile }) {
                       <h2 className={styles.title}>{ev.title}</h2>
                       <StatusBadge status={ev.status} />
                     </div>
-                    <p className={styles.meta}>
-                      {formatEventDate(ev.event_date)} · {formatTime(ev.start_time)} –{' '}
-                      {formatTime(ev.end_time)}
-                    </p>
-                    <p className={styles.meta}>{ev.location}</p>
+                    <EventMeta event={ev} />
                     {showAtt && total > 0 && (
-                      <p className={styles.attendMeta}>
-                        Time In: <strong>{att.timedIn}</strong> / {total} · Time Out:{' '}
-                        <strong>{att.timedOut}</strong>
-                      </p>
+                      <div className={styles.meter}>
+                        <p className={styles.attendMeta}>
+                          Time In: <strong>{att.timedIn}</strong> / {total} · Time Out:{' '}
+                          <strong>{att.timedOut}</strong>
+                        </p>
+                        <div className={styles.bars} aria-hidden="true">
+                          <span className={styles.bar}>
+                            <span className={styles.barIn} style={{ width: `${inPct}%` }} />
+                          </span>
+                          <span className={styles.bar}>
+                            <span className={styles.barOut} style={{ width: `${outPct}%` }} />
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
 
                   <div className={styles.countBox}>
+                    <Users size={16} strokeWidth={2.4} aria-hidden="true" className={styles.countIcon} />
                     <span className={styles.countNum}>{total}</span>
                     <span className={styles.countLabel}>{isDone ? 'joined' : 'joining'}</span>
                   </div>
@@ -605,7 +754,8 @@ function ParticipantsPerEvent({ profile }) {
                         className={styles.scanBtn}
                         onClick={() => setScanEvent(ev)}
                       >
-                        ▣ Scan {scanMode === MODE_IN ? 'Time In' : 'Time Out'}
+                        <ScanLine size={18} strokeWidth={2.3} aria-hidden="true" />
+                        Scan {scanMode === MODE_IN ? 'Time In' : 'Time Out'}
                       </button>
                     )}
                     {scanHint && <span className={styles.hintSmall}>{scanHint}</span>}
@@ -616,7 +766,13 @@ function ParticipantsPerEvent({ profile }) {
                         aria-expanded={isOpen}
                         onClick={() => toggle(ev.id)}
                       >
-                        {isOpen ? 'Hide list ▴' : 'View participants ▾'}
+                        {isOpen ? 'Hide list' : 'View participants'}
+                        <ChevronDown
+                          size={17}
+                          strokeWidth={2.4}
+                          aria-hidden="true"
+                          className={styles.chevron}
+                        />
                       </button>
                     )}
                     {total > 0 && (
@@ -627,7 +783,8 @@ function ParticipantsPerEvent({ profile }) {
                         onClick={() => handleExport(ev)}
                         title="Download this event's attendance (.csv, opens in Excel)"
                       >
-                        {exportingId === ev.id ? 'Exporting…' : '⤓ Export (Excel/CSV)'}
+                        <Download size={16} strokeWidth={2.3} aria-hidden="true" />
+                        {exportingId === ev.id ? 'Exporting…' : 'Export (Excel/CSV)'}
                       </button>
                     )}
                   </div>
@@ -766,8 +923,16 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
           return (
             <li key={p.profile_id} className={styles.person}>
               <span className={styles.num}>{i + 1}</span>
-              <span className={styles.name}>{name}</span>
-              <span className={styles.role}>{role}</span>
+              <span className={styles.avatar} aria-hidden="true">
+                {initialOf(name)}
+              </span>
+              <span className={styles.who}>
+                <span className={styles.name}>{name}</span>
+                <span className={styles.whoMeta}>
+                  <span className={styles.role}>{role}</span>
+                  <span className={styles.when}>Joined {formatDateTimeShort(p.joined_at)}</span>
+                </span>
+              </span>
 
               <span className={styles.times}>
                 <span className={`${styles.chip} ${a?.time_in ? styles.chipIn : ''}`}>
@@ -792,8 +957,6 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
                   {busy ? '…' : manualMode === MODE_IN ? 'Time In' : 'Time Out'}
                 </button>
               )}
-
-              <span className={styles.when}>Joined {formatDateTimeShort(p.joined_at)}</span>
             </li>
           )
         })}

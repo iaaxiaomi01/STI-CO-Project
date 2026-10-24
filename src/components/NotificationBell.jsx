@@ -65,7 +65,9 @@ function toneClass(n) {
   return styles[`tone_${n.tone}`] ?? ''
 }
 
-function NotificationBell() {
+/* variant="onDark" — para sa madilim na background (hal. ang navy
+   na pagbati sa bento Dashboard ng Member). Itsura lang ang iba. */
+function NotificationBell({ variant } = {}) {
   const { profile } = useAuth()
   const profileId = profile?.id
   const navigate = useNavigate()
@@ -208,7 +210,9 @@ function NotificationBell() {
     <div className={styles.wrap} ref={wrapRef}>
       <button
         type="button"
-        className={`${styles.bell} ${open ? styles.bellActive : ''} ${ringing ? styles.ring : ''}`}
+        className={`${styles.bell} ${variant === 'onDark' ? styles.onDark : ''} ${
+          open ? styles.bellActive : ''
+        } ${ringing ? styles.ring : ''}`}
         onClick={togglePanel}
         aria-label={
           unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Award, Check, Clock, Download, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
@@ -34,7 +35,7 @@ import {
   subscribeToNotifications,
 } from '../lib/notifications.js'
 import { fetchEventRewards, rewardFor } from '../lib/og.js'
-import { OgAmount } from '../components/OgGem.jsx'
+import { OgAmount, OgGem } from '../components/OgGem.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
@@ -133,6 +134,29 @@ const FILTERS = [{ value: 'all', label: 'All' }, ...EVENT_STATUSES]
 /* Member at Officer: may dagdag na tab na "Missed" */
 const MEMBER_FILTERS = [...FILTERS, MISSED_STATUS]
 
+/* "2026-10-07" → { day: '07', month: 'OCT 2026', weekday: 'Wednesday' }
+   Para sa malaking petsa sa stub ng ticket. Display lang. */
+function dateParts(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  return {
+    day: String(d).padStart(2, '0'),
+    month: `${date.toLocaleDateString('en-PH', { month: 'short' }).toUpperCase()} ${y}`,
+    weekday: date.toLocaleDateString('en-PH', { weekday: 'long' }),
+  }
+}
+
+/* Diamond sa poster kapag walang larawan ang event */
+function PosterMark() {
+  return (
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2 22 12 12 22 2 12Z" />
+      <path d="M12 7 17 12 12 17 7 12Z" />
+    </svg>
+  )
+}
+
 function isFinished(status) {
   return status === 'completed' || status === MISSED_STATUS.value
 }
@@ -216,6 +240,14 @@ function Events() {
   /* "Missed" — Member at Officer (sila ang nagja-Join) */
   const showMissed = profile?.role_id === 1 || profile?.role_id === 2
   const filters = showMissed ? MEMBER_FILTERS : FILTERS
+
+  /* TICKET VIEW — Member, Officer at Adviser.
+     Itsura lang ang iba; pareho ang data at mga aksyon.
+     Ang Adviser ay walang Join (canJoinEvents), kaya walang
+     button sa stub niya — nasa ibaba ng ticket ang Certificates,
+     Edit at Delete, tulad ng sa Officer.
+     Ang dating card layout ay naiwan para sa ibang role. */
+  const ticketView = showMissed || profile?.role_id === 3
 
   /* Ang mga event, may kinuwentang status.
      Member/Officer: Completed + hindi nag-Join → Missed */
@@ -471,7 +503,7 @@ function Events() {
   }
 
   return (
-    <>
+    <div className={ticketView ? styles.ticketPage : undefined}>
       <PageHeader title="Events" />
 
       {notice && (
@@ -500,8 +532,10 @@ function Events() {
       {!loading && !error && events.length > 0 && (
         <>
 
+          <div className={styles.toolbar}>
           {/* ---------- SEARCH ---------- */}
           <div className={styles.searchBar}>
+            <Search className={styles.searchIcon} size={18} strokeWidth={2.2} aria-hidden="true" />
             <input
               type="search"
               className={styles.search}
@@ -510,7 +544,10 @@ function Events() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            {query && (
+            {/* Member/Officer ticket view: wala — ang bilang sa "All"
+                tab na ang nagsasabi kung ilan ang tumugma.
+                Adviser: naiwan, tulad ng dati niyang layout. */}
+            {query && (!ticketView || isAdviser) && (
               <span className={styles.searchCount}>
                 {matched.length} of {withStatus.length}
               </span>
@@ -531,6 +568,7 @@ function Events() {
                 <span className={styles.filterCount}>{counts[f.value] ?? 0}</span>
               </button>
             ))}
+          </div>
           </div>
 
           {visible.length === 0 ? (
@@ -579,6 +617,222 @@ function Events() {
                   joinable && joined && isDone && reward && certsLoaded
                     ? myOgStatus(reward, myAttendance[ev.id], attendanceClosed)
                     : null
+
+                if (ticketView) {
+                  const date = dateParts(ev.event_date)
+                  const certReady = showCertStatus && Boolean(myCert)
+
+                  return (
+                    <li
+                      key={ev.id}
+                      id={`event-${ev.id}`}
+                      className={[
+                        styles.ticket,
+                        styles[`t_${ev.status}`] ?? '',
+                        highlightId === ev.id ? styles.cardHighlight : '',
+                      ].join(' ')}
+                    >
+                      {/* ---------- POSTER ---------- */}
+                      <div className={styles.poster}>
+                        {ev.image_url ? (
+                          <img src={ev.image_url} alt="" loading="lazy" />
+                        ) : (
+                          <PosterMark />
+                        )}
+                      </div>
+
+                      {/* ---------- KATAWAN ---------- */}
+                      <div className={styles.ticketBody}>
+                        <h2 className={styles.ticketTitle}>{ev.title}</h2>
+
+                        <p
+                          className={`${styles.ticketDesc} ${
+                            longText && !isOpen ? styles.clamped : ''
+                          }`}
+                        >
+                          {ev.description}
+                        </p>
+                        {longText && (
+                          <button
+                            type="button"
+                            className={styles.more}
+                            onClick={() => toggleExpanded(ev.id)}
+                          >
+                            {isOpen ? 'Show less' : 'Read more'}
+                          </button>
+                        )}
+
+                        <ul className={styles.chips}>
+                          <li>
+                            <Clock size={15} aria-hidden="true" />
+                            <span className={styles.srOnly}>Time: </span>
+                            {formatTime(ev.start_time)} – {formatTime(ev.end_time)}
+                          </li>
+                          <li>
+                            <MapPin size={15} aria-hidden="true" />
+                            <span className={styles.srOnly}>Location: </span>
+                            {ev.location}
+                          </li>
+                          {reward && (
+                            <li className={styles.chipOg}>
+                              <span className={styles.srOnly}>Reward: </span>
+                              <OgAmount value={reward.amount} size={15} />
+                            </li>
+                          )}
+                          {/* Adviser: wala pang reward (dating "Reward" row) */}
+                          {!reward && showRewardRow && (
+                            <li className={styles.chipNone}>
+                              <OgGem size={15} />
+                              <span className={styles.srOnly}>Reward: </span>
+                              None yet ·{' '}
+                              <Link to="/rewards" className={styles.chipLink}>
+                                Set in Rewards
+                              </Link>
+                            </li>
+                          )}
+                        </ul>
+
+                        {/* ---------- CERTIFICATE NOTE (wala pang file) ---------- */}
+                        {showCertStatus && !myCert && completedMine && (
+                          <p className={`${styles.ticketNote} ${styles.notePending}`}>
+                            Your attendance is complete. No certificate yet — an Officer or the
+                            Adviser will upload it.
+                          </p>
+                        )}
+                        {showCertStatus && !myCert && !completedMine && attendanceClosed && (
+                          <p className={`${styles.ticketNote} ${styles.noteNone}`}>
+                            No certificate — your Time In and Time Out are incomplete.
+                          </p>
+                        )}
+
+                        {/* ---------- OG MO ---------- */}
+                        {myOg && (
+                          <p
+                            className={`${styles.ticketNote} ${
+                              myOg.tone === 'got'
+                                ? styles.noteGot
+                                : myOg.tone === 'pending'
+                                  ? styles.notePending
+                                  : styles.noteNone
+                            }`}
+                          >
+                            {myOg.text}
+                          </p>
+                        )}
+
+                        <div className={styles.ticketFooter}>
+                          <p className={styles.author}>
+                            {authorLabel(ev)}
+                            {wasEdited(ev) && <span className={styles.edited}> · edited</span>}
+                          </p>
+
+                          {/* Officer at Adviser: Certificates / Edit / Delete */}
+                          {(editable || deletable || manageCerts) && (
+                            <div className={`${styles.actions} ${styles.tActions}`}>
+                              {manageCerts && (
+                                <button
+                                  type="button"
+                                  className={`${styles.linkButton} ${styles.tAction}`}
+                                  onClick={() => {
+                                    setNotice('')
+                                    setCertEvent(ev)
+                                  }}
+                                  disabled={busy}
+                                >
+                                  <Award size={16} strokeWidth={2.2} aria-hidden="true" />
+                                  Certificates
+                                </button>
+                              )}
+                              {editable && (
+                                <button
+                                  type="button"
+                                  className={`${styles.linkButton} ${styles.tAction}`}
+                                  onClick={() => {
+                                    setNotice('')
+                                    setEditing(ev)
+                                  }}
+                                  disabled={busy}
+                                >
+                                  <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
+                                  Edit
+                                </button>
+                              )}
+                              {deletable && (
+                                <button
+                                  type="button"
+                                  className={`${styles.linkButton} ${styles.tAction} ${styles.danger}`}
+                                  onClick={() => handleDelete(ev)}
+                                  disabled={busy}
+                                >
+                                  <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
+                                  {busy ? 'Deleting…' : 'Delete'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* ---------- STUB: status, petsa, aksyon ---------- */}
+                      <div className={styles.stub}>
+                        <span className={`${styles.notch} ${styles.notchA}`} aria-hidden="true" />
+                        <span className={`${styles.notch} ${styles.notchB}`} aria-hidden="true" />
+
+                        <span className={styles.statusPill}>
+                          {ev.status === 'ongoing' && (
+                            <span className={styles.liveDot} aria-hidden="true" />
+                          )}
+                          {eventStatusLabel(ev.status)}
+                        </span>
+
+                        <p className={styles.stubDate}>
+                          <span className={styles.srOnly}>{formatEventDate(ev.event_date)}</span>
+                          <span className={styles.stubDay} aria-hidden="true">
+                            {date.day}
+                          </span>
+                          <span className={styles.stubMeta} aria-hidden="true">
+                            <span className={styles.stubMonth}>{date.month}</span>
+                            <span className={styles.stubWeekday}>{date.weekday}</span>
+                          </span>
+                        </p>
+
+                        <div className={styles.stubAction}>
+                          {joinable && !isDone && !joined && (
+                            <button
+                              type="button"
+                              className={styles.tJoin}
+                              onClick={() => openJoin(ev)}
+                              disabled={joinBusy}
+                            >
+                              {joinBusy ? 'Joining…' : 'Join'}
+                            </button>
+                          )}
+
+                          {/* Hindi na kasabay ng Download — sa sumali lang
+                              lumalabas ang Download */}
+                          {joinable && joined && !certReady && (
+                            <span className={styles.tStamp}>
+                              <Check size={15} strokeWidth={3} aria-hidden="true" />
+                              You joined
+                            </span>
+                          )}
+
+                          {certReady && (
+                            <button
+                              type="button"
+                              className={styles.tCert}
+                              onClick={() => handleDownloadCertificate(ev)}
+                              disabled={certBusy}
+                            >
+                              <Download size={16} strokeWidth={2.4} aria-hidden="true" />
+                              {certBusy ? 'Opening…' : 'Download Certificate'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  )
+                }
 
                 return (
                   <li
@@ -780,7 +1034,7 @@ function Events() {
       {confirmingJoin && (
         <JoinConfirmDialog event={confirmingJoin} onConfirm={handleJoin} onCancel={closeJoin} />
       )}
-    </>
+    </div>
   )
 }
 

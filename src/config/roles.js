@@ -205,10 +205,19 @@ export const ROLES = {
     sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, ATTENDANCE, REWARDS, PROFILE],
 
     dashboard: {
+      /* BENTO LAYOUT (Member, Officer, Adviser)
+         Pagbati + 4 na stat tile sa iisang grid, tapos ang
+         Event Calendar na may listahan ng events sa gilid.
+         Tingnan ang renderBentoTile() at BENTO_LAYOUTS sa
+         pages/Dashboard.jsx. Ang staff roles (SAO, School Head,
+         School Administrator, IT Admin) ay nasa lumang layout pa. */
+      layout: 'bento',
+
       stats: [
         { label: 'Upcoming events', value: '0', to: '/events', key: 'upcomingEvents' },
         {
-          label: 'New announcements (7 days)',
+          label: 'New announcements',
+          tag: 'Last 7 days',
           value: '0',
           to: '/announcements',
           key: 'newAnnouncements',
@@ -216,23 +225,11 @@ export const ROLES = {
         { label: 'Your attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
         { label: 'Your Organization Gems', value: '0', to: '/rewards', key: 'ogBalance' },
       ],
-      cards: [
-        {
-          to: '/rewards',
-          icon: '❖',
-          title: 'Rewards Shop',
-        },
-        {
-          to: '/announcements',
-          icon: '★',
-          title: 'Announcements',
-        },
-        {
-          to: '/attendance',
-          icon: '✓',
-          title: 'Attendance',
-        },
-      ],
+
+      /* Inalis ang "Sections" cards (Rewards Shop, Announcements,
+         Attendance): nasa sidebar na sila AT ang mga stat tile na
+         mismo ang link papunta roon — tatlong beses na paulit-ulit. */
+      cards: [],
     },
   },
 
@@ -271,6 +268,10 @@ export const ROLES = {
     ],
 
     dashboard: {
+      /* Kaparehong UI ng Member (bento). Pareho pa rin ang laman:
+         5 stat, Event Calendar, at Sections cards. */
+      layout: 'bento',
+
       stats: [
         { label: 'Pending proposals', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Total members', value: '0', to: '/members', key: 'memberCount' },
@@ -348,6 +349,10 @@ export const ROLES = {
     ],
 
     dashboard: {
+      /* Kaparehong UI ng Member (bento). Pareho pa rin ang laman:
+         3 stat, Event Calendar, at Sections cards. */
+      layout: 'bento',
+
       stats: [
         { label: 'Proposals awaiting your action', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Active members', value: '0', to: '/members', key: 'memberCount' },

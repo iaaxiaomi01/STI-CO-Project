@@ -321,3 +321,42 @@
   font-size: 0.95rem;
   font-weight: 700;
 }
+
+/* ---------- variant="onDark" (navy na pagbati sa Dashboard) ---------- */
+.onDark {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border-color: transparent;
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.onDark:hover,
+.onDark.bellActive {
+  border-color: transparent;
+  background-color: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.onDark:focus-visible {
+  outline-color: var(--dash-yellow);
+}
+
+.onDark .badge {
+  top: -5px;
+  right: -5px;
+  min-width: 22px;
+  height: 22px;
+  border: 3px solid var(--dash-navy);
+  font-size: 0.72rem;
+  line-height: 16px;
+}
+
+/* Huwag manahin ang puting text kapag nasa madilim na background
+   (hal. ang navy na pagbati sa Dashboard) */
+.panel,
+.toast {
+  color: var(--color-text);
+  text-align: left;
+}

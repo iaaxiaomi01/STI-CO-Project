@@ -92,7 +92,10 @@ function buildCalendarDays(year, month) {
   })
 }
 
-function DashboardCalendar() {
+/* eyebrow — maliit na label sa itaas ng buwan (hal. "Event Calendar"
+   sa bento Dashboard ng Member, kung saan wala nang hiwalay na
+   heading sa labas ng calendar). */
+function DashboardCalendar({ eyebrow } = {}) {
   const today = new Date()
   const todayKey = toYmd(today)
 
@@ -184,9 +187,12 @@ function DashboardCalendar() {
     <div className={styles.calendar}>
       {/* ---------- HEADER: buwan + navigation ---------- */}
       <div className={styles.header}>
-        <h3 className={styles.monthTitle} aria-live="polite">
-          {MONTHS[month]} <span>{year}</span>
-        </h3>
+        <div>
+          {eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}
+          <h3 className={styles.monthTitle} aria-live="polite">
+            {MONTHS[month]} <span>{year}</span>
+          </h3>
+        </div>
 
         <div className={styles.controls}>
           <button
@@ -216,147 +222,171 @@ function DashboardCalendar() {
         </div>
       </div>
 
-      {/* ---------- MGA ARAW NG LINGGO ---------- */}
-      <div className={styles.weekdays}>
-        {WEEK_DAYS.map((day) => (
-          <div key={day} className={styles.weekday}>
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* ---------- MGA ARAW ---------- */}
-      <div className={[styles.grid, loading ? styles.loading : ''].join(' ')}>
-        {days.map(({ date, inMonth, key }) => {
-          const isToday = sameDay(date, today)
-          const dayEvents = eventsByDay.get(key) ?? []
-          const shown = dayEvents.slice(0, MAX_PER_DAY)
-          const extra = dayEvents.length - shown.length
-
-          return (
-            <button
-              type="button"
-              key={key}
-              onClick={() => setSelectedKey(key)}
-              aria-pressed={selectedKey === key}
-              aria-label={`${formatEventDate(key)}, ${dayEvents.length} event${
-                dayEvents.length === 1 ? '' : 's'
-              }`}
-              className={[
-                styles.day,
-                inMonth ? '' : styles.outsideMonth,
-                isToday ? styles.today : '',
-                selectedKey === key ? styles.selected : '',
-              ].join(' ')}
-            >
-              <span className={styles.dayNumber}>{date.getDate()}</span>
-
-              {dayEvents.length > 0 && (
-                <span className={styles.dayEvents}>
-                  {shown.map((event) => (
-                    <span
-                      key={event.id}
-                      className={[
-                        styles.chip,
-                        computeStatus(event, now) === 'completed' ? styles.past : '',
-                      ].join(' ')}
-                      style={{ '--org-color': orgColor(event) }}
-                      title={`${event.title} — ${event.organization_name}`}
-                    >
-                      {event.title}
-                    </span>
-                  ))}
-                  {extra > 0 && <span className={styles.more}>+{extra} more</span>}
-
-                  {/* Sa mobile: tuldok lang, dahil masikip */}
-                  <span className={styles.dots} aria-hidden="true">
-                    {dayEvents.slice(0, 3).map((event) => (
-                      <span
-                        key={event.id}
-                        className={styles.dot}
-                        style={{ '--org-color': orgColor(event) }}
-                      />
-                    ))}
-                  </span>
+      {/* Calendar sa kaliwa, events ng napiling araw sa kanan.
+          Kapag masikip (tablet/phone), bumababa ang events sa
+          ilalim ng calendar — tingnan ang .body sa CSS. */}
+      <div className={styles.body}>
+        <div className={styles.month}>
+          {/* ---------- MGA ARAW NG LINGGO ---------- */}
+          <div className={styles.weekdays}>
+            {WEEK_DAYS.map((day) => (
+              <div key={day} className={styles.weekday}>
+                <span className={styles.weekdayLong}>{day}</span>
+                <span className={styles.weekdayShort} aria-hidden="true">
+                  {day.charAt(0)}
                 </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+              </div>
+            ))}
+          </div>
 
-      {/* ---------- LEGEND: mga org na may event ngayong buwan ---------- */}
-      {legend.length > 0 && (
-        <ul className={styles.legend}>
-          {legend.map((event) => (
-            <li key={event.organization_id}>
-              <span className={styles.dot} style={{ '--org-color': orgColor(event) }} />
-              {event.organization_name}
-            </li>
-          ))}
-        </ul>
-      )}
+          {/* ---------- MGA ARAW ---------- */}
+          <div className={[styles.grid, loading ? styles.loading : ''].join(' ')}>
+            {days.map(({ date, inMonth, key }) => {
+              const isToday = sameDay(date, today)
+              const dayEvents = eventsByDay.get(key) ?? []
+              const shown = dayEvents.slice(0, MAX_PER_DAY)
+              const extra = dayEvents.length - shown.length
 
-      {/* ---------- MGA EVENT NG NAPILING ARAW ---------- */}
-      {error ? (
-        <p className={styles.note}>{error}</p>
-      ) : selectedKey ? (
-        <div className={styles.details}>
-          <h4 className={styles.detailsTitle}>{formatEventDate(selectedKey)}</h4>
+              return (
+                <button
+                  type="button"
+                  key={key}
+                  onClick={() => setSelectedKey(key)}
+                  aria-pressed={selectedKey === key}
+                  aria-label={`${formatEventDate(key)}, ${dayEvents.length} event${
+                    dayEvents.length === 1 ? '' : 's'
+                  }`}
+                  className={[
+                    styles.day,
+                    inMonth ? '' : styles.outsideMonth,
+                    isToday ? styles.today : '',
+                    selectedKey === key ? styles.selected : '',
+                  ].join(' ')}
+                >
+                  <span className={styles.dayNumber}>{date.getDate()}</span>
 
-          {selectedEvents.length === 0 ? (
-            <p className={styles.detailsEmpty}>
-              {loading ? 'Loading events…' : 'No events on this day.'}
-            </p>
-          ) : (
-            <ul className={styles.detailsList}>
-              {selectedEvents.map((event) => {
-                const status = computeStatus(event, now)
-                return (
-                  <li
-                    key={event.id}
-                    className={styles.detailsItem}
-                    style={{ '--org-color': orgColor(event) }}
-                  >
-                    <div className={styles.detailsHead}>
-                      <strong>{event.title}</strong>
-                      <span className={`${styles.status} ${styles[status]}`}>
-                        {eventStatusLabel(status)}
+                  {dayEvents.length > 0 && (
+                    <span className={styles.dayEvents}>
+                      {shown.map((event) => (
+                        <span
+                          key={event.id}
+                          className={[
+                            styles.chip,
+                            computeStatus(event, now) === 'completed' ? styles.past : '',
+                          ].join(' ')}
+                          style={{ '--org-color': orgColor(event) }}
+                          title={`${event.title} — ${event.organization_name}`}
+                        >
+                          <span className={styles.dot} aria-hidden="true" />
+                          <span className={styles.chipText}>{event.title}</span>
+                        </span>
+                      ))}
+                      {extra > 0 && <span className={styles.more}>+{extra} more</span>}
+
+                      {/* Sa phone: tuldok lang, dahil masikip */}
+                      <span className={styles.dots} aria-hidden="true">
+                        {dayEvents.slice(0, 3).map((event) => (
+                          <span
+                            key={event.id}
+                            className={styles.dot}
+                            style={{ '--org-color': orgColor(event) }}
+                          />
+                        ))}
                       </span>
-                    </div>
-                    <div className={styles.detailsOrg}>
-                      {event.organization_name}
-                    </div>
-                    <div className={styles.detailsMeta}>
-                      <span>
-                        <Clock size={14} aria-hidden="true" />
-                        {formatTime(event.start_time)} – {formatTime(event.end_time)}
-                      </span>
-                      <span>
-                        <MapPin size={14} aria-hidden="true" />
-                        {event.location}
-                      </span>
-                    </div>
-                    {event.is_own_org && (
-                      <Link to="/events" className={styles.detailsLink}>
-                        View in Events →
-                      </Link>
-                    )}
-                  </li>
-                )
-              })}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ---------- LEGEND: mga org na may event ngayong buwan ---------- */}
+          {legend.length > 0 && (
+            <ul className={styles.legend}>
+              {legend.map((event) => (
+                <li key={event.organization_id}>
+                  <span className={styles.dot} style={{ '--org-color': orgColor(event) }} />
+                  {event.organization_name}
+                </li>
+              ))}
             </ul>
           )}
         </div>
-      ) : (
-        <p className={styles.note}>
-          {loading
-            ? 'Loading events…'
-            : legend.length === 0
-              ? 'No events this month.'
-              : 'Click a day to see its events.'}
-        </p>
-      )}
+
+        {/* ---------- MGA EVENT NG NAPILING ARAW ---------- */}
+        <div className={styles.agenda}>
+          {error ? (
+            <p className={styles.note}>{error}</p>
+          ) : selectedKey ? (
+            <div className={styles.details}>
+              <div>
+                <h4 className={styles.detailsTitle}>{formatEventDate(selectedKey)}</h4>
+                {selectedEvents.length > 0 && (
+                  <p className={styles.detailsCount}>
+                    {selectedEvents.length} event{selectedEvents.length === 1 ? '' : 's'}
+                  </p>
+                )}
+              </div>
+
+              {selectedEvents.length === 0 ? (
+                <p className={styles.detailsEmpty}>
+                  {loading ? 'Loading events…' : 'No events on this day.'}
+                </p>
+              ) : (
+                <ul className={styles.detailsList}>
+                  {selectedEvents.map((event) => {
+                    const status = computeStatus(event, now)
+                    return (
+                      <li
+                        key={event.id}
+                        className={styles.detailsItem}
+                        style={{ '--org-color': orgColor(event) }}
+                      >
+                        <div className={styles.detailsHead}>
+                          <span className={styles.detailsOrg}>
+                            <span className={styles.dot} aria-hidden="true" />
+                            {event.organization_name}
+                          </span>
+                          <span className={`${styles.status} ${styles[status]}`}>
+                            {eventStatusLabel(status)}
+                          </span>
+                        </div>
+
+                        <strong className={styles.detailsName}>{event.title}</strong>
+
+                        <div className={styles.detailsMeta}>
+                          <span>
+                            <Clock size={14} aria-hidden="true" />
+                            {formatTime(event.start_time)} – {formatTime(event.end_time)}
+                          </span>
+                          <span>
+                            <MapPin size={14} aria-hidden="true" />
+                            {event.location}
+                          </span>
+                        </div>
+
+                        {event.is_own_org && (
+                          <Link to="/events" className={styles.detailsLink}>
+                            View in Events →
+                          </Link>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <p className={styles.note}>
+              {loading
+                ? 'Loading events…'
+                : legend.length === 0
+                  ? 'No events this month.'
+                  : 'Click a day to see its events.'}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

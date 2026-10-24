@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowDown, ArrowUp, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { fullNameOf } from '../lib/profile.js'
 import {
   POSITION_LIMIT,
@@ -254,6 +255,7 @@ function OfficerPositions({ orgId }) {
                 onClick={handleAddCommon}
                 disabled={Boolean(busy)}
               >
+                <Sparkles size={16} strokeWidth={2.4} aria-hidden="true" />
                 {busy === 'common' ? 'Adding…' : 'Add common positions'}
               </button>
             </div>
@@ -339,7 +341,7 @@ function OfficerPositions({ orgId }) {
                         aria-label={`Move ${position.name} up`}
                         title="Move up"
                       >
-                        ↑
+                        <ArrowUp size={16} strokeWidth={2.4} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
@@ -349,7 +351,7 @@ function OfficerPositions({ orgId }) {
                         aria-label={`Move ${position.name} down`}
                         title="Move down"
                       >
-                        ↓
+                        <ArrowDown size={16} strokeWidth={2.4} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
@@ -357,6 +359,7 @@ function OfficerPositions({ orgId }) {
                         onClick={() => startEdit(position)}
                         disabled={disabled}
                       >
+                        <Pencil size={14} strokeWidth={2.4} aria-hidden="true" />
                         Edit
                       </button>
                       <button
@@ -370,6 +373,7 @@ function OfficerPositions({ orgId }) {
                             : undefined
                         }
                       >
+                        <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
                         {rowBusy ? '…' : 'Delete'}
                       </button>
                     </div>
@@ -403,6 +407,7 @@ function OfficerPositions({ orgId }) {
                 className={styles.primary}
                 disabled={Boolean(busy) || newName.trim() === ''}
               >
+                <Plus size={16} strokeWidth={2.6} aria-hidden="true" />
                 {busy === 'add' ? 'Adding…' : 'Add position'}
               </button>
             </form>

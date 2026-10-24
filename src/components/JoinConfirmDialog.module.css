@@ -1,26 +1,52 @@
-/* Join confirm dialog — mas makitid kaysa sa ibang form */
-.modal {
+/* ============================================================
+   JOIN CONFIRM DIALOG — mini-ticket (kapareho ng ticket sa Events)
+   Itsura lang ang binago; pareho ang laman at kilos.
+   ============================================================ */
+/* div.modal: mas mataas kaysa sa .modal ng ProposalForm.module.css */
+div.modal {
   max-width: 460px;
+  padding: 26px;
+  border-radius: var(--dash-radius);
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
 }
 
-/* ---------- Detalye ng event ---------- */
+.modal h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+/* ---------- Mini-ticket ---------- */
 .event {
-  margin-bottom: 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  position: relative;
+  display: flex;
+  margin-bottom: 16px;
+  border-radius: 18px;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.eventMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 16px 18px;
 }
 
 .title {
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   overflow-wrap: anywhere;
 }
 
 .details {
   display: grid;
-  gap: 0.25rem;
-  margin: 0.5rem 0 0;
-  font-size: 0.88rem;
+  gap: 2px;
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .details div {
@@ -29,8 +55,9 @@
 }
 
 .details dt {
-  min-width: 3.5rem;
-  color: var(--color-muted);
+  min-width: 3.6rem;
+  font-weight: 600;
+  opacity: 0.75;
 }
 
 .details dd {
@@ -38,18 +65,61 @@
   overflow-wrap: anywhere;
 }
 
+.stub {
+  position: relative;
+  flex: 0 0 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-left: 2px dashed #e3bb00;
+}
+
+.stub b {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.stub small {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+/* Butas sa taas at baba ng punit na linya */
+.notchA,
+.notchB {
+  position: absolute;
+  left: -11px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+.notchA {
+  top: -10px;
+}
+
+.notchB {
+  bottom: -10px;
+}
+
 /* ---------- Paalala: hindi na makakaalis ---------- */
 .warning {
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
-  margin-bottom: 1.25rem;
-  padding: 0.75rem 0.9rem;
-  border-left: 3px solid #b25e09;
-  border-radius: 0 10px 10px 0;
-  background-color: #fff4e8;
-  font-size: 0.88rem;
-  color: #5c3404;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px;
+  border-radius: 16px;
+  background-color: #fdecec;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #7a1d1d;
 }
 
 .warningIcon {
@@ -57,11 +127,39 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background-color: #b25e09;
+  background-color: #c92a2a;
   color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+/* ---------- Mga button ---------- */
+.modal .cancel,
+.modal .yes {
+  min-height: 48px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.modal .yes {
+  border-color: var(--dash-navy-deep);
+  background-color: var(--dash-navy-deep);
+}
+
+.modal .yes:hover:not(:disabled) {
+  border-color: var(--dash-navy);
+  background-color: var(--dash-navy);
+}
+
+@media (max-width: 480px) {
+  div.modal {
+    padding: 22px;
+  }
+
+  .modal h2 {
+    font-size: 23px;
+  }
 }

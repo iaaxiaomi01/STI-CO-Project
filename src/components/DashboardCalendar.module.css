@@ -1,72 +1,86 @@
 /* ============================================================
-   DASHBOARD CALENDAR — kapareho ng itsura ng mga card sa
-   Dashboard (puting background, border, radius, shadow).
+   DASHBOARD CALENDAR — bagong disenyo (bento)
+
+   Calendar sa kaliwa, events ng napiling araw sa kanan.
+   Container queries (@container): ang lapad ng CALENDAR mismo
+   ang tinitingnan, hindi ng buong screen.
+
+     malapad      grid + listahan ng events sa gilid
+     ≤ ~840px     bumababa ang listahan sa ilalim (flex-wrap)
+     ≤ 520px      phone: tuldok imbes na title, S M T W…
    ============================================================ */
 
 .calendar {
-  padding: 1.4rem;
+  container-type: inline-size;
+  padding: 24px;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: var(--dash-radius);
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
 }
 
 /* ---------- HEADER ---------- */
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.1rem;
   flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dash-muted);
 }
 
 .monthTitle {
-  font-size: 1.2rem;
+  font-family: var(--font-display);
+  font-size: 36px;
   font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .monthTitle span {
   font-weight: 600;
-  color: var(--color-muted);
+  color: var(--dash-muted);
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 8px;
 }
 
-.navBtn,
-.todayBtn {
+.todayBtn,
+.navBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  border: 1px solid var(--color-border);
-  border-radius: 9px;
-  background-color: #fff;
-  color: var(--color-text);
+  height: 44px;
   font: inherit;
   cursor: pointer;
-  transition: border-color var(--transition), background-color var(--transition);
-}
-
-.navBtn {
-  width: 36px;
+  transition: background-color var(--transition), border-color var(--transition),
+    opacity var(--transition);
 }
 
 .todayBtn {
-  padding: 0 0.9rem;
-  font-size: 0.87rem;
-  font-weight: 600;
+  padding: 0 18px;
+  border: 1.5px solid #dde3ee;
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--dash-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.navBtn:hover,
 .todayBtn:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
+  border-color: var(--dash-navy);
 }
 
 .todayBtn:disabled {
@@ -74,62 +88,102 @@
   cursor: default;
 }
 
+.navBtn {
+  width: 44px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+}
+
+.navBtn:hover {
+  background-color: var(--dash-navy);
+}
+
+/* ---------- KATAWAN: calendar + events ---------- */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.month {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+
+.agenda {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 20px;
+  border-radius: 22px;
+  background-color: #f3f5fa;
+}
+
 /* ---------- MGA ARAW NG LINGGO ---------- */
 .weekdays,
 .grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .weekday {
-  padding: 0.5rem 0;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 700;
+  padding: 0 8px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-muted);
+  color: var(--dash-muted);
+}
+
+.weekdayShort {
+  display: none;
 }
 
 /* ---------- MGA ARAW ---------- */
-.grid {
-  border-top: 1px solid var(--color-border);
-  border-left: 1px solid var(--color-border);
-}
-
 .day {
-  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   min-width: 0;
-  padding: 0.4rem;
-  border: none;
-  border-right: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-  background-color: #fff;
+  height: 106px;
+  padding: 7px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background-color: var(--dash-soft);
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.25rem;
-  transition: background-color var(--transition);
+  transition: border-color var(--transition), background-color var(--transition);
 }
 
 .day:hover {
-  background-color: var(--color-primary-soft);
+  border-color: #c9d4ef;
 }
 
 .day:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 1px;
 }
 
-/* Napiling araw — makikita sa ilalim ang mga event nito */
+/* Araw na hindi sakop ng buwang tinitingnan */
+.outsideMonth {
+  border: 1.5px dashed #e1e6f0;
+  background-color: transparent;
+  color: #6b7690;
+}
+
+/* Napiling araw — nasa kanan (o sa ilalim) ang mga event nito */
 .selected,
 .selected:hover {
-  background-color: var(--color-primary-soft);
-  box-shadow: inset 0 0 0 2px var(--color-primary);
+  border: 1.5px solid var(--dash-navy);
+  background-color: #fff;
+  box-shadow: 0 6px 18px rgba(3, 27, 75, 0.1);
 }
 
 /* Habang kinukuha pa ang events ng bagong buwan */
@@ -138,51 +192,47 @@
 }
 
 .dayNumber {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-/* Araw na hindi sakop ng buwang tinitingnan */
-.outsideMonth:not(.selected) {
-  background-color: var(--color-surface);
-}
-
-.outsideMonth .dayNumber {
-  color: var(--color-muted);
-  opacity: 0.6;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 /* Araw ngayon */
 .today .dayNumber {
-  background-color: var(--color-primary);
-  color: #fff;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
 }
 
 /* ---------- EVENTS SA LOOB NG ARAW ---------- */
 .dayEvents {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 3px;
   min-width: 0;
 }
 
 /* --org-color: galing sa orgColor() sa DashboardCalendar.jsx */
 .chip {
-  display: block;
-  padding: 0.12rem 0.4rem;
-  border-left: 3px solid var(--org-color);
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px 6px;
+  border-radius: 7px;
   background-color: color-mix(in srgb, var(--org-color) 12%, #fff);
-  color: var(--color-text);
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.35;
+  color: var(--dash-ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.chipText {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -194,13 +244,13 @@
 }
 
 .more {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--color-muted);
-  padding-left: 0.2rem;
+  padding-left: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--dash-navy);
 }
 
-/* Sa mobile lang lumalabas (tingnan sa baba) */
+/* Sa phone lang lumalabas (tingnan sa baba) */
 .dots {
   display: none;
   gap: 3px;
@@ -220,116 +270,142 @@
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1.1rem;
-  margin: 0.9rem 0 0;
+  gap: 8px 18px;
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 0.8rem;
-  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+  color: #3a4766;
 }
 
 .legend li {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 7px;
 }
 
 /* ---------- MGA EVENT NG NAPILING ARAW ---------- */
 .details {
-  margin-top: 1.1rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .detailsTitle {
-  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.detailsCount {
+  font-size: 13px;
   font-weight: 700;
-  margin-bottom: 0.7rem;
+  color: var(--dash-muted);
 }
 
 .detailsEmpty {
-  font-size: 0.87rem;
-  color: var(--color-muted);
+  font-size: 14px;
+  color: var(--dash-muted);
 }
 
 .detailsList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .detailsItem {
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--org-color);
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
   background-color: #fff;
 }
 
 .detailsHead {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.detailsHead strong {
-  font-size: 0.95rem;
-  overflow-wrap: anywhere;
+  gap: 8px;
 }
 
 .detailsOrg {
-  margin-top: 0.15rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--org-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3a4766;
+  overflow-wrap: anywhere;
+}
+
+.detailsName {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .detailsMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem 1.1rem;
-  margin-top: 0.45rem;
-  font-size: 0.83rem;
-  color: var(--color-muted);
+  gap: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dash-muted);
 }
 
 .detailsMeta span {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 6px;
+}
+
+.detailsMeta svg {
+  flex-shrink: 0;
 }
 
 .detailsLink {
-  display: inline-block;
-  margin-top: 0.5rem;
-  font-size: 0.83rem;
-  font-weight: 600;
-  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 32px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--dash-navy);
+}
+
+.detailsLink:hover {
+  color: var(--dash-navy-deep);
 }
 
 /* Kapareho ng badge sa Events page */
 .status {
   flex-shrink: 0;
-  padding: 0.15rem 0.6rem;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .upcoming {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background-color: #e6edfc;
+  color: #1740ad;
 }
 
 .ongoing {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+  background-color: #e3f4e8;
+  color: #1b6e33;
 }
 
 .completed {
@@ -338,32 +414,60 @@
 }
 
 .note {
-  margin-top: 0.9rem;
-  font-size: 0.87rem;
-  color: var(--color-muted);
+  font-size: 14px;
+  color: var(--dash-muted);
   text-align: center;
 }
 
-/* ---------- MOBILE ---------- */
-@media (max-width: 560px) {
-  .calendar {
-    padding: 1rem 0.75rem;
+/* ---------- PHONE (calendar ≤ 520px ang lapad) ---------- */
+@container (max-width: 520px) {
+  .header {
+    margin-bottom: 14px;
+  }
+
+  .monthTitle {
+    font-size: 28px;
+  }
+
+  /* Buong lapad ang mga button para madaling pindutin */
+  .controls {
+    width: 100%;
+  }
+
+  .todayBtn {
+    flex: 1;
+  }
+
+  .weekdays,
+  .grid {
+    gap: 4px;
+  }
+
+  .weekday {
+    padding: 0 0 6px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .weekdayLong {
+    display: none;
+  }
+
+  .weekdayShort {
+    display: inline;
   }
 
   .day {
-    min-height: 48px;
-    padding: 0.25rem;
     align-items: center;
+    height: 54px;
+    padding: 4px;
+    border-radius: 12px;
   }
 
   .dayNumber {
     width: 24px;
     height: 24px;
-    font-size: 0.78rem;
-  }
-
-  .weekday {
-    font-size: 0.68rem;
+    font-size: 12px;
   }
 
   /* Masikip — tuldok na lang imbes na title */
@@ -374,5 +478,29 @@
 
   .dots {
     display: flex;
+  }
+
+  .agenda {
+    padding: 16px;
+  }
+
+  .detailsList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Mas maliit na padding ng calendar mismo sa phone */
+@media (max-width: 560px) {
+  .calendar {
+    padding: 16px;
+    border-radius: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day,
+  .todayBtn,
+  .navBtn {
+    transition: none;
   }
 }

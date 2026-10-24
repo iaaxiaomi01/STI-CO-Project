@@ -8,6 +8,20 @@ import {
   removeAvatar,
   uploadAvatar,
 } from '../lib/avatar.js'
+import {
+  Award,
+  Building2,
+  CalendarDays,
+  Camera,
+  Clock,
+  GraduationCap,
+  Hash,
+  Layers,
+  Mail,
+  Shield,
+  Trash2,
+  User,
+} from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Avatar from '../components/Avatar.jsx'
 import styles from './Profile.module.css'
@@ -25,6 +39,25 @@ import styles from './Profile.module.css'
    Pagkatapos mag-upload, tinatawag ang refreshProfile() para
    sabay-sabay magbago ang larawan dito, sa Sidebar at sa
    Dashboard. */
+/* ITSURA ("Portrait" — UI lang, walang binago sa data o aksyon):
+   simpleng avatar na may manipis na dilaw na border (walang
+   animation), malaking pangalan, at bawat detalye ay nasa sariling
+   off-white na box na may icon. */
+
+/* Icon ng bawat detalye (label → icon) */
+const DETAIL_ICONS = {
+  'Full name': User,
+  'Student ID': Hash,
+  Email: Mail,
+  Program: GraduationCap,
+  'Year level': Layers,
+  Organization: Building2,
+  Role: Shield,
+  Position: Award,
+  'Last sign-in': Clock,
+  'Member since': CalendarDays,
+}
+
 function Profile() {
   const { user, profile, role, refreshProfile } = useAuth()
   const roleConfig = getRoleConfig(role)
@@ -106,75 +139,92 @@ function Profile() {
   ]
 
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader title="Profile" />
 
-      <div className={styles.card}>
-        <div className={styles.identity}>
+      {/* ---------- PORTRAIT: avatar + pangalan ---------- */}
+      <section className={styles.identity}>
+        <div className={styles.avatarStage}>
           <div className={styles.avatarWrap}>
             <Avatar src={profile?.avatar_url} name={fullName} size="lg" />
             {busy && <span className={styles.avatarBusy} aria-hidden="true" />}
           </div>
-
-          <div className={styles.identityText}>
-            <p className={styles.name}>{fullName}</p>
-            <p className={styles.email}>{profile?.email ?? user?.email}</p>
-
-            {profile && (
-              <div className={styles.avatarActions}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPTED_TYPES.join(',')}
-                  onChange={handleFileChange}
-                  hidden
-                />
-                <button
-                  type="button"
-                  className={styles.avatarButton}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={Boolean(busy)}
-                >
-                  {busy === 'upload'
-                    ? 'Uploading…'
-                    : profile.avatar_url
-                      ? 'Change picture'
-                      : 'Upload picture'}
-                </button>
-
-                {profile.avatar_url && (
-                  <button
-                    type="button"
-                    className={`${styles.avatarButton} ${styles.avatarRemove}`}
-                    onClick={handleRemove}
-                    disabled={Boolean(busy)}
-                  >
-                    {busy === 'remove' ? 'Removing…' : 'Remove'}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {avatarError ? (
-              <p className={styles.avatarError} role="alert">
-                {avatarError}
-              </p>
-            ) : (
-              <p className={styles.avatarHint}>JPG, PNG or WEBP · up to 10 MB</p>
-            )}
-          </div>
         </div>
 
-        <dl className={styles.details}>
-          {DETAILS.map((item) => (
-            <div key={item.label} className={styles.detailRow}>
-              <dt className={styles.detailLabel}>{item.label}</dt>
+        <div className={styles.identityText}>
+          <p className={styles.name}>{fullName}</p>
+          <p className={styles.email}>{profile?.email ?? user?.email}</p>
+
+          {profile && (
+            <div className={styles.avatarActions}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_TYPES.join(',')}
+                onChange={handleFileChange}
+                hidden
+              />
+              <button
+                type="button"
+                className={styles.avatarButton}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={Boolean(busy)}
+              >
+                <Camera size={17} strokeWidth={2.3} aria-hidden="true" />
+                {busy === 'upload'
+                  ? 'Uploading…'
+                  : profile.avatar_url
+                    ? 'Change picture'
+                    : 'Upload picture'}
+              </button>
+
+              {profile.avatar_url && (
+                <button
+                  type="button"
+                  className={`${styles.avatarButton} ${styles.avatarRemove}`}
+                  onClick={handleRemove}
+                  disabled={Boolean(busy)}
+                >
+                  <Trash2 size={16} strokeWidth={2.3} aria-hidden="true" />
+                  {busy === 'remove' ? 'Removing…' : 'Remove'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {avatarError ? (
+            <p className={styles.avatarError} role="alert">
+              {avatarError}
+            </p>
+          ) : (
+            <p className={styles.avatarHint}>JPG, PNG or WEBP · up to 10 MB</p>
+          )}
+        </div>
+      </section>
+
+      {/* ---------- MGA DETALYE ---------- */}
+      <dl className={styles.details}>
+        {DETAILS.map((item) => {
+          const Icon = DETAIL_ICONS[item.label]
+          return (
+            <div
+              key={item.label}
+              className={`${styles.detailRow} ${
+                item.label === 'Position' ? styles.detailPosition : ''
+              }`}
+            >
+              <dt className={styles.detailLabel}>
+                <span className={styles.detailIcon} aria-hidden="true">
+                  {Icon && <Icon size={18} strokeWidth={2.2} />}
+                </span>
+                {item.label}
+              </dt>
               <dd className={styles.detailValue}>{item.value}</dd>
             </div>
-          ))}
-        </dl>
-      </div>
-    </>
+          )
+        })}
+      </dl>
+    </div>
   )
 }
 

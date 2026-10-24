@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Building2, ImagePlus, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { ACCEPTED_TYPES, ImageError } from '../lib/image.js'
 import {
@@ -31,6 +32,10 @@ import styles from './OrgProfile.module.css'
    Pagkatapos palitan ang pangalan, tinatawag ang
    refreshProfile() para magbago rin ito sa Sidebar at
    Dashboard (galing doon ang profile.organizations.name).
+
+   ITSURA ("Cover + logo" — UI lang, walang binago sa data):
+     navy na cover na may pinong pattern, logo na nakapatong sa
+     gilid nito, at ang detalye sa ilalim. Hover lang ang may galaw.
    ============================================================ */
 function OrgProfile() {
   const { profile, refreshProfile } = useAuth()
@@ -198,7 +203,7 @@ function OrgProfile() {
     .join('')
 
   return (
-    <>
+    <div className={styles.page}>
       {header}
 
       {notice && (
@@ -208,6 +213,9 @@ function OrgProfile() {
       )}
 
       <div className={styles.card}>
+        {/* Navy na cover sa itaas — disenyo lang */}
+        <div className={styles.cover} aria-hidden="true" />
+
         {/* ---------- LOGO ---------- */}
         <div className={styles.logoSection}>
           <div className={styles.logoWrap}>
@@ -242,6 +250,7 @@ function OrgProfile() {
               onClick={() => fileInputRef.current?.click()}
               disabled={Boolean(logoBusy)}
             >
+              <ImagePlus size={16} strokeWidth={2.3} aria-hidden="true" />
               {logoBusy === 'upload'
                 ? 'Uploading…'
                 : org.logo_url
@@ -255,6 +264,7 @@ function OrgProfile() {
                 onClick={handleLogoRemove}
                 disabled={Boolean(logoBusy)}
               >
+                <Trash2 size={15} strokeWidth={2.3} aria-hidden="true" />
                 {logoBusy === 'remove' ? 'Removing…' : 'Remove'}
               </button>
             )}
@@ -342,7 +352,10 @@ function OrgProfile() {
             </div>
             <div className={styles.row}>
               <dt className={styles.label}>Department</dt>
-              <dd className={styles.value}>{org.department || '—'}</dd>
+              <dd className={styles.value}>
+                <Building2 size={16} strokeWidth={2.3} aria-hidden="true" />
+                {org.department || '—'}
+              </dd>
             </div>
             <div className={styles.row}>
               <dt className={styles.label}>Description</dt>
@@ -355,7 +368,7 @@ function OrgProfile() {
       </div>
 
       <OfficerPositions orgId={org.id} />
-    </>
+    </div>
   )
 }
 

@@ -1,17 +1,39 @@
+/* ============================================================
+   SIDEBAR — lumulutang na navy panel
+
+   Desktop  (> 900px): nakadikit sa kaliwa, may 16px na puwang
+                       sa paligid at bilugang kanto.
+   Tablet/phone (≤ 900px): drawer na dumudulas mula sa kaliwa
+                       (binubuksan ng ☰ sa MemberLayout).
+
+   Kapag papalitan mo ang lapad (248px) o ang puwang (16px),
+   palitan mo rin ang margin-left ng .main sa
+   layouts/MemberLayout.module.css (16 + 248 + 16 = 280px).
+   ============================================================ */
+
 .sidebar {
   /* Fixed — hindi gumagalaw kahit mag-scroll ang content */
   position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 260px;
+  top: 16px;
+  left: 16px;
+  bottom: 16px;
+  width: 248px;
   z-index: 60;
 
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  padding: 24px 16px 16px;
 
-  background-color: #fff;
-  border-right: 1px solid var(--color-border);
+  border-radius: var(--dash-radius);
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+  font-family: var(--font-ui);
+}
+
+/* Dilaw na focus ring — hindi makikita ang asul sa navy */
+.sidebar :focus-visible {
+  outline-color: var(--dash-yellow);
 }
 
 /* ---------- TAAS ---------- */
@@ -19,97 +41,106 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.35rem 1.35rem 1.1rem;
-  border-bottom: 1px solid var(--color-border);
+  gap: 8px;
+  padding: 0 4px 0 10px;
 }
 
 .brand {
-  font-size: 1.3rem;
+  font-family: var(--font-display);
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .brandAccent {
-  color: var(--color-primary);
+  color: var(--dash-yellow);
 }
 
 .closeBtn {
-  display: none; /* sa mobile lang lalabas */
-  background: none;
+  display: none; /* sa tablet/phone lang lalabas */
+  place-items: center;
+  width: 44px;
+  height: 44px;
   border: none;
-  font-size: 1.15rem;
-  line-height: 1;
-  color: var(--color-muted);
-  padding: 0.3rem 0.4rem;
-  border-radius: 6px;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .closeBtn:hover {
-  background-color: var(--color-surface);
-  color: var(--color-text);
+  background-color: rgba(255, 255, 255, 0.16);
 }
 
 /* ---------- NAV ---------- */
 .nav {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 1.1rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .navItem {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 0.85rem;
-  border-radius: 9px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  gap: 14px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 16px;
+  color: #c9d4ef;
+  font-size: 15px;
+  font-weight: 600;
   transition: background-color var(--transition), color var(--transition);
 }
 
-.navItem {
-  color: var(--color-muted);
-}
-
 .navItem:hover {
-  background-color: var(--color-surface);
-  color: var(--color-text);
+  background-color: rgba(255, 255, 255, 0.07);
+  color: #fff;
 }
 
 /* Ang kasalukuyang page — inilalagay ito ng NavLink */
-.navItemActive {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-weight: 600;
+.navItemActive,
+.navItemActive:hover {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  font-weight: 800;
 }
 
 .icon {
+  display: grid;
+  place-items: center;
   width: 20px;
   flex-shrink: 0;
-  text-align: center;
   font-size: 0.85rem;
 }
 
 /* ---------- IBABA ---------- */
 .bottom {
-  /* margin-top: auto — itinutulak nito ang kahon na ito
-     sa pinakailalim ng sidebar */
-  margin-top: auto;
-  padding: 1.1rem 1.1rem 1.35rem;
-  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 .userBox {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.9rem;
+  gap: 12px;
   min-width: 0;
 }
 
+/* Parisukat na dilaw na avatar (kapag walang larawan) */
+.userBox .avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  font-weight: 800;
+}
 
 .userInfo {
   display: flex;
@@ -118,59 +149,73 @@
 }
 
 .userName {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .userEmail {
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  font-size: 12px;
+  color: #aebbd9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* Role ng naka-login — para alam niya kung bakit ganito ang menu */
 .roleTag {
-  display: inline-block;
-  margin-bottom: 0.9rem;
-  padding: 0.18rem 0.62rem;
+  min-width: 0;
+  padding: 5px 10px;
   border-radius: 999px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: 0.7rem;
-  font-weight: 700;
+  background-color: #c9d4ef;
+  color: var(--dash-navy-deep);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
 }
 
 .logout {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border-radius: 9px;
-  background-color: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-muted);
-  font-size: 0.88rem;
-  font-weight: 600;
-  transition: border-color var(--transition), color var(--transition);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transition: background-color var(--transition);
 }
 
 .logout:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.16);
 }
 
-/* ---------- MOBILE ---------- */
+/* ---------- TABLET / PHONE: drawer ---------- */
 @media (max-width: 900px) {
   /* Nakatago sa labas ng screen, dumudulas papasok kapag binuksan */
   .sidebar {
-    transform: translateX(-100%);
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 300px;
+    max-width: 84vw;
+    padding: 18px 16px 16px;
+    border-radius: 0 var(--dash-radius) var(--dash-radius) 0;
+    transform: translateX(-110%);
     transition: transform 0.25s ease;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 20px 48px rgba(3, 27, 75, 0.3);
   }
 
   .sidebarOpen {
@@ -178,7 +223,7 @@
   }
 
   .closeBtn {
-    display: block;
+    display: grid;
   }
 }
 

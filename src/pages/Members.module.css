@@ -1,169 +1,411 @@
-.status {
-  padding: 2rem 0;
-  color: var(--color-muted);
+/* ================================================================
+   MEMBERS — "editorial roster"
+
+   Walang card, box o tile: bukas na listahan sa ibabaw mismo ng
+   page, hinahati lang ng manipis na guhit — parang directory sa
+   magazine. Dilaw ang bida; maitim na tinta ang teksto; mainit
+   na cream kapag tinapatan ang isang row.
+   ================================================================ */
+.page {
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+
+  --ink: #141a2b;
+  --ink-soft: #5b6275;
+  --hair: rgba(20, 26, 43, 0.1);
+  --yellow: var(--dash-yellow);
+  --amber: #e0a800;
+  --cream: #fff6d1;
 }
 
+.status {
+  padding: 2rem 0;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+/* Mensahe pagka-set ng position — guhit lang sa kaliwa, walang kahon */
+.notice {
+  margin-bottom: 20px;
+  padding: 4px 0 4px 14px;
+  border-left: 4px solid var(--yellow);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* ================================================================
+   TOOLBAR
+   ================================================================ */
 .toolbar {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  align-items: flex-end;
   flex-wrap: wrap;
+  gap: 18px 32px;
+  margin-bottom: 26px;
+}
+
+/* Search — underline lang; nagiging dilaw kapag naka-focus */
+.searchField {
+  position: relative;
+  flex: 1 1 340px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 0 10px;
+  border-bottom: 2px solid rgba(20, 26, 43, 0.18);
+  cursor: text;
+  transition: border-color var(--transition);
+}
+
+.searchField::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 3px;
+  border-radius: 3px;
+  background-color: var(--yellow);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+}
+
+.searchField:focus-within::after {
+  transform: scaleX(1);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--ink-soft);
+}
+
+.searchField:focus-within .searchIcon {
+  color: var(--ink);
 }
 
 .search {
   flex: 1;
-  min-width: 220px;
-  padding: 0.7rem 0.95rem;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
   font: inherit;
-  font-size: 0.93rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background-color: #fff;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.search::placeholder {
+  color: #8d93a3;
+  font-weight: 500;
 }
 
 .search:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
+  outline: none;
 }
 
-/* Organization filter (SAO, School Head, IT Admin) */
-.orgSelect {
-  min-width: 200px;
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+}
+
+/* Organization filter (SAO, School Head, School Admin, IT Admin) —
+   underline din, may sariling chevron */
+.selectField {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   max-width: 100%;
-  padding: 0.7rem 0.95rem;
+}
+
+.orgSelect {
+  appearance: none;
+  min-width: 210px;
+  max-width: 100%;
+  padding: 8px 30px 8px 0;
+  border: none;
+  border-bottom: 2px solid rgba(20, 26, 43, 0.18);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
   font: inherit;
-  font-size: 0.93rem;
-  color: inherit;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background-color: #fff;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .orgSelect:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
+  outline: none;
+  border-bottom-color: var(--yellow);
 }
 
-@media (max-width: 600px) {
-  .orgSelect {
-    width: 100%;
-  }
+.selectIcon {
+  position: absolute;
+  right: 2px;
+  color: var(--ink-soft);
+  pointer-events: none;
 }
 
-.count {
-  font-size: 0.87rem;
-  color: var(--color-muted);
+/* "Officers only" — checkbox na itsurang switch */
+.filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
 }
 
-/* Naka-scroll pahalang sa mobile para hindi masira ang page */
-.tableWrap {
-  overflow-x: auto;
+.switchInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background-color: rgba(20, 26, 43, 0.16);
+  transition: background-color 0.25s ease;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 6px rgba(20, 26, 43, 0.25);
+  transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), background-color 0.25s ease;
+}
+
+.switchInput:checked + .switch {
+  background-color: var(--yellow);
+}
+
+.switchInput:checked + .switch::after {
+  transform: translateX(18px);
+  background-color: var(--ink);
+}
+
+.switchInput:focus-visible + .switch {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* "12 of 40" — malaking numero */
+.count {
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.count b {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* ================================================================
+   ROSTER (table sa desktop)
+   ================================================================ */
+.tableWrap {
+  container-type: inline-size;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 14.5px;
 }
 
 .table th,
 .table td {
-  padding: 0.8rem 1rem;
+  padding: 16px 14px;
   text-align: left;
-  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
   white-space: nowrap;
 }
 
-.table th {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-muted);
-  background-color: var(--color-surface);
+.table th:first-child,
+.table td:first-child {
+  padding-left: 6px;
 }
 
-.table tbody tr:last-child td {
-  border-bottom: none;
+/* Header: maliit na caps sa ibabaw ng makapal na guhit */
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+  background-color: var(--dash-ground);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--hair);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover: cream na wash at dilaw na guhit sa kaliwa */
+.table tbody tr:hover {
+  background-color: var(--cream);
+  box-shadow: inset 4px 0 0 var(--yellow);
+}
+
+.detail {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
 /* Profile picture sa kaliwa ng pangalan at email */
 .person {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 14px;
+}
+
+.avatarRing {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: 50%;
+}
+
+/* Avatar na walang larawan: maitim na tinta + dilaw na letra
+   (imbes na asul) */
+.avatarRing > * {
+  background-color: var(--ink);
+  color: var(--yellow);
+}
+
+/* Officer: dilaw na avatar at dilaw na singsing */
+.officerRow .avatarRing {
+  background: conic-gradient(var(--yellow), var(--amber), var(--yellow));
+}
+
+.officerRow .avatarRing > * {
+  background-color: var(--yellow);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px var(--dash-ground);
+}
+
+.officerRow:hover .avatarRing > * {
+  box-shadow: 0 0 0 2px var(--cream);
+}
+
+.personText {
+  min-width: 0;
 }
 
 .name {
   display: block;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--ink);
 }
 
 .email {
   display: block;
-  font-size: 0.8rem;
-  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* Position — parang highlighter na dilaw */
+.position {
+  display: inline;
+  padding: 0 5px;
+  background: linear-gradient(100deg, transparent 2%, var(--yellow) 4%, #ffe14d 96%, transparent 98%);
+  background-size: 100% 62%;
+  background-position: 0 85%;
+  background-repeat: no-repeat;
+  color: var(--ink);
+  font-weight: 800;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.roleText {
+  color: var(--ink-soft);
+  font-weight: 700;
 }
 
 .inactive {
-  opacity: 0.5;
-}
-/* ---------- Officer position ---------- */
-.notice {
-  margin-bottom: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  font-size: 0.9rem;
+  opacity: 0.45;
 }
 
-.filter {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.88rem;
-  color: var(--color-muted);
-  cursor: pointer;
+.inactive .name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(20, 26, 43, 0.35);
 }
 
-.filter input {
-  accent-color: var(--color-primary);
-}
-
-.position {
-  display: inline-block;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
+/* ---------- SET POSITION — text link na may dilaw na underline ---------- */
 .actionCell {
   text-align: right;
 }
 
 .rowButton {
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background-color: #fff;
-  color: var(--color-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 2px;
+  border: none;
+  border-radius: 0;
+  background: linear-gradient(var(--yellow), var(--yellow)) no-repeat left bottom / 100% 3px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-size 0.25s ease, color 0.2s ease;
 }
 
 .rowButton:hover {
-  background-color: var(--color-primary-soft);
+  background-size: 100% 100%;
+}
+
+.rowButton svg {
+  transition: transform 0.2s ease;
+}
+
+.rowButton:hover svg {
+  transform: translate(2px, -2px);
+}
+
+.rowButton:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
 }
 
 /* Para sa screen reader lang */
@@ -174,4 +416,177 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* ================================================================
+   TABLET at PHONE — bawat row ay patong-patong, may label ang
+   bawat detalye (galing sa data-label). Walang horizontal scroll.
+   ================================================================ */
+@container (max-width: 860px) {
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  /* Hanay 1: pangalan · role · Set position
+     Hanay 2: Student ID · Program · Year · Organization */
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    gap: 12px 18px;
+    padding: 16px 8px;
+  }
+
+  .table td,
+  .table td:first-child {
+    padding: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .nameCell {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+
+  .roleCell {
+    grid-column: 3 / 4;
+    grid-row: 1;
+  }
+
+  /* Laging sa hanay 2 — kahit walang "Set position" sa hanay 1 */
+  .detail {
+    grid-row: 2;
+    align-self: start;
+  }
+
+  .detail::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: #8d93a3;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .detail {
+    color: var(--ink);
+  }
+
+  .actionCell {
+    grid-column: 4 / 5;
+    grid-row: 1;
+    text-align: right;
+  }
+}
+
+@container (max-width: 560px) {
+  /* Hanay 1: pangalan · role
+     Hanay 2: Student ID · Program · Year
+     tapos Organization, tapos Set position */
+  .table tbody tr {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 14px 4px;
+  }
+
+  .nameCell {
+    grid-column: 1 / 3;
+  }
+
+  .roleCell {
+    grid-column: 3 / 4;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .detail {
+    grid-row: auto;
+  }
+
+  .orgCell {
+    grid-column: 1 / -1;
+  }
+
+  .actionCell {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    text-align: left;
+  }
+
+  /* Walang button (hal. Adviser mismo) → walang bakanteng hanay */
+  .actionCell:empty {
+    display: none;
+  }
+
+  .person {
+    gap: 10px;
+  }
+
+  .name {
+    font-size: 15.5px;
+  }
+
+  .email {
+    font-size: 12px;
+  }
+
+  .rowButton {
+    min-height: 40px;
+  }
+}
+
+/* Toolbar sa phone */
+@media (max-width: 560px) {
+  .toolbar {
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .searchField {
+    flex-basis: 100%;
+  }
+
+  .search {
+    font-size: 17px;
+  }
+
+  .controls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 14px 18px;
+  }
+
+  .selectField,
+  .orgSelect {
+    width: 100%;
+  }
+
+  .count b {
+    font-size: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchField::after,
+  .switch,
+  .switch::after,
+  .rowButton,
+  .rowButton svg,
+  .table tbody tr {
+    transition: none;
+  }
 }

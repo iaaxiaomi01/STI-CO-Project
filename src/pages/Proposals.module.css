@@ -1,315 +1,367 @@
+/* ================================================================
+   PROPOSALS — "route line"
+
+   Bawat proposal ay nasa sariling box na malambot ang kulay
+   (hindi matapang na puti; mapusyaw na dilaw kapag ikaw ang may
+   aksyon), may bilog na status sa kaliwa, at may sariling
+   ROUTE MAP ng daan nito
+   (Officer → Adviser → SAO → School Head → School Admin).
+
+   Kulay ng STI-CO: navy, deep navy, dilaw at gold — hindi puro puti.
+   ================================================================ */
+.page {
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+
+  --navy: var(--dash-navy);
+  --deep: var(--dash-navy-deep);
+  --yellow: var(--dash-yellow);
+  --gold: var(--dash-gold);
+  --hair: rgba(3, 27, 75, 0.12);
+  --tint: #6b7fae;
+  --red: #d33a2f;
+  --orange: #ee7a14;
+}
+
 .status {
   padding: 2rem 0;
-  color: var(--color-muted);
+  color: var(--dash-muted);
+  font-weight: 600;
 }
 
+/* Mensahe — deep navy na guhit na may dilaw na marka */
 .notice {
-  margin-bottom: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  font-size: 0.9rem;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background-color: var(--deep);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
+.notice::before {
+  content: '';
+  flex-shrink: 0;
+  width: 4px;
+  border-radius: 4px;
+  background-color: var(--yellow);
+}
+
+/* ================================================================
+   FILTER — malalaking tab na teksto + madilim na org select
+   ================================================================ */
+.filters {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid var(--hair);
+}
+
+.chipGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 28px;
+}
+
+.filterChip {
+  position: relative;
+  padding: 6px 0 14px;
+  border: none;
+  background: none;
+  color: #7c88a3;
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.filterChip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  background-color: var(--yellow);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.filterChip:hover {
+  color: var(--navy);
+}
+
+.filterActive,
+.filterActive:hover {
+  color: var(--deep);
+}
+
+.filterActive::after {
+  transform: scaleX(1);
+}
+
+.filterChip:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Organization filter (SAO, School Head, School Admin) */
+.orgSelect {
+  appearance: none;
+  min-width: 210px;
+  max-width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 40px 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--deep);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffd200' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orgSelect:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   FEED
+   ================================================================ */
 .list {
+  container-type: inline-size;
   display: grid;
-  gap: 1rem;
+  gap: 16px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Bawat proposal ay may sariling box — malambot na kulay, hindi
+   matapang na puti */
 .card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  padding: 1.35rem 1.5rem;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  --box: #f7f9fc;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  column-gap: 22px;
+  padding: 26px 26px 26px 22px;
+  border: 1px solid rgba(3, 27, 75, 0.08);
+  border-radius: 26px;
+  background-color: var(--box);
+  transition: box-shadow var(--transition), border-color var(--transition);
 }
 
+.card:hover {
+  border-color: rgba(3, 27, 75, 0.14);
+  box-shadow: 0 12px 30px rgba(3, 27, 75, 0.07);
+}
+
+/* Ikaw ang may hawak ngayon → mapusyaw na dilaw na box */
+.yourTurn {
+  --box: #fffaea;
+  border-color: rgba(247, 185, 0, 0.45);
+}
+
+.yourTurn:hover {
+  border-color: rgba(247, 185, 0, 0.7);
+}
+
+/* ---------- STATUS (bilog sa kaliwa ng box) ---------- */
+.rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.railDot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.tone_pending .railDot {
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.tone_revision .railDot {
+  background-color: var(--orange);
+  color: #fff;
+}
+
+.tone_approved .railDot {
+  background-color: var(--deep);
+  color: var(--yellow);
+}
+
+.tone_rejected .railDot {
+  background-color: var(--red);
+  color: #fff;
+}
+
+/* Ikaw ang may hawak ngayon (aaksyon o magre-revise) — kumikislap */
+.yourTurn .railDot::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 3px solid var(--yellow);
+  border-radius: 50%;
+  animation: turnPulse 1.9s ease-out infinite;
+}
+
+/* ---------- NILALAMAN ---------- */
 .cardMain {
-  flex: 1;
-  min-width: 240px;
+  min-width: 0;
 }
 
-.title {
-  font-size: 1.12rem;
-  overflow-wrap: anywhere;
-}
-
-.meta {
-  font-size: 0.9rem;
-  color: var(--color-muted);
-  overflow-wrap: anywhere;
-}
-
-.meta strong {
-  color: var(--color-text);
-}
-
-.date {
-  margin-top: 0.5rem;
-  font-size: 0.82rem;
-  color: var(--color-muted);
-}
-
-.cardActions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.openButton {
-  padding: 0.5rem 1.05rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 999px;
-  background-color: #fff;
-  color: var(--color-primary);
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.openButton:hover {
-  background-color: var(--color-primary-soft);
-}
-
-.linkButton {
-  padding: 0.35rem 0.75rem;
-  border: none;
-  border-radius: 8px;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.87rem;
-  font-weight: 600;
-}
-
-.linkButton:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
-}
-
-.linkButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.danger {
-  color: #b42318;
-}
-
-.danger:hover:not(:disabled) {
-  background-color: #fdecec;
-}
-
-/* ---------- STATUS ---------- */
 .titleRow {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
   flex-wrap: wrap;
-  margin-bottom: 0.5rem;
+  gap: 8px 10px;
 }
 
-.status {
-  display: inline-block;
-  padding: 0.2rem 0.7rem;
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
   border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  background-color: #e3e8f3;
+  color: #3b4660;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  background-color: var(--color-surface);
-  color: var(--color-muted);
 }
 
 .status_pending {
-  background-color: #fff6da;
-  color: #8a5a00;
+  background-color: #fff1b8;
+  color: #6b5100;
 }
 
 .status_revision {
-  background-color: #fff0e0;
-  color: #9a4f05;
+  background-color: #ffe1c7;
+  color: #9a3f00;
 }
 
 .status_approved {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+  background-color: var(--deep);
+  color: var(--yellow);
 }
 
 .status_rejected {
-  background-color: #fdecec;
+  background-color: #fde0dd;
   color: #a61b1b;
 }
 
 /* "With budget" — dadaan pa sa School Administrator */
 .budgetTag {
-  display: inline-block;
-  padding: 0.2rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
   border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  background-color: var(--gold);
+  color: var(--deep);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
 }
 
-/* ---------- AKSYON NG ADVISER SA CARD ---------- */
-.review {
-  margin-top: 0.85rem;
-  padding: 0.7rem 0.9rem;
-  border-left: 3px solid #1c6b3f;
-  border-radius: 0 10px 10px 0;
-  background-color: #f2f9f5;
+.date {
+  margin-left: auto;
+  color: var(--dash-muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.reviewRejected {
-  border-left-color: #b42318;
-  background-color: #fdf3f2;
-}
-
-.reviewHead {
-  font-size: 0.85rem;
-  color: var(--color-muted);
-}
-
-.reviewHead strong {
-  color: var(--color-text);
-}
-
-.reviewComment {
-  margin-top: 0.3rem;
-  font-size: 0.9rem;
-  white-space: pre-wrap;
+.title {
+  margin: 10px 0 10px;
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
   overflow-wrap: anywhere;
 }
 
-/* ---------- MGA BUTTON NG ADVISER ---------- */
-.approveButton,
-.rejectButton {
-  padding: 0.5rem 1.05rem;
-  border-radius: 999px;
-  font-size: 0.87rem;
+.metaList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meta {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+  color: var(--dash-muted);
+  font-size: 14px;
   font-weight: 600;
-  transition: background-color var(--transition);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
-.approveButton {
-  border: none;
-  background-color: #1c6b3f;
-  color: #fff;
+.meta svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--tint);
 }
 
-.approveButton:hover:not(:disabled) {
-  background-color: #155430;
+.meta strong {
+  color: var(--deep);
+  font-weight: 800;
 }
 
-.rejectButton {
-  border: 1px solid #e3b4ae;
-  background-color: #fff;
-  color: #b42318;
-}
-
-.rejectButton:hover:not(:disabled) {
-  background-color: #fdecec;
-}
-
-.approveButton:disabled,
-.rejectButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* "Noted" — kapag rejected na ang proposal */
-.notedButton {
-  padding: 0.5rem 1.05rem;
-  border: none;
-  border-radius: 999px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.notedButton:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
-}
-
-/* "Revise" ng Adviser/SAO at "I-revise" ng Officer */
-.reviseButton {
-  padding: 0.5rem 1.05rem;
-  border: 1px solid #e8c49f;
-  border-radius: 999px;
-  background-color: #fff;
-  color: #9a4f05;
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.reviseButton:hover:not(:disabled) {
-  background-color: #fff4e8;
-}
-
-/* ---------- EVENT MULA SA APPROVED NA PROPOSAL ---------- */
-.eventButton {
-  padding: 0.5rem 1.05rem;
-  border: none;
-  border-radius: 999px;
-  background-color: var(--color-primary);
-  color: #fff;
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.eventButton:hover {
-  background-color: var(--color-primary-dark);
-}
-
-.eventLink {
-  padding: 0.5rem 0.9rem;
-  border-radius: 999px;
-  color: #1c6b3f;
-  font-size: 0.87rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background-color var(--transition);
-}
-
-.eventLink:hover {
-  background-color: #e8f6ee;
-}
-
-/* ---------- NAKA-ATTACH NA FILE ---------- */
+/* ---------- NAKA-ATTACH NA FILE — link na may dilaw na underline ---------- */
 .fileChip {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 8px;
   max-width: 100%;
-  margin-top: 0.65rem;
-  padding: 0.45rem 0.8rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background-color: var(--color-surface);
-  color: var(--color-text);
+  margin-top: 12px;
+  padding: 4px 0;
+  border: none;
+  border-bottom: 2px solid var(--yellow);
+  border-radius: 0;
+  background: none;
+  color: var(--deep);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 14px;
   text-align: left;
-  transition: border-color var(--transition), background-color var(--transition);
+  cursor: pointer;
+  transition: background-color var(--transition);
 }
 
 .fileChip:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
+  background-color: rgba(255, 210, 0, 0.25);
 }
 
 .fileChip:disabled {
@@ -317,80 +369,469 @@
   cursor: wait;
 }
 
+.fileChip svg {
+  flex-shrink: 0;
+  color: var(--navy);
+}
+
 .fileChipName {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .fileChipMeta {
   flex-shrink: 0;
-  color: var(--color-primary);
-  font-weight: 600;
-}
-/* ---------- SALAIN: naghihintay sa akin / lahat ---------- */
-.filters {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
+  color: var(--dash-muted);
+  font-weight: 700;
 }
 
-.chipGroup {
+/* ================================================================
+   ROUTE MAP — parang mapa ng tren
+   ================================================================ */
+.route {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  max-width: 620px;
+  margin: 20px 0 4px;
+  padding: 0;
+  list-style: none;
 }
 
-/* Organization filter (SAO, School Head) — nasa kanan ng chips */
-.orgSelect {
-  margin-left: auto;
-  min-width: 200px;
+.station {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.station:last-child {
+  flex: 0 0 auto;
+}
+
+/* Linya papunta sa susunod na istasyon */
+.station:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 30px;
+  right: 4px;
+  height: 3px;
+  border-radius: 3px;
+  background-color: var(--deep);
+}
+
+/* Hindi pa nararating ang susunod → putol-putol na linya */
+.station:has(+ .st_upcoming)::after,
+.station:has(+ .st_current)::after {
+  background-color: transparent;
+  background-image: linear-gradient(90deg, rgba(3, 27, 75, 0.28) 50%, transparent 50%);
+  background-size: 9px 3px;
+}
+
+.station:has(+ .st_current)::after {
+  background-image: linear-gradient(90deg, var(--gold) 50%, transparent 50%);
+}
+
+.stationDot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--deep);
+  color: var(--yellow);
+}
+
+.stationLabel {
   max-width: 100%;
-  padding: 0.45rem 0.9rem;
+  padding-right: 6px;
+  color: var(--deep);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.st_rejected .stationDot {
+  background-color: var(--red);
+  color: #fff;
+}
+
+.st_noted .stationDot {
+  background-color: #8a93a6;
+  color: #fff;
+}
+
+.st_revision .stationDot {
+  background-color: var(--orange);
+  color: #fff;
+}
+
+/* Narito ngayon ang proposal */
+.st_current .stationDot {
+  background-color: var(--yellow);
+  box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.35);
+}
+
+.st_current .stationDot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--deep);
+}
+
+.st_current .stationDot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  animation: turnPulse 1.9s ease-out infinite;
+}
+
+.st_upcoming .stationDot {
+  border: 2px dashed rgba(3, 27, 75, 0.3);
+  background-color: transparent;
+}
+
+.st_upcoming .stationLabel {
+  color: #8a96ae;
+}
+
+/* ================================================================
+   KASAYSAYAN NG REVIEW (ReviewTrail)
+   Dito lang sa page binabago ang itsura: walang kahon/background,
+   ang kulay na guhit sa kaliwa na lang ang natitira. Ang
+   ReviewDialog at ang sulat ay hindi apektado.
+   ================================================================ */
+.trailWrap ol {
+  gap: 2px;
+  margin: 16px 0 0;
+}
+
+.trailWrap li {
+  padding: 6px 0 6px 14px;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+.trailWrap li p:first-child span:first-child {
+  color: var(--deep);
+}
+
+/* ================================================================
+   MGA BUTTON
+   ================================================================ */
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 176px;
+}
+
+.openButton,
+.approveButton,
+.rejectButton,
+.reviseButton,
+.notedButton,
+.eventButton,
+.eventLink,
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: none;
   font: inherit;
-  font-size: 0.87rem;
-  color: inherit;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background-color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
+  transition: background-color var(--transition), color var(--transition),
+    border-color var(--transition);
 }
 
-.orgSelect:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
+.openButton {
+  border-color: var(--deep);
+  color: var(--deep);
 }
 
-@media (max-width: 600px) {
-  .orgSelect {
+.openButton:hover {
+  background-color: var(--deep);
+  color: #fff;
+}
+
+.approveButton {
+  background-color: var(--deep);
+  color: #fff;
+}
+
+.approveButton svg {
+  color: var(--yellow);
+}
+
+.approveButton:hover:not(:disabled) {
+  background-color: var(--navy);
+}
+
+.reviseButton {
+  border-color: rgba(238, 122, 20, 0.55);
+  color: #a64600;
+}
+
+.reviseButton:hover:not(:disabled) {
+  background-color: #ffe1c7;
+}
+
+.rejectButton {
+  border-color: rgba(211, 58, 47, 0.45);
+  color: #b42318;
+}
+
+.rejectButton:hover:not(:disabled) {
+  background-color: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+/* "Noted" — kapag rejected na ang proposal */
+.notedButton {
+  background-color: #4a5878;
+  color: #fff;
+}
+
+.notedButton:hover:not(:disabled) {
+  background-color: #3a4766;
+}
+
+/* Gumawa ng event mula sa approved na proposal */
+.eventButton {
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.eventButton:hover {
+  background-color: var(--gold);
+}
+
+.eventLink {
+  color: var(--navy);
+}
+
+.eventLink:hover {
+  background-color: rgba(255, 210, 0, 0.3);
+}
+
+.linkButton {
+  min-height: 40px;
+}
+
+.danger {
+  color: #b42318;
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #fde0dd;
+}
+
+.linkButton:disabled,
+.approveButton:disabled,
+.rejectButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.openButton:focus-visible,
+.approveButton:focus-visible,
+.rejectButton:focus-visible,
+.reviseButton:focus-visible,
+.notedButton:focus-visible,
+.eventButton:focus-visible,
+.eventLink:focus-visible,
+.linkButton:focus-visible,
+.fileChip:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.cardActions svg {
+  flex-shrink: 0;
+}
+
+/* ---------- ANIMATION ---------- */
+@keyframes turnPulse {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* ================================================================
+   TABLET — ang mga button ay bumababa sa ilalim ng nilalaman
+   ================================================================ */
+@container (max-width: 760px) {
+  .card {
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 16px;
+  }
+
+  .railDot {
+    width: 42px;
+    height: 42px;
+  }
+
+  .cardActions {
+    grid-column: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 0;
+    margin-top: 18px;
+  }
+
+  .cardActions > * {
+    flex: 1 1 auto;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}
+
+/* ================================================================
+   PHONE
+   ================================================================ */
+@container (max-width: 480px) {
+  .card {
+    grid-template-columns: 34px minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 18px 16px;
+    border-radius: 22px;
+  }
+
+  .railDot {
+    width: 34px;
+    height: 34px;
+  }
+
+  .railDot svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .date {
+    flex-basis: 100%;
     margin-left: 0;
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: 19.5px;
+  }
+
+  .metaList {
+    flex-direction: column;
+  }
+
+  .meta {
+    font-size: 13.5px;
+  }
+
+  .fileChip {
+    flex-wrap: wrap;
+  }
+
+  /* Route map: mas maliit, at buong lapad ng card */
+  .route {
+    margin-left: -46px;
+  }
+
+  .station:not(:last-child)::after {
+    left: 25px;
+  }
+
+  .stationDot {
+    width: 22px;
+    height: 22px;
+  }
+
+  .stationDot svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .station:not(:last-child)::after {
+    top: 10px;
+  }
+
+  .stationLabel {
+    font-size: 9.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .trailWrap {
+    margin-left: -46px;
+  }
+
+  /* Mga button: dalawa bawat hanay; "Open letter" buong lapad */
+  .cardActions {
+    grid-column: 1 / -1;
+  }
+
+  .cardActions > * {
+    flex: 1 1 calc(50% - 4px);
+    padding: 0 12px;
+  }
+
+  .openButton {
+    flex-basis: 100%;
+  }
+}
+
+/* Filter sa phone */
+@media (max-width: 560px) {
+  .filters {
+    gap: 6px 18px;
+  }
+
+  .chipGroup {
+    gap: 2px 20px;
+  }
+
+  .filterChip {
+    font-size: 17px;
+    padding-bottom: 12px;
+  }
+
+  .orgSelect {
     width: 100%;
   }
 }
 
-.filterChip {
-  padding: 0.45rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background-color: #fff;
-  color: var(--color-muted);
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: background-color var(--transition), color var(--transition);
-}
+@media (prefers-reduced-motion: reduce) {
+  .yourTurn .railDot::after,
+  .st_current .stationDot::before {
+    animation: none;
+  }
 
-.filterChip:hover {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-}
-
-.filterActive,
-.filterActive:hover {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary);
-  color: #fff;
+  .filterChip::after {
+    transition: none;
+  }
 }

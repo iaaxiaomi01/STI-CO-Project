@@ -1,4 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Siren,
+  Bell,
+  Building2,
+  Clock,
+  Globe,
+  Megaphone,
+  Pencil,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
@@ -39,7 +50,99 @@ import styles from './Announcements.module.css'
    Ang RLS sa database ang totoong nagbabantay. Ang
    can.announce at canManageAnnouncement() dito ay para lang
    itago ang mga button na hindi mo magagamit.
+
+   ITSURA (UI lang — walang binago sa data o mga aksyon):
+     - POP-UP ng pinakabagong announcement pagbukas ng page,
+       parang emergency alert ng iPhone (LatestAlert sa ibaba).
+       Ang pinakabago ay ang una sa listahan, dahil naka-order
+       na sa created_at (pinakabago una) ang fetchAnnouncements().
+     - Ang pinakabago ay malaking navy na card sa itaas
+       ("Latest"); ang iba ay nasa "Earlier".
    ============================================================ */
+
+/* Icon ng bawat type ng announcement (ANNOUNCEMENT_TYPES) */
+const TYPE_ICONS = {
+  meeting: Users,
+  reminder: Bell,
+  urgent: Siren,
+}
+
+function TypeIcon({ type, size = 20 }) {
+  const Icon = TYPE_ICONS[type] ?? Megaphone
+  return <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
+}
+
+/* ============================================================
+   LATEST ALERT — pop-up na parang iPhone emergency alert
+
+   Lumalabas sa gitna ng screen, may blur sa likod. Sarado
+   kapag pinindot ang "Close", ang labas ng alert, o ang Esc.
+   "View" → isasara at dadalhin ka sa "Latest" na card.
+   Itsura lang: walang binabago sa database.
+   ============================================================ */
+function LatestAlert({ announcement: a, onClose, onView }) {
+  const viewRef = useRef(null)
+
+  useEffect(() => {
+    viewRef.current?.focus()
+    function handleKey(event) {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <div className={styles.alertBackdrop} onClick={onClose}>
+      <div
+        className={`${styles.alert} ${styles[`alert_${a.type}`] ?? ''}`}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="latest-alert-title"
+        aria-describedby="latest-alert-message"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className={styles.alertHead}>
+          <span className={styles.alertIcon}>
+            <TypeIcon type={a.type} size={26} />
+          </span>
+          <p className={styles.alertEyebrow}>
+            Latest announcement · {typeLabel(a.type)}
+          </p>
+        </div>
+
+        <div className={styles.alertBody}>
+          <h2 id="latest-alert-title" className={styles.alertTitle}>
+            {a.title}
+          </h2>
+          <p id="latest-alert-message" className={styles.alertMessage}>
+            {a.message}
+          </p>
+          <p className={styles.alertMeta}>
+            {authorLabel(a)}
+            <br />
+            {formatDate(a.created_at)}
+          </p>
+        </div>
+
+        <div className={styles.alertButtons}>
+          <button type="button" className={styles.alertButton} onClick={onClose}>
+            Close
+          </button>
+          <button
+            type="button"
+            ref={viewRef}
+            className={`${styles.alertButton} ${styles.alertPrimary}`}
+            onClick={onView}
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Announcements() {
   const { role, profile } = useAuth()
   const { can } = getRoleConfig(role)
@@ -76,6 +179,37 @@ function Announcements() {
   }, [load])
 
   const closeForm = useCallback(() => setEditing(null), [])
+
+  /* ---------- POP-UP NG PINAKABAGO (itsura lang) ----------
+     Isang beses lumalabas bawat pagbukas ng page, pagkatapos
+     makuha ang listahan. "Show alert" sa Latest card para
+     ipakita ulit. */
+  const latest = announcements[0] ?? null
+  const [alertOpen, setAlertOpen] = useState(false)
+  const alertShown = useRef(false)
+  const latestRef = useRef(null)
+  const [latestFlash, setLatestFlash] = useState(false)
+
+  useEffect(() => {
+    if (loading || alertShown.current || !latest) return
+    alertShown.current = true
+    setAlertOpen(true)
+  }, [loading, latest])
+
+  const closeAlert = useCallback(() => setAlertOpen(false), [])
+
+  const viewLatest = useCallback(() => {
+    setAlertOpen(false)
+    latestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setLatestFlash(true)
+  }, [])
+
+  /* Patayin ang highlight ng Latest card pagkatapos ng animation */
+  useEffect(() => {
+    if (!latestFlash) return undefined
+    const timer = setTimeout(() => setLatestFlash(false), 1600)
+    return () => clearTimeout(timer)
+  }, [latestFlash])
 
   async function handleSubmit(values) {
     if (editing === 'new') {
@@ -116,8 +250,122 @@ function Announcements() {
     }
   }
 
+  /* Isang announcement — pareho ang laman ng Latest at ng nasa
+     "Earlier"; ibang itsura lang (featured = navy na card). */
+  function renderCard(a, { featured = false } = {}) {
+    const manageable = canManageAnnouncement(a, profile)
+    const busy = deletingId === a.id
+    const audienceKind = audienceOf(a)
+
+    return (
+      <article
+        ref={featured ? latestRef : undefined}
+        className={[
+          styles.card,
+          styles[`card_${a.type}`] ?? '',
+          featured ? styles.featured : '',
+          featured && latestFlash ? styles.flash : '',
+        ].join(' ')}
+      >
+        <div className={styles.cardTop}>
+          <span className={styles.typeIcon}>
+            <TypeIcon type={a.type} size={featured ? 22 : 20} />
+          </span>
+
+          <span className={styles.badges}>
+            {featured && <span className={`${styles.type} ${styles.latestPill}`}>Latest</span>}
+            <span className={`${styles.type} ${styles[`type_${a.type}`] ?? ''}`}>
+              {typeLabel(a.type)}
+            </span>
+            {audienceKind === 'all' && (
+              <span className={`${styles.type} ${styles.global}`}>
+                <Globe size={12} strokeWidth={2.6} aria-hidden="true" />
+                All organizations
+              </span>
+            )}
+            {audienceKind === 'selected' && (
+              <span className={`${styles.type} ${styles.global}`}>
+                <Building2 size={12} strokeWidth={2.6} aria-hidden="true" />
+                Selected organizations
+              </span>
+            )}
+          </span>
+
+          <time className={styles.date} dateTime={a.created_at}>
+            <Clock size={13} strokeWidth={2.4} aria-hidden="true" />
+            <span>
+              {formatDate(a.created_at)}
+              {wasEdited(a) && (
+                <span className={styles.edited} title={`Edited on ${formatDate(a.updated_at)}`}>
+                  {' '}· edited
+                </span>
+              )}
+            </span>
+          </time>
+        </div>
+
+        <h2 className={styles.title}>{a.title}</h2>
+        {audienceKind === 'selected' && (
+          <p className={styles.audience}>To: {selectedOrgsLabel(a)}</p>
+        )}
+        <p className={styles.message}>{a.message}</p>
+
+        <div className={styles.cardBottom}>
+          <p className={styles.author}>
+            <span className={styles.authorAvatar} aria-hidden="true">
+              {(a.author_name ?? '?').trim().charAt(0).toUpperCase() || '?'}
+            </span>
+            {authorLabel(a)}
+          </p>
+
+          {(manageable || featured) && (
+            <div className={styles.cardActions}>
+              {featured && (
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => setAlertOpen(true)}
+                >
+                  <Bell size={15} strokeWidth={2.2} aria-hidden="true" />
+                  Show alert
+                </button>
+              )}
+              {manageable && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => {
+                      setNotice('')
+                      setEditing(a)
+                    }}
+                    disabled={busy}
+                  >
+                    <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionButton} ${styles.danger}`}
+                    onClick={() => handleDelete(a)}
+                    disabled={busy}
+                  >
+                    <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
+                    {busy ? 'Deleting…' : 'Delete'}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </article>
+    )
+  }
+
+  const earlier = announcements.slice(1)
+
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader
         title="Announcements"
         action={
@@ -158,79 +406,31 @@ function Announcements() {
       )}
 
       {!loading && !error && announcements.length > 0 && (
-        <ul className={styles.list}>
-          {announcements.map((a) => {
-            const manageable = canManageAnnouncement(a, profile)
-            const busy = deletingId === a.id
+        <div className={styles.feed}>
+          {/* ---------- PINAKABAGO ---------- */}
+          {renderCard(latest, { featured: true })}
 
-            return (
-              <li key={a.id} className={styles.card}>
-                <div className={styles.cardTop}>
-                  <span className={styles.badges}>
-                    <span className={`${styles.type} ${styles[`type_${a.type}`] ?? ''}`}>
-                      {typeLabel(a.type)}
-                    </span>
-                    {audienceOf(a) === 'all' && (
-                      <span className={`${styles.type} ${styles.global}`}>
-                        All organizations
-                      </span>
-                    )}
-                    {audienceOf(a) === 'selected' && (
-                      <span className={`${styles.type} ${styles.global}`}>
-                        Selected organizations
-                      </span>
-                    )}
-                  </span>
-                  <time className={styles.date} dateTime={a.created_at}>
-                    {formatDate(a.created_at)}
-                    {wasEdited(a) && (
-                      <span
-                        className={styles.edited}
-                        title={`Edited on ${formatDate(a.updated_at)}`}
-                      >
-                        {' '}· edited
-                      </span>
-                    )}
-                  </time>
-                </div>
+          {/* ---------- ANG IBA ---------- */}
+          {earlier.length > 0 && (
+            <section className={styles.earlier} aria-labelledby="earlier-heading">
+              <h2 id="earlier-heading" className={styles.sectionTitle}>
+                Earlier
+                <span className={styles.sectionCount}>{earlier.length}</span>
+              </h2>
 
-                <h2 className={styles.title}>{a.title}</h2>
-                {audienceOf(a) === 'selected' && (
-                  <p className={styles.audience}>To: {selectedOrgsLabel(a)}</p>
-                )}
-                <p className={styles.message}>{a.message}</p>
+              <ul className={styles.list}>
+                {earlier.map((a) => (
+                  <li key={a.id}>{renderCard(a)}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
 
-                <div className={styles.cardBottom}>
-                  <p className={styles.author}>{authorLabel(a)}</p>
-
-                  {manageable && (
-                    <div className={styles.cardActions}>
-                      <button
-                        type="button"
-                        className={styles.linkButton}
-                        onClick={() => {
-                          setNotice('')
-                          setEditing(a)
-                        }}
-                        disabled={busy}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.linkButton} ${styles.danger}`}
-                        onClick={() => handleDelete(a)}
-                        disabled={busy}
-                      >
-                        {busy ? 'Deleting…' : 'Delete'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+      {/* Pop-up ng pinakabago — hindi kasabay ng form */}
+      {alertOpen && latest && !editing && (
+        <LatestAlert announcement={latest} onClose={closeAlert} onView={viewLatest} />
       )}
 
       {editing && (
@@ -242,7 +442,7 @@ function Announcements() {
           onCancel={closeForm}
         />
       )}
-    </>
+    </div>
   )
 }
 

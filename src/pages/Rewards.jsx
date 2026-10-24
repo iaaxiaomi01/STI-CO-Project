@@ -1,5 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import {
+  Gift,
+  HandCoins,
+  History,
+  Pencil,
+  Plus,
+  RotateCcw,
+  ShoppingBag,
+  Sparkles,
+  Store,
+  Ticket,
+  Trash2,
+  Trophy,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   canEarnOg,
@@ -70,7 +84,27 @@ import styles from './Rewards.module.css'
        Time In lang            = kalahati
 
    Database ang nagbabantay sa lahat (OG_REWARDS_SHOP.sql).
+
+   ITSURA ("Gem Vault" — UI lang, walang binago sa data o aksyon):
+     - OG mo: malaking gold na numero sa deep navy na "night sky"
+       na may kumikinang na gem (BalanceCard)
+     - tabs: pill dock na may icon
+     - Shop: "shelf" na walang card; price tag sa larawan, at
+       progress bar kung gaano ka na kalapit sa presyo
+     - OG history: timeline · Members' OG: leaderboard (top 3)
    ============================================================ */
+
+/* Icon ng bawat tab */
+const TAB_ICONS = {
+  shop: ShoppingBag,
+  mine: Ticket,
+  history: History,
+  manage: Store,
+  rewards: Gift,
+  release: Sparkles,
+  claims: HandCoins,
+  members: Trophy,
+}
 
 const TAB_SHOP = 'shop'
 const TAB_MINE = 'mine'
@@ -151,37 +185,41 @@ function Rewards() {
 
   if (tabs.length === 0) {
     return (
-      <>
+      <div className={styles.page}>
         <PageHeader title="Rewards" />
         <EmptyState
           icon="◆"
           title="Nothing to show here"
           message="Organization Gems are for organization members, officers and advisers."
         />
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader title="Rewards" />
 
       {earns && <BalanceCard balance={balance} orgName={profile?.organizations?.name} />}
 
       {tabs.length > 1 && (
         <div className={styles.tabs} role="tablist" aria-label="Rewards">
-          {tabs.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.value}
-              className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''}`}
-              onClick={() => setTab(t.value)}
-            >
-              {t.label}
-            </button>
-          ))}
+          {tabs.map((t) => {
+            const Icon = TAB_ICONS[t.value]
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.value}
+                className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''}`}
+                onClick={() => setTab(t.value)}
+              >
+                {Icon && <Icon size={17} strokeWidth={2.3} aria-hidden="true" />}
+                {t.label}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -204,18 +242,31 @@ function Rewards() {
       {(tab === TAB_REWARDS || tab === TAB_RELEASE) && <EventRewardsTab profile={profile} />}
       {tab === TAB_CLAIMS && <ClaimsTab profile={profile} />}
       {tab === TAB_MEMBERS && <MembersOgTab />}
-    </>
+    </div>
   )
 }
 
 /* ============================================================
-   BALANCE CARD
+   BALANCE — "night sky" na may kumikinang na gem
+   (Member at Officer). Itsura lang ang mga sparkle.
    ============================================================ */
 function BalanceCard({ balance, orgName }) {
   return (
     <section className={styles.balanceCard} aria-label="Your Organization Gems">
+      {/* Mga kislap sa langit */}
+      <span className={styles.sky} aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
+
       <div className={styles.balanceGem} aria-hidden="true">
-        <OgGem size={40} className={styles.balanceGemSvg} />
+        <span className={styles.gemGlow} />
+        <OgGem size={92} className={styles.balanceGemSvg} />
+        <Sparkles className={styles.gemSpark} size={22} strokeWidth={2.4} />
       </div>
       <div className={styles.balanceText}>
         <p className={styles.balanceLabel}>
@@ -316,22 +367,37 @@ function ShopTab({ profile, balance, onRedeemed, onOpenMine }) {
           else if (short > 0) label = `Need ${short.toLocaleString('en-PH')} more OG`
           const disabled = outOfStock || limitReached || short > 0
 
+          /* Itsura lang: gaano ka na kalapit sa presyo (kapag kulang pa) */
+          const showProgress = !outOfStock && !limitReached && short > 0
+          const progress = item.price > 0 ? Math.min(100, (balance / item.price) * 100) : 100
+
           return (
-            <li key={item.id} className={styles.itemCard}>
-              <ItemImage item={item} />
+            <li
+              key={item.id}
+              className={`${styles.itemCard} ${disabled ? '' : styles.itemReady}`}
+            >
+              <div className={styles.itemMedia}>
+                <ItemImage item={item} />
+                <OgAmount value={item.price} size={18} className={styles.itemPrice} />
+              </div>
               <div className={styles.itemBody}>
                 <h2 className={styles.itemName}>{item.name}</h2>
                 {item.description && <p className={styles.itemDesc}>{item.description}</p>}
                 <ItemFacts item={item} used={used} />
               </div>
               <div className={styles.itemFooter}>
-                <OgAmount value={item.price} size={18} className={styles.itemPrice} />
+                {showProgress && (
+                  <span className={styles.progress} aria-hidden="true">
+                    <span style={{ width: `${progress}%` }} />
+                  </span>
+                )}
                 <button
                   type="button"
                   className={styles.redeemBtn}
                   disabled={disabled}
                   onClick={() => setRedeeming(item)}
                 >
+                  {!disabled && <Sparkles size={16} strokeWidth={2.4} aria-hidden="true" />}
                   {label}
                 </button>
               </div>
@@ -518,7 +584,7 @@ function RedemptionOutcome({ r }) {
 /* ============================================================
    OG HISTORY — Member at Officer
    ============================================================ */
-const KIND_ICON = { event_reward: '◆', redemption: '✉', refund: '↺' }
+const KIND_ICON = { event_reward: Sparkles, redemption: ShoppingBag, refund: RotateCcw }
 
 function HistoryTab({ profile, balance }) {
   const [rows, setRows] = useState([])
@@ -590,10 +656,12 @@ function HistoryTab({ profile, balance }) {
       </div>
 
       <ul className={styles.ledger}>
-        {rows.map((t) => (
+        {rows.map((t) => {
+          const KindIcon = KIND_ICON[t.kind]
+          return (
           <li key={t.id} className={styles.ledgerRow}>
             <span className={`${styles.ledgerIcon} ${styles[`kind_${t.kind}`] ?? ''}`} aria-hidden="true">
-              {KIND_ICON[t.kind] ?? '•'}
+              {KindIcon ? <KindIcon size={17} strokeWidth={2.4} /> : '•'}
             </span>
             <span className={styles.ledgerText}>
               <span className={styles.ledgerDesc}>{t.description}</span>
@@ -601,7 +669,8 @@ function HistoryTab({ profile, balance }) {
             </span>
             <OgAmount value={t.amount} signed size={14} />
           </li>
-        ))}
+          )
+        })}
       </ul>
     </>
   )
@@ -902,7 +971,8 @@ function EventRewardCard({ event, att, isAdviser, isOfficer, onChanged }) {
         <div className={styles.cardActions}>
           {event.rewardState === 'ready' && (
             <button type="button" className={styles.releaseBtn} disabled={busy} onClick={handleRelease}>
-              {busy ? 'Releasing…' : '◆ Release OG'}
+              {!busy && <Sparkles size={17} strokeWidth={2.4} aria-hidden="true" />}
+              {busy ? 'Releasing…' : 'Release OG'}
             </button>
           )}
           {event.rewardState === 'waiting' && (
@@ -1006,7 +1076,8 @@ function ManageShopTab({ profile }) {
           <strong>{shown}</strong> shown · <strong>{items.length - shown}</strong> hidden
         </p>
         <button type="button" className={styles.addBtn} onClick={() => setEditing('new')}>
-          + Add item
+          <Plus size={17} strokeWidth={2.6} aria-hidden="true" />
+          Add item
         </button>
       </div>
 
@@ -1024,7 +1095,10 @@ function ManageShopTab({ profile }) {
               key={item.id}
               className={`${styles.itemCard} ${item.is_active ? '' : styles.itemHidden}`}
             >
-              <ItemImage item={item} />
+              <div className={styles.itemMedia}>
+                <ItemImage item={item} />
+                <OgAmount value={item.price} size={18} className={styles.itemPrice} />
+              </div>
               <div className={styles.itemBody}>
                 <div className={styles.titleRow}>
                   <h2 className={styles.itemName}>{item.name}</h2>
@@ -1033,9 +1107,6 @@ function ManageShopTab({ profile }) {
                 {item.description && <p className={styles.itemDesc}>{item.description}</p>}
                 <ItemFacts item={item} />
               </div>
-              <div className={styles.itemFooter}>
-                <OgAmount value={item.price} size={18} className={styles.itemPrice} />
-              </div>
               <div className={styles.manageActions}>
                 <button
                   type="button"
@@ -1043,6 +1114,7 @@ function ManageShopTab({ profile }) {
                   onClick={() => setEditing(item)}
                   disabled={busyId === item.id}
                 >
+                  <Pencil size={14} strokeWidth={2.4} aria-hidden="true" />
                   Edit
                 </button>
                 <button
@@ -1059,6 +1131,7 @@ function ManageShopTab({ profile }) {
                   onClick={() => handleDelete(item)}
                   disabled={busyId === item.id}
                 >
+                  <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
                   Delete
                 </button>
               </div>
@@ -1345,8 +1418,11 @@ function MembersOgTab() {
       <ol className={styles.people}>
         {rows.map((r, i) => {
           const { name, role } = personLabel(`${r.first_name} ${r.last_name}`, r.role_id)
+          /* Naka-ayos na ayon sa OG (pinakamarami una) mula sa
+             org_og_balances(), kaya ang top 3 ay may medalya */
+          const medal = ['rank1', 'rank2', 'rank3'][i] ?? ''
           return (
-            <li key={r.profile_id} className={styles.person}>
+            <li key={r.profile_id} className={`${styles.person} ${styles[medal] ?? ''}`}>
               <span className={styles.num}>{i + 1}</span>
               <span className={styles.name}>{name}</span>
               <span className={styles.role}>{role}</span>

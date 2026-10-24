@@ -4,6 +4,12 @@
    ay nasa sariling .module.css file nila.
    ============================================================ */
 
+/* --- FONTS ---
+   Bricolage Grotesque: malalaking numero at heading (display)
+   Manrope:             sidebar, dashboard at calendar
+   Dapat nasa pinakaitaas ng file ang @import. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
 /* --- DESIGN TOKENS ---
    Palitan mo lang ang values dito at magbabago ang buong site.
    Halimbawa: gusto mo ng green theme? Palitan --color-primary. */
@@ -30,8 +36,23 @@
   --sti-ink: #10285c;
   --sti-cream: #faf8f1;
 
+  /* Member area (sidebar + dashboard) — bagong disenyo.
+     Dito mo palitan kung gusto mong iba ang kulay ng sidebar,
+     ng background ng member pages, o ng mga tile. */
+  --dash-ground: #eef1f7;      /* background ng member pages */
+  --dash-navy: #06358c;        /* hero tile, ring */
+  --dash-navy-deep: #031b4b;   /* sidebar */
+  --dash-yellow: #ffd200;      /* active na menu, Gems tile, "today" */
+  --dash-gold: #f7b900;
+  --dash-ink: #0e1a36;
+  --dash-muted: #5a6782;
+  --dash-soft: #f5f7fb;        /* araw sa calendar */
+  --dash-radius: 28px;
+
   /* Typography */
   --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-ui: "Manrope", var(--font-sans);
+  --font-display: "Bricolage Grotesque", "Manrope", var(--font-sans);
 
   /* Layout */
   --max-width: 1120px;

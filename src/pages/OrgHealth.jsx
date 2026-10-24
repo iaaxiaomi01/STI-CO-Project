@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CalendarCheck, UserCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   HEALTH_LEVELS,
@@ -34,6 +35,12 @@ import styles from './OrgHealth.module.css'
      3. Attendance Rate, Participation Rate, at ang average
      4. Healthy / Needs Attention / Critical
      5. Ipakita ang score, classification at dalawang rate
+
+   ITSURA ("Health report" — UI lang, walang binago sa data):
+     Adviser: deep navy na box na may semicircle GAUGE (pula /
+     amber / berde na zone + marker ng score), dalawang box ng
+     rate na may segmented bar, at madilim na box ng formula.
+     Walang animation maliban sa hover.
    ============================================================ */
 function OrgHealth() {
   const { profile } = useAuth()
@@ -68,7 +75,7 @@ function OrgHealth() {
   }, [isStaff])
 
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader
         title="Organization Health"
       />
@@ -92,7 +99,7 @@ function OrgHealth() {
       )}
 
       {!loading && !error && <Legend />}
-    </>
+    </div>
   )
 }
 
@@ -113,7 +120,7 @@ function OrgReport({ health }) {
   return (
     <div className={styles.report}>
       <section className={`${styles.scoreCard} ${styles[tone]}`}>
-        <ScoreRing score={health.score} tone={tone} size="lg" />
+        <ScoreGauge score={health.score} tone={tone} />
 
         <div className={styles.scoreText}>
           <p className={styles.eyebrow}>Organization Health Score</p>
@@ -132,11 +139,13 @@ function OrgReport({ health }) {
       <div className={styles.rateGrid}>
         <RateCard
           title="Attendance Rate"
+          Icon={CalendarCheck}
           rate={health.attendance_rate}
           detail={`${health.completed_attendance} of ${health.joined} joined participants timed in and timed out.`}
         />
         <RateCard
           title="Participation Rate"
+          Icon={UserCheck}
           rate={health.participation_rate}
           detail={`${health.members_attended} of ${health.active_members} active members attended at least one event.`}
         />
@@ -145,12 +154,19 @@ function OrgReport({ health }) {
   )
 }
 
-function RateCard({ title, rate, detail }) {
+function RateCard({ title, Icon, rate, detail }) {
   const pct = Math.max(0, Math.min(100, Number(rate) || 0))
 
   return (
     <section className={styles.rateCard}>
-      <h2 className={styles.rateTitle}>{title}</h2>
+      <h2 className={styles.rateTitle}>
+        {Icon && (
+          <span className={styles.rateIcon} aria-hidden="true">
+            <Icon size={18} strokeWidth={2.3} />
+          </span>
+        )}
+        {title}
+      </h2>
       <p className={styles.rateValue}>{formatRate(rate)}</p>
       <div
         className={styles.bar}
@@ -246,7 +262,38 @@ function AllOrgs({ list }) {
 
 /* ---------- MALIIT NA BAHAGI ---------- */
 
-/* Bilog na umaapaw ayon sa score (0–100) */
+/* Semicircle gauge (Adviser) — display lang.
+   Zone: 0–60 Critical · 60–80 Needs Attention · 80–100 Healthy
+   (kapareho ng HEALTH_LEVELS). Ang marker ay nasa score. */
+function ScoreGauge({ score, tone }) {
+  const pct = score == null ? 0 : Math.max(0, Math.min(100, Number(score)))
+  /* 0 → kaliwa (180°), 100 → kanan (0°) */
+  const angle = Math.PI * (1 - pct / 100)
+  const mx = 100 + 80 * Math.cos(angle)
+  const my = 100 - 80 * Math.sin(angle)
+  const arc = 'M20 100 A80 80 0 0 1 180 100'
+
+  return (
+    <div className={`${styles.gauge} ${styles[tone]}`}>
+      <svg viewBox="0 0 200 118" aria-hidden="true">
+        <path className={styles.gaugeTrack} d={arc} pathLength="100" />
+        <path className={`${styles.gaugeZone} ${styles.zoneCritical}`} d={arc} pathLength="100" strokeDasharray="59.4 100" />
+        <path className={`${styles.gaugeZone} ${styles.zoneAttention}`} d={arc} pathLength="100" strokeDasharray="0 60.3 19.4 100" />
+        <path className={`${styles.gaugeZone} ${styles.zoneHealthy}`} d={arc} pathLength="100" strokeDasharray="0 80.3 19.7 100" />
+        <path className={styles.gaugeFill} d={arc} pathLength="100" strokeDasharray={`${pct} 100`} />
+        <circle className={styles.gaugeMarker} cx={mx} cy={my} r="7" />
+        <text className={styles.gaugeTick} x="20" y="116" textAnchor="middle">0</text>
+        <text className={styles.gaugeTick} x="180" y="116" textAnchor="middle">100</text>
+      </svg>
+      <span className={styles.gaugeValue}>
+        {formatScore(score)}
+        {score != null && <span className={styles.ringMax}>/100</span>}
+      </span>
+    </div>
+  )
+}
+
+/* Bilog na umaapaw ayon sa score (0–100) — sa listahan ng School Head */
 function ScoreRing({ score, tone, size }) {
   const r = 42
   const c = 2 * Math.PI * r

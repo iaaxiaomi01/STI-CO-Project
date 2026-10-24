@@ -1,329 +1,420 @@
-/* ---------- KULAY NG BAWAT ANTAS ----------
-   Ang .healthy / .attention / .critical / .none ay nagtatakda
-   lang ng --tone at --tone-soft. Ang ibang class ang gumagamit
-   ng mga ito, kaya iisang lugar lang ang papalitan. */
-.healthy {
-  --tone: #15803d;
-  --tone-soft: #e6f6ec;
-}
+/* ================================================================
+   ORGANIZATION HEALTH — "Health report"
 
-.attention {
-  --tone: #b45309;
-  --tone-soft: #fff3df;
-}
+   Adviser:
+     [ deep navy na box: GAUGE | classification + paliwanag ]
+     [ Attendance Rate box ] [ Participation Rate box ]
+     [ madilim na box: paano kinukuwenta ]
+   School Head: buod at listahan ng lahat ng org (kaparehong kulay)
 
-.critical {
-  --tone: #c62828;
-  --tone-soft: #fdecec;
-}
+   May box pero may sariling disenyo: pinong guhit-guhit na pattern
+   sa navy, kulay ng zone sa gauge, segmented bar sa rate.
+   Hover lang ang may galaw.
+   ================================================================ */
+.page {
+  max-width: 1040px;
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
 
-.none {
-  --tone: var(--color-muted);
-  --tone-soft: var(--color-surface);
+  --navy: var(--dash-navy);
+  --deep: var(--dash-navy-deep);
+  --yellow: var(--dash-yellow);
+  --gold: var(--dash-gold);
+  --muted: var(--dash-muted);
+  --paper: #fafbfd;
+  --line: rgba(3, 27, 75, 0.09);
+
+  /* Kulay ng bawat antas */
+  --c-healthy: #2fbf71;
+  --c-attention: #f5b014;
+  --c-critical: #ef5b4c;
+  --c-none: #9aa5bd;
 }
 
 .status {
   padding: 2rem 0;
-  color: var(--color-muted);
+  color: var(--muted);
+  font-weight: 600;
 }
 
-/* ---------- REPORT (Adviser) ---------- */
+/* Tone → kulay (ginagamit ng badge, gauge, ring at dot) */
+.healthy {
+  --tone: var(--c-healthy);
+  --tone-soft: #e2f6eb;
+  --tone-ink: #17683a;
+}
+
+.attention {
+  --tone: var(--c-attention);
+  --tone-soft: #fff2cf;
+  --tone-ink: #7a5200;
+}
+
+.critical {
+  --tone: var(--c-critical);
+  --tone-soft: #fde4e1;
+  --tone-ink: #a61b1b;
+}
+
+.none {
+  --tone: var(--c-none);
+  --tone-soft: #eceff5;
+  --tone-ink: #59647c;
+}
+
+/* ================================================================
+   REPORT (Adviser)
+   ================================================================ */
 .report {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  display: grid;
+  gap: 16px;
 }
 
+/* Malaking deep navy na box na may pinong diagonal na pattern */
 .scoreCard {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 1.75rem;
-  padding: 1.85rem;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-top: 4px solid var(--tone);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  gap: 36px;
+  padding: 30px 36px;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.035) 0 2px,
+      transparent 2px 14px
+    ),
+    radial-gradient(circle at 12% 20%, rgba(91, 133, 240, 0.45), transparent 45%),
+    linear-gradient(150deg, var(--navy), var(--deep) 70%);
+  color: #fff;
 }
 
+/* Manipis na guhit ng kulay ng antas sa itaas ng box */
+.scoreCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 36px;
+  width: 120px;
+  height: 5px;
+  border-radius: 0 0 5px 5px;
+  background-color: var(--tone);
+}
+
+/* ---------- GAUGE ---------- */
+.gauge {
+  position: relative;
+  width: 280px;
+}
+
+.gauge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gaugeTrack,
+.gaugeZone,
+.gaugeFill {
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.gaugeTrack {
+  stroke: rgba(3, 27, 75, 0.6);
+  stroke-width: 18;
+}
+
+/* Mga zone: mapusyaw */
+.gaugeZone {
+  stroke-width: 18;
+  opacity: 0.42;
+}
+
+.zoneCritical {
+  stroke: var(--c-critical);
+}
+
+.zoneAttention {
+  stroke: var(--c-attention);
+}
+
+.zoneHealthy {
+  stroke: var(--c-healthy);
+}
+
+/* Ang score mismo: buong kulay, mas manipis, nasa gitna ng zone */
+.gaugeFill {
+  stroke: var(--tone);
+  stroke-width: 8;
+}
+
+.gaugeMarker {
+  fill: #fff;
+  stroke: var(--tone);
+  stroke-width: 4;
+}
+
+.gaugeTick {
+  fill: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.gaugeValue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.ringMax {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+/* ---------- TEKSTO SA TABI NG GAUGE ---------- */
 .scoreText {
   min-width: 0;
 }
 
 .eyebrow {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-muted);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
 }
 
 .badge {
-  display: inline-block;
-  margin: 0.4rem 0 0.6rem;
-  padding: 0.3rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 7px 14px;
   border-radius: 999px;
-  background-color: var(--tone-soft);
-  color: var(--tone);
-  font-size: 1.05rem;
+  background-color: var(--tone-soft, #eceff5);
+  color: var(--tone-ink, #3b4660);
+  font-size: 13px;
   font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
-.badgeSm {
-  margin: 0.2rem 0 0;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.78rem;
-  font-weight: 700;
+.badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--tone, #9aa5bd);
+}
+
+/* Sa navy na box: mas malaki ang classification */
+.scoreText .badge {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  padding: 8px 18px;
+}
+
+.scoreText .badge::before {
+  width: 10px;
+  height: 10px;
 }
 
 .scoreNote {
-  font-size: 0.94rem;
-  color: var(--color-muted);
-  max-width: 52ch;
+  margin-top: 14px;
+  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .scoreNote strong {
-  color: var(--color-text);
+  color: var(--yellow);
+  font-weight: 800;
 }
 
-/* ---------- RATE CARDS ---------- */
+/* ---------- RATE BOXES ---------- */
 .rateGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .rateCard {
-  padding: 1.5rem 1.55rem;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  position: relative;
+  padding: 24px 26px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background-color: var(--paper);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+/* Mapusyaw na dilaw na sulok — disenyo lang */
+.rateCard::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 210, 0, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.rateCard:hover {
+  border-color: rgba(3, 27, 75, 0.16);
+  box-shadow: 0 12px 28px rgba(3, 27, 75, 0.07);
 }
 
 .rateTitle {
-  font-size: 0.98rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--deep);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rateIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background-color: var(--deep);
+  color: var(--yellow);
 }
 
 .rateValue {
-  margin-top: 0.35rem;
-  font-size: 2.1rem;
+  margin-top: 14px;
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 52px;
   font-weight: 800;
-  line-height: 1.1;
-  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -0.04em;
 }
 
+/* Segmented bar (10 hati) */
 .bar {
-  height: 8px;
-  margin: 0.9rem 0 0.75rem;
-  border-radius: 999px;
-  background-color: var(--color-primary-soft);
+  position: relative;
+  height: 12px;
+  margin-top: 16px;
   overflow: hidden;
+  border-radius: 4px;
+  background-color: #e3e8f3;
 }
 
 .barFill {
   display: block;
   height: 100%;
-  border-radius: inherit;
-  background-color: var(--color-primary);
-  transition: width 0.4s ease;
+  background: linear-gradient(90deg, var(--navy), var(--deep));
+}
+
+/* Mga puwang sa pagitan ng 10 hati */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(10% - 3px),
+    var(--paper) calc(10% - 3px) 10%
+  );
+  pointer-events: none;
 }
 
 .rateDetail {
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-/* ---------- SCORE RING ---------- */
-.ring {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.lg {
-  width: 148px;
-  height: 148px;
-}
-
-.sm {
-  width: 58px;
-  height: 58px;
-}
-
-.ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.ringTrack {
-  fill: none;
-  stroke: var(--tone-soft);
-  stroke-width: 10;
-}
-
-.ringFill {
-  fill: none;
-  stroke: var(--tone);
-  stroke-width: 10;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.6s ease;
-}
-
-.ringValue {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  padding-top: 38%;
-  font-weight: 800;
-  color: var(--tone);
-  line-height: 1;
-}
-
-.lg .ringValue {
-  font-size: 2.3rem;
-}
-
-.sm .ringValue {
-  padding-top: 0;
-  align-items: center;
-  font-size: 0.95rem;
-}
-
-.ringMax {
-  margin-left: 0.15rem;
-  font-size: 0.85rem;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--color-muted);
+  line-height: 1.55;
 }
 
-/* ---------- LAHAT NG ORG (Staff) ---------- */
-.summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.summaryTile {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 1.1rem 1.25rem;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--tone);
-  border-radius: var(--radius);
-}
-
-.summaryValue {
-  font-size: 1.7rem;
-  font-weight: 800;
-  line-height: 1.1;
-  color: var(--tone);
-}
-
-.summaryLabel {
-  font-size: 0.88rem;
-  color: var(--color-muted);
-}
-
-.listNote {
-  margin-bottom: 0.75rem;
-  font-size: 0.88rem;
-  color: var(--color-muted);
-}
-
-.orgList {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.orgRow {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 1rem 1.25rem;
-  background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
-.orgMain {
-  flex: 1;
-  min-width: 0;
-}
-
-.orgName {
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.orgRates {
-  display: flex;
-  gap: 1.5rem;
-  flex-shrink: 0;
-}
-
-.orgRates div {
-  text-align: right;
-}
-
-.orgRates dt {
-  font-size: 0.76rem;
-  color: var(--color-muted);
-}
-
-.orgRates dd {
-  margin: 0;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- LEGEND ---------- */
+/* ================================================================
+   PAANO KINUKUWENTA (lahat ng role)
+   ================================================================ */
 .legend {
-  margin-top: 2rem;
-  padding: 1.35rem 1.5rem;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  font-size: 0.9rem;
-  color: var(--color-muted);
+  margin-top: 16px;
+  padding: 26px 28px;
+  border-radius: 24px;
+  background-color: var(--deep);
+  color: #dfe6f6;
 }
 
 .legendTitle {
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 0.5rem;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .legendFormulas {
-  padding-left: 1.1rem;
-  margin-bottom: 0.85rem;
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.legendFormulas strong,
-.legendLevels strong {
-  color: var(--color-text);
+.legendFormulas li {
+  padding-left: 14px;
+  border-left: 3px solid rgba(255, 210, 0, 0.6);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.legendFormulas strong {
+  color: var(--yellow);
+  font-weight: 800;
 }
 
 .legendLevels {
-  list-style: none;
-  padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 18px 0 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .legendLevels li {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.07);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legendLevels strong {
+  color: #fff;
+  font-weight: 800;
 }
 
 .dot {
@@ -333,27 +424,267 @@
   background-color: var(--tone);
 }
 
-/* ---------- MOBILE ---------- */
-@media (max-width: 560px) {
+/* ================================================================
+   LAHAT NG ORG (School Head)
+   ================================================================ */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.summaryTile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background-color: var(--paper);
+}
+
+/* Kulay ng antas sa kaliwang gilid */
+.summaryTile::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background-color: var(--tone);
+}
+
+.summaryValue {
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.summaryLabel {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.listNote {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.orgList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orgRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background-color: var(--paper);
+  transition: border-color var(--transition);
+}
+
+.orgRow:hover {
+  border-color: rgba(3, 27, 75, 0.18);
+}
+
+.orgMain {
+  min-width: 0;
+}
+
+.orgName {
+  color: var(--deep);
+  font-size: 16px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.badgeSm {
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.badgeSm::before {
+  width: 6px;
+  height: 6px;
+}
+
+.orgRates {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+}
+
+.orgRates div {
+  text-align: right;
+}
+
+.orgRates dt {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.orgRates dd {
+  margin: 2px 0 0;
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* Maliit na ring sa listahan */
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.sm {
+  width: 56px;
+  height: 56px;
+}
+
+.ringTrack,
+.ringFill {
+  fill: none;
+  stroke-width: 10;
+}
+
+.ringTrack {
+  stroke: #e3e8f3;
+}
+
+.ringFill {
+  stroke: var(--tone);
+  stroke-linecap: round;
+}
+
+.ringValue {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* ================================================================
+   TABLET
+   ================================================================ */
+@media (max-width: 860px) {
   .scoreCard {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.1rem;
-    padding: 1.5rem 1.3rem;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 18px;
+    padding: 30px 24px 26px;
+    text-align: center;
+  }
+
+  .scoreCard::before {
+    left: 50%;
+    margin-left: -60px;
+  }
+
+  .scoreNote {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ================================================================
+   PHONE
+   ================================================================ */
+@media (max-width: 600px) {
+  .gauge {
+    width: 240px;
+  }
+
+  .gaugeValue {
+    font-size: 48px;
+  }
+
+  .scoreText .badge {
+    font-size: 18px;
+  }
+
+  .scoreNote {
+    font-size: 14px;
+  }
+
+  .rateGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .rateCard {
+    padding: 20px;
+  }
+
+  .rateValue {
+    font-size: 44px;
+  }
+
+  .legend {
+    padding: 22px 20px;
   }
 
   .orgRow {
-    flex-wrap: wrap;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px 14px;
+    padding: 14px 16px;
   }
 
   .orgRates {
-    width: 100%;
+    grid-column: 1 / -1;
     justify-content: space-between;
-    padding-top: 0.6rem;
-    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
   }
 
   .orgRates div {
     text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rateCard,
+  .orgRow {
+    transition: none;
   }
 }

@@ -1,12 +1,13 @@
 .layout {
   min-height: 100vh;
-  background-color: var(--color-surface);
+  background-color: var(--dash-ground);
 }
 
-/* Ang 260px ay eksaktong lapad ng sidebar.
-   Kung papalitan mo ang lapad doon, palitan mo rin dito. */
+/* 280px = 16px puwang + 248px sidebar + 16px puwang.
+   Kung papalitan mo ang lapad ng sidebar (Sidebar.module.css),
+   palitan mo rin dito. */
 .main {
-  margin-left: 260px;
+  margin-left: 280px;
   min-height: 100vh;
 }
 
@@ -15,59 +16,66 @@
    babaguhin kung gusto mong mas maluwag o mas masikip. */
 .content {
   min-height: 100vh;
-  padding: 2.35rem 1.85rem 3.5rem;
+  padding: 1.5rem 1.5rem 3rem 0.25rem;
   max-width: 1180px;
 }
 
-@media (max-width: 560px) {
-  .content {
-    padding: 1.75rem 1.15rem 2.5rem;
-  }
-}
-
-/* ---------- OVERLAY (mobile lang) ---------- */
+/* ---------- OVERLAY (tablet/phone lang) ---------- */
 .overlay {
   display: none;
 }
 
-/* ---------- MOBILE TOPBAR ---------- */
+/* ---------- TOP BAR (tablet/phone lang) ---------- */
 .mobileBar {
   display: none; /* nakatago sa desktop */
   align-items: center;
-  gap: 0.85rem;
-  height: 60px;
-  padding: 0 1.1rem;
+  gap: 10px;
+  margin: 12px 12px 0;
+  padding: 6px 14px 6px 6px;
+  border-radius: 20px;
   background-color: #fff;
-  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 4px 16px rgba(3, 27, 75, 0.06);
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 40;
 }
 
 .burger {
-  background: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   border: none;
-  font-size: 1.35rem;
-  line-height: 1;
-  color: var(--color-text);
-  padding: 0.25rem 0.35rem;
+  border-radius: 14px;
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+}
+
+.burger:hover {
+  background-color: var(--dash-navy);
 }
 
 .mobileBrand {
-  font-size: 1.15rem;
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  color: var(--dash-navy-deep);
 }
 
 .brandAccent {
-  color: var(--color-primary);
+  color: #e0a800;
 }
 
-/* ---------- MOBILE ---------- */
+/* ---------- TABLET / PHONE ---------- */
 @media (max-width: 900px) {
   /* Wala nang sidebar sa gilid — buong lapad na ang content */
   .main {
     margin-left: 0;
+  }
+
+  .content {
+    padding: 1rem 1.5rem 2.5rem;
   }
 
   .mobileBar {
@@ -79,6 +87,12 @@
     position: fixed;
     inset: 0;
     z-index: 55; /* sa ilalim ng sidebar (60), sa ibabaw ng content */
-    background-color: rgba(22, 32, 58, 0.45);
+    background-color: rgba(3, 27, 75, 0.5);
+  }
+}
+
+@media (max-width: 560px) {
+  .content {
+    padding: 12px 12px 2rem;
   }
 }

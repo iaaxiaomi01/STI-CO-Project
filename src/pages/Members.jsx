@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowUpRight, ChevronDown, Search } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
 import { ROLE_KEYS, getRoleConfig } from '../config/roles.js'
@@ -28,6 +29,13 @@ import styles from './Members.module.css'
    (hal. "President" imbes na "Officer"). Ang may
    can.assignPositions (Adviser, IT Admin) ay may "Set position"
    button sa bawat Member/Officer — tingnan ang PositionDialog.
+
+   ITSURA ("editorial roster" — UI lang, walang binago sa data):
+     walang card/box; bukas na listahan na may manipis na guhit.
+     Dilaw ang accent: switch ng "Officers only", highlight ng
+     position, singsing ng avatar ng officer.
+     Sa tablet/phone: bawat row ay nagiging patong-patong, at ang
+     bawat detalye ay may maliit na label (data-label sa <td>).
    ============================================================ */
 
 const MEMBER_COLUMNS = `
@@ -190,7 +198,7 @@ function Members() {
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <PageHeader title="Members" />
 
       {notice && (
@@ -220,44 +228,64 @@ function Members() {
       {!loading && !error && members.length > 0 && (
         <>
           <div className={styles.toolbar}>
-            <input
-              type="search"
-              className={styles.search}
-              placeholder="Search by name, student ID, program, or position…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {showOrgFilter && (
-              <select
-                className={styles.orgSelect}
-                aria-label="Filter by organization"
-                value={orgFilter}
-                onChange={(e) => setOrgFilter(e.target.value)}
-              >
-                <option value="">All organizations</option>
-                {orgOptions.list.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name} ({org.count})
-                  </option>
-                ))}
-                {orgOptions.noOrgCount > 0 && (
-                  <option value={NO_ORG}>No organization ({orgOptions.noOrgCount})</option>
-                )}
-              </select>
-            )}
-            {showOfficersFilter && (
-              <label className={styles.filter}>
-                <input
-                  type="checkbox"
-                  checked={officersOnly}
-                  onChange={(e) => setOfficersOnly(e.target.checked)}
-                />
-                Officers only
-              </label>
-            )}
-            <span className={styles.count}>
-              {filtered.length} of {members.length}
-            </span>
+            {/* ---------- SEARCH (underline lang) ---------- */}
+            <label className={styles.searchField}>
+              <Search className={styles.searchIcon} size={20} strokeWidth={2.2} aria-hidden="true" />
+              <input
+                type="search"
+                className={styles.search}
+                placeholder="Search by name, student ID, program, or position…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+
+            <div className={styles.controls}>
+              {showOrgFilter && (
+                <span className={styles.selectField}>
+                  <select
+                    className={styles.orgSelect}
+                    aria-label="Filter by organization"
+                    value={orgFilter}
+                    onChange={(e) => setOrgFilter(e.target.value)}
+                  >
+                    <option value="">All organizations</option>
+                    {orgOptions.list.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name} ({org.count})
+                      </option>
+                    ))}
+                    {orgOptions.noOrgCount > 0 && (
+                      <option value={NO_ORG}>No organization ({orgOptions.noOrgCount})</option>
+                    )}
+                  </select>
+                  <ChevronDown
+                    className={styles.selectIcon}
+                    size={18}
+                    strokeWidth={2.4}
+                    aria-hidden="true"
+                  />
+                </span>
+              )}
+
+              {/* "Officers only" — checkbox pa rin, itsurang switch */}
+              {showOfficersFilter && (
+                <label className={styles.filter}>
+                  <input
+                    type="checkbox"
+                    className={styles.switchInput}
+                    checked={officersOnly}
+                    onChange={(e) => setOfficersOnly(e.target.checked)}
+                  />
+                  <span className={styles.switch} aria-hidden="true" />
+                  Officers only
+                </label>
+              )}
+
+              <span className={styles.count}>
+                <b>{filtered.length}</b> of {members.length}
+              </span>
+            </div>
           </div>
 
           <div className={styles.tableWrap}>
@@ -278,52 +306,74 @@ function Members() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((m) => (
-                  <tr key={m.id} className={m.is_active ? '' : styles.inactive}>
-                    <td>
-                      {/* Profile picture + pangalan. Kapag walang larawan,
-                          unang letra ng pangalan ang lalabas (Avatar). */}
-                      <div className={styles.person}>
-                        <Avatar src={m.avatar_url} name={fullNameOf(m)} size="sm" />
-                        <div>
-                          <span className={styles.name}>{fullNameOf(m)}</span>
-                          <span className={styles.email}>{m.email}</span>
+                {filtered.map((m) => {
+                  const hasPosition = Boolean(m.officer_positions?.name)
+                  return (
+                    <tr
+                      key={m.id}
+                      className={[
+                        m.is_active ? '' : styles.inactive,
+                        hasPosition || m.role_id === 2 ? styles.officerRow : '',
+                      ].join(' ')}
+                    >
+                      <td className={styles.nameCell}>
+                        {/* Profile picture + pangalan. Kapag walang larawan,
+                            unang letra ng pangalan ang lalabas (Avatar). */}
+                        <div className={styles.person}>
+                          <span className={styles.avatarRing}>
+                            <Avatar src={m.avatar_url} name={fullNameOf(m)} size="sm" />
+                          </span>
+                          <div className={styles.personText}>
+                            <span className={styles.name}>{fullNameOf(m)}</span>
+                            <span className={styles.email}>{m.email}</span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>{m.student_id || '—'}</td>
-                    <td>{m.program || '—'}</td>
-                    <td>{m.year_level || '—'}</td>
-                    {/* May position = Officer, kaya ang position na
-                        mismo ang ipinapakita (hal. "President") */}
-                    <td>
-                      {m.officer_positions?.name ? (
-                        <span className={styles.position} title="Officer">
-                          {m.officer_positions.name}
-                        </span>
-                      ) : (
-                        (m.roles?.name ?? '—')
-                      )}
-                    </td>
-                    {showOrg && <td>{m.organizations?.name ?? '—'}</td>}
-                    {can.assignPositions && (
-                      <td className={styles.actionCell}>
-                        {canHavePosition(m) && (
-                          <button
-                            type="button"
-                            className={styles.rowButton}
-                            onClick={() => {
-                              setNotice('')
-                              setEditing(m)
-                            }}
-                          >
-                            Set position
-                          </button>
+                      </td>
+                      <td className={styles.detail} data-label="Student ID">
+                        {m.student_id || '—'}
+                      </td>
+                      <td className={styles.detail} data-label="Program">
+                        {m.program || '—'}
+                      </td>
+                      <td className={styles.detail} data-label="Year">
+                        {m.year_level || '—'}
+                      </td>
+                      {/* May position = Officer, kaya ang position na
+                          mismo ang ipinapakita (hal. "President") */}
+                      <td className={styles.roleCell} data-label="Role">
+                        {hasPosition ? (
+                          <span className={styles.position} title="Officer">
+                            {m.officer_positions.name}
+                          </span>
+                        ) : (
+                          <span className={styles.roleText}>{m.roles?.name ?? '—'}</span>
                         )}
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      {showOrg && (
+                        <td className={`${styles.detail} ${styles.orgCell}`} data-label="Organization">
+                          {m.organizations?.name ?? '—'}
+                        </td>
+                      )}
+                      {can.assignPositions && (
+                        <td className={styles.actionCell}>
+                          {canHavePosition(m) && (
+                            <button
+                              type="button"
+                              className={styles.rowButton}
+                              onClick={() => {
+                                setNotice('')
+                                setEditing(m)
+                              }}
+                            >
+                              Set position
+                              <ArrowUpRight size={16} strokeWidth={2.4} aria-hidden="true" />
+                            </button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -340,7 +390,7 @@ function Members() {
           onCancel={() => setEditing(null)}
         />
       )}
-    </>
+    </div>
   )
 }
 

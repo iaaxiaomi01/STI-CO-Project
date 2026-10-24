@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
+import { Menu } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
 import styles from './MemberLayout.module.css'
 
@@ -55,8 +56,9 @@ function MemberLayout() {
             className={styles.burger}
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
+            aria-expanded={menuOpen}
           >
-            ☰
+            <Menu size={20} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <p className={styles.mobileBrand}>
             STI<span className={styles.brandAccent}>-CO</span>

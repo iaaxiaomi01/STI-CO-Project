@@ -67,7 +67,9 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
           Do you want to join this event?
         </h2>
 
+        {/* Mini-ticket: detalye sa kaliwa, petsa sa stub */}
         <div className={styles.event}>
+          <div className={styles.eventMain}>
           <p className={styles.title}>{event.title}</p>
           <dl className={styles.details}>
             <div>
@@ -85,6 +87,17 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
               <dd>{event.location}</dd>
             </div>
           </dl>
+          </div>
+          <div className={styles.stub} aria-hidden="true">
+            <span className={styles.notchA} />
+            <span className={styles.notchB} />
+            <b>{event.event_date.slice(8, 10)}</b>
+            <small>
+              {new Date(`${event.event_date}T00:00:00`)
+                .toLocaleDateString('en-PH', { month: 'short' })
+                .toUpperCase()}
+            </small>
+          </div>
         </div>
 
         <div id="join-confirm-warning" className={styles.warning} role="note">
@@ -103,7 +116,7 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
           <button
             ref={cancelRef}
             type="button"
-            className={base.secondary}
+            className={`${base.secondary} ${styles.cancel}`}
             onClick={onCancel}
             disabled={saving}
           >
@@ -111,7 +124,7 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
           </button>
           <button
             type="button"
-            className={base.primary}
+            className={`${base.primary} ${styles.yes}`}
             onClick={handleConfirm}
             disabled={saving}
           >

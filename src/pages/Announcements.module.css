@@ -1,84 +1,168 @@
+/* ================================================================
+   ANNOUNCEMENTS — bagong disenyo (kapareho ng Dashboard at Events)
+
+   [ Latest — navy na card ]
+   Earlier (N)
+   [ card ]
+   [ card ]
+
+   + POP-UP ng pinakabago (parang iPhone emergency alert)
+   ================================================================ */
+.page {
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+
+  /* Kulay ng bawat type — isang lugar lang */
+  --type-meeting: #1b7a43;
+  --type-meeting-soft: #e3f4e8;
+  --type-reminder: #8a5a00;
+  --type-reminder-soft: #fff4c2;
+  --type-urgent: #c4231a;
+  --type-urgent-soft: #fdeceb;
+}
+
 .status {
   padding: 2rem 0;
-  color: var(--color-muted);
+  color: var(--dash-muted);
+  font-weight: 600;
 }
 
 .notice {
-  margin-bottom: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  font-size: 0.9rem;
-}
-
-.list {
-  display: grid;
-  gap: 1rem;
-  padding: 0;
-  list-style: none;
-}
-
-.card {
-  padding: 1.35rem 1.5rem;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 16px;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-left: 4px solid var(--dash-navy);
+  color: var(--dash-navy-deep);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ---------- CARD ---------- */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 26px 20px;
+  border-radius: 24px;
+  background-color: #fff;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+/* Manipis na guhit sa kaliwa ayon sa type */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background-color: var(--accent, #cfd6e4);
+}
+
+.card_meeting {
+  --accent: var(--type-meeting);
+  --accent-soft: var(--type-meeting-soft);
+}
+
+.card_reminder {
+  --accent: #e3a600;
+  --accent-soft: var(--type-reminder-soft);
+}
+
+.card_urgent {
+  --accent: var(--type-urgent);
+  --accent-soft: var(--type-urgent-soft);
+}
+
+.list .card:hover {
+  box-shadow: 0 14px 32px rgba(3, 27, 75, 0.08);
 }
 
 .cardTop {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 0.7rem;
+  margin-bottom: 14px;
 }
 
-.type {
-  display: inline-block;
-  padding: 0.2rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  background-color: var(--color-surface);
-  color: var(--color-muted);
+.typeIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: var(--accent-soft, var(--dash-ground));
+  color: var(--accent, var(--dash-navy));
 }
 
-/* Kulay bawat type */
-.type_meeting {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
+.card_reminder .typeIcon {
+  color: var(--type-reminder);
 }
 
-.type_reminder {
-  background-color: #fff6da;
-  color: #8a5a00;
-}
-
-.type_urgent {
-  background-color: #fdecec;
-  color: #a61b1b;
-}
-
-/* Galing sa org na may can_announce_all — para sa lahat ng org */
 .badges {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 6px;
+  min-width: 0;
 }
 
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background-color: var(--dash-ground);
+  color: #3b4660;
+}
+
+.type_meeting {
+  background-color: var(--type-meeting-soft);
+  color: var(--type-meeting);
+}
+
+.type_reminder {
+  background-color: var(--type-reminder-soft);
+  color: var(--type-reminder);
+}
+
+.type_urgent {
+  background-color: var(--type-urgent-soft);
+  color: var(--type-urgent);
+}
+
+/* All / Selected organizations */
 .global {
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background-color: #e8eefc;
+  color: var(--dash-navy);
 }
 
 .date {
-  font-size: 0.82rem;
-  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dash-muted);
+}
+
+.date svg {
+  flex-shrink: 0;
 }
 
 .edited {
@@ -86,71 +170,591 @@
 }
 
 .title {
-  font-size: 1.12rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 /* "To: Student Council, Org A" — kapag Selected organizations */
 .audience {
-  margin-top: -0.2rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-muted);
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dash-muted);
 }
 
 /* pre-wrap: para lumabas ang mga bagong linya na tinype sa form */
 .message {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 0.95rem;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #2f3b57;
 }
 
 .cardBottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 12px 16px;
   flex-wrap: wrap;
-  margin-top: 1rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--color-border);
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #edf0f6;
 }
 
 .author {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dash-muted);
+}
+
+.authorAvatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--dash-navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .cardActions {
   display: flex;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.linkButton {
-  padding: 0.35rem 0.75rem;
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
   border: none;
-  border-radius: 8px;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.87rem;
-  font-weight: 600;
+  border-radius: 12px;
+  background-color: #f3f5fa;
+  color: var(--dash-navy);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
 }
 
-.linkButton:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
+.actionButton:hover:not(:disabled) {
+  background-color: var(--dash-navy);
+  color: #fff;
 }
 
-.linkButton:disabled {
+.actionButton:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+.actionButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.danger {
+.actionButton.danger {
+  background-color: #fdecec;
   color: #b42318;
 }
 
-.danger:hover:not(:disabled) {
-  background-color: #fdecec;
+.actionButton.danger:hover:not(:disabled) {
+  background-color: #b42318;
+  color: #fff;
+}
+
+/* ---------- LATEST (navy na card) ---------- */
+.featured {
+  padding: 28px 30px 24px;
+  overflow: hidden;
+  background-color: var(--dash-navy);
+  color: #fff;
+}
+
+/* Mga bilog sa likod — pareho ng pagbati sa Dashboard */
+.featured::after {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -90px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 46px rgba(255, 255, 255, 0.03), 0 0 0 92px rgba(255, 255, 255, 0.02);
+  pointer-events: none;
+}
+
+/* Walang guhit sa gilid — ang kulay na icon na ang nagsasabi ng type */
+.featured::before {
+  display: none;
+}
+
+.featured.card_meeting .typeIcon {
+  background-color: #2fa863;
+  color: #fff;
+}
+
+.featured.card_reminder .typeIcon {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.featured > * {
+  position: relative;
+  z-index: 1;
+}
+
+.featured .typeIcon {
+  width: 48px;
+  height: 48px;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: var(--dash-yellow);
+}
+
+.featured.card_urgent .typeIcon {
+  background-color: #ff6b5e;
+  color: #fff;
+}
+
+.latestPill {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.featured .type_meeting,
+.featured .type_reminder,
+.featured .type_urgent,
+.featured .global {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.featured.card_urgent .type_urgent {
+  background-color: #ff6b5e;
+}
+
+.featured .date,
+.featured .audience,
+.featured .author {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.featured .title {
+  font-size: clamp(26px, 3.4vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.featured .message {
+  max-width: 72ch;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.featured .cardBottom {
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+
+.featured .authorAvatar {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.featured .actionButton {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.featured .actionButton:hover:not(:disabled) {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.featured .actionButton:focus-visible {
+  outline-color: var(--dash-yellow);
+}
+
+.featured .actionButton.danger {
+  background-color: rgba(255, 107, 94, 0.2);
+  color: #ffd1cc;
+}
+
+.featured .actionButton.danger:hover:not(:disabled) {
+  background-color: #ff6b5e;
+  color: #fff;
+}
+
+/* "View" sa pop-up → sandaling kikislap ang Latest card */
+.flash {
+  animation: latestFlash 1.6s ease-out;
+}
+
+@keyframes latestFlash {
+  0%,
+  45% {
+    box-shadow: 0 0 0 5px var(--dash-yellow), 0 18px 40px rgba(3, 27, 75, 0.25);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ---------- EARLIER ---------- */
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 4px 14px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.sectionCount {
+  min-width: 28px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--dash-navy);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ================================================================
+   POP-UP — parang iPhone emergency alert
+   ================================================================ */
+.alertBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background-color: rgba(3, 27, 75, 0.38);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  animation: alertFade 0.25s ease-out both;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 380px);
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  border-radius: 26px;
+  background-color: rgba(246, 247, 251, 0.94);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+  text-align: center;
+  animation: alertPop 0.5s cubic-bezier(0.18, 1.25, 0.4, 1) both;
+}
+
+.alertHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 22px 0;
+}
+
+/* Bilog na icon, kumikislap na singsing (parang alarma) */
+.alertIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: var(--dash-navy);
+  color: var(--dash-yellow);
+}
+
+.alertIcon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  opacity: 0;
+  animation: alertPulse 1.8s ease-out 0.4s infinite;
+}
+
+.alert_urgent .alertIcon {
+  background-color: #e5322b;
+  color: #fff;
+}
+
+.alert_urgent .alertIcon::after {
+  border-color: #e5322b;
+}
+
+.alert_meeting .alertIcon {
+  background-color: var(--type-meeting);
+  color: #fff;
+}
+
+.alert_meeting .alertIcon::after {
+  border-color: var(--type-meeting);
+}
+
+.alert_reminder .alertIcon {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.alert_reminder .alertIcon::after {
+  border-color: #e3a600;
+}
+
+.alertEyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dash-muted);
+}
+
+.alert_urgent .alertEyebrow {
+  color: #c4231a;
+}
+
+.alertBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 22px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.alertTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.alertMessage {
+  font-size: 15px;
+  line-height: 1.55;
+  color: #2f3b57;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.alertMeta {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--dash-muted);
+}
+
+/* Dalawang button na may manipis na guhit — parang iOS */
+.alertButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(60, 60, 67, 0.18);
+}
+
+.alertButton {
+  min-height: 54px;
+  border: none;
+  background: transparent;
+  color: var(--dash-navy);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.alertButton + .alertButton {
+  border-left: 1px solid rgba(60, 60, 67, 0.18);
+}
+
+.alertButton:hover {
+  background-color: rgba(6, 53, 140, 0.06);
+}
+
+/* Mahinang tint imbes na makapal na outline (iOS style) */
+.alertButton:focus-visible {
+  outline: none;
+  background-color: rgba(6, 53, 140, 0.1);
+}
+
+.alertPrimary {
+  font-weight: 800;
+}
+
+.alert_urgent .alertPrimary {
+  color: #c4231a;
+}
+
+@keyframes alertFade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes alertPop {
+  0% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes alertPulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+/* ---------- TABLET ---------- */
+@media (max-width: 900px) {
+  .featured .title {
+    font-size: 30px;
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .feed {
+    gap: 22px;
+  }
+
+  .card {
+    padding: 20px 18px 16px;
+    border-radius: 22px;
+  }
+
+  .featured {
+    padding: 22px 20px 18px;
+  }
+
+  .featured::after {
+    width: 240px;
+    height: 240px;
+    top: -100px;
+    right: -100px;
+  }
+
+  .cardTop {
+    gap: 10px;
+  }
+
+  /* Petsa sa sariling hanay, sa ilalim ng mga badge */
+  .date {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .typeIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .title {
+    font-size: 19px;
+  }
+
+  .featured .title {
+    font-size: 26px;
+  }
+
+  .message,
+  .featured .message {
+    font-size: 14.5px;
+  }
+
+  /* Mga button: buong lapad, pantay-pantay */
+  .cardBottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cardActions {
+    width: 100%;
+  }
+
+  .actionButton {
+    flex: 1 1 0;
+    min-height: 44px;
+  }
+
+  .sectionTitle {
+    font-size: 21px;
+  }
+
+  .alert {
+    border-radius: 22px;
+  }
+
+  .alertTitle {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alertBackdrop,
+  .alert,
+  .flash {
+    animation: none;
+  }
+
+  .alertIcon::after {
+    display: none;
+  }
+
+  .card {
+    transition: none;
+  }
 }

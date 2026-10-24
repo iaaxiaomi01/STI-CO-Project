@@ -443,3 +443,742 @@
 .ogNone {
   color: var(--color-muted);
 }
+
+
+/* ================================================================
+   TICKET VIEW — Member at Officer (ticketView sa Events.jsx)
+
+   Lahat ng nasa ibaba ay nasa loob ng .ticketPage, kaya hindi
+   apektado ang dating card layout ng Adviser.
+
+   [ poster | katawan | ┊ stub ]   ← malapad
+   ┌ poster ┐
+   │katawan │                       ← makitid (≤ 640px ang listahan)
+   ├┄ stub ┄┤
+   ================================================================ */
+.ticketPage {
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- TOOLBAR: search + tabs sa iisang hanay ---------- */
+.searchIcon {
+  display: none;
+}
+
+.ticketPage .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ticketPage .searchBar {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 420px;
+  margin: 0;
+}
+
+.ticketPage .searchIcon {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  color: var(--dash-muted);
+  pointer-events: none;
+}
+
+.ticketPage .search {
+  max-width: none;
+  height: 52px;
+  padding: 0 16px 0 46px;
+  border: 1.5px solid transparent;
+  border-radius: 18px;
+  font-size: 15px;
+}
+
+.ticketPage .search:focus {
+  outline: none;
+  border-color: var(--dash-navy);
+}
+
+.ticketPage .filters {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  gap: 4px;
+  max-width: 100%;
+  margin: 0 0 0 auto;
+  padding: 5px;
+  overflow-x: auto;
+  border-radius: 18px;
+  background-color: #fff;
+}
+
+.ticketPage .filter {
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 13px;
+  background-color: transparent;
+  color: #3a4766;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ticketPage .filter:hover {
+  background-color: #f3f5fa;
+}
+
+.ticketPage .filterActive,
+.ticketPage .filterActive:hover {
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+}
+
+.ticketPage .filterCount {
+  min-width: 24px;
+  height: 22px;
+  line-height: 22px;
+  background-color: var(--dash-ground);
+  color: #3a4766;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ticketPage .filterActive .filterCount {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+/* ---------- LISTAHAN ---------- */
+.ticketPage .list {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- TICKET ---------- */
+.ticket {
+  position: relative;
+  display: flex;
+  min-height: 224px;
+  border-radius: 24px;
+  background-color: #fff;
+}
+
+.ticket.cardHighlight {
+  border: none;
+  animation: ticketHighlight 4s ease-out;
+}
+
+@keyframes ticketHighlight {
+  0%,
+  60% {
+    box-shadow: 0 0 0 4px var(--dash-yellow), 0 14px 32px rgba(3, 27, 75, 0.14);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+.poster {
+  position: relative;
+  flex: 0 0 196px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 24px 0 0 24px;
+  background-color: var(--dash-navy);
+  color: var(--dash-yellow);
+}
+
+.poster img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ticketBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 26px;
+}
+
+.ticketTitle {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.ticketDesc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3a4766;
+  white-space: pre-wrap; /* pareho sa .description */
+  overflow-wrap: anywhere;
+}
+
+.ticketPage .more {
+  align-self: flex-start;
+  margin-top: -6px;
+  min-height: 32px;
+  color: var(--dash-navy);
+  font-weight: 800;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background-color: #f3f5fa;
+  color: #3a4766;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chips svg {
+  flex-shrink: 0;
+}
+
+.chips .chipOg {
+  background-color: #fff4c2;
+  color: #5c4700;
+}
+
+/* Adviser: wala pang OG reward ang event */
+.chips .chipNone {
+  border: 1.5px dashed #d5dbe7;
+  background-color: transparent;
+  color: var(--dash-muted);
+}
+
+.chipLink {
+  color: var(--dash-navy);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.chipLink:hover {
+  color: var(--dash-navy-deep);
+}
+
+/* ---------- SEARCH COUNT (Adviser) — nasa loob ng search box ---------- */
+.ticketPage .searchCount {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background-color: var(--dash-ground);
+  color: #3a4766;
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.ticketPage .searchBar:has(.searchCount) .search {
+  padding-right: 92px;
+}
+
+/* ---------- MGA BUTTON NG OFFICER / ADVISER ----------
+   Certificates · Edit · Delete sa ibaba ng ticket */
+.tActions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ticketPage .tAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background-color: #f3f5fa;
+  color: var(--dash-navy);
+  font-size: 13px;
+  font-weight: 800;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.ticketPage .tAction:hover:not(:disabled) {
+  background-color: var(--dash-navy);
+  color: #fff;
+}
+
+.ticketPage .tAction:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+.ticketPage .tAction.danger {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
+.ticketPage .tAction.danger:hover:not(:disabled) {
+  background-color: #b42318;
+  color: #fff;
+}
+
+.ticketPage .tAction svg {
+  flex-shrink: 0;
+}
+
+.ticketNote {
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.noteGot {
+  background-color: #e3f4e8;
+  color: #1b6e33;
+}
+
+.notePending {
+  background-color: #fff4c2;
+  color: #5c4700;
+}
+
+.noteNone {
+  background-color: #f0f2f6;
+  color: var(--dash-muted);
+}
+
+.ticketFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: auto;
+}
+
+.ticketFooter .author {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-muted);
+}
+
+/* ---------- STUB ---------- */
+.stub {
+  position: relative;
+  flex: 0 0 212px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 18px;
+  border-left: 2px dashed #cfd6e4;
+  border-radius: 0 24px 24px 0;
+  text-align: center;
+}
+
+/* Ang "butas" sa taas at baba ng punit na linya */
+.notch {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--dash-ground);
+}
+
+.notchA {
+  top: -14px;
+  left: -15px;
+}
+
+.notchB {
+  bottom: -14px;
+  left: -15px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: livePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.stubDate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stubDay {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+}
+
+.stubMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.stubMonth {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.stubWeekday {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.stubAction {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.tJoin,
+.tCert {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.tJoin {
+  background-color: var(--dash-navy-deep);
+  font-size: 15px;
+}
+
+.tCert {
+  background-color: var(--dash-navy);
+  font-size: 13px;
+}
+
+.tJoin:hover:not(:disabled),
+.tCert:hover:not(:disabled) {
+  background-color: var(--dash-navy);
+}
+
+.tCert:hover:not(:disabled) {
+  background-color: var(--dash-navy-deep);
+}
+
+.tJoin:disabled,
+.tCert:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tJoin:focus-visible,
+.tCert:focus-visible {
+  outline: 3px solid var(--dash-navy-deep);
+  outline-offset: 2px;
+}
+
+.tStamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 2px solid currentColor;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+/* ---------- KULAY AYON SA STATUS ---------- */
+.t_upcoming .stub {
+  border-color: #e3bb00;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.t_upcoming .statusPill {
+  background-color: var(--dash-navy-deep);
+  color: var(--dash-yellow);
+}
+
+.t_ongoing .stub {
+  border-color: #3d63b3;
+  background-color: var(--dash-navy);
+  color: #fff;
+}
+
+.t_ongoing .stubDay {
+  color: var(--dash-yellow);
+}
+
+.t_ongoing .statusPill {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+/* Join sa navy na stub: dilaw na button para kita */
+.t_ongoing .tJoin {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.t_ongoing .tJoin:focus-visible {
+  outline-color: var(--dash-yellow);
+}
+
+.t_completed .statusPill {
+  background-color: var(--dash-ground);
+  color: #3b4660;
+}
+
+.t_missed .stub {
+  background-color: #f3f5f9;
+  color: var(--dash-muted);
+}
+
+.t_missed .statusPill {
+  background-color: #e3e7ef;
+  color: #3b4660;
+}
+
+.t_missed .poster {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.t_missed .ticketTitle {
+  color: var(--dash-muted);
+}
+
+/* ---------- KATAMTAMAN (tablet): mas makitid ang poster at stub
+   para may sapat na lapad ang pamagat at mga button ---------- */
+@container (max-width: 860px) {
+  .poster {
+    flex-basis: 150px;
+  }
+
+  .stub {
+    flex-basis: 176px;
+    padding: 18px 14px;
+  }
+
+  .stubDay {
+    font-size: 60px;
+  }
+
+  .ticketBody {
+    padding: 22px;
+  }
+
+  .ticketTitle {
+    font-size: 23px;
+  }
+}
+
+/* ---------- MAKITID: patayong ticket ---------- */
+@container (max-width: 640px) {
+  /* Mga button ng Officer/Adviser: buong lapad, pantay-pantay */
+  .ticketFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tActions {
+    width: 100%;
+  }
+
+  .ticketPage .tAction {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .ticket {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .poster {
+    flex: none;
+    height: 140px;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .ticketBody {
+    padding: 20px;
+  }
+
+  .ticketTitle {
+    font-size: 22px;
+  }
+
+  .stub {
+    flex: none;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px 16px;
+    padding: 18px 20px;
+    border-left: none;
+    border-top: 2px dashed #cfd6e4;
+    border-radius: 0 0 24px 24px;
+    text-align: left;
+  }
+
+  .t_upcoming .stub {
+    border-top-color: #e3bb00;
+  }
+
+  .t_ongoing .stub {
+    border-top-color: #3d63b3;
+  }
+
+  .statusPill {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .stubDate {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stubDay {
+    font-size: 52px;
+  }
+
+  .stubMeta {
+    align-items: flex-start;
+    margin-top: 0;
+  }
+
+  .stubAction {
+    justify-content: flex-end;
+  }
+
+  .tJoin,
+  .tCert {
+    width: auto;
+    padding: 6px 18px;
+  }
+
+  .tJoin {
+    min-width: 120px;
+  }
+
+  /* 24px at -12px: hindi lumalampas sa padding ng page (12px) sa phone */
+  .notch {
+    width: 24px;
+    height: 24px;
+  }
+
+  .notchA {
+    top: -13px;
+    left: -12px;
+  }
+
+  .notchB {
+    top: -13px;
+    right: -12px;
+    bottom: auto;
+    left: auto;
+  }
+}
+
+/* ---------- TABLET / PHONE: tabs sa sariling hanay ---------- */
+@media (max-width: 900px) {
+  .ticketPage .searchBar {
+    max-width: none;
+  }
+
+  .ticketPage .filters {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDot,
+  .ticket.cardHighlight {
+    animation: none;
+  }
+
+  .ticket.cardHighlight {
+    box-shadow: 0 0 0 4px var(--dash-yellow);
+  }
+}
