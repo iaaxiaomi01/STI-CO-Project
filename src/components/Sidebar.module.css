@@ -79,6 +79,46 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Puwang para hindi dumikit ang scrollbar sa mga item */
+  margin-right: -10px;
+  padding-right: 10px;
+}
+
+/* ---------- SCROLLBAR NG NAV ----------
+   Kapag mas marami ang menu kaysa kasya sa taas ng screen
+   (hal. Officer at Adviser), lumalabas ang scrollbar. Dati ay
+   puti ito at may mga arrow (default ng browser). Ngayon:
+   manipis, walang arrow, at halos transparent sa navy —
+   lumilinaw lang kapag tinapatan. */
+.nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.nav:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+.nav::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Firefox (walang ::-webkit-scrollbar) */
+@supports not selector(::-webkit-scrollbar) {
+  .nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
 }
 
 .navItem {
