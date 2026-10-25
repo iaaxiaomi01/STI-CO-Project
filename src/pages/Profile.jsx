@@ -122,12 +122,19 @@ function Profile() {
         .join(' — ')
     : '—'
 
+  /* Adviser: walang Student ID, Program at Year level */
+  const isAdviser = profile?.role_id === 3
+
   const DETAILS = [
     { label: 'Full name', value: fullName },
-    { label: 'Student ID', value: profile?.student_id || '—' },
+    ...(isAdviser ? [] : [{ label: 'Student ID', value: profile?.student_id || '—' }]),
     { label: 'Email', value: profile?.email ?? user?.email ?? '—' },
-    { label: 'Program', value: profile?.program || '—' },
-    { label: 'Year level', value: profile?.year_level || '—' },
+    ...(isAdviser
+      ? []
+      : [
+          { label: 'Program', value: profile?.program || '—' },
+          { label: 'Year level', value: profile?.year_level || '—' },
+        ]),
     { label: 'Organization', value: organization },
     { label: 'Role', value: profile?.roles?.name ?? roleConfig.label },
     /* Officer position (President, VP, atbp.) — ang Adviser ang nagbibigay */
