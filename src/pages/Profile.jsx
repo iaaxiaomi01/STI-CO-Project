@@ -122,20 +122,28 @@ function Profile() {
         .join(' — ')
     : '—'
 
-  /* Adviser: walang Student ID, Program at Year level */
+  /* Adviser: walang Student ID, Program at Year level
+     SAO, School Head at SA: walang Student ID, Program, Year level at Organization */
   const isAdviser = profile?.role_id === 3
+  const isSao = profile?.role_id === 4
+  const isSchoolHead = profile?.role_id === 6
+  const isSchoolAdmin = profile?.role_id === 8
 
   const DETAILS = [
     { label: 'Full name', value: fullName },
-    ...(isAdviser ? [] : [{ label: 'Student ID', value: profile?.student_id || '—' }]),
+    ...(isAdviser || isSao || isSchoolHead || isSchoolAdmin
+      ? []
+      : [{ label: 'Student ID', value: profile?.student_id || '—' }]),
     { label: 'Email', value: profile?.email ?? user?.email ?? '—' },
-    ...(isAdviser
+    ...(isAdviser || isSao || isSchoolHead || isSchoolAdmin
       ? []
       : [
           { label: 'Program', value: profile?.program || '—' },
           { label: 'Year level', value: profile?.year_level || '—' },
         ]),
-    { label: 'Organization', value: organization },
+    ...(isSao || isSchoolHead || isSchoolAdmin
+      ? []
+      : [{ label: 'Organization', value: organization }]),
     { label: 'Role', value: profile?.roles?.name ?? roleConfig.label },
     /* Officer position (President, VP, atbp.) — ang Adviser ang nagbibigay */
     ...(profile?.officer_positions?.name
