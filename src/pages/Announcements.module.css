@@ -585,10 +585,10 @@
   color: var(--dash-muted);
 }
 
-/* Dalawang button na may manipis na guhit — parang iOS */
+/* Iisang button ("View") na may manipis na guhit — parang iOS */
 .alertButtons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   flex-shrink: 0;
   border-top: 1px solid rgba(60, 60, 67, 0.18);
 }
@@ -603,10 +603,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color var(--transition);
-}
-
-.alertButton + .alertButton {
-  border-left: 1px solid rgba(60, 60, 67, 0.18);
 }
 
 .alertButton:hover {

@@ -6,7 +6,6 @@ import {
   Clock,
   Globe,
   Megaphone,
-  Pencil,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -37,9 +36,10 @@ import styles from './Announcements.module.css'
 
    Member  → nakikita ang announcements ng org niya
    Officer → nakikita lahat sa org niya, nagpapaskil,
-             nag-e-edit/nagde-delete ng gawa ng Officers
+             nagde-delete ng gawa ng Officers
    Adviser → nakikita lahat sa org niya, nagpapaskil,
-             nag-e-edit/nagde-delete ng sarili at ng Officers
+             nagde-delete ng sarili at ng Officers
+   (Wala nang Edit button sa page na ito.)
 
    LAHAT NG ORG: nakikita rin ng lahat ang mga global post
    (is_global) at ang mga post na pinili ang org mo
@@ -75,8 +75,9 @@ function TypeIcon({ type, size = 20 }) {
 /* ============================================================
    LATEST ALERT — pop-up na parang iPhone emergency alert
 
-   Lumalabas sa gitna ng screen, may blur sa likod. Sarado
-   kapag pinindot ang "Close", ang labas ng alert, o ang Esc.
+   Lumalabas sa gitna ng screen, may blur sa likod. Wala nang
+   "Close" na button; sarado kapag pinindot ang labas ng alert,
+   o ang Esc.
    "View" → isasara at dadalhin ka sa "Latest" na card.
    Itsura lang: walang binabago sa database.
    ============================================================ */
@@ -126,9 +127,6 @@ function LatestAlert({ announcement: a, onClose, onView }) {
         </div>
 
         <div className={styles.alertButtons}>
-          <button type="button" className={styles.alertButton} onClick={onClose}>
-            Close
-          </button>
           <button
             type="button"
             ref={viewRef}
@@ -182,8 +180,8 @@ function Announcements() {
 
   /* ---------- POP-UP NG PINAKABAGO (itsura lang) ----------
      Isang beses lumalabas bawat pagbukas ng page, pagkatapos
-     makuha ang listahan. "Show alert" sa Latest card para
-     ipakita ulit. */
+     makuha ang listahan. Wala nang "Show alert" na button
+     para ipakita ulit. */
   const latest = announcements[0] ?? null
   const [alertOpen, setAlertOpen] = useState(false)
   const alertShown = useRef(false)
@@ -318,43 +316,17 @@ function Announcements() {
             {authorLabel(a)}
           </p>
 
-          {(manageable || featured) && (
+          {manageable && (
             <div className={styles.cardActions}>
-              {featured && (
-                <button
-                  type="button"
-                  className={styles.actionButton}
-                  onClick={() => setAlertOpen(true)}
-                >
-                  <Bell size={15} strokeWidth={2.2} aria-hidden="true" />
-                  Show alert
-                </button>
-              )}
-              {manageable && (
-                <>
-                  <button
-                    type="button"
-                    className={styles.actionButton}
-                    onClick={() => {
-                      setNotice('')
-                      setEditing(a)
-                    }}
-                    disabled={busy}
-                  >
-                    <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton} ${styles.danger}`}
-                    onClick={() => handleDelete(a)}
-                    disabled={busy}
-                  >
-                    <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
-                    {busy ? 'Deleting…' : 'Delete'}
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                className={`${styles.actionButton} ${styles.danger}`}
+                onClick={() => handleDelete(a)}
+                disabled={busy}
+              >
+                <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
+                {busy ? 'Deleting…' : 'Delete'}
+              </button>
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { fullNameOf } from '../lib/profile.js'
 import {
   POSITION_LIMIT,
@@ -13,7 +13,6 @@ import {
   fetchPositions,
   positionErrorMessage,
   renamePosition,
-  reorderPositions,
   setAllowMultiple,
 } from '../lib/officerPositions.js'
 import Avatar from './Avatar.jsx'
@@ -23,8 +22,8 @@ import styles from './OfficerPositions.module.css'
    OFFICER POSITIONS — nasa ilalim ng Org Profile (Adviser)
 
    Dito ginagawa ng Adviser ang listahan ng position ng org niya:
-   magdagdag, magpalit ng pangalan, ayusin ang pagkakasunod-sunod
-   (↑ ↓), at magbura.
+   magdagdag, magpalit ng pangalan, at magbura. Ang pagkakasunod-sunod
+   ay ayon sa pagkakadagdag (sort_order) — wala nang ↑ ↓ na button.
 
    HINDI dito nag-a-assign ng tao. Sa Members page iyon ("Set
    position"), dahil doon nakikita ang lahat ng member. Dito ay
@@ -162,26 +161,6 @@ function OfficerPositions({ orgId }) {
       setPositions((list) => list.map((p) => (p.id === updated.id ? updated : p)))
     })
     if (ok) setEditingId(null)
-  }
-
-  function handleMove(index, direction) {
-    const target = index + direction
-    if (target < 0 || target >= positions.length) return
-
-    const ordered = [...positions]
-    ;[ordered[index], ordered[target]] = [ordered[target], ordered[index]]
-
-    /* Ipakita agad; ibalik kapag pumalya */
-    const before = positions
-    setPositions(ordered)
-    run(positions[index].id, async () => {
-      try {
-        setPositions(await reorderPositions(ordered))
-      } catch (err) {
-        setPositions(before)
-        throw err
-      }
-    })
   }
 
   function handleDelete(position) {
@@ -333,26 +312,6 @@ function OfficerPositions({ orgId }) {
                     </div>
 
                     <div className={styles.actions}>
-                      <button
-                        type="button"
-                        className={styles.iconButton}
-                        onClick={() => handleMove(index, -1)}
-                        disabled={disabled || index === 0}
-                        aria-label={`Move ${position.name} up`}
-                        title="Move up"
-                      >
-                        <ArrowUp size={16} strokeWidth={2.4} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.iconButton}
-                        onClick={() => handleMove(index, 1)}
-                        disabled={disabled || index === positions.length - 1}
-                        aria-label={`Move ${position.name} down`}
-                        title="Move down"
-                      >
-                        <ArrowDown size={16} strokeWidth={2.4} aria-hidden="true" />
-                      </button>
                       <button
                         type="button"
                         className={styles.smallButton}
