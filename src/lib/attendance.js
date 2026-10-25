@@ -202,7 +202,8 @@ export async function fetchAttendanceCounts() {
   return map
 }
 
-/* "85%" o "—" kung wala pang natapos na event na sinalihan */
+/* "85%" o "—" kung wala pang natapos na event na sinalihan
+   (natapos = sarado na ang Time Out scanner) */
 function percent(attended, joined) {
   const j = Number(joined) || 0
   const a = Number(attended) || 0
@@ -214,8 +215,13 @@ function percent(attended, joined) {
    database, dalawang sagot:
 
      mine → sa mga natapos na event na SINALIHAN MO, ilan ang
-            may Time In ka (Member at Officer)
+            may Time In AT Time Out ka (Member at Officer)
      org  → sa buong org (Officer/Adviser lang; "—" sa iba)
+
+   "Natapos" = sarado na ang Time Out scanner (End + 60 min).
+   Habang bukas pa ito, hindi pa kasama ang event sa rate.
+   Ang Time In lang na walang Time Out ay absent.
+   Tingnan ang ATTENDANCE_RATE_FIX.sql.
 
    Ibinabalik: { mine: '85%' | '—', org: '72%' | '—' } */
 export async function fetchAttendanceRates() {

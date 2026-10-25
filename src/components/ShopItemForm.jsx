@@ -156,7 +156,6 @@ function ShopItemForm({ initial = null, onSubmit, onCancel }) {
             value={name}
             maxLength={ITEM_NAME_MAX}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Org T-Shirt"
             required
           />
         </label>
@@ -176,7 +175,6 @@ function ShopItemForm({ initial = null, onSubmit, onCancel }) {
             maxLength={ITEM_DESCRIPTION_MAX}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            placeholder="Size, color, where to claim it, etc."
           />
         </label>
 

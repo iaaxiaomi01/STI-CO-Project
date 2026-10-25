@@ -177,14 +177,16 @@ function Dashboard() {
     }
   }, [needsPendingProposals, profile?.role_id, profile?.id])
 
-  /* TOTOONG DATA: attendance rate (galing sa QR Time In).
+  /* TOTOONG DATA: attendance rate (kumpletong Time In + Time Out).
      key: 'attendanceRate'
        Member          → sa mga natapos na event na sinalihan mo
        Officer/Adviser → sa buong organisasyon
      key: 'myAttendanceRate'
        Officer         → sa mga natapos na event na sinalihan MO
+     "Natapos" = sarado na ang Time Out scanner (End + 60 min).
+     Ang Time In lang na walang Time Out ay absent.
      Iisang tawag lang sa database para sa dalawa.
-     Tingnan ang attendance_summary() sa QR_ATTENDANCE.sql. */
+     Tingnan ang attendance_summary() sa ATTENDANCE_RATE_FIX.sql. */
   const needsAttendanceRate = roleConfig.dashboard.stats.some(
     (stat) => stat.key === 'attendanceRate' || stat.key === 'myAttendanceRate',
   )
