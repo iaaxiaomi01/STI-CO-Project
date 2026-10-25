@@ -70,9 +70,10 @@ import styles from './Events.module.css'
    binabago sa database.
 
    JOIN:
-     Member at Officer → may "Join" habang hindi
-                          pa tapos ang event. Pagka-Join,
-                          lilipat sa Attendance tab.
+     Member at Officer → may "Join" habang Upcoming pa
+                          (hindi pa nagsisimula) ang event.
+                          Kapag Ongoing na, wala nang Join button.
+                          Pagka-Join, lilipat sa Attendance tab.
      Walang bilang ng sasali dito para sa kahit anong role.
      Ang bilang at buong listahan ng sasali bawat event ay
      nasa Attendance page (Officer at Adviser).
@@ -598,8 +599,12 @@ function Events() {
                 const isDone = isFinished(ev.status)
                 const missed = ev.status === MISSED_STATUS.value
                 const joinBusy = joiningId === ev.id
+                /* Join: Upcoming lang. Kapag Ongoing na (nagsimula na ang
+                   event), sarado na ang pagsali — wala nang Join button.
+                   Hinaharang din ito ng database (EVENT_JOIN_BEFORE_START.sql). */
+                const canJoinNow = joinable && !joined && ev.status === 'upcoming'
                 /* May Join, "Nakasali ka" o "Hindi ka nakasali" na ipapakita */
-                const hasJoinAction = joinable && (joined || !isDone || missed)
+                const hasJoinAction = joinable && (joined || canJoinNow || missed)
 
                 /* Certificate: drop box para sa Officer/Adviser ng org,
                    at status ng sariling certificate para sa sumali */
@@ -797,7 +802,7 @@ function Events() {
                         </p>
 
                         <div className={styles.stubAction}>
-                          {joinable && !isDone && !joined && (
+                          {canJoinNow && (
                             <button
                               type="button"
                               className={styles.tJoin}
@@ -908,7 +913,7 @@ function Events() {
                       {/* ---------- JOIN ---------- */}
                       {hasJoinAction && (
                         <div className={styles.joinRow}>
-                          {joinable && !isDone && !joined && (
+                          {canJoinNow && (
                             <button
                               type="button"
                               className={styles.joinButton}

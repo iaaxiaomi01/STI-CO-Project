@@ -491,7 +491,8 @@ export function wasEdited(event) {
                (EVENT_JOIN_NO_LEAVE.sql). May paalala nito sa
                JoinConfirmDialog bago sumali.
 
-   Hinaharang ng database ang Join kapag tapos na ang event.
+   Hinaharang ng database ang Join kapag nagsimula na ang event
+   (Ongoing o Completed) — EVENT_JOIN_BEFORE_START.sql.
 
    Sino ang nakakakita:
      Member           → sariling join lang, at ang BILANG ng sasali
@@ -559,8 +560,8 @@ export function participantLabel(p) {
 export function joinErrorMessage(err) {
   /* Galing sa trigger — nakasulat na sa Tagalog */
   if (err?.code === 'P0001' && err.message) return err.message
-  /* RLS: tapos na ang event o wala kang pahintulot */
-  if (err?.code === '42501') return 'You can no longer join — the event has ended.'
+  /* RLS: nagsimula na ang event o wala kang pahintulot */
+  if (err?.code === '42501') return 'You can no longer join — the event has already started.'
   return 'Could not save. Please try again.'
 }
 
