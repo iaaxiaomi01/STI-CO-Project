@@ -755,3 +755,12 @@ export function todayKey() {
 export function isFutureSchedule(eventDate, startTime) {
   return `${eventDate} ${startTime.slice(0, 5)}` > nowKey()
 }
+
+/* Lumampas na ba sa proposed na petsa at oras (simula) ng activity?
+   Kapag oo, wala nang Approve, Revise, Reject at Noted.
+   Hinaharang din ito ng database (PROPOSAL_REVIEW_BEFORE_SCHEDULE.sql).
+   Ang lumang proposal na walang schedule ay hindi apektado. */
+export function isPastSchedule(proposal, now = nowKey()) {
+  if (!hasSchedule(proposal)) return false
+  return `${proposal.event_date} ${proposal.start_time.slice(0, 5)}` <= now
+}

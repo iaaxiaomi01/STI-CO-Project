@@ -34,6 +34,7 @@ import {
   formatDateTime,
   hasSchedule,
   isInRevision,
+  isPastSchedule,
   progressLabel,
   requestRevision,
   resubmitProposal,
@@ -54,6 +55,7 @@ import {
   canCreateEventFrom,
   createEventFromProposal,
   eventOfProposal,
+  nowKey,
 } from '../lib/events.js'
 import PageHeader from '../components/PageHeader.jsx'
 import ActionButton from '../components/ActionButton.jsx'
@@ -269,6 +271,16 @@ function Proposals() {
 
   /* Aling proposal ang dina-download ang file */
   const [downloadingId, setDownloadingId] = useState(null)
+
+  /* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo para
+     kusang mawala ang Approve, Revise, Reject at Noted pagpatak ng
+     proposed na petsa at oras */
+  const [now, setNow] = useState(() => nowKey())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(nowKey()), 30 * 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -727,8 +739,10 @@ function Proposals() {
                     Open letter
                   </button>
 
-                  {/* Rejected na: "Noted" lang ang aksyon */}
-                  {canReviewProposal(p, profile) && awaitsNoted(p) && (
+                  {/* Rejected na: "Noted" lang ang aksyon.
+                      Wala na rin ito kapag lumampas na sa proposed na
+                      petsa at oras ng activity. */}
+                  {canReviewProposal(p, profile) && awaitsNoted(p) && !isPastSchedule(p, now) && (
                     <button
                       type="button"
                       className={styles.notedButton}
@@ -739,7 +753,9 @@ function Proposals() {
                     </button>
                   )}
 
-                  {canReviewProposal(p, profile) && !awaitsNoted(p) && (
+                  {/* Wala nang Approve, Revise at Reject kapag lumampas na
+                      sa proposed na petsa at oras ng activity */}
+                  {canReviewProposal(p, profile) && !awaitsNoted(p) && !isPastSchedule(p, now) && (
                     <>
                       <button
                         type="button"
