@@ -65,6 +65,7 @@ import ProposalLetter from '../components/ProposalLetter.jsx'
 import ReviewDialog from '../components/ReviewDialog.jsx'
 import ReviewTrail from '../components/ReviewTrail.jsx'
 import EventForm from '../components/EventForm.jsx'
+import { OgGem } from '../components/OgGem.jsx'
 import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
 import styles from './Proposals.module.css'
 
@@ -657,6 +658,12 @@ function Proposals() {
                       <span className={styles.budgetTag}>
                         <Coins size={13} strokeWidth={2.6} aria-hidden="true" />
                         With budget
+                      </span>
+                    )}
+                    {p.og_reward > 0 && (
+                      <span className={styles.budgetTag} title="OG per attendee with Time In and Time Out">
+                        <OgGem size={13} />
+                        {Number(p.og_reward).toLocaleString('en-PH')} OG reward
                       </span>
                     )}
                     <span className={styles.date}>{formatDateTime(p.created_at)}</span>

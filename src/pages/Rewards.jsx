@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
-  Gift,
   HandCoins,
   History,
   Pencil,
@@ -19,10 +18,8 @@ import {
   canEarnOg,
   canHandOutItems,
   canManageOgShop,
-  canReleaseOg,
   claimRedemption,
   deleteShopItem,
-  fetchEventRewards,
   fetchMyBalance,
   fetchMyRedemptions,
   fetchMyTransactions,
@@ -32,29 +29,11 @@ import {
   formatOgDate,
   ogErrorMessage,
   personLabel,
-  OG_REWARD_MAX,
   REDEMPTION_STATUSES,
   redemptionStatusLabel,
-  releaseEventOg,
-  rewardFor,
   saveShopItem,
-  setEventReward,
   setShopItemActive,
 } from '../lib/og.js'
-import {
-  computeStatus,
-  eventStatusLabel,
-  fetchEvents,
-  formatEventDate,
-  formatTime,
-  nowKey,
-} from '../lib/events.js'
-import {
-  PHASE_CLOSED,
-  attendancePhase,
-  attendanceWindows,
-  fetchAttendanceCounts,
-} from '../lib/attendance.js'
 import { isOgNotification, subscribeToNotifications } from '../lib/notifications.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
@@ -71,17 +50,16 @@ import styles from './Rewards.module.css'
 
    Member  → Shop · My redemptions · OG history
    Officer → Shop · My redemptions · OG history ·
-             Release OG (ibigay ang OG pagkatapos ng event) ·
              Hand out items (i-claim ang code ng member)
-   Adviser → Manage shop · Event rewards (ilang OG bawat event) ·
-             Hand out items · Members' OG
+   Adviser → Manage shop · Hand out items · Members' OG
 
-   Paano kumikita ng OG:
-     Adviser nagtakda ng reward ng event → tapos ang event at
-     sarado na ang attendance (1 oras pagkatapos ng End Time) →
-     Officer pumindot ng "Release OG" →
+   Paano kumikita ng OG (OG_REWARD_FROM_PROPOSAL.sql):
+     Officer naglagay ng OG reward sa proposal → approved →
+     ginawa ang event → sarado na ang attendance (1 oras
+     pagkatapos ng End Time) → KUSANG nare-release ang OG:
        may Time In AT Time Out = buong reward
-       Time In lang            = kalahati
+       Time In lang            = wala
+     Wala nang "Event rewards" (Adviser) at "Release OG" (Officer).
 
    Database ang nagbabantay sa lahat (OG_REWARDS_SHOP.sql).
 
@@ -100,8 +78,6 @@ const TAB_ICONS = {
   mine: Ticket,
   history: History,
   manage: Store,
-  rewards: Gift,
-  release: Sparkles,
   claims: HandCoins,
   members: Trophy,
 }
@@ -109,10 +85,8 @@ const TAB_ICONS = {
 const TAB_SHOP = 'shop'
 const TAB_MINE = 'mine'
 const TAB_HISTORY = 'history'
-const TAB_RELEASE = 'release'
 const TAB_CLAIMS = 'claims'
 const TAB_MANAGE = 'manage'
-const TAB_REWARDS = 'rewards'
 const TAB_MEMBERS = 'members'
 
 function tabsFor(profile) {
@@ -124,22 +98,10 @@ function tabsFor(profile) {
   }
   if (canManageOgShop(profile)) {
     tabs.push({ value: TAB_MANAGE, label: 'Manage shop' })
-    tabs.push({ value: TAB_REWARDS, label: 'Event rewards' })
   }
-  if (canReleaseOg(profile)) tabs.push({ value: TAB_RELEASE, label: 'Release OG' })
   if (canHandOutItems(profile)) tabs.push({ value: TAB_CLAIMS, label: 'Hand out items' })
   if (canManageOgShop(profile)) tabs.push({ value: TAB_MEMBERS, label: "Members' OG" })
   return tabs
-}
-
-/* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo */
-function useNow() {
-  const [now, setNow] = useState(() => nowKey())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(nowKey()), 30 * 1000)
-    return () => clearInterval(timer)
-  }, [])
-  return now
 }
 
 function Rewards() {
@@ -239,7 +201,6 @@ function Rewards() {
       )}
       {tab === TAB_HISTORY && <HistoryTab key={version} profile={profile} balance={balance} />}
       {tab === TAB_MANAGE && <ManageShopTab profile={profile} />}
-      {(tab === TAB_REWARDS || tab === TAB_RELEASE) && <EventRewardsTab profile={profile} />}
       {tab === TAB_CLAIMS && <ClaimsTab profile={profile} />}
       {tab === TAB_MEMBERS && <MembersOgTab />}
     </div>
@@ -673,326 +634,6 @@ function HistoryTab({ profile, balance }) {
         })}
       </ul>
     </>
-  )
-}
-
-/* ============================================================
-   EVENT REWARDS — Adviser (nagtatakda) at Officer (nagre-release)
-
-   Iisang listahan, magkaibang button:
-     Adviser → kahon ng OG + "Save" hangga't hindi pa na-release
-     Officer → "Release OG" kapag may reward at sarado na ang
-               attendance
-   ============================================================ */
-const REWARD_FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'ready', label: 'Ready to release' },
-  { value: 'waiting', label: 'Not yet released' },
-  { value: 'released', label: 'Released' },
-  { value: 'none', label: 'No reward' },
-]
-
-function rewardState(ev, reward, now) {
-  if (!reward) return 'none'
-  if (reward.released_at) return 'released'
-  return attendancePhase(ev, now) === PHASE_CLOSED ? 'ready' : 'waiting'
-}
-
-/* "2026-10-04 11:00" → "11:00 AM" */
-function clockOfKey(key) {
-  return formatTime(key.slice(11))
-}
-
-function EventRewardsTab({ profile }) {
-  const isAdviser = canManageOgShop(profile)
-  const isOfficer = canReleaseOg(profile)
-  const now = useNow()
-
-  const [events, setEvents] = useState([])
-  const [rewards, setRewards] = useState({})
-  const [att, setAtt] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filter, setFilter] = useState(isOfficer ? 'ready' : 'all')
-
-  const load = useCallback(async () => {
-    try {
-      const [evs, rw, counts] = await Promise.all([
-        fetchEvents(),
-        fetchEventRewards(),
-        fetchAttendanceCounts().catch(() => ({})),
-      ])
-      setEvents(evs)
-      setRewards(rw)
-      setAtt(counts)
-      setError(null)
-    } catch (err) {
-      console.error('Hindi makuha ang event rewards:', err)
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  const withState = useMemo(
-    () =>
-      events
-        .map((e) => ({
-          ...e,
-          status: computeStatus(e, now),
-          reward: rewards[e.id] ?? null,
-          rewardState: rewardState(e, rewards[e.id], now),
-        }))
-        /* Pinakabago muna */
-        .sort((a, b) =>
-          `${b.event_date} ${b.start_time}`.localeCompare(`${a.event_date} ${a.start_time}`),
-        ),
-    [events, rewards, now],
-  )
-
-  const counts = useMemo(() => {
-    const c = { all: withState.length, ready: 0, waiting: 0, released: 0, none: 0 }
-    withState.forEach((e) => {
-      c[e.rewardState] += 1
-    })
-    return c
-  }, [withState])
-
-  const visible = filter === 'all' ? withState : withState.filter((e) => e.rewardState === filter)
-
-  if (loading) return <p className={styles.muted}>Loading events…</p>
-  if (error) {
-    return (
-      <EmptyState
-        icon="!"
-        title="Could not load events"
-        message="There was a problem connecting to the database. Please try again later."
-      />
-    )
-  }
-  if (events.length === 0) {
-    return (
-      <EmptyState
-        icon="◆"
-        title="No events yet"
-      />
-    )
-  }
-
-  return (
-    <>
-      <div className={styles.filters} role="tablist" aria-label="Filter events">
-        {REWARD_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            role="tab"
-            aria-selected={filter === f.value}
-            className={`${styles.filter} ${filter === f.value ? styles.filterActive : ''}`}
-            onClick={() => setFilter(f.value)}
-          >
-            {f.label}
-            <span className={styles.filterCount}>{counts[f.value] ?? 0}</span>
-          </button>
-        ))}
-      </div>
-
-      {visible.length === 0 ? (
-        <p className={styles.muted}>No events here.</p>
-      ) : (
-        <ul className={styles.list}>
-          {visible.map((ev) => (
-            <EventRewardCard
-              key={ev.id}
-              event={ev}
-              att={att[ev.id] ?? { timedIn: 0, timedOut: 0 }}
-              isAdviser={isAdviser}
-              isOfficer={isOfficer}
-              onChanged={load}
-            />
-          ))}
-        </ul>
-      )}
-    </>
-  )
-}
-
-function EventRewardCard({ event, att, isAdviser, isOfficer, onChanged }) {
-  const reward = event.reward
-  const released = Boolean(reward?.released_at)
-
-  const [amount, setAmount] = useState(reward ? String(reward.amount) : '')
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState({ tone: '', text: '' })
-
-  /* Kapag nag-reload ang listahan */
-  useEffect(() => {
-    setAmount(reward ? String(reward.amount) : '')
-  }, [reward])
-
-  const complete = att.timedOut
-  const inOnly = Math.max(0, att.timedIn - att.timedOut)
-  const estimate = reward
-    ? complete * rewardFor(reward.amount, true) + inOnly * rewardFor(reward.amount, false)
-    : 0
-
-  const dirty = amount.trim() !== (reward ? String(reward.amount) : '')
-
-  async function handleSave(e) {
-    e.preventDefault()
-    const s = amount.trim()
-    const n = s === '' ? 0 : Number(s)
-    if (!/^\d*$/.test(s) || n > OG_REWARD_MAX) {
-      setMessage({ tone: 'error', text: `Enter a whole number from 0 to ${OG_REWARD_MAX}.` })
-      return
-    }
-    setBusy(true)
-    setMessage({ tone: '', text: '' })
-    try {
-      await setEventReward(event.id, n)
-      setMessage({
-        tone: 'ok',
-        text: n === 0 ? 'Reward removed.' : `Saved. This event now gives ${n} OG.`,
-      })
-      onChanged()
-    } catch (err) {
-      console.error('Hindi na-save ang reward:', err)
-      setMessage({ tone: 'error', text: ogErrorMessage(err) })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleRelease() {
-    const ok = window.confirm(
-      `Release the OG of "${event.title}"?\n\n` +
-        `${complete} with complete attendance × ${reward.amount} OG\n` +
-        `${inOnly} with Time In only × ${rewardFor(reward.amount, false)} OG\n\n` +
-        'This can only be done once.',
-    )
-    if (!ok) return
-    setBusy(true)
-    setMessage({ tone: '', text: '' })
-    try {
-      const r = await releaseEventOg(event.id)
-      setMessage({
-        tone: 'ok',
-        text: `Released ${Number(r.total).toLocaleString('en-PH')} OG to ${r.recipients} ${
-          r.recipients === 1 ? 'person' : 'people'
-        }.`,
-      })
-      onChanged()
-    } catch (err) {
-      console.error('Hindi na-release ang OG:', err)
-      setMessage({ tone: 'error', text: ogErrorMessage(err) })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const w = attendanceWindows(event)
-
-  return (
-    <li className={styles.card}>
-      <div className={styles.row}>
-        <div className={styles.main}>
-          <div className={styles.titleRow}>
-            <h2 className={styles.title}>{event.title}</h2>
-            <span className={`${styles.badge} ${styles[`badge_${event.status}`] ?? ''}`}>
-              {eventStatusLabel(event.status)}
-            </span>
-          </div>
-          <p className={styles.meta}>
-            {formatEventDate(event.event_date)} · {formatTime(event.start_time)} –{' '}
-            {formatTime(event.end_time)}
-          </p>
-          {att.timedIn > 0 && (
-            <p className={styles.attendMeta}>
-              Complete: <strong>{complete}</strong> · Time In only: <strong>{inOnly}</strong>
-              {reward && !released && (
-                <>
-                  {' '}
-                  · about <strong>{estimate.toLocaleString('en-PH')} OG</strong> to release
-                </>
-              )}
-            </p>
-          )}
-        </div>
-
-        <div className={styles.rewardBox}>
-          {reward ? (
-            <>
-              <OgAmount value={reward.amount} size={18} />
-              <span className={styles.rewardSub}>
-                half: {rewardFor(reward.amount, false)} OG
-              </span>
-            </>
-          ) : (
-            <span className={styles.rewardNone}>No reward</span>
-          )}
-        </div>
-      </div>
-
-      {released && (
-        <p className={styles.released}>
-          ✓ Released by {reward.released_by_name ?? 'an Officer'} · {formatOgDate(reward.released_at)} ·{' '}
-          {reward.recipients} {reward.recipients === 1 ? 'person' : 'people'} ·{' '}
-          {Number(reward.total_released).toLocaleString('en-PH')} OG
-        </p>
-      )}
-
-      {/* ---------- ADVISER: itakda ang reward ---------- */}
-      {isAdviser && !released && (
-        <form className={styles.rewardForm} onSubmit={handleSave}>
-          <label className={styles.rewardLabel}>
-            OG reward
-            <input
-              className={styles.rewardInput}
-              inputMode="numeric"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0"
-              aria-label={`OG reward for ${event.title}`}
-            />
-          </label>
-          <button type="submit" className={styles.smallPrimary} disabled={busy || !dirty}>
-            {busy ? 'Saving…' : 'Save'}
-          </button>
-          <span className={styles.hintSmall}>0 or blank removes the reward. Max {OG_REWARD_MAX}.</span>
-        </form>
-      )}
-
-      {/* ---------- OFFICER: i-release ---------- */}
-      {isOfficer && !released && (
-        <div className={styles.cardActions}>
-          {event.rewardState === 'ready' && (
-            <button type="button" className={styles.releaseBtn} disabled={busy} onClick={handleRelease}>
-              {!busy && <Sparkles size={17} strokeWidth={2.4} aria-hidden="true" />}
-              {busy ? 'Releasing…' : 'Release OG'}
-            </button>
-          )}
-          {event.rewardState === 'waiting' && (
-            <span className={styles.hintSmall}>
-              Release opens at {clockOfKey(w.outCloses)} on {formatEventDate(event.event_date)} (after
-              Time Out closes).
-            </span>
-          )}
-          {event.rewardState === 'none' && (
-            <span className={styles.hintSmall}>Waiting for the Adviser to set a reward.</span>
-          )}
-        </div>
-      )}
-
-      {message.text && (
-        <p className={message.tone === 'error' ? styles.panelError : styles.panelOk} role="status">
-          {message.text}
-        </p>
-      )}
-    </li>
   )
 }
 

@@ -9,9 +9,11 @@ import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
    Tingnan ang OG_REWARDS_SHOP.sql para sa buong paliwanag.
    Sa maikling salita:
 
-     Adviser → setEventReward()    ilang OG ang reward ng event
-     Officer → releaseEventOg()    ibigay ang OG pagkasara ng
-                                   attendance (isang beses lang)
+     Officer → og_reward sa Proposal Form (ilang OG bawat dadalo).
+               Kusang nakokopya sa event kapag ginawa na ang event.
+     KUSA    → releaseDueOg() / pg_cron: pagsara ng attendance,
+               nare-release ang OG sa Member at Officer na may
+               Time In AT Time Out (OG_REWARD_FROM_PROPOSAL.sql)
      Adviser → saveShopItem()      mga item sa shop ng org
      Member/Officer → redeemItem() bawas agad + claim code
      Officer/Adviser → claimRedemption(code)  naibigay na ang item
@@ -41,14 +43,9 @@ export function canEarnOg(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 1 || profile.role_id === 2))
 }
 
-/* Adviser — nagtatakda ng reward at namamahala ng shop */
+/* Adviser — namamahala ng shop */
 export function canManageOgShop(profile) {
   return Boolean(profile?.is_active && profile.role_id === 3)
-}
-
-/* Officer — nagre-release ng OG */
-export function canReleaseOg(profile) {
-  return Boolean(profile?.is_active && profile.role_id === 2)
 }
 
 /* Officer at Adviser — nagbibigay ng item (claim) */
@@ -57,12 +54,12 @@ export function canHandOutItems(profile) {
 }
 
 /* ---------- REWARD ----------
-   KAPAREHO ng og_reward_for() sa OG_REWARDS_SHOP.sql:
+   KAPAREHO ng og_reward_for() sa OG_REWARD_FROM_PROPOSAL.sql:
      may Time In AT Time Out → buo
-     Time In lang            → kalahati (pababa) */
+     Time In lang            → wala */
 export function rewardFor(amount, complete) {
   const n = Number(amount) || 0
-  return complete ? n : Math.floor(n / 2)
+  return complete ? n : 0
 }
 
 /* ---------- MENSAHE ---------- */
@@ -110,7 +107,24 @@ export function personLabel(name, roleId) {
    BALANCE AT HISTORY
    ============================================================ */
 
+/* ============================================================
+   KUSANG RELEASE
+   I-release ang OG ng mga event sa org mo na sarado na ang
+   attendance. Ligtas tawagin nang paulit-ulit — isang beses lang
+   nare-release ang bawat event. Pang-backup ito ng pg_cron, kaya
+   hindi kritikal kapag pumalya.
+   ============================================================ */
+export async function releaseDueOg() {
+  try {
+    const { error } = await supabase.rpc('release_due_event_og')
+    if (error) throw error
+  } catch (err) {
+    console.warn('Hindi na-check ang OG na dapat i-release:', err)
+  }
+}
+
 export async function fetchMyBalance() {
+  await releaseDueOg()
   const { data, error } = await supabase.rpc('my_og_balance')
   if (error) throw error
   return Number(data) || 0
@@ -147,6 +161,7 @@ export async function fetchOrgBalances() {
 
 /* { [event_id]: row } — lahat ng reward sa org mo (RLS) */
 export async function fetchEventRewards() {
+  await releaseDueOg()
   const { data, error } = await supabase
     .from('event_og_rewards')
     .select(
@@ -159,23 +174,6 @@ export async function fetchEventRewards() {
     map[r.event_id] = r
   })
   return map
-}
-
-/* Adviser. 0 = alisin ang reward */
-export async function setEventReward(eventId, amount) {
-  const { data, error } = await supabase.rpc('set_event_og_reward', {
-    p_event: eventId,
-    p_amount: amount,
-  })
-  if (error) throw error
-  return data
-}
-
-/* Officer. Ibinabalik: { recipients, total } */
-export async function releaseEventOg(eventId) {
-  const { data, error } = await supabase.rpc('release_event_og', { p_event: eventId })
-  if (error) throw error
-  return data
 }
 
 /* ============================================================

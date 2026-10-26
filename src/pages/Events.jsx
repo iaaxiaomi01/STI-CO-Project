@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Award, Check, Clock, Download, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
@@ -35,7 +35,7 @@ import {
   subscribeToNotifications,
 } from '../lib/notifications.js'
 import { fetchEventRewards, rewardFor } from '../lib/og.js'
-import { OgAmount, OgGem } from '../components/OgGem.jsx'
+import { OgAmount } from '../components/OgGem.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
@@ -95,18 +95,17 @@ import styles from './Events.module.css'
      ililipat sa tab na "Lahat", iki-clear ang search, at
      dadalhin ka sa mismong event card (sandaling naka-highlight).
 
-   OG REWARD (OG_REWARDS_SHOP.sql — event_og_rewards):
-     Member, Officer, Adviser → may "Reward" sa detalye ng event:
-                          ilang OG ang buo (Time In + Time Out)
-                          at kalahati (Time In lang).
-     Adviser            → kapag wala pang reward: "None yet ·
-                          Set in Rewards" (doon itinatakda).
+   OG REWARD (OG_REWARD_FROM_PROPOSAL.sql — event_og_rewards):
+     Itinakda ng Officer sa proposal; kusang nakopya sa event.
+     Member, Officer, Adviser → may "Reward" sa detalye ng event
+                          kapag may OG reward ito (Time In AT
+                          Time Out ang kailangan).
      Member at Officer  → sa event na sinalihan at tapos na:
                           ilang OG ang natanggap mo, o ilang OG
-                          ang matatanggap mo kapag na-release na
-                          ng Officer. Kinukuwenta mula sa sariling
-                          attendance gamit ang rewardFor() — pareho
-                          ng og_reward_for() sa database.
+                          ang matatanggap mo kapag kusang na-release
+                          na (pagsara ng attendance). Kinukuwenta
+                          mula sa sariling attendance gamit ang
+                          rewardFor() — pareho ng og_reward_for().
      Kapag dumating ang "og_update" notification (na-release ang
      OG) habang bukas ang page → kukunin ulit ang mga reward.
      Basa lang ito; walang binabago sa database.
@@ -163,8 +162,7 @@ function isFinished(status) {
 }
 
 /* Ilang OG ang sa iyo sa isang tapos na event na sinalihan mo.
-   Pareho ng release_event_og(): may Time In → may OG;
-   may Time Out din → buo, kung wala → kalahati.
+   Pareho ng og_release_event(): kailangan may Time In AT Time Out.
    Ibinabalik: { tone: 'got' | 'pending' | 'none', text } o null */
 function myOgStatus(reward, attendance, attendanceClosed) {
   const timedIn = Boolean(attendance?.time_in)
@@ -173,26 +171,33 @@ function myOgStatus(reward, attendance, attendanceClosed) {
   const og = amount.toLocaleString('en-PH')
   const full = Number(reward.amount).toLocaleString('en-PH')
 
+  const noOg = timedIn
+    ? 'No OG — you had Time In but no Time Out for this event.'
+    : 'No OG — you had no Time In for this event.'
+
   if (reward.released_at) {
     return amount > 0
       ? { tone: 'got', text: `You received +${og} OG for this event.` }
-      : { tone: 'none', text: 'No OG — you had no Time In for this event.' }
+      : { tone: 'none', text: noOg }
   }
 
   if (attendanceClosed) {
     return amount > 0
-      ? { tone: 'pending', text: `You'll receive ${og} OG once an Officer releases it.` }
-      : { tone: 'none', text: 'No OG — you had no Time In for this event.' }
+      ? { tone: 'pending', text: `Your ${og} OG is being released. It will show up shortly.` }
+      : { tone: 'none', text: noOg }
   }
 
   /* Bukas pa ang attendance (hanggang 1 oras pagkatapos ng event) */
   if (complete) {
-    return { tone: 'pending', text: `You'll receive ${og} OG once an Officer releases it.` }
+    return {
+      tone: 'pending',
+      text: `You'll receive ${og} OG automatically when attendance closes.`,
+    }
   }
   if (timedIn) {
     return {
       tone: 'pending',
-      text: `Time In only so far: ${og} OG. Time Out before attendance closes to get the full ${full} OG.`,
+      text: `Time Out before attendance closes to get ${full} OG.`,
     }
   }
   return null
@@ -617,7 +622,7 @@ function Events() {
 
                 /* OG reward ng event (null kung walang itinakda) */
                 const reward = rewards[ev.id] ?? null
-                const showRewardRow = Boolean(reward) || isAdviser
+                const showRewardRow = Boolean(reward)
                 const myOg =
                   joinable && joined && isDone && reward && certsLoaded
                     ? myOgStatus(reward, myAttendance[ev.id], attendanceClosed)
@@ -682,17 +687,6 @@ function Events() {
                             <li className={styles.chipOg}>
                               <span className={styles.srOnly}>Reward: </span>
                               <OgAmount value={reward.amount} size={15} />
-                            </li>
-                          )}
-                          {/* Adviser: wala pang reward (dating "Reward" row) */}
-                          {!reward && showRewardRow && (
-                            <li className={styles.chipNone}>
-                              <OgGem size={15} />
-                              <span className={styles.srOnly}>Reward: </span>
-                              None yet ·{' '}
-                              <Link to="/rewards" className={styles.chipLink}>
-                                Set in Rewards
-                              </Link>
                             </li>
                           )}
                         </ul>
@@ -879,15 +873,9 @@ function Events() {
                           <div>
                             <dt>Reward</dt>
                             <dd>
-                              {reward ? (
-                                <span className={styles.reward}>
-                                  <OgAmount value={reward.amount} size={15} />
-                                </span>
-                              ) : (
-                                <span className={styles.rewardNone}>
-                                  None yet · <Link to="/rewards">Set in Rewards</Link>
-                                </span>
-                              )}
+                              <span className={styles.reward}>
+                                <OgAmount value={reward.amount} size={15} />
+                              </span>
                             </dd>
                           </div>
                         )}

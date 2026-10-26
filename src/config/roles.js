@@ -66,7 +66,7 @@ const PROPOSALS = { label: 'Proposals', to: '/proposals', icon: '✉' }
 const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
 const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 
-/* Organization Gems (OG) — Shop, Release OG, Event rewards, atbp.
+/* Organization Gems (OG) — Shop, OG history, Hand out items, atbp.
    Iba ang tab bawat role; tingnan ang pages/Rewards.jsx at
    OG_REWARDS_SHOP.sql */
 const REWARDS = { label: 'Rewards', to: '/rewards', icon: '❖' }

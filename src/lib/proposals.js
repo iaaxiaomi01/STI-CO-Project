@@ -216,13 +216,25 @@ export const TITLE_MAX = 150
 export const DESCRIPTION_MAX = 8000
 export const VENUE_MAX = 200
 
+/* OG REWARD (OG_REWARD_FROM_PROPOSAL.sql)
+   Itinatakda ng Officer sa proposal: ilang OG ang makukuha ng bawat
+   Member at Officer na may Time In AT Time Out. 0 = walang reward.
+   Kusang nare-release pagsara ng attendance ng event. */
+export const OG_REWARD_MAX = 1000
+
+/* "" → 0, "50" → 50 */
+export function toOgReward(value) {
+  const n = Number(String(value ?? '').trim() || 0)
+  return Number.isInteger(n) ? n : NaN
+}
+
 const COLUMNS = `
   id, organization_id, title, description,
   venue, event_date, start_time, end_time,
   attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id, author_position,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
-  stage, head_decision, admin_decision, has_budget,
+  stage, head_decision, admin_decision, has_budget, og_reward,
   adviser_decision, adviser_comment, adviser_name, adviser_reviewed_at,
   sao_decision, sao_comment, sao_name, sao_reviewed_at,
   revision_from, revision_count,
@@ -319,6 +331,7 @@ export async function createProposal({
   title,
   description,
   hasBudget = false,
+  ogReward = 0,
   attachment = null,
   ...schedule
 }) {
@@ -328,6 +341,7 @@ export async function createProposal({
       title,
       description,
       has_budget: Boolean(hasBudget),
+      og_reward: Number(ogReward) || 0,
       ...scheduleColumns(schedule),
       ...attachmentColumns(attachment),
     })
@@ -395,7 +409,7 @@ export async function requestRevision(id, comment) {
    Kapag pareho ang path sa dati, hindi binago ang file. */
 export async function resubmitProposal(
   id,
-  { title, description, venue, eventDate, startTime, endTime, hasBudget, attachment = null },
+  { title, description, venue, eventDate, startTime, endTime, hasBudget, ogReward, attachment = null },
 ) {
   const { error } = await supabase.rpc('resubmit_proposal', {
     p_id: id,
@@ -410,6 +424,7 @@ export async function resubmitProposal(
     p_end_time: endTime,
     /* undefined → hindi ipapadala → hindi babaguhin ng database */
     p_has_budget: hasBudget === undefined ? undefined : Boolean(hasBudget),
+    p_og_reward: ogReward === undefined ? undefined : Number(ogReward) || 0,
   })
 
   if (error) throw rpcError(error)

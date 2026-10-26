@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   DESCRIPTION_MAX,
+  OG_REWARD_MAX,
   TITLE_MAX,
   VENUE_MAX,
   formatDateTime,
   isFutureSchedule,
   latestRevision,
   stageLabel,
+  toOgReward,
   todayKey,
 } from '../lib/proposals.js'
 import { toTimeInput } from '../lib/events.js'
@@ -39,6 +41,12 @@ import styles from './ProposalForm.module.css'
    Kapag naka-check, dadaan pa ito sa School Administrator
    pagkatapos ng School Head (ADD_SCHOOL_ADMINISTRATOR.sql).
    Pwede itong baguhin habang nire-revise.
+
+   OG REWARD (OG_REWARD_FROM_PROPOSAL.sql): ilang OG ang makukuha
+   ng bawat Member at Officer na may Time In AT Time Out. Blangko
+   o 0 = walang reward. Kusang nare-release pagsara ng attendance
+   ng event — wala nang kailangang pindutin. Pwede ring baguhin
+   habang nire-revise.
    Ang Organization Name, Logo at Proposed by ay kusang
    nilalagay — galing sila sa org at sa account mo.
 
@@ -59,6 +67,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const [startTime, setStartTime] = useState(toTimeInput(proposal?.start_time))
   const [endTime, setEndTime] = useState(toTimeInput(proposal?.end_time))
   const [hasBudget, setHasBudget] = useState(Boolean(proposal?.has_budget))
+  const [ogReward, setOgReward] = useState(proposal?.og_reward ? String(proposal.og_reward) : '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -119,6 +128,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       startTime,
       endTime,
       hasBudget,
+      ogReward: toOgReward(ogReward),
     }
 
     if (
@@ -129,7 +139,15 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       !clean.startTime ||
       !clean.endTime
     ) {
-      setError('All fields except File are required.')
+      setError('All fields except File and OG reward are required.')
+      return
+    }
+
+    if (
+      !/^\d*$/.test(ogReward.trim()) ||
+      !(clean.ogReward >= 0 && clean.ogReward <= OG_REWARD_MAX)
+    ) {
+      setError(`OG reward must be a whole number from 0 to ${OG_REWARD_MAX}.`)
       return
     }
 
@@ -297,6 +315,25 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
                 ? 'Review: Adviser → SAO → School Head → School Administrator'
                 : 'Review: Adviser → SAO → School Head'}
             </span>
+          </span>
+        </label>
+
+        {/* ---------- OG REWARD (opsyonal) ---------- */}
+        <label className={styles.field}>
+          <span className={styles.label}>
+            OG reward per attendee <span className={styles.optional}>(optional)</span>
+          </span>
+          <input
+            className={styles.input}
+            inputMode="numeric"
+            value={ogReward}
+            onChange={(e) => setOgReward(e.target.value)}
+            placeholder="0"
+            disabled={saving}
+          />
+          <span className={styles.hint}>
+            Given automatically to Members and Officers with both Time In and Time Out,
+            once attendance closes. Blank or 0 means no reward. Max {OG_REWARD_MAX}.
           </span>
         </label>
 
