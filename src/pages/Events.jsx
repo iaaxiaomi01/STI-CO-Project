@@ -34,7 +34,7 @@ import {
   isOgNotification,
   subscribeToNotifications,
 } from '../lib/notifications.js'
-import { fetchEventRewards, rewardFor } from '../lib/og.js'
+import { fetchEventRewards } from '../lib/og.js'
 import { OgAmount } from '../components/OgGem.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
@@ -104,8 +104,8 @@ import styles from './Events.module.css'
                           ilang OG ang natanggap mo, o ilang OG
                           ang matatanggap mo kapag kusang na-release
                           na (pagsara ng attendance). Kinukuwenta
-                          mula sa sariling attendance gamit ang
-                          rewardFor() — pareho ng og_reward_for().
+                          mula sa sariling attendance — pareho ng
+                          og_release_event() sa database.
      Kapag dumating ang "og_update" notification (na-release ang
      OG) habang bukas ang page → kukunin ulit ang mga reward.
      Basa lang ito; walang binabago sa database.
@@ -167,7 +167,7 @@ function isFinished(status) {
 function myOgStatus(reward, attendance, attendanceClosed) {
   const timedIn = Boolean(attendance?.time_in)
   const complete = Boolean(attendance?.time_out)
-  const amount = timedIn ? rewardFor(reward.amount, complete) : 0
+  const amount = timedIn && complete ? Number(reward.amount) || 0 : 0
   const og = amount.toLocaleString('en-PH')
   const full = Number(reward.amount).toLocaleString('en-PH')
 

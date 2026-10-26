@@ -53,15 +53,6 @@ export function canHandOutItems(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 2 || profile.role_id === 3))
 }
 
-/* ---------- REWARD ----------
-   KAPAREHO ng og_reward_for() sa OG_REWARD_FROM_PROPOSAL.sql:
-     may Time In AT Time Out → buo
-     Time In lang            → wala */
-export function rewardFor(amount, complete) {
-  const n = Number(amount) || 0
-  return complete ? n : 0
-}
-
 /* ---------- MENSAHE ---------- */
 
 export function ogErrorMessage(err) {
