@@ -26,6 +26,9 @@ import styles from './ProposalLetter.module.css'
      Attachment                 → pangalan ng file (kung meron);
                                   "I-download" sa itaas na toolbar
      Budget                     → "With budget" kapag naka-check
+     OG Reward                  → ilang OG ng org bawat dadalo
+                                  (kapag higit sa 0). Dito lang
+                                  ito makikita, wala sa card.
      Daan ng review             → Adviser → SAO → School Head
                                   (→ School Administrator kapag
                                   may budget), bawat isa ay may
@@ -41,6 +44,7 @@ import styles from './ProposalLetter.module.css'
    ============================================================ */
 function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) {
   const org = proposal.organizations
+  const ogReward = Number(proposal.og_reward) || 0
 
   /* Esc para isara */
   useEffect(() => {
@@ -116,7 +120,7 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
             <span className={styles.subjectLabel}>SUBJECT:</span> {proposal.title}
           </p>
 
-          {(hasSchedule(proposal) || proposal.venue || proposal.has_budget) && (
+          {(hasSchedule(proposal) || proposal.venue || proposal.has_budget || ogReward > 0) && (
             <dl className={styles.details}>
               {proposal.venue && (
                 <div className={styles.detailRow}>
@@ -140,6 +144,18 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
                 <div className={styles.detailRow}>
                   <dt>Budget:</dt>
                   <dd>(Please see the attached file)</dd>
+                </div>
+              )}
+              {/* OG ng org na ito — para sa bawat dadalo na may
+                  Time In at Time Out. Dito na lang ito makikita;
+                  wala na sa card ng Proposals page. */}
+              {ogReward > 0 && (
+                <div className={styles.detailRow}>
+                  <dt>OG Reward:</dt>
+                  <dd>
+                    {ogReward.toLocaleString('en-PH')} OG per attendee
+                    {org?.name && ` (${org.name})`} with Time In and Time Out
+                  </dd>
                 </div>
               )}
             </dl>
