@@ -552,19 +552,24 @@ function Dashboard() {
         </section>
       )}
 
-      <h2 className={styles.sectionTitle}>Sections</h2>
+      {/* Walang "Sections" kapag walang card (hal. IT Admin) */}
+      {roleConfig.dashboard.cards.length > 0 && (
+        <>
+          <h2 className={styles.sectionTitle}>Sections</h2>
 
-      <div className={styles.cardGrid}>
-        {roleConfig.dashboard.cards.map((card) => (
-          <Link key={card.to} to={card.to} className={styles.card}>
-            <span className={styles.cardIcon} aria-hidden="true">
-              {card.icon}
-            </span>
-            <h3 className={styles.cardTitle}>{card.title}</h3>
-            <p className={styles.cardText}>{card.text}</p>
-          </Link>
-        ))}
-      </div>
+          <div className={styles.cardGrid}>
+            {roleConfig.dashboard.cards.map((card) => (
+              <Link key={card.to} to={card.to} className={styles.card}>
+                <span className={styles.cardIcon} aria-hidden="true">
+                  {card.icon}
+                </span>
+                <h3 className={styles.cardTitle}>{card.title}</h3>
+                <p className={styles.cardText}>{card.text}</p>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </>
   )
 }

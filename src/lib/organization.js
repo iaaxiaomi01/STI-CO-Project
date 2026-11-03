@@ -5,7 +5,8 @@ import { checkImageFile, extensionFor, resizeToSquare } from './image.js'
    ORGANIZATION — Org Profile ng Adviser
 
    Name, Description at Logo lang ang nababago. Ang Department
-   at status ay hawak ng IT Admin.
+   at status ay sa Supabase SQL Editor / Table Editor na lang
+   binabago (REMOVE_IT_ADMIN_FUNCTIONS.sql).
 
    Ang database ang totoong bantay:
      - RLS "orgs_adviser_update_own": sariling org lang

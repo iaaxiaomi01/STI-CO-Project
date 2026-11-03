@@ -23,7 +23,7 @@ import styles from './OrgProfile.module.css'
 
    Ang organisasyong hawak ng Adviser (profiles.organization_id).
    Nababago: Name, Description, Logo
-   Hindi nababago: Department (IT Administrator ang may hawak)
+   Hindi nababago: Department (sa Supabase SQL Editor / Table Editor lang)
 
    Sa ilalim nito ang OFFICER POSITIONS — ang listahan ng
    position ng org (President, VP, atbp.). Tingnan ang

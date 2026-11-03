@@ -27,7 +27,7 @@ import styles from './Members.module.css'
    OFFICER POSITION (OFFICER_POSITIONS.sql):
    Sa "Role" column, ang position ang lalabas kapag mayroon
    (hal. "President" imbes na "Officer"). Ang may
-   can.assignPositions (Adviser, IT Admin) ay may "Set position"
+   can.assignPositions (Adviser lang) ay may "Set position"
    button sa bawat Member/Officer — tingnan ang PositionDialog.
 
    ITSURA ("editorial roster" — UI lang, walang binago sa data):
@@ -65,15 +65,12 @@ function Members() {
   const showOfficersFilter =
     role !== ROLE_KEYS.SAO && role !== ROLE_KEYS.SCHOOL_HEAD && role !== ROLE_KEYS.SCHOOL_ADMIN
 
-  /* Organization filter: para sa SAO, School Head, School
-     Administrator at IT Admin, na nakakakita ng LAHAT ng org
+  /* Organization filter: para sa SAO, School Head at School
+     Administrator, na nakakakita ng LAHAT ng org
      (profiles_read_staff). Ang Officer at Adviser ay sariling org
      lang ang nakikita kaya hindi na kailangan. */
   const showOrgFilter =
-    role === ROLE_KEYS.SAO ||
-    role === ROLE_KEYS.SCHOOL_HEAD ||
-    role === ROLE_KEYS.SCHOOL_ADMIN ||
-    role === ROLE_KEYS.IT_ADMIN
+    role === ROLE_KEYS.SAO || role === ROLE_KEYS.SCHOOL_HEAD || role === ROLE_KEYS.SCHOOL_ADMIN
 
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -108,8 +105,8 @@ function Members() {
     loadMembers()
   }, [loadMembers])
 
-  /* Ang listahan ng position (RLS: sariling org ng Adviser; lahat
-     para sa IT Admin). Kailangan lang kapag may "Set position". */
+  /* Ang listahan ng position (RLS: sariling org ng Adviser).
+     Kailangan lang kapag may "Set position". */
   useEffect(() => {
     if (!can.assignPositions) return
     fetchPositions()

@@ -59,7 +59,8 @@ function byOrder(a, b) {
 }
 
 /* orgId = null → lahat ng nakikita mo (RLS ang nagsasala:
-   sariling org lang, o lahat kung SAO pataas / IT Admin) */
+   sariling org lang, o lahat kung SAO / School Head / School
+   Administrator) */
 export async function fetchPositions(orgId = null) {
   let query = supabase.from('officer_positions').select(COLUMNS)
   if (orgId) query = query.eq('organization_id', orgId)

@@ -11,7 +11,7 @@ import styles from './Login.module.css'
      - hindi makuha ang profile (error sa database)
 
    Hindi siya makakapasok sa member pages hangga't hindi
-   siya naidadagdag ng SAO o IT Admin sa student_records.
+   siya naidadagdag ng SAO sa student_records (o sa Supabase Table Editor).
    ============================================================ */
 function AccessDenied() {
   const { user, profile, profileError, refreshProfile } = useAuth()

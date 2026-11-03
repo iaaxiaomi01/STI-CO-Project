@@ -18,8 +18,9 @@
    │  sa Supabase, tapos isinasalin dito sa ROLE_ID_TO_KEY. │
    │                                                        │
    │  Para palitan ang role ng isang tao, baguhin ang       │
-   │  role_id niya sa profiles table (IT Admin lang ang     │
-   │  may pahintulot, dahil sa RLS at guard trigger).       │
+   │  role_id niya sa profiles table gamit ang SQL Editor   │
+   │  o Table Editor ng Supabase (sila lang ang lusot sa    │
+   │  guard trigger — REMOVE_IT_ADMIN_FUNCTIONS.sql).       │
    └────────────────────────────────────────────────────────┘ */
 
 export const ROLE_KEYS = {
@@ -115,7 +116,8 @@ const ORG_HEALTH = { label: 'Org Health', to: '/org-health', icon: '✚' }
    Adviser : gumagawa ng events at announcements, at sumusuri
              rin                    → create + review + announce
                                       + assignPositions
-   IT Admin: may hawak ng lahat ng account → assignPositions
+   IT Admin: Dashboard lang, walang kakayahan → wala
+             (REMOVE_IT_ADMIN_FUNCTIONS.sql)
 
    DITO KA MAGDAGDAG kapag nagkaroon na ng totoong function.
    Halimbawa, kung may role na makakabura: dagdagan ng
@@ -210,7 +212,7 @@ export const ROLES = {
          Event Calendar na may listahan ng events sa gilid.
          Tingnan ang renderBentoTile() at BENTO_LAYOUTS sa
          pages/Dashboard.jsx. Ang staff roles (SAO, School Head,
-         School Administrator, IT Admin) ay nasa lumang layout pa. */
+         School Administrator) at ang IT Admin ay nasa lumang layout pa. */
       layout: 'bento',
 
       stats: [
@@ -394,14 +396,14 @@ export const ROLES = {
   },
 
   /* ----------------------------------------------------------
-     STAFF ROLES (SAO, School Head, IT Admin)
+     STAFF ROLES (SAO, School Head, School Administrator)
 
      Panimulang config lang ito para may makita sila pagka-login.
      Dahil sa RLS (is_staff), nakikita nila ang profiles ng LAHAT
      ng organisasyon sa Members page.
 
      Kapag may sariling page na sila (hal. pamamahala ng
-     student_records para sa SAO at IT Admin):
+     student_records para sa SAO):
        1. gumawa ng page
        2. irehistro sa PAGE_COMPONENTS sa App.jsx
        3. idagdag sa sidebar nila dito
@@ -494,12 +496,17 @@ export const ROLES = {
       },
     }
   })(),
-  /* Kaya rin niyang magbigay ng officer position sa kahit anong
-     org (sa Members page). */
-  [ROLE_KEYS.IT_ADMIN]: (() => {
-    const base = staffRole('IT Administrator')
-    return { ...base, can: { ...base.can, assignPositions: true } }
-  })(),
+  /* IT Administrator — inalis na ang lahat ng kakayahan niya
+     (REMOVE_IT_ADMIN_FUNCTIONS.sql). Nananatili ang role sa
+     database at nakakapag-login pa rin siya, pero Dashboard na
+     lang ang nakikita niya. Walang Members, Profile, o "Set
+     position". */
+  [ROLE_KEYS.IT_ADMIN]: {
+    label: 'IT Administrator',
+    can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
+    sidebar: [DASHBOARD],
+    dashboard: { stats: [], cards: [] },
+  },
 }
 
 /* Ginagamit kapag hindi kilala ang role — halimbawa, kung
