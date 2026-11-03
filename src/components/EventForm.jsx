@@ -29,7 +29,8 @@ import styles from './EventForm.module.css'
    Ang lumang proposal na walang schedule ay hindi naka-lock.
 
    Laman: Title, Description, Date, Start Time, End Time,
-          Location, Picture (optional)
+          Location, OG reward per attendee (Gumawa lang, basa
+          lang — galing sa proposal), Picture (optional)
 
    Walang Status — kusa itong kinukuwenta mula sa Date at oras
    (tingnan ang computeStatus() sa lib/events.js).
@@ -263,6 +264,26 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             required
           />
         </label>
+
+        {/* ---------- OG REWARD (basa lang) ----------
+            Galing sa proposal at NAKA-LOCK. Hindi ito kasama sa
+            ise-save ng form — ang database na ang kumokopya nito
+            sa event (events_copy_og_reward). */}
+        {proposal && (
+          <label className={base.field}>
+            <span className={base.label}>OG reward per attendee</span>
+            <input
+              className={`${base.input} ${styles.locked}`}
+              value={Number(proposal.og_reward) || 0}
+              disabled
+              readOnly
+            />
+            <span className={base.hint}>
+              From the proposal. Given automatically to Members and Officers with both Time
+              In and Time Out, once attendance closes. 0 means no reward.
+            </span>
+          </label>
+        )}
 
         {/* ---------- PICTURE (optional) ---------- */}
         <div className={base.field}>
