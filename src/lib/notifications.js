@@ -20,6 +20,11 @@ import { supabase } from './supabaseClient.js'
        - dumating ang proposal sa stage mo → Adviser ng org,
          lahat ng SAO, o lahat ng School Head
          — PROPOSAL_REVIEW_NOTIFICATIONS.sql
+       - nag-announce ang Officer o Adviser → bawat aktibong
+         Member, Officer at Adviser ng org na pinadalhan
+         (sariling org, mga piniling org, o lahat kapag global),
+         maliban sa nag-post
+         — ANNOUNCEMENT_NOTIFICATIONS.sql
 
    REALTIME:
      subscribeToNotifications() → nakikinig sa Supabase Realtime.
