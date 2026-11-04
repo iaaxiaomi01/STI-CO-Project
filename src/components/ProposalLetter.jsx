@@ -154,7 +154,7 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
                   <dt>OG Reward:</dt>
                   <dd>
                     {ogReward.toLocaleString('en-PH')} OG per attendee
-                    {org?.name && ` (${org.name})`} with Time In and Time Out
+                    {org?.name && ` (${org.name})`}
                   </dd>
                 </div>
               )}

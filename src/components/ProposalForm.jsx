@@ -321,7 +321,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
         {/* ---------- OG REWARD (opsyonal) ---------- */}
         <label className={styles.field}>
           <span className={styles.label}>
-            OG reward per attendee <span className={styles.optional}>(optional)</span>
+            OG reward per attendee
           </span>
           <input
             className={styles.input}
