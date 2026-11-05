@@ -92,7 +92,7 @@ export const LOCATION_MAX = 200
 
 const COLUMNS = `
   id, organization_id, proposal_id,
-  status, title, description, event_date, start_time, end_time, location, image_url,
+  title, description, event_date, start_time, end_time, location, image_url,
   author_id, author_name, author_role_id,
   created_at, updated_at, updated_by,
   proposals ( venue, event_date, start_time, end_time )

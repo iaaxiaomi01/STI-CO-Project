@@ -109,11 +109,11 @@ function Profile() {
   }
 
   const lastSignIn = user?.last_sign_in_at
-    ? new Date(user.last_sign_in_at).toLocaleString()
+    ? new Date(user.last_sign_in_at).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
     : '—'
 
   const memberSince = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString()
+    ? new Date(profile.created_at).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' })
     : '—'
 
   const organization = profile?.organizations

@@ -685,6 +685,7 @@ export function authorPositionLabel(proposal) {
 /* "September 28, 2026" — pang-sulat na petsa */
 export function formatLetterDate(iso) {
   return new Date(iso).toLocaleDateString('en-PH', {
+    timeZone: 'Asia/Manila',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -694,6 +695,7 @@ export function formatLetterDate(iso) {
 /* "Sep 28, 2026, 2:15 PM" — para sa listahan */
 export function formatDateTime(iso) {
   return new Date(iso).toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
     dateStyle: 'medium',
     timeStyle: 'short',
   })

@@ -227,6 +227,7 @@ export function authorLabel(announcement) {
 
 export function formatDate(iso) {
   return new Date(iso).toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
     dateStyle: 'medium',
     timeStyle: 'short',
   })
