@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CANCEL_REASON_MAX, cancelRedemption, ogErrorMessage } from '../lib/og.js'
+import { CANCEL_REASON_MAX, cancelRedemption, isCharged, ogErrorMessage } from '../lib/og.js'
 import { OgAmount } from './OgGem.jsx'
 import base from './ProposalForm.module.css'
 import styles from './RedeemDialog.module.css'
@@ -11,10 +11,13 @@ import styles from './RedeemDialog.module.css'
    Ng iba (Officer/Adviser): KAILANGAN ang dahilan — makikita ito
    ng may-ari sa notification niya.
 
-   Pending lang ang pwedeng i-cancel. Ibinabalik ng database ang
-   OG at ang stock.
+   Pending lang ang pwedeng i-cancel. Sa bagong daloy, wala pang
+   nabawas (sa claim pa lang ang bawas), kaya walang ibabalik.
+   Ang LUMANG pending lang (nabawasan na noong nag-redeem, may
+   charged_at) ang ibinabalik ng database ang OG at stock.
    ============================================================ */
 function CancelRedemptionDialog({ redemption, ownRedemption, onCancel, onDone }) {
+  const charged = isCharged(redemption)
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -71,22 +74,29 @@ function CancelRedemptionDialog({ redemption, ownRedemption, onCancel, onDone })
             <dt>Item</dt>
             <dd>{redemption.item_name}</dd>
           </div>
-          <div>
-            <dt>Claim code</dt>
-            <dd>{redemption.claim_code}</dd>
-          </div>
+          {/* Walang claim code: ginagamit ito sa "Hand out items", at
+              hindi dapat makita ng Officer/Adviser ang code */}
           {!ownRedemption && (
             <div>
               <dt>Redeemed by</dt>
               <dd>{redemption.redeemer_name}</dd>
             </div>
           )}
-          <div className={styles.total}>
-            <dt>OG to return</dt>
-            <dd>
-              <OgAmount value={redemption.price} signed />
-            </dd>
-          </div>
+          {charged ? (
+            <div className={styles.total}>
+              <dt>OG to return</dt>
+              <dd>
+                <OgAmount value={redemption.price} signed />
+              </dd>
+            </div>
+          ) : (
+            <div className={styles.total}>
+              <dt>Price</dt>
+              <dd>
+                <OgAmount value={redemption.price} /> · not deducted yet
+              </dd>
+            </div>
+          )}
         </dl>
 
         <label className={base.field}>
@@ -124,7 +134,7 @@ function CancelRedemptionDialog({ redemption, ownRedemption, onCancel, onDone })
             Keep it
           </button>
           <button type="button" className={base.danger} onClick={handleConfirm} disabled={saving}>
-            {saving ? 'Cancelling…' : 'Cancel & return OG'}
+            {saving ? 'Cancelling…' : charged ? 'Cancel & return OG' : 'Cancel redemption'}
           </button>
         </div>
       </div>

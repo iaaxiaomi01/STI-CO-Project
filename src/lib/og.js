@@ -15,9 +15,13 @@ import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
                nare-release ang OG sa Member at Officer na may
                Time In AT Time Out (OG_REWARD_FROM_PROPOSAL.sql)
      Adviser → saveShopItem()      mga item sa shop ng org
-     Member/Officer → redeemItem() bawas agad + claim code
-     Officer/Adviser → claimRedemption(code)  naibigay na ang item
-     May-ari o Officer/Adviser → cancelRedemption()  ibalik ang OG
+     Member/Officer → redeemItem()  claim code lang — WALA pang bawas
+                       at WALANG reserve; first come first serve
+                       (OG_FIRST_COME.sql). Isang code bawat item.
+     Officer/Adviser → claimRedemption(code)  DITO pa lang ibabawas
+                       ang OG at ang stock (OG_DEDUCT_ON_CLAIM.sql)
+     May-ari o Officer/Adviser → cancelRedemption()  walang ibabalik
+                       (maliban sa lumang pending na nabawasan na)
 
    Walang "balance" column. Ang balance ay suma ng og_transactions
    (ledger) ng tao sa org niya. Mga function lang sa database ang
@@ -304,7 +308,8 @@ export async function deleteShopItem(item) {
    REDEEM, CLAIM, CANCEL
    ============================================================ */
 
-/* Ibinabalik: { id, claim_code, item_name, price, balance } */
+/* Ibinabalik: { id, claim_code, item_id, item_name, price, balance }
+   Hindi pa nababawasan ang balance — sa claim pa lang. */
 export async function redeemItem(itemId) {
   const { data, error } = await supabase.rpc('redeem_og_item', { p_item: itemId })
   if (error) throw error
@@ -314,9 +319,15 @@ export async function redeemItem(itemId) {
 const REDEMPTION_COLUMNS = `
   id, profile_id, item_id, item_name, price, redeemer_name, redeemer_role_id,
   claim_code, status, created_at, claimed_at, claimed_by, claimed_by_name,
-  cancelled_at, cancelled_by, cancelled_by_name, cancel_reason
+  cancelled_at, cancelled_by, cancelled_by_name, cancel_reason, charged_at
 `
 
+/* Nabawasan na ba ang OG para sa redemption na ito?
+   Bagong daloy: sa claim pa lang. Ang lumang pending (bago ang
+   OG_DEDUCT_ON_CLAIM.sql) ay nabawasan na noong nag-redeem. */
+export function isCharged(r) {
+  return Boolean(r?.charged_at)
+}
 export async function fetchMyRedemptions(profileId) {
   const { data, error } = await supabase
     .from('og_redemptions')
@@ -328,26 +339,27 @@ export async function fetchMyRedemptions(profileId) {
   return data ?? []
 }
 
-/* Officer/Adviser: lahat ng redemption sa org (RLS) */
+/* Officer/Adviser: lahat ng redemption sa org — WALANG claim_code.
+   Hindi dapat makita ng Officer/Adviser ang code; ang member ang
+   magpapakita nito (OG_HIDE_CLAIM_CODE.sql). */
 export async function fetchOrgRedemptions() {
-  const { data, error } = await supabase
-    .from('og_redemptions')
-    .select(REDEMPTION_COLUMNS)
-    .order('created_at', { ascending: false })
-    .limit(300)
-
+  const { data, error } = await supabase.rpc('org_og_redemptions')
   if (error) throw error
   return data ?? []
 }
 
-/* Tinatanggap ang "OG-7KQ2MX", "og7kq2mx", "7KQ2MX" */
+/* Tinatanggap ang "OG-7KQ2MX", "og7kq2mx", "7KQ2MX".
+   Dito ibinabawas ang OG ng member at ang stock ng item.
+   Ibinabalik: { ..., deducted } — ilang OG ang nabawas ngayon
+   (0 kapag lumang pending na nabawasan na noon). */
 export async function claimRedemption(code) {
   const { data, error } = await supabase.rpc('claim_og_redemption', { p_code: code })
   if (error) throw error
   return data
 }
 
-/* Kailangan ng dahilan kapag Officer/Adviser ang nag-cancel */
+/* Kailangan ng dahilan kapag Officer/Adviser ang nag-cancel.
+   Ibinabalik: { id, refunded } — 0 kapag wala pang nabawas. */
 export async function cancelRedemption(id, reason = '') {
   const { data, error } = await supabase.rpc('cancel_og_redemption', {
     p_id: id,

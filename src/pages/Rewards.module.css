@@ -694,25 +694,29 @@
   font-style: italic;
 }
 
-/* ---------- MY REDEMPTIONS: claim code na parang coupon ---------- */
-.redemption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px 24px;
-}
-
-.redemptionMain {
-  flex: 1 1 260px;
-  min-width: 0;
-}
-
-.redemptionSide {
+/* ---------- SHOP: claim code sa item card mismo (parang coupon) ---------- */
+.claimBox {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 2px;
+  padding: 12px 14px;
+  border: 1.5px dashed rgba(3, 27, 75, 0.3);
+  border-radius: 14px;
+  background-color: rgba(247, 185, 0, 0.08);
+}
+
+.claimBoxHint {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.claimBox .textDanger {
+  margin-top: 2px;
+  font-size: 13px;
 }
 
 .codeSmallLabel {
@@ -731,11 +735,6 @@
   font-size: 24px;
   font-weight: 800;
   letter-spacing: 0.12em;
-}
-
-.redemptionSide .textDanger {
-  margin-top: 4px;
-  font-size: 12.5px;
 }
 
 /* ================================================================
@@ -1206,17 +1205,6 @@
   border-bottom: 1px solid var(--hair);
 }
 
-.codeChip {
-  padding: 6px 10px;
-  border-radius: 10px;
-  background-color: var(--deep);
-  color: var(--yellow);
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-}
-
 .personMain {
   display: flex;
   flex: 1 1 220px;
@@ -1485,12 +1473,6 @@
     min-height: 42px;
     padding: 0 8px;
     font-size: 12.5px;
-  }
-
-  /* My redemptions: claim code sa ilalim */
-  .redemptionSide {
-    align-items: flex-start;
-    width: 100%;
   }
 
   /* OG history */

@@ -214,8 +214,8 @@ function ShopItemForm({ initial = null, onSubmit, onCancel }) {
           </label>
         </div>
         <p className={styles.fieldHint}>
-          Leave Stock or Limit blank for no limit. Stock goes down by 1 for every redemption and
-          goes back up when one is cancelled.
+          Leave Stock or Limit blank for no limit. Stock goes down by 1 only when an item is
+          handed out (an Officer or you enter the member's claim code).
         </p>
 
         <div className={base.field}>

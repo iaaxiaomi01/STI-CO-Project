@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   Sparkles,
   Store,
-  Ticket,
   Trash2,
   Trophy,
 } from 'lucide-react'
@@ -18,6 +17,7 @@ import {
   canEarnOg,
   canHandOutItems,
   canManageOgShop,
+  cancelRedemption,
   claimRedemption,
   deleteShopItem,
   fetchMyBalance,
@@ -27,8 +27,10 @@ import {
   fetchOrgRedemptions,
   fetchShopItems,
   formatOgDate,
+  isCharged,
   ogErrorMessage,
   personLabel,
+  redeemItem,
   REDEMPTION_STATUSES,
   redemptionStatusLabel,
   saveShopItem,
@@ -38,7 +40,6 @@ import { isOgNotification, subscribeToNotifications } from '../lib/notifications
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { OgAmount, OgGem } from '../components/OgGem.jsx'
-import RedeemDialog from '../components/RedeemDialog.jsx'
 import CancelRedemptionDialog from '../components/CancelRedemptionDialog.jsx'
 import ShopItemForm from '../components/ShopItemForm.jsx'
 import styles from './Rewards.module.css'
@@ -48,8 +49,8 @@ import styles from './Rewards.module.css'
 
    Iba-iba ang tab ayon sa role (lib/og.js para sa "can..."):
 
-   Member  → Shop · My redemptions · OG history
-   Officer → Shop · My redemptions · OG history ·
+   Member  → Shop · OG history
+   Officer → Shop · OG history ·
              Hand out items (i-claim ang code ng member)
    Adviser → Manage shop · Hand out items · Members' OG
 
@@ -63,6 +64,17 @@ import styles from './Rewards.module.css'
 
    Database ang nagbabantay sa lahat (OG_REWARDS_SHOP.sql).
 
+   KAILAN NABABAWASAN (OG_DEDUCT_ON_CLAIM.sql, OG_FIRST_COME.sql):
+     Redeem → sa item card mismo lalabas ang claim code at ang
+              Cancel. HINDI pa bawas ang OG at stock, at WALANG
+              reserve. Wala nang "My redemptions".
+     Claim  → inilagay ng Officer/Adviser ang claim code sa
+              "Hand out items" → DITO pa lang ibabawas ang OG ng
+              member at ang stock ng item. First come first serve:
+              kapag naubos na ang OG o stock, hindi na maibibigay.
+     Walang "Hand out" button sa bawat row — claim code lang ang
+     paraan para maibigay ang item. Cancel na lang ang natira.
+
    ITSURA ("Gem Vault" — UI lang, walang binago sa data o aksyon):
      - OG mo: malaking gold na numero sa deep navy na "night sky"
        na may kumikinang na gem (BalanceCard)
@@ -75,7 +87,6 @@ import styles from './Rewards.module.css'
 /* Icon ng bawat tab */
 const TAB_ICONS = {
   shop: ShoppingBag,
-  mine: Ticket,
   history: History,
   manage: Store,
   claims: HandCoins,
@@ -83,7 +94,6 @@ const TAB_ICONS = {
 }
 
 const TAB_SHOP = 'shop'
-const TAB_MINE = 'mine'
 const TAB_HISTORY = 'history'
 const TAB_CLAIMS = 'claims'
 const TAB_MANAGE = 'manage'
@@ -93,7 +103,6 @@ function tabsFor(profile) {
   const tabs = []
   if (canEarnOg(profile)) {
     tabs.push({ value: TAB_SHOP, label: 'Shop' })
-    tabs.push({ value: TAB_MINE, label: 'My redemptions' })
     tabs.push({ value: TAB_HISTORY, label: 'OG history' })
   }
   if (canManageOgShop(profile)) {
@@ -190,14 +199,8 @@ function Rewards() {
           key={version}
           profile={profile}
           balance={balance ?? 0}
-          onRedeemed={() => {
-            reloadBalance()
-          }}
-          onOpenMine={() => setTab(TAB_MINE)}
+          onChanged={reloadBalance}
         />
-      )}
-      {tab === TAB_MINE && (
-        <MyRedemptionsTab key={version} profile={profile} onChanged={reloadBalance} />
       )}
       {tab === TAB_HISTORY && <HistoryTab key={version} profile={profile} balance={balance} />}
       {tab === TAB_MANAGE && <ManageShopTab profile={profile} />}
@@ -247,14 +250,25 @@ function BalanceCard({ balance, orgName }) {
 
 /* ============================================================
    SHOP — Member at Officer
+
+   Walang "My redemptions" at walang confirm dialog. Pagpindot ng
+   Redeem, sa card mismo lalabas ang CLAIM CODE at ang Cancel.
+   Mananatili ito sa card hangga't hindi pa na-claim o na-cancel
+   (isang claim code lang bawat item — OG_FIRST_COME.sql).
+
+   Walang reserve, first come first serve: hindi pa bawas ang OG
+   at stock hanggang ilagay ng Officer/Adviser ang code. Kapag
+   naubos na ang OG o stock bago ma-claim, hindi na ito maibibigay.
    ============================================================ */
-function ShopTab({ profile, balance, onRedeemed, onOpenMine }) {
+function ShopTab({ profile, balance, onChanged }) {
   const [items, setItems] = useState([])
   const [mine, setMine] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [redeeming, setRedeeming] = useState(null)
-  const [notice, setNotice] = useState('')
+
+  /* Aling item ang may ginagawa (redeem o cancel) at ang error nito */
+  const [busyId, setBusyId] = useState(null)
+  const [itemError, setItemError] = useState({ id: null, text: '' })
 
   const load = useCallback(async () => {
     try {
@@ -274,14 +288,48 @@ function ShopTab({ profile, balance, onRedeemed, onOpenMine }) {
     load()
   }, [load])
 
-  /* Ilan na ang na-redeem mo bawat item (hindi kasama ang cancelled) */
-  const myCount = useMemo(() => {
-    const c = {}
+  /* Ilan na ang na-redeem mo bawat item (hindi kasama ang cancelled),
+     at ang claim code na hindi pa na-claim (kung meron) */
+  const { myCount, pendingByItem } = useMemo(() => {
+    const count = {}
+    const pending = {}
     mine.forEach((r) => {
-      if (r.status !== 'cancelled' && r.item_id) c[r.item_id] = (c[r.item_id] ?? 0) + 1
+      if (!r.item_id) return
+      if (r.status !== 'cancelled') count[r.item_id] = (count[r.item_id] ?? 0) + 1
+      if (r.status === 'pending' && !pending[r.item_id]) pending[r.item_id] = r
     })
-    return c
+    return { myCount: count, pendingByItem: pending }
   }, [mine])
+
+  async function handleRedeem(item) {
+    setBusyId(item.id)
+    setItemError({ id: null, text: '' })
+    try {
+      await redeemItem(item.id)
+      await load()
+    } catch (err) {
+      console.error('Hindi na-redeem:', err)
+      setItemError({ id: item.id, text: ogErrorMessage(err) })
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleCancel(item, redemption) {
+    setBusyId(item.id)
+    setItemError({ id: null, text: '' })
+    try {
+      await cancelRedemption(redemption.id)
+      await load()
+      /* Lumang claim code lang (nabawasan na noon) ang may ibinabalik */
+      if (isCharged(redemption)) onChanged()
+    } catch (err) {
+      console.error('Hindi na-cancel:', err)
+      setItemError({ id: item.id, text: ogErrorMessage(err) })
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   if (loading) return <p className={styles.muted}>Loading the shop…</p>
 
@@ -296,91 +344,90 @@ function ShopTab({ profile, balance, onRedeemed, onOpenMine }) {
   }
 
   if (items.length === 0) {
-    return (
-      <EmptyState
-        icon="◆"
-        title="The shop is empty for now"
-      />
-    )
+    return <EmptyState icon="◆" title="The shop is empty for now" />
   }
 
   return (
-    <>
-      {notice && (
-        <p className={styles.notice} role="status">
-          {notice}{' '}
-          <button type="button" className={styles.linkButton} onClick={onOpenMine}>
-            View my redemptions →
-          </button>
-        </p>
-      )}
+    <ul className={styles.itemGrid}>
+      {items.map((item) => {
+        const pending = pendingByItem[item.id] ?? null
+        const outOfStock = item.stock !== null && item.stock <= 0
+        const used = myCount[item.id] ?? 0
+        const limitReached = item.limit_per_member !== null && used >= item.limit_per_member
+        const short = item.price - balance
+        const busy = busyId === item.id
 
-      <ul className={styles.itemGrid}>
-        {items.map((item) => {
-          const outOfStock = item.stock !== null && item.stock <= 0
-          const used = myCount[item.id] ?? 0
-          const limitReached = item.limit_per_member !== null && used >= item.limit_per_member
-          const short = item.price - balance
+        let label = 'Redeem'
+        if (outOfStock) label = 'Out of stock'
+        else if (limitReached) label = 'Limit reached'
+        else if (short > 0) label = `Need ${short.toLocaleString('en-PH')} more OG`
+        const disabled = outOfStock || limitReached || short > 0
 
-          let label = 'Redeem'
-          if (outOfStock) label = 'Out of stock'
-          else if (limitReached) label = 'Limit reached'
-          else if (short > 0) label = `Need ${short.toLocaleString('en-PH')} more OG`
-          const disabled = outOfStock || limitReached || short > 0
+        /* Itsura lang: gaano ka na kalapit sa presyo (kapag kulang pa) */
+        const showProgress = !pending && !outOfStock && !limitReached && short > 0
+        const progress = item.price > 0 ? Math.min(100, (balance / item.price) * 100) : 100
 
-          /* Itsura lang: gaano ka na kalapit sa presyo (kapag kulang pa) */
-          const showProgress = !outOfStock && !limitReached && short > 0
-          const progress = item.price > 0 ? Math.min(100, (balance / item.price) * 100) : 100
-
-          return (
-            <li
-              key={item.id}
-              className={`${styles.itemCard} ${disabled ? '' : styles.itemReady}`}
-            >
-              <div className={styles.itemMedia}>
-                <ItemImage item={item} />
-                <OgAmount value={item.price} size={18} className={styles.itemPrice} />
-              </div>
-              <div className={styles.itemBody}>
-                <h2 className={styles.itemName}>{item.name}</h2>
-                {item.description && <p className={styles.itemDesc}>{item.description}</p>}
-                <ItemFacts item={item} used={used} />
-              </div>
-              <div className={styles.itemFooter}>
-                {showProgress && (
-                  <span className={styles.progress} aria-hidden="true">
-                    <span style={{ width: `${progress}%` }} />
+        return (
+          <li
+            key={item.id}
+            className={`${styles.itemCard} ${pending || !disabled ? styles.itemReady : ''}`}
+          >
+            <div className={styles.itemMedia}>
+              <ItemImage item={item} />
+              <OgAmount value={item.price} size={18} className={styles.itemPrice} />
+            </div>
+            <div className={styles.itemBody}>
+              <h2 className={styles.itemName}>{item.name}</h2>
+              {item.description && <p className={styles.itemDesc}>{item.description}</p>}
+              <ItemFacts item={item} used={used} />
+            </div>
+            <div className={styles.itemFooter}>
+              {pending ? (
+                /* May claim code na — ipakita ito at ang Cancel */
+                <div className={styles.claimBox}>
+                  <span className={styles.codeSmallLabel}>Claim code</span>
+                  <span className={styles.codeSmall}>{pending.claim_code}</span>
+                  <span className={styles.claimBoxHint}>
+                    Show this to an Officer or the Adviser. Your OG is deducted only when they
+                    enter it.
                   </span>
-                )}
-                <button
-                  type="button"
-                  className={styles.redeemBtn}
-                  disabled={disabled}
-                  onClick={() => setRedeeming(item)}
-                >
-                  {!disabled && <Sparkles size={16} strokeWidth={2.4} aria-hidden="true" />}
-                  {label}
-                </button>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
-
-      {redeeming && (
-        <RedeemDialog
-          item={redeeming}
-          balance={balance}
-          onCancel={() => setRedeeming(null)}
-          onDone={(result) => {
-            setRedeeming(null)
-            setNotice(`You redeemed "${result.item_name}". Your claim code is ${result.claim_code}.`)
-            onRedeemed()
-            load()
-          }}
-        />
-      )}
-    </>
+                  <button
+                    type="button"
+                    className={styles.textDanger}
+                    disabled={busy}
+                    onClick={() => handleCancel(item, pending)}
+                  >
+                    {busy ? 'Cancelling…' : 'Cancel'}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {showProgress && (
+                    <span className={styles.progress} aria-hidden="true">
+                      <span style={{ width: `${progress}%` }} />
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.redeemBtn}
+                    disabled={disabled || busy}
+                    onClick={() => handleRedeem(item)}
+                  >
+                    {!disabled && <Sparkles size={16} strokeWidth={2.4} aria-hidden="true" />}
+                    {busy ? 'Redeeming…' : label}
+                  </button>
+                </>
+              )}
+              {itemError.id === item.id && (
+                <p className={styles.panelError} role="alert">
+                  {itemError.text}
+                </p>
+              )}
+            </div>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -411,108 +458,6 @@ function ItemFacts({ item, used = null }) {
   return <p className={styles.itemFacts}>{facts.join(' · ')}</p>
 }
 
-/* ============================================================
-   MY REDEMPTIONS — Member at Officer
-   ============================================================ */
-function MyRedemptionsTab({ profile, onChanged }) {
-  const [list, setList] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [cancelling, setCancelling] = useState(null)
-
-  const load = useCallback(async () => {
-    try {
-      setList(await fetchMyRedemptions(profile.id))
-      setError(null)
-    } catch (err) {
-      console.error('Hindi makuha ang mga redemption:', err)
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [profile.id])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  if (loading) return <p className={styles.muted}>Loading your redemptions…</p>
-  if (error) {
-    return (
-      <EmptyState
-        icon="!"
-        title="Could not load your redemptions"
-        message="There was a problem connecting to the database. Please try again later."
-      />
-    )
-  }
-  if (list.length === 0) {
-    return (
-      <EmptyState
-        icon="◆"
-        title="No redemptions yet"
-      />
-    )
-  }
-
-  const pending = list.filter((r) => r.status === 'pending').length
-
-  return (
-    <>
-      {pending > 0 && (
-        <p className={styles.summary}>
-          <strong>{pending}</strong> {pending === 1 ? 'item' : 'items'} waiting to be picked up.
-          Show the claim code to an Officer or the Adviser.
-        </p>
-      )}
-
-      <ul className={styles.list}>
-        {list.map((r) => (
-          <li key={r.id} className={`${styles.card} ${styles.redemption}`}>
-            <div className={styles.redemptionMain}>
-              <div className={styles.titleRow}>
-                <h2 className={styles.title}>{r.item_name}</h2>
-                <StatusBadge status={r.status} />
-              </div>
-              <p className={styles.meta}>
-                <OgAmount value={-r.price} signed size={14} /> · Redeemed {formatOgDate(r.created_at)}
-              </p>
-              <RedemptionOutcome r={r} />
-            </div>
-
-            {r.status === 'pending' && (
-              <div className={styles.redemptionSide}>
-                <span className={styles.codeSmallLabel}>Claim code</span>
-                <span className={styles.codeSmall}>{r.claim_code}</span>
-                <button
-                  type="button"
-                  className={styles.textDanger}
-                  onClick={() => setCancelling(r)}
-                >
-                  Cancel & get OG back
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {cancelling && (
-        <CancelRedemptionDialog
-          redemption={cancelling}
-          ownRedemption
-          onCancel={() => setCancelling(null)}
-          onDone={() => {
-            setCancelling(null)
-            load()
-            onChanged()
-          }}
-        />
-      )}
-    </>
-  )
-}
-
 function StatusBadge({ status }) {
   return (
     <span className={`${styles.badge} ${styles[`badge_${status}`] ?? ''}`}>
@@ -534,7 +479,8 @@ function RedemptionOutcome({ r }) {
     return (
       <p className={styles.outcome}>
         Cancelled by {r.cancelled_by === r.profile_id ? 'you' : r.cancelled_by_name ?? 'an Officer'}{' '}
-        · {formatOgDate(r.cancelled_at)} · {r.price.toLocaleString('en-PH')} OG returned
+        · {formatOgDate(r.cancelled_at)}
+        {isCharged(r) && <> · {r.price.toLocaleString('en-PH')} OG returned</>}
         {r.cancel_reason && <span className={styles.reason}>“{r.cancel_reason}”</span>}
       </p>
     )
@@ -803,6 +749,11 @@ function ManageShopTab({ profile }) {
 
 /* ============================================================
    HAND OUT ITEMS — Officer at Adviser
+
+   Claim code LANG ang paraan para maibigay ang item — wala nang
+   "Hand out" button sa bawat row. Kapag inilagay ang code, dito
+   pa lang ibabawas ang OG ng member at ang stock ng item.
+   Cancel na lang ang natira sa bawat row.
    ============================================================ */
 const CLAIM_FILTERS = [{ value: 'all', label: 'All' }, ...REDEMPTION_STATUSES]
 
@@ -816,7 +767,6 @@ function ClaimsTab({ profile }) {
   const [claiming, setClaiming] = useState(false)
   const [result, setResult] = useState({ tone: '', text: '' })
 
-  const [busyId, setBusyId] = useState(null)
   const [cancelling, setCancelling] = useState(null)
 
   const load = useCallback(async () => {
@@ -835,43 +785,27 @@ function ClaimsTab({ profile }) {
     load()
   }, [load])
 
-  async function claim(c) {
-    const r = await claimRedemption(c)
-    setResult({
-      tone: 'ok',
-      text: `✓ ${r.claim_code}: give “${r.item_name}” to ${personLabel(r.redeemer_name).name}.`,
-    })
-    await load()
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     if (!code.trim()) return
     setClaiming(true)
     setResult({ tone: '', text: '' })
     try {
-      await claim(code)
+      const r = await claimRedemption(code)
+      const deducted = Number(r.deducted) || 0
+      setResult({
+        tone: 'ok',
+        text:
+          `✓ ${r.claim_code}: give “${r.item_name}” to ${personLabel(r.redeemer_name).name}.` +
+          (deducted > 0 ? ` ${deducted.toLocaleString('en-PH')} OG was deducted.` : ''),
+      })
       setCode('')
+      await load()
     } catch (err) {
       console.error('Hindi na-claim:', err)
       setResult({ tone: 'error', text: ogErrorMessage(err) })
     } finally {
       setClaiming(false)
-    }
-  }
-
-  async function handleClaimRow(r) {
-    const { name } = personLabel(r.redeemer_name)
-    if (!window.confirm(`Hand out "${r.item_name}" to ${name} (${r.claim_code})?`)) return
-    setBusyId(r.id)
-    setResult({ tone: '', text: '' })
-    try {
-      await claim(r.claim_code)
-    } catch (err) {
-      console.error('Hindi na-claim:', err)
-      setResult({ tone: 'error', text: ogErrorMessage(err) })
-    } finally {
-      setBusyId(null)
     }
   }
 
@@ -907,7 +841,8 @@ function ClaimsTab({ profile }) {
           </button>
         </div>
         <p className={styles.hintSmall}>
-          Ask the member for the code on their phone. You can't hand out your own item.
+          Ask the member for the code on their phone. Their OG and the item's stock are deducted
+          only when you enter the code. You can't hand out your own item.
         </p>
       </form>
 
@@ -951,10 +886,8 @@ function ClaimsTab({ profile }) {
         <ul className={styles.people}>
           {visible.map((r) => {
             const { name, role } = personLabel(r.redeemer_name, r.redeemer_role_id)
-            const isMine = r.profile_id === profile.id
             return (
               <li key={r.id} className={styles.person}>
-                <span className={styles.codeChip}>{r.claim_code}</span>
                 <span className={styles.personMain}>
                   <span className={styles.name}>{r.item_name}</span>
                   <span className={styles.personSub}>
@@ -964,21 +897,12 @@ function ClaimsTab({ profile }) {
                 </span>
                 <OgAmount value={r.price} size={14} />
                 <StatusBadge status={r.status} />
+                {/* Cancel lang — ang pagbibigay ay sa claim code sa itaas */}
                 {r.status === 'pending' && (
                   <span className={styles.personActions}>
                     <button
                       type="button"
-                      className={styles.manualBtn}
-                      disabled={isMine || busyId === r.id}
-                      title={isMine ? 'Ask another Officer or the Adviser' : undefined}
-                      onClick={() => handleClaimRow(r)}
-                    >
-                      {isMine ? 'Your own' : busyId === r.id ? '…' : 'Hand out'}
-                    </button>
-                    <button
-                      type="button"
                       className={styles.textDanger}
-                      disabled={busyId === r.id}
                       onClick={() => setCancelling(r)}
                     >
                       Cancel
