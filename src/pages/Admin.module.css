@@ -1,0 +1,185 @@
+/* ================================================================
+   ADMIN — dagdag na itsura para sa Organizations at Users
+   (School Administrator). Ang listahan mismo ay gumagamit ng
+   Members.module.css para pare-pareho ang itsura.
+   ================================================================ */
+
+/* ---------- MGA BADGE (status) ---------- */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Walang text sa itaas (hal. Status ng org) → walang puwang */
+.badges:first-child {
+  margin-top: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background-color: #e3f5ea;
+  color: #16683a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badgeOff {
+  background-color: #f1f2f5;
+  color: #6b7285;
+}
+
+.badgeWait {
+  background-color: #fff3cc;
+  color: #7a5a00;
+}
+
+.badgeSpecial {
+  background-color: #e6edff;
+  color: #1a3d9c;
+}
+
+/* Mahabang text (hal. Program) na pwedeng bumaba sa dalawang linya
+   para hindi lumampas ang table sa desktop */
+.wrapCell {
+  min-width: 150px;
+  white-space: normal !important;
+}
+
+/* ---------- MGA BUTTON SA ROW ---------- */
+.rowActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.current {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  color: #16683a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ---------- LOGO NG ORG (o unang letra) ---------- */
+.logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--dash-navy-deep);
+  color: var(--dash-yellow);
+  font-weight: 800;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- SHOW MORE ---------- */
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 8px;
+}
+
+/* ---------- DIALOG ---------- */
+.modal {
+  max-width: 620px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .grid2,
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.select {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.readonly {
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+}
+
+.fieldHint {
+  margin-top: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* Checkbox na may paliwanag */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.check:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.checkTitle {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.checkText {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}

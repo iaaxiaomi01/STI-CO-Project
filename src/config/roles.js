@@ -79,6 +79,31 @@ const REWARDS = { label: 'Rewards', to: '/rewards', icon: '❖' }
    Tingnan ang pages/OrgHealth.jsx at ORG_HEALTH.sql */
 const ORG_HEALTH = { label: 'Org Health', to: '/org-health', icon: '✚' }
 
+/* School Administrator lang (SCHOOL_ADMIN_SUPERADMIN.sql) —
+   pages/Organizations.jsx at pages/Users.jsx */
+const ORGANIZATIONS = { label: 'Organizations', to: '/organizations', icon: '◈' }
+const USERS = { label: 'Users', to: '/users', icon: '▲' }
+
+/* Mga page na kailangan ng org. Ang School Administrator ay
+   walang sariling org, kaya pipili muna siya ng "acting org" sa
+   sidebar bago gumana ang mga ito (tingnan ang App.jsx). */
+export const ACTING_ORG_PAGES = ['/events', '/announcements', '/attendance', '/rewards', '/org-profile']
+
+/* May kapangyarihan ba ng Adviser sa org na hawak niya?
+     Adviser                          → oo, sa sariling org
+     School Administrator + acting org → oo, sa org na pinili niya
+   Para lang sa pagpapakita ng button; ang database pa rin ang
+   totoong nagbabantay (SCHOOL_ADMIN_SUPERADMIN.sql). */
+export function hasAdviserPowers(profile) {
+  if (!profile?.is_active) return false
+  if (profile.role_id === 3) return true
+  return profile.role_id === 8 && Boolean(profile.organization_id)
+}
+
+export function isSchoolAdmin(profile) {
+  return Boolean(profile?.is_active && profile.role_id === 8)
+}
+
 /* ============================================================
    MGA KAKAYAHAN (capabilities)
 
@@ -438,12 +463,46 @@ export const ROLES = {
      (Members, Profile). Nasa sidebar pa rin ang Proposals, Members,
      at Profile.
 
-     Kailangan sa Supabase: ADD_SCHOOL_ADMINISTRATOR.sql */
+     SUPERADMIN (SCHOOL_ADMIN_SUPERADMIN.sql):
+       Organizations → gumawa, mag-edit, mag-deactivate ng org,
+                       at piliin ang "special org"
+       Users         → magdagdag/mag-edit ng student record, magpalit
+                       ng role at org, mag-deactivate
+       Members       → "Set position" sa kahit anong org
+       ACTING ORG    → pumipili ang SA ng org (sa sidebar). Habang
+                       nasa org na iyon, parang Adviser siya roon sa
+                       Events, Announcements, Attendance, Rewards at
+                       Org Profile (tingnan ang hasAdviserPowers()).
+                       Kapag wala pang napiling org, may paalala ang
+                       mga page na iyon (ACTING_ORG_PAGES, App.jsx).
+
+     Hindi nagbago ang proposal flow: budget proposals pa rin lang.
+
+     Kailangan sa Supabase: ADD_SCHOOL_ADMINISTRATOR.sql at
+     SCHOOL_ADMIN_SUPERADMIN.sql */
   [ROLE_KEYS.SCHOOL_ADMIN]: (() => {
     const base = staffRoleWithProposals('School Administrator')
     const SCHOOL_GROUP = 'School overview'
     return {
       ...base,
+      can: {
+        ...base.can,
+        announce: true,
+        assignPositions: true,
+      },
+      sidebar: [
+        DASHBOARD,
+        ORGANIZATIONS,
+        USERS,
+        MEMBERS,
+        PROPOSALS,
+        EVENTS,
+        ANNOUNCEMENTS,
+        ATTENDANCE,
+        REWARDS,
+        ORG_PROFILE,
+        PROFILE,
+      ],
       dashboard: {
         ...base.dashboard,
         cards: [],

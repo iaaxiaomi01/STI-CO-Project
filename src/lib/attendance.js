@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js'
+import { hasAdviserPowers } from '../config/roles.js'
 
 /* ============================================================
    ATTENDANCE (QR) — lahat ng pakikipag-usap sa database
@@ -42,9 +43,10 @@ export function canShowQr(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 1 || profile.role_id === 2))
 }
 
-/* Officer at Adviser ang nag-i-scan */
+/* Officer at Adviser ang nag-i-scan (pati ang School Administrator
+   sa acting org niya) */
 export function canScanAttendance(profile) {
-  return Boolean(profile?.is_active && (profile.role_id === 2 || profile.role_id === 3))
+  return Boolean(profile?.is_active && (profile.role_id === 2 || hasAdviserPowers(profile)))
 }
 
 /* ---------- ORAS ----------

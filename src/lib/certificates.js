@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js'
-import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
+import { getRoleConfig, hasAdviserPowers, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
 
 /* ============================================================
@@ -78,11 +78,12 @@ export function checkCertificateFile(file) {
 
 /* ---------- SINO ANG PWEDE (para sa mga button lang) ---------- */
 
-/* Officer at Adviser ng org ng event */
+/* Officer at Adviser ng org ng event (pati ang School Administrator
+   sa acting org niya) */
 export function canManageCertificates(event, profile) {
   return Boolean(
     profile?.is_active &&
-      (profile.role_id === 2 || profile.role_id === 3) &&
+      (profile.role_id === 2 || hasAdviserPowers(profile)) &&
       event.organization_id === profile.organization_id,
   )
 }

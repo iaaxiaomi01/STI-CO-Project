@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 import { checkImageFile, extensionFor, ImageError, resizeToSquare } from './image.js'
 import { toTitleCase } from './profile.js'
-import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
+import { getRoleConfig, hasAdviserPowers, roleKeyFromId } from '../config/roles.js'
 
 /* ============================================================
    ORGANIZATION GEMS (OG) — lahat ng pakikipag-usap sa database
@@ -46,14 +46,15 @@ export function canEarnOg(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 1 || profile.role_id === 2))
 }
 
-/* Adviser — namamahala ng shop */
+/* Adviser — namamahala ng shop (pati ang School Administrator sa
+   acting org niya) */
 export function canManageOgShop(profile) {
-  return Boolean(profile?.is_active && profile.role_id === 3)
+  return hasAdviserPowers(profile)
 }
 
 /* Officer at Adviser — nagbibigay ng item (claim) */
 export function canHandOutItems(profile) {
-  return Boolean(profile?.is_active && (profile.role_id === 2 || profile.role_id === 3))
+  return Boolean(profile?.is_active && (profile.role_id === 2 || hasAdviserPowers(profile)))
 }
 
 /* ---------- MENSAHE ---------- */

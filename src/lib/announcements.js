@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js'
-import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
+import { getRoleConfig, isSchoolAdmin, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
 
 /* ============================================================
@@ -64,9 +64,11 @@ export function orgCanAnnounceAll(profile) {
 }
 
 /* May "Post to: All organizations" ba sa form —
-   Officer/Adviser (can.announce) ng special org */
+   Officer/Adviser (can.announce) ng special org, at ang School
+   Administrator (laging pwede, kahit hindi special ang acting org
+   niya — SCHOOL_ADMIN_SUPERADMIN.sql) */
 export function canPostToAllOrgs(profile, can) {
-  return Boolean(can?.announce) && orgCanAnnounceAll(profile)
+  return Boolean(can?.announce) && (orgCanAnnounceAll(profile) || isSchoolAdmin(profile))
 }
 
 export async function fetchAnnouncements() {
@@ -189,6 +191,8 @@ export function canManageAnnouncement(announcement, profile) {
       announcement.author_role_id === 2
     )
   }
+  /* School Administrator: lahat ng post sa acting org niya */
+  if (profile.role_id === 8) return true
   return false
 }
 

@@ -96,7 +96,13 @@ function Members() {
       setError(queryError)
     } else {
       setError(null)
-      setMembers(data ?? [])
+      /* Ang School Administrator ay may "acting org" lang (hindi
+         siya miyembro roon), kaya ipinapakita siyang walang org */
+      setMembers(
+        (data ?? []).map((m) =>
+          m.role_id === 8 ? { ...m, organization_id: null, organizations: null } : m,
+        ),
+      )
     }
     setLoading(false)
   }, [])
@@ -382,7 +388,7 @@ function Members() {
           member={editing}
           positions={positions.filter((p) => p.organization_id === editing.organization_id)}
           holdersByPosition={holdersByPosition}
-          canManagePositions={role === ROLE_KEYS.ADVISER}
+          canManagePositions={role === ROLE_KEYS.ADVISER || role === ROLE_KEYS.SCHOOL_ADMIN}
           onSave={handleSavePosition}
           onCancel={() => setEditing(null)}
         />

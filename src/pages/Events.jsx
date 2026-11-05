@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Award, Check, Clock, Download, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
+import { hasAdviserPowers } from '../config/roles.js'
 import {
   EVENT_STATUSES,
   MISSED_STATUS,
@@ -251,7 +252,7 @@ function Events() {
      button sa stub niya — nasa ibaba ng ticket ang Certificates,
      Edit at Delete, tulad ng sa Officer.
      Ang dating card layout ay naiwan para sa ibang role. */
-  const ticketView = showMissed || profile?.role_id === 3
+  const ticketView = showMissed || hasAdviserPowers(profile)
 
   /* Ang mga event, may kinuwentang status.
      Member/Officer: Completed + hindi nag-Join → Missed */
@@ -288,7 +289,7 @@ function Events() {
      Hiwalay sa listahan ng events: kapag pumalya, walang Reward
      na lalabas pero gagana pa rin ang page. */
   const [rewards, setRewards] = useState({})
-  const isAdviser = profile?.role_id === 3
+  const isAdviser = hasAdviserPowers(profile)
 
   const loadRewards = useCallback(async () => {
     try {

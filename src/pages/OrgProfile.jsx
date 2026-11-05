@@ -303,7 +303,8 @@ function OrgProfile() {
                 readOnly
               />
               <span className={styles.hint}>
-                This can't be changed here. Please contact the IT Administrator.
+                This can't be changed here. The School Administrator can change it in
+                Organizations.
               </span>
             </label>
 

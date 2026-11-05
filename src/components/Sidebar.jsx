@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
-import { getRoleConfig } from '../config/roles.js'
+import { getRoleConfig, isSchoolAdmin } from '../config/roles.js'
 import { displayNameOf } from '../lib/profile.js'
 import {
   Building2,
@@ -8,15 +8,18 @@ import {
   FileText,
   Gem,
   HeartPulse,
+  Landmark,
   LayoutDashboard,
   LogOut,
   Megaphone,
   ScanLine,
   User,
+  UserCog,
   Users,
   X,
 } from 'lucide-react'
 import Avatar from './Avatar.jsx'
+import ActingOrgSwitcher from './ActingOrgSwitcher.jsx'
 import styles from './Sidebar.module.css'
 
 /* Ang laman ng sidebar ay HINDI nakasulat dito — galing siya
@@ -39,6 +42,8 @@ const NAV_ICONS = {
   '/org-health': HeartPulse,
   '/org-profile': Building2,
   '/profile': User,
+  '/organizations': Landmark,
+  '/users': UserCog,
 }
 
 function Sidebar({ open, onClose, user, onLogout }) {
@@ -69,6 +74,9 @@ function Sidebar({ open, onClose, user, onLogout }) {
           <X size={20} strokeWidth={2.4} aria-hidden="true" />
         </button>
       </div>
+
+      {/* School Administrator: aling org ang hinahawakan ngayon */}
+      {isSchoolAdmin(profile) && <ActingOrgSwitcher />}
 
       <nav className={styles.nav}>
         {roleConfig.sidebar.map((item) => {

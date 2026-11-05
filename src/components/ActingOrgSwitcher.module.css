@@ -1,0 +1,81 @@
+/* Acting org ng School Administrator — nasa navy na sidebar */
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 18px;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.label {
+  padding-left: 2px;
+  color: #aebbd9;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.selectWrap {
+  position: relative;
+  display: block;
+}
+
+.select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 36px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.select:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--dash-yellow);
+  outline-offset: 2px;
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Ang listahan mismo ay puti (browser) — madilim na text doon */
+.select option {
+  color: var(--dash-ink);
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: var(--dash-yellow);
+  pointer-events: none;
+}
+
+.hint {
+  padding-left: 2px;
+  color: #c9d4ef;
+  font-size: 12px;
+}
+
+.error {
+  padding-left: 2px;
+  color: #ffb4b4;
+  font-size: 12px;
+  font-weight: 600;
+}

@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js'
-import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
+import { getRoleConfig, hasAdviserPowers, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
 import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.js'
 import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js'
@@ -401,7 +401,7 @@ export function canCreateEventFrom(proposal, profile) {
 export function canManageEvent(event, profile) {
   if (!profile?.is_active) return false
   if (event.organization_id !== profile.organization_id) return false
-  if (profile.role_id === 3) return true
+  if (hasAdviserPowers(profile)) return true
   if (profile.role_id === 2) return event.author_id === profile.id
   return false
 }
@@ -433,11 +433,11 @@ export function canEditEvent(event, profile, now = nowKey()) {
   return canManageEvent(event, profile) && now < editLockKey(event)
 }
 
-/* Burahin: Adviser lang ng org na iyon */
+/* Burahin: Adviser ng org na iyon (o ang School Administrator sa
+   acting org niya) */
 export function canDeleteEvent(event, profile) {
   return Boolean(
-    profile?.is_active &&
-      profile.role_id === 3 &&
+    hasAdviserPowers(profile) &&
       event.organization_id === profile.organization_id,
   )
 }
@@ -506,7 +506,7 @@ export function canJoinEvents(profile) {
 
 /* Officer at Adviser lang ang nakakakita ng listahan */
 export function canViewParticipants(profile) {
-  return Boolean(profile?.is_active && (profile.role_id === 2 || profile.role_id === 3))
+  return Boolean(profile?.is_active && (profile.role_id === 2 || hasAdviserPowers(profile)))
 }
 
 /* Mga event_id na sinalihan mo → Set */
