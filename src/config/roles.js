@@ -428,49 +428,26 @@ export const ROLES = {
      budget ay hindi na dumadaan sa kanya, at hindi rin niya nakikita
      (RLS: proposals_read_staff).
 
-     Dashboard: dalawang grupo ng stat (may "group" ang bawat isa —
-     tingnan ang Dashboard.jsx). Lahat ng numero ay galing sa iisang
-     tawag: school_admin_overview() (lib/schoolAdmin.js), maliban sa
-     "awaiting your action" na kapareho ng sa SAO / School Head.
+     Dashboard: "School overview" lang — Active organizations at
+     Active members. Galing ang numero sa school_admin_overview()
+     (lib/schoolAdmin.js).
+
+     Inalis na sa Dashboard: ang grupong "Budget proposals"
+     (Awaiting your action, Still with Adviser / SAO / School Head,
+     Approved, Rejected), ang "Officers" stat, at ang Sections cards
+     (Members, Profile). Nasa sidebar pa rin ang Proposals, Members,
+     at Profile.
 
      Kailangan sa Supabase: ADD_SCHOOL_ADMINISTRATOR.sql */
   [ROLE_KEYS.SCHOOL_ADMIN]: (() => {
     const base = staffRoleWithProposals('School Administrator')
-    const PROPOSALS_GROUP = 'Budget proposals'
     const SCHOOL_GROUP = 'School overview'
     return {
       ...base,
       dashboard: {
         ...base.dashboard,
+        cards: [],
         stats: [
-          {
-            label: 'Awaiting your action',
-            value: '0',
-            to: '/proposals',
-            key: 'pendingProposals',
-            group: PROPOSALS_GROUP,
-          },
-          {
-            label: 'Still with Adviser / SAO / School Head',
-            value: '0',
-            to: '/proposals',
-            key: 'saOnTheWay',
-            group: PROPOSALS_GROUP,
-          },
-          {
-            label: 'Approved',
-            value: '0',
-            to: '/proposals',
-            key: 'saApproved',
-            group: PROPOSALS_GROUP,
-          },
-          {
-            label: 'Rejected',
-            value: '0',
-            to: '/proposals',
-            key: 'saRejected',
-            group: PROPOSALS_GROUP,
-          },
           {
             label: 'Active organizations',
             value: '0',
@@ -483,13 +460,6 @@ export const ROLES = {
             value: '0',
             to: '/members',
             key: 'saMembers',
-            group: SCHOOL_GROUP,
-          },
-          {
-            label: 'Officers',
-            value: '0',
-            to: '/members',
-            key: 'saOfficers',
             group: SCHOOL_GROUP,
           },
         ],
