@@ -27,7 +27,7 @@ const OUTPUT_SIZE = 256
 
 /* Ang pagpapaliit ay nasa lib/image.js na (kasama ng org logo).
    Ini-export ulit dito para hindi magbago ang import sa Profile.jsx. */
-export { ACCEPTED_TYPES, MAX_INPUT_BYTES, ImageError as AvatarError } from './image.js'
+export { ACCEPTED_TYPES, ImageError as AvatarError } from './image.js'
 
 async function listOwnFiles(userId) {
   const { data, error } = await supabase.storage.from(BUCKET).list(userId)

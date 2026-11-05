@@ -231,9 +231,6 @@ function Proposals() {
      filter, dahil proposals ng LAHAT ng org ang nakikita nila. */
   const showOrgFilter = [4, 6, 8].includes(profile?.role_id)
 
-  /* School Administrator: ang may budget lang ang nakikita */
-  const isSchoolAdmin = profile?.role_id === 8
-
   /* Officer: may sariling hanay ng proposal na ibinalik sa
      kanya para i-revise. */
   const isProposer = Boolean(can.propose)

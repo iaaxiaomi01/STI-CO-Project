@@ -34,7 +34,6 @@ import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
 const BUCKET = 'og-shop-images'
 const ITEM_IMAGE_SIZE = 640
 
-export const OG_REWARD_MAX = 1000
 export const ITEM_NAME_MAX = 100
 export const ITEM_DESCRIPTION_MAX = 1000
 export const ITEM_PRICE_MAX = 100000
@@ -74,11 +73,6 @@ export function ogErrorMessage(err) {
     return `Something went wrong in the database (error ${err.code}). Please try again later or tell your IT Admin.`
   }
   return 'There was a connection problem. Please try again.'
-}
-
-/* "1,250" */
-export function formatOg(n) {
-  return Number(n || 0).toLocaleString('en-PH')
 }
 
 /* "Sep 30, 2026, 12:30 AM" */

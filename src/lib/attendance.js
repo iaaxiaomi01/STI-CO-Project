@@ -101,12 +101,6 @@ export function attendancePhase(event, now) {
   return PHASE_CLOSED
 }
 
-/* Bukas ba ang QR / pag-scan ngayon? (Time In o Time Out) */
-export function isAttendanceOpen(event, now) {
-  const phase = attendancePhase(event, now)
-  return phase === PHASE_IN || phase === PHASE_OUT
-}
-
 /* Ang mode na pwede ngayon: MODE_IN, MODE_OUT, o null kung sarado */
 export function modeForPhase(phase) {
   if (phase === PHASE_IN) return MODE_IN

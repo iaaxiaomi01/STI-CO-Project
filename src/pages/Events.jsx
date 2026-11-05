@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Award, Check, Clock, Download, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
-import { getRoleConfig } from '../config/roles.js'
 import {
   EVENT_STATUSES,
   MISSED_STATUS,
@@ -205,7 +204,6 @@ function myOgStatus(reward, attendance, attendanceClosed) {
 
 function Events() {
   const { role, profile } = useAuth()
-  const { can } = getRoleConfig(role)
 
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)

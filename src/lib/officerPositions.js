@@ -142,21 +142,6 @@ export function setAllowMultiple(id, allowMultiple) {
   return updatePosition(id, { allow_multiple: allowMultiple })
 }
 
-/* Inilalagay ulit ang sort_order ayon sa bagong pagkakasunod-sunod.
-   Ang mga nagbago lang ang ina-update. */
-export async function reorderPositions(ordered) {
-  const changes = ordered
-    .map((p, index) => ({ p, index }))
-    .filter(({ p, index }) => p.sort_order !== index)
-
-  const updated = await Promise.all(
-    changes.map(({ p, index }) => updatePosition(p.id, { sort_order: index })),
-  )
-
-  const byId = new Map(updated.map((p) => [p.id, p]))
-  return ordered.map((p, index) => byId.get(p.id) ?? { ...p, sort_order: index })
-}
-
 export async function deletePosition(id) {
   const { data, error } = await supabase.from('officer_positions').delete().eq('id', id).select('id')
   if (error) throw error
