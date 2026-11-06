@@ -15,16 +15,22 @@ import {
   fetchEventAttendance,
   formatClock,
 } from './attendance.js'
-import { toTitleCase } from './profile.js'
+import { fullNameOf, toTitleCase } from './profile.js'
+import { fetchOrganization } from './organization.js'
+import { buildAttendanceWorkbook } from './attendanceWorkbook.js'
+import stiLogoUrl from '../assets/sti-logo.png'
 
 /* ============================================================
    EXPORT NG ATTENDANCE (bawat event) — Officer at Adviser
 
-   Gumagawa ng .csv na bumubukas nang diretso sa Excel at
-   Google Sheets. Walang dagdag na package.
+   Gumagawa ng totoong .xlsx na may design (kulay ng STI, logo,
+   summary cards, kulay ng Status). Bumubukas sa Excel, Google
+   Sheets at LibreOffice. Walang dagdag na package — sariling
+   writer ang lib/xlsx.js, at ang itsura ay nasa
+   lib/attendanceWorkbook.js.
 
    Laman:
-     - itaas: pangalan, petsa, oras at lugar ng event, at buod
+     - itaas: banner, detalye ng event at ng org, at buod
      - talaan: lahat ng nag-Join, may Time In / Time Out at status
 
    Ang RLS pa rin ang nagbabantay: Officer/Adviser lang ang
@@ -35,29 +41,6 @@ import { toTitleCase } from './profile.js'
    ============================================================ */
 
 const METHOD_LABEL = { qr: 'QR', manual: 'Manual' }
-
-/* Isang cell ng CSV.
-   - May kuwit, quote o bagong linya → nakapaloob sa "…"
-   - Nagsisimula sa = + - @ → may ' sa unahan, para hindi
-     ituring ng Excel na formula (CSV injection) */
-function cell(value) {
-  let text = value == null ? '' : String(value)
-  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`
-  if (/[",\r\n]/.test(text)) text = `"${text.replace(/"/g, '""')}"`
-  return text
-}
-
-/* Student ID na puro numero (hal. 02000123456): isinusulat na
-   ="02000123456" para hindi alisin ng Excel ang 0 sa unahan */
-function idCell(value) {
-  if (!value) return ''
-  const text = String(value)
-  return /^\d+$/.test(text) ? `="${text}"` : cell(text)
-}
-
-function row(values) {
-  return values.join(',')
-}
 
 /* "Dela Cruz, Juan S." mula sa profile; kung wala, ang
    naka-save na pangalan sa event_participants */
@@ -97,7 +80,7 @@ async function fetchProfiles(ids) {
   return map
 }
 
-/* "attendance-general-assembly-2026-10-18.csv" */
+/* "attendance-general-assembly-2026-10-18.xlsx" */
 function fileNameFor(event) {
   const slug =
     String(event.title ?? 'event')
@@ -107,13 +90,10 @@ function fileNameFor(event) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 60) || 'event'
-  return `attendance-${slug}-${event.event_date}.csv`
+  return `attendance-${slug}-${event.event_date}.xlsx`
 }
 
-function download(text, fileName) {
-  /* ﻿ (BOM) — para mabasa ng Excel nang tama ang ñ at
-     iba pang letra */
-  const blob = new Blob(['﻿', text], { type: 'text/csv;charset=utf-8' })
+function download(blob, fileName) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -124,12 +104,52 @@ function download(text, fileName) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-/* Kinukuha ang data, gumagawa ng CSV, at dina-download.
-   Ibinabalik ang bilang ng taong naisama. */
-export async function exportEventAttendance(event) {
-  const [participants, attendance] = await Promise.all([
+/* Pangalan at department ng org — hindi kritikal */
+async function fetchOrgInfo(orgId) {
+  if (!orgId) return { name: '', department: '' }
+  try {
+    const org = await fetchOrganization(orgId)
+    return { name: org?.name ?? '', department: org?.department ?? '' }
+  } catch (err) {
+    console.error('Hindi makuha ang org para sa export:', err)
+    return { name: '', department: '' }
+  }
+}
+
+/* STI logo → maliit na PNG (malaki ang orihinal na file, kaya
+   pinapaliit muna para hindi bumigat ang .xlsx).
+   Kapag pumalya, walang logo lang — tuloy pa rin ang export. */
+async function loadLogo() {
+  try {
+    const img = new Image()
+    img.src = stiLogoUrl
+    await img.decode()
+    const height = 140 // 2x ng 70px na lalabas sa Excel, para malinaw
+    const width = Math.round((img.naturalWidth / img.naturalHeight) * height)
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+    if (!blob) return null
+    return { data: new Uint8Array(await blob.arrayBuffer()), width, height }
+  } catch (err) {
+    console.error('Hindi ma-load ang logo para sa export:', err)
+    return null
+  }
+}
+
+/* Kinukuha ang data, gumagawa ng .xlsx, at dina-download.
+   Ibinabalik ang bilang ng taong naisama.
+
+   exportedBy (opsyonal): profile ng nag-export, para lumabas
+   ang pangalan niya sa "Exported by". */
+export async function exportEventAttendance(event, { exportedBy = null } = {}) {
+  const [participants, attendance, org, logo] = await Promise.all([
     fetchParticipants(event.id),
     fetchEventAttendance(event.id),
+    fetchOrgInfo(event.organization_id),
+    loadLogo(),
   ])
   const profiles = await fetchProfiles(participants.map((p) => p.profile_id))
 
@@ -157,56 +177,20 @@ export async function exportEventAttendance(event) {
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'en-PH', { sensitivity: 'base' }))
 
-  const timedIn = people.filter((p) => p.hasIn).length
-  const complete = people.filter((p) => p.hasOut).length
+  const workbook = buildAttendanceWorkbook({
+    school: 'STI COLLEGE SAN PABLO',
+    orgName: org.name,
+    department: org.department,
+    title: event.title,
+    date: formatEventDate(event.event_date),
+    time: `${formatTime(event.start_time)} – ${formatTime(event.end_time)}`,
+    location: event.location,
+    exportedOn: formatDateTimeShort(new Date().toISOString()),
+    exportedBy: exportedBy ? fullNameOf(exportedBy) : '',
+    people,
+    logo,
+  })
 
-  const lines = [
-    row([cell('Event'), cell(event.title)]),
-    row([cell('Date'), cell(formatEventDate(event.event_date))]),
-    row([cell('Time'), cell(`${formatTime(event.start_time)} – ${formatTime(event.end_time)}`)]),
-    row([cell('Location'), cell(event.location)]),
-    row([
-      cell('Summary'),
-      cell(`Joined: ${people.length}`),
-      cell(`Timed In: ${timedIn}`),
-      cell(`Complete (with Time Out): ${complete}`),
-    ]),
-    row([cell('Exported on'), cell(formatDateTimeShort(new Date().toISOString()))]),
-    '',
-    row(
-      [
-        'No.',
-        'Student ID',
-        'Name',
-        'Role',
-        'Program',
-        'Year Level',
-        'Joined on',
-        'Time In',
-        'Method (In)',
-        'Time Out',
-        'Method (Out)',
-        'Status',
-      ].map(cell),
-    ),
-    ...people.map((p, i) =>
-      row([
-        cell(i + 1),
-        idCell(p.studentId),
-        cell(p.name),
-        cell(p.role),
-        cell(p.program),
-        cell(p.yearLevel),
-        cell(p.joinedAt),
-        cell(p.timeIn),
-        cell(p.timeInMethod),
-        cell(p.timeOut),
-        cell(p.timeOutMethod),
-        cell(p.status),
-      ]),
-    ),
-  ]
-
-  download(lines.join('\r\n'), fileNameFor(event))
+  download(workbook.toBlob(), fileNameFor(event))
   return people.length
 }

@@ -563,7 +563,7 @@ function ParticipantsPerEvent({ profile }) {
     setExportingId(ev.id)
     setExportError({ id: null, text: '' })
     try {
-      await exportEventAttendance(ev)
+      await exportEventAttendance(ev, { exportedBy: profile })
     } catch (err) {
       console.error('Hindi na-export ang attendance:', err)
       setExportError({ id: ev.id, text: 'Could not export attendance. Please try again.' })
@@ -781,10 +781,10 @@ function ParticipantsPerEvent({ profile }) {
                         className={styles.exportBtn}
                         disabled={exportingId === ev.id}
                         onClick={() => handleExport(ev)}
-                        title="Download this event's attendance (.csv, opens in Excel)"
+                        title="Download this event's attendance as an Excel file (.xlsx)"
                       >
                         <Download size={16} strokeWidth={2.3} aria-hidden="true" />
-                        {exportingId === ev.id ? 'Exporting…' : 'Export (Excel/CSV)'}
+                        {exportingId === ev.id ? 'Exporting…' : 'Export (Excel)'}
                       </button>
                     )}
                   </div>
