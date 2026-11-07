@@ -4,10 +4,12 @@ import {
   AUDIENCES,
   MESSAGE_MAX,
   TITLE_MAX,
+  announcementErrorMessage,
   audienceOf,
   fetchTargetOrganizations,
   selectedOrgsLabel,
 } from '../lib/announcements.js'
+import { ACCEPTED_TYPES, ImageError, checkImageFile } from '../lib/image.js'
 import styles from './AnnouncementForm.module.css'
 
 /* ============================================================
@@ -17,9 +19,13 @@ import styles from './AnnouncementForm.module.css'
      initial = null      → bagong announcement
      initial = { ... }   → ine-edit ang dati
 
+   Laman: Title, Post to (kung may pagpipilian), Type, Message,
+          Picture (optional)
+
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
-   onSubmit(values) — ang page ang tatawag sa database.
-   Kapag nag-throw ang onSubmit, dito lalabas ang error.
+   onSubmit(values, { imageFile, removeImage }) — ang page ang
+   tatawag sa database. Kapag nag-throw ang onSubmit, dito
+   lalabas ang error.
 
    audience — para kanino ang BAGONG post:
      'own'    → sariling org lang (walang pagpipilian)
@@ -39,10 +45,17 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
   const [orgIds, setOrgIds] = useState([])
   const [orgOptions, setOrgOptions] = useState(null) // null = kinukuha pa
   const [orgLoadError, setOrgLoadError] = useState(false)
+
+  /* Picture: ang bagong pinili (file + preview), o ang dati */
+  const [imageFile, setImageFile] = useState(null)
+  const [preview, setPreview] = useState(initial?.image_url ?? null)
+  const [removeImage, setRemoveImage] = useState(false)
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const titleRef = useRef(null)
+  const fileRef = useRef(null)
 
   useEffect(() => {
     titleRef.current?.focus()
@@ -79,6 +92,34 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
     return () => window.removeEventListener('keydown', onKey)
   }, [saving, onCancel])
 
+  /* Linisin ang object URL ng preview kapag napalitan o nagsara */
+  useEffect(() => {
+    if (!imageFile) return undefined
+    const url = URL.createObjectURL(imageFile)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [imageFile])
+
+  function handlePickImage(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      checkImageFile(file)
+      setError('')
+      setImageFile(file)
+      setRemoveImage(false)
+    } catch (err) {
+      setError(err instanceof ImageError ? err.message : 'Could not read the image.')
+    }
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null)
+    setPreview(null)
+    setRemoveImage(Boolean(initial?.image_url))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -98,20 +139,19 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
 
     setSaving(true)
     try {
-      await onSubmit({
-        title: cleanTitle,
-        message: cleanMessage,
-        type,
-        audience: canChoose ? postTo : 'own',
-        orgIds: canChoose && postTo === 'selected' ? orgIds : [],
-      })
+      await onSubmit(
+        {
+          title: cleanTitle,
+          message: cleanMessage,
+          type,
+          audience: canChoose ? postTo : 'own',
+          orgIds: canChoose && postTo === 'selected' ? orgIds : [],
+        },
+        { imageFile, removeImage },
+      )
     } catch (err) {
       console.error('Hindi na-save ang announcement:', err)
-      setError(
-        err?.message === 'not-allowed'
-          ? "You don't have permission to change this announcement."
-          : 'Could not save. Please try again.',
-      )
+      setError(announcementErrorMessage(err))
       setSaving(false)
     }
   }
@@ -238,6 +278,56 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
             required
           />
         </label>
+
+        {/* ---------- PICTURE (optional) ---------- */}
+        <div className={styles.field}>
+          <span className={styles.label}>
+            Picture <span className={styles.optional}>(optional)</span>
+          </span>
+
+          {preview ? (
+            <div className={styles.preview}>
+              <img src={preview} alt="Announcement picture preview" />
+              <div className={styles.previewActions}>
+                <button
+                  type="button"
+                  className={styles.secondary}
+                  onClick={() => fileRef.current?.click()}
+                  disabled={saving}
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  className={styles.removeButton}
+                  onClick={handleRemoveImage}
+                  disabled={saving}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.dropzone}
+              onClick={() => fileRef.current?.click()}
+              disabled={saving}
+            >
+              <span className={styles.dropIcon} aria-hidden="true">＋</span>
+              <span>Choose a picture</span>
+              <span className={styles.fileHint}>JPG, PNG or WEBP · up to 10 MB</span>
+            </button>
+          )}
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept={ACCEPTED_TYPES.join(',')}
+            onChange={handlePickImage}
+            hidden
+          />
+        </div>
 
         {error && <p className={styles.error}>{error}</p>}
 

@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js'
 import { getRoleConfig, isSchoolAdmin, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
+import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.js'
 
 /* ============================================================
    ANNOUNCEMENTS — lahat ng pakikipag-usap sa database
@@ -13,10 +14,18 @@ import { toTitleCase } from './profile.js'
 
    Sa paggawa, dumadaan sa post_announcement() (RPC) para
    sabay na magawa ang post at ang mga piniling org. Title,
-   message, type at kung para kanino lang ang ipinapadala.
-   Ang org, author, role at petsa ay itinatakda ng trigger sa
-   database — hindi mapepeke mula sa browser.
+   message, type, picture at kung para kanino lang ang
+   ipinapadala. Ang org, author, role at petsa ay itinatakda ng
+   trigger sa database — hindi mapepeke mula sa browser.
+
+   Picture (optional): announcement-images/<org id>/<timestamp>.webp
+   PER ORG — sa folder ng org ng nag-post lang pwedeng mag-upload,
+   at sinusuri ng trigger na galing doon ang image_url.
+   Tingnan ang ANNOUNCEMENT_IMAGES.sql.
    ============================================================ */
+
+const BUCKET = 'announcement-images'
+const IMAGE_MAX_SIDE = 1600
 
 /* Dapat tugma sa check constraint na announcements_type_valid */
 export const ANNOUNCEMENT_TYPES = [
@@ -33,7 +42,7 @@ export function typeLabel(value) {
 }
 
 const COLUMNS = `
-  id, organization_id, title, message, type, is_global,
+  id, organization_id, title, message, type, is_global, image_url,
   author_id, author_name, author_role_id,
   created_at, updated_at, updated_by,
   organizations!announcements_organization_id_fkey ( name ),
@@ -47,6 +56,17 @@ export const AUDIENCES = [
   { value: 'all', label: 'All organizations' },
   { value: 'selected', label: 'Selected organizations' },
 ]
+
+/* Isinasalin ang error sa mensaheng maiintindihan */
+export function announcementErrorMessage(err) {
+  if (err instanceof ImageError) return err.message
+  if (err?.message === 'not-allowed') {
+    return "You don't have permission to change this announcement."
+  }
+  /* Galing sa "raise exception" ng trigger/RPC */
+  if (err?.code === 'P0001' && err.message) return err.message
+  return 'Could not save. Please try again.'
+}
 
 /* ============================================================
    ANNOUNCE SA LAHAT NG ORG
@@ -81,24 +101,81 @@ export async function fetchAnnouncements() {
   return data ?? []
 }
 
-/* audience: 'own' | 'all' | 'selected'
-   orgIds:   mga piniling org kapag 'selected' (hindi kasama ang
-             sariling org — laging kasama na iyon) */
-export async function createAnnouncement({
-  title,
-  message,
-  type,
-  audience = 'own',
-  orgIds = [],
-}) {
+/* ---------- PICTURE ---------- */
+
+async function uploadImage(orgId, file) {
+  if (!orgId) throw new ImageError('Your account has no organization.')
+  checkImageFile(file)
+
+  const blob = await resizeToFit(file, IMAGE_MAX_SIDE)
+  const path = `${orgId}/${Date.now()}.${extensionFor(blob)}`
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
+    contentType: blob.type,
+    cacheControl: '31536000',
+    upsert: false,
+  })
+  if (error) throw error
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(BUCKET).getPublicUrl(path)
+
+  return { path, publicUrl }
+}
+
+/* ".../object/public/announcement-images/<org>/<file>" → "<org>/<file>" */
+function pathFromUrl(url) {
+  if (!url) return null
+  const marker = `/object/public/${BUCKET}/`
+  const i = url.indexOf(marker)
+  if (i < 0) return null
+  return decodeURIComponent(url.slice(i + marker.length).split('?')[0])
+}
+
+/* Hindi kritikal kapag pumalya — lumang file lang ang maiiwan */
+async function removeFiles(paths) {
+  const clean = paths.filter(Boolean)
+  if (clean.length === 0) return
+  try {
+    const { error } = await supabase.storage.from(BUCKET).remove(clean)
+    if (error) throw error
+  } catch (err) {
+    console.warn('Hindi nabura ang larawan ng announcement:', err)
+  }
+}
+
+/* ---------- GUMAWA / MAG-EDIT / MAG-BURA ---------- */
+
+/* values:  { title, message, type, audience, orgIds }
+     audience: 'own' | 'all' | 'selected'
+     orgIds:   mga piniling org kapag 'selected' (hindi kasama ang
+               sariling org — laging kasama na iyon)
+   options: { orgId, imageFile }
+     orgId:     org ng nag-post (folder ng picture)
+     imageFile: picture (optional) */
+export async function createAnnouncement(
+  { title, message, type, audience = 'own', orgIds = [] },
+  { orgId = null, imageFile = null } = {},
+) {
+  let uploaded = null
+  if (imageFile) {
+    uploaded = await uploadImage(orgId, imageFile)
+  }
+
   const { data: id, error } = await supabase.rpc('post_announcement', {
     p_title: title,
     p_message: message,
     p_type: type,
     p_is_global: audience === 'all',
     p_org_ids: audience === 'selected' ? orgIds : [],
+    p_image_url: uploaded?.publicUrl ?? null,
   })
-  if (error) throw error
+  if (error) {
+    /* Hindi na-post → burahin ang na-upload para walang maiwang file */
+    if (uploaded) await removeFiles([uploaded.path])
+    throw error
+  }
 
   const { data, error: readError } = await supabase
     .from('announcements')
@@ -126,29 +203,56 @@ export async function fetchTargetOrganizations(ownOrgId) {
 
 /* Hindi kasama kung para kanino — hindi na ito nababago
    pagkatapos i-post (ini-lock ng announcements_before_update at
-   ng RLS ng announcement_orgs). */
-export async function updateAnnouncement(id, { title, message, type }) {
+   ng RLS ng announcement_orgs).
+
+   options.imageFile   → bagong picture
+   options.removeImage → alisin ang kasalukuyang picture */
+export async function updateAnnouncement(
+  announcement,
+  { title, message, type },
+  { imageFile = null, removeImage = false } = {},
+) {
+  const row = { title, message, type }
+
+  let uploaded = null
+  if (imageFile) {
+    uploaded = await uploadImage(announcement.organization_id, imageFile)
+    row.image_url = uploaded.publicUrl
+  } else if (removeImage) {
+    row.image_url = null
+  }
+
   const { data, error } = await supabase
     .from('announcements')
-    .update({ title, message, type })
-    .eq('id', id)
+    .update(row)
+    .eq('id', announcement.id)
     .select(COLUMNS)
 
-  if (error) throw error
-  /* Walang row na bumalik = hinarang ng RLS (wala kang pahintulot) */
-  if (!data || data.length === 0) throw new Error('not-allowed')
+  if (error || !data || data.length === 0) {
+    if (uploaded) await removeFiles([uploaded.path])
+    if (error) throw error
+    /* Walang row na bumalik = hinarang ng RLS (wala kang pahintulot) */
+    throw new Error('not-allowed')
+  }
+
+  /* Napalitan o inalis → burahin ang lumang file */
+  if ((uploaded || removeImage) && announcement.image_url) {
+    await removeFiles([pathFromUrl(announcement.image_url)])
+  }
   return data[0]
 }
 
-export async function deleteAnnouncement(id) {
+export async function deleteAnnouncement(announcement) {
   const { data, error } = await supabase
     .from('announcements')
     .delete()
-    .eq('id', id)
+    .eq('id', announcement.id)
     .select('id')
 
   if (error) throw error
   if (!data || data.length === 0) throw new Error('not-allowed')
+
+  await removeFiles([pathFromUrl(announcement.image_url)])
 }
 
 /* Ilang announcement ang lumabas sa nakaraang ilang araw —

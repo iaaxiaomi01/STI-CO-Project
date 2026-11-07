@@ -116,13 +116,10 @@ function Profile() {
     ? new Date(profile.created_at).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' })
     : '—'
 
-  const organization = profile?.organizations
-    ? [profile.organizations.name, profile.organizations.department]
-        .filter(Boolean)
-        .join(' — ')
-    : '—'
+  /* Pangalan lang ng org ang ipinapakita — inalis na ang department */
+  const organization = profile?.organizations?.name || '—'
 
-  /* Adviser: walang Student ID, Program at Year level
+  /* Adviser: walang Student ID at Year level (may Program na)
      SAO, School Head at SA: walang Student ID, Program, Year level at Organization */
   const isAdviser = profile?.role_id === 3
   const isSao = profile?.role_id === 4
@@ -135,12 +132,14 @@ function Profile() {
       ? []
       : [{ label: 'Student ID', value: profile?.student_id || '—' }]),
     { label: 'Email', value: profile?.email ?? user?.email ?? '—' },
+    /* Program: Member, Officer at Adviser */
+    ...(isSao || isSchoolHead || isSchoolAdmin
+      ? []
+      : [{ label: 'Program', value: profile?.program || '—' }]),
+    /* Year level: Member at Officer lang */
     ...(isAdviser || isSao || isSchoolHead || isSchoolAdmin
       ? []
-      : [
-          { label: 'Program', value: profile?.program || '—' },
-          { label: 'Year level', value: profile?.year_level || '—' },
-        ]),
+      : [{ label: 'Year level', value: profile?.year_level || '—' }]),
     ...(isSao || isSchoolHead || isSchoolAdmin
       ? []
       : [{ label: 'Organization', value: organization }]),

@@ -340,7 +340,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
         {/* ---------- FILE (opsyonal) ---------- */}
         <div className={styles.field}>
           <span className={styles.label}>
-            File <span className={styles.optional}>(optional)</span>
+            File <span className={styles.optional}>(Required)</span>
           </span>
 
           {file || keepExisting ? (

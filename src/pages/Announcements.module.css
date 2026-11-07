@@ -196,6 +196,27 @@
   color: #2f3b57;
 }
 
+/* Picture ng announcement — contain: hindi napuputol ang poster */
+.picture {
+  display: block;
+  margin-top: 16px;
+  border-radius: 18px;
+  overflow: hidden;
+  background-color: #f3f5fa;
+}
+
+.picture img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+.picture:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 3px;
+}
+
 .cardBottom {
   display: flex;
   align-items: center;
@@ -366,6 +387,14 @@
   max-width: 72ch;
   font-size: 16px;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.featured .picture {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.featured .picture:focus-visible {
+  outline-color: var(--dash-yellow);
 }
 
 .featured .cardBottom {
@@ -577,6 +606,18 @@
   overflow-wrap: anywhere;
 }
 
+/* Picture sa pop-up — maliit lang, buo ang larawan */
+.alertPicture {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  max-height: 200px;
+  margin-top: 4px;
+  object-fit: contain;
+  border-radius: 14px;
+  background-color: rgba(3, 27, 75, 0.05);
+}
+
 .alertMeta {
   margin-top: 4px;
   font-size: 12px;
@@ -709,6 +750,14 @@
   .message,
   .featured .message {
     font-size: 14.5px;
+  }
+
+  .picture {
+    border-radius: 14px;
+  }
+
+  .picture img {
+    max-height: 380px;
   }
 
   /* Mga button: buong lapad, pantay-pantay */

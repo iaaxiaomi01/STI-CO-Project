@@ -47,6 +47,10 @@ import styles from './Announcements.module.css'
    can_announce_all ay pwedeng mag-post para sa sariling org,
    sa lahat, o sa mga piniling org lang.
 
+   PICTURE (optional): naka-upload sa folder ng org ng nag-post
+   (announcement-images/<org id>/...). Lumalabas sa card at sa
+   pop-up; pindutin para makita ang buong laki.
+
    Ang RLS sa database ang totoong nagbabantay. Ang
    can.announce at canManageAnnouncement() dito ay para lang
    itago ang mga button na hindi mo magagamit.
@@ -119,6 +123,13 @@ function LatestAlert({ announcement: a, onClose, onView }) {
           <p id="latest-alert-message" className={styles.alertMessage}>
             {a.message}
           </p>
+          {a.image_url && (
+            <img
+              className={styles.alertPicture}
+              src={a.image_url}
+              alt={`Picture for "${a.title}"`}
+            />
+          )}
           <p className={styles.alertMeta}>
             {authorLabel(a)}
             <br />
@@ -209,13 +220,17 @@ function Announcements() {
     return () => clearTimeout(timer)
   }, [latestFlash])
 
-  async function handleSubmit(values) {
+  /* media = { imageFile, removeImage } galing sa form */
+  async function handleSubmit(values, media = {}) {
     if (editing === 'new') {
-      const created = await createAnnouncement(values)
+      const created = await createAnnouncement(values, {
+        orgId: profile?.organization_id,
+        imageFile: media.imageFile,
+      })
       setAnnouncements((list) => [created, ...list])
       setNotice('Announcement posted.')
     } else {
-      const updated = await updateAnnouncement(editing.id, values)
+      const updated = await updateAnnouncement(editing, values, media)
       setAnnouncements((list) =>
         list.map((a) => (a.id === updated.id ? updated : a)),
       )
@@ -233,7 +248,7 @@ function Announcements() {
     setDeletingId(announcement.id)
     setNotice('')
     try {
-      await deleteAnnouncement(announcement.id)
+      await deleteAnnouncement(announcement)
       setAnnouncements((list) => list.filter((a) => a.id !== announcement.id))
       setNotice('Announcement deleted.')
     } catch (err) {
@@ -307,6 +322,19 @@ function Announcements() {
           <p className={styles.audience}>To: {selectedOrgsLabel(a)}</p>
         )}
         <p className={styles.message}>{a.message}</p>
+
+        {/* Picture — pindutin para makita ang buong laki */}
+        {a.image_url && (
+          <a
+            className={styles.picture}
+            href={a.image_url}
+            target="_blank"
+            rel="noreferrer"
+            title="Open full picture"
+          >
+            <img src={a.image_url} alt={`Picture for "${a.title}"`} loading="lazy" />
+          </a>
+        )}
 
         <div className={styles.cardBottom}>
           <p className={styles.author}>
