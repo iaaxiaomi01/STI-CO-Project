@@ -6,6 +6,7 @@ import {
   Clock,
   Globe,
   Megaphone,
+  Pencil,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -36,10 +37,15 @@ import styles from './Announcements.module.css'
 
    Member  → nakikita ang announcements ng org niya
    Officer → nakikita lahat sa org niya, nagpapaskil,
-             nagde-delete ng gawa ng Officers
+             nag-e-edit at nagde-delete ng gawa ng Officers
    Adviser → nakikita lahat sa org niya, nagpapaskil,
-             nagde-delete ng sarili at ng Officers
-   (Wala nang Edit button sa page na ito.)
+             nag-e-edit at nagde-delete ng sarili at ng Officers
+
+   EDIT: Title, Type, Message at Picture lang ang nababago.
+   Hindi na mababago kung para kanino (sariling org / lahat /
+   pinili) — naka-lock iyon sa database. Pareho ang patakaran
+   ng Edit at Delete: canManageAnnouncement() dito, at
+   can_manage_announcement() sa database.
 
    LAHAT NG ORG: nakikita rin ng lahat ang mga global post
    (is_global) at ang mga post na pinili ang org mo
@@ -346,6 +352,18 @@ function Announcements() {
 
           {manageable && (
             <div className={styles.cardActions}>
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={() => {
+                  setNotice('')
+                  setEditing(a)
+                }}
+                disabled={busy}
+              >
+                <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
+                Edit
+              </button>
               <button
                 type="button"
                 className={`${styles.actionButton} ${styles.danger}`}
