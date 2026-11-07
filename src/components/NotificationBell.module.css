@@ -96,6 +96,30 @@
   background-color: var(--color-primary-soft);
 }
 
+/* "Mark all as read" + "Clear all" (o ang "Delete all? Yes / Cancel") */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.confirmText {
+  margin-right: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* Pula — para sa pagbura */
+.markAll.danger {
+  color: #b42318;
+}
+
+.markAll.danger:hover {
+  background-color: #fdecec;
+}
+
 .status {
   padding: 1.5rem 1.1rem;
   font-size: 0.88rem;
@@ -120,12 +144,18 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* Ang hanay: notification + ang × sa kanan */
+.row {
+  position: relative;
+}
+
 .item {
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
   width: 100%;
-  padding: 0.8rem 1.1rem;
+  /* May puwang sa kanan para sa × */
+  padding: 0.8rem 2.5rem 0.8rem 1.1rem;
   border: none;
   background-color: #fff;
   color: var(--color-text);
@@ -204,6 +234,51 @@
   margin-top: 0.4rem;
   border-radius: 999px;
   background-color: var(--color-primary);
+}
+
+/* ---------- × (BURAHIN) ----------
+   Lumalabas kapag naka-hover o naka-focus ang hanay. Sa phone
+   (walang hover) ay laging nakikita. */
+.deleteBtn {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), background-color var(--transition),
+    color var(--transition);
+}
+
+.row:hover .deleteBtn,
+.row:focus-within .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
+.deleteBtn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+@media (hover: none) {
+  .deleteBtn {
+    opacity: 1;
+  }
 }
 
 /* ---------- KULAY AYON SA TONE ---------- */

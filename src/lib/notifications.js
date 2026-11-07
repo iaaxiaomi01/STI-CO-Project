@@ -32,7 +32,8 @@ import { supabase } from './supabaseClient.js'
      onInsert — walang refresh na kailangan.
 
    Sariling notification lang ang nakikita (RLS). Ang pagmarka
-   na nabasa ay sa mga function lang sa database.
+   na nabasa at ang pagbura ay sa mga function lang sa database
+   (DELETE_NOTIFICATIONS.sql para sa pagbura).
    ============================================================ */
 
 const COLUMNS = 'id, type, title, body, link, event_id, proposal_id, tone, created_at, read_at'
@@ -69,6 +70,17 @@ export async function markNotificationRead(id) {
 
 export async function markAllNotificationsRead() {
   const { error } = await supabase.rpc('mark_all_notifications_read')
+  if (error) throw error
+}
+
+/* Pagbura — sariling notification lang (DELETE_NOTIFICATIONS.sql) */
+export async function deleteNotification(id) {
+  const { error } = await supabase.rpc('delete_notification', { p_id: id })
+  if (error) throw error
+}
+
+export async function deleteAllNotifications() {
+  const { error } = await supabase.rpc('delete_all_notifications')
   if (error) throw error
 }
 

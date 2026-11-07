@@ -103,7 +103,7 @@ function tabsFor(profile) {
   const tabs = []
   if (canEarnOg(profile)) {
     tabs.push({ value: TAB_SHOP, label: 'Shop' })
-    tabs.push({ value: TAB_HISTORY, label: 'OG history' })
+    tabs.push({ value: TAB_HISTORY, label: 'Purchase History' })
   }
   if (canManageOgShop(profile)) {
     tabs.push({ value: TAB_MANAGE, label: 'Manage shop' })
@@ -540,7 +540,7 @@ function HistoryTab({ profile, balance }) {
     return (
       <EmptyState
         icon="◆"
-        title="OG's History"
+        title="Purchase History"
       />
     )
   }

@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext.js'
 import {
   NOTIFICATION_LIMIT,
   countUnreadNotifications,
+  deleteAllNotifications,
+  deleteNotification,
   fetchNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -45,6 +47,13 @@ import styles from './NotificationBell.module.css'
 
    Kapag pinindot ang isang notification: mamarkahang nabasa,
    at dadalhin ka sa link nito (hal. /events).
+
+   PAGBURA (DELETE_NOTIFICATIONS.sql):
+     - ang × sa kanan ng bawat notification → buburahin iyon lang
+     - "Clear all" sa itaas → may "Sigurado ka?" muna, tapos
+       buburahin lahat ng notification mo
+   Nawawala agad sa listahan; kapag pumalya sa database, kukunin
+   ulit ang listahan para bumalik ang tamang laman.
    ============================================================ */
 
 /* Ilang segundo bago kusang mawala ang maliit na paalala */
@@ -78,6 +87,9 @@ function NotificationBell({ variant } = {}) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  /* "Clear all" — naghihintay ng kumpirmasyon */
+  const [confirmClear, setConfirmClear] = useState(false)
 
   /* Kalembang ng bell at ang maliit na paalala */
   const [ringing, setRinging] = useState(false)
@@ -167,6 +179,7 @@ function NotificationBell({ variant } = {}) {
 
   function togglePanel() {
     setToast(null)
+    setConfirmClear(false)
     /* Pagbukas: kunin ulit para sariwa (hal. may nabura nang event) */
     if (!open) {
       setNow(Date.now())
@@ -203,6 +216,38 @@ function NotificationBell({ variant } = {}) {
       await markAllNotificationsRead()
     } catch (err) {
       console.error('Hindi namarkahang nabasa lahat:', err)
+      reload()
+    }
+  }
+
+  /* Burahin ang isa: alisin agad sa listahan, tapos sa database */
+  async function handleDelete(n) {
+    const wasFull = items.length >= NOTIFICATION_LIMIT
+    setItems((list) => list.filter((x) => x.id !== n.id))
+    if (!n.read_at) setUnreadCount((c) => Math.max(0, c - 1))
+    if (toast?.id === n.id) setToast(null)
+
+    try {
+      await deleteNotification(n.id)
+      /* Puno ang panel kanina — kunin ulit para may pumalit
+         mula sa mas lumang notifications */
+      if (wasFull) reload()
+    } catch (err) {
+      console.error('Hindi nabura ang notification:', err)
+      reload()
+    }
+  }
+
+  /* Burahin lahat (pagkatapos ng "Sigurado ka?") */
+  async function handleClearAll() {
+    setConfirmClear(false)
+    setItems([])
+    setUnreadCount(0)
+    setToast(null)
+    try {
+      await deleteAllNotifications()
+    } catch (err) {
+      console.error('Hindi nabura lahat ng notification:', err)
       reload()
     }
   }
@@ -259,10 +304,41 @@ function NotificationBell({ variant } = {}) {
         <div className={styles.panel} role="dialog" aria-label="Notifications">
           <div className={styles.panelHeader}>
             <p className={styles.panelTitle}>Notifications</p>
-            {unreadCount > 0 && (
-              <button type="button" className={styles.markAll} onClick={handleMarkAll}>
-                Mark all as read
-              </button>
+            {confirmClear ? (
+              <div className={styles.headerActions}>
+                <span className={styles.confirmText}>Delete all?</span>
+                <button
+                  type="button"
+                  className={`${styles.markAll} ${styles.danger}`}
+                  onClick={handleClearAll}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className={styles.markAll}
+                  onClick={() => setConfirmClear(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className={styles.headerActions}>
+                {unreadCount > 0 && (
+                  <button type="button" className={styles.markAll} onClick={handleMarkAll}>
+                    Mark all as read
+                  </button>
+                )}
+                {items.length > 0 && (
+                  <button
+                    type="button"
+                    className={`${styles.markAll} ${styles.danger}`}
+                    onClick={() => setConfirmClear(true)}
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -280,7 +356,7 @@ function NotificationBell({ variant } = {}) {
           ) : (
             <ul className={styles.list}>
               {items.map((n) => (
-                <li key={n.id}>
+                <li key={n.id} className={styles.row}>
                   <button
                     type="button"
                     className={`${styles.item} ${n.read_at ? '' : styles.unread}`}
@@ -295,6 +371,28 @@ function NotificationBell({ variant } = {}) {
                       <span className={styles.itemTime}>{timeAgo(n.created_at, now)}</span>
                     </span>
                     {!n.read_at && <span className={styles.dot} aria-label="Unread" />}
+                  </button>
+
+                  {/* Hiwalay na button (hindi puwedeng button sa loob ng button) */}
+                  <button
+                    type="button"
+                    className={styles.deleteBtn}
+                    onClick={() => handleDelete(n)}
+                    aria-label={`Delete notification: ${n.title}`}
+                    title="Delete"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
                   </button>
                 </li>
               ))}
