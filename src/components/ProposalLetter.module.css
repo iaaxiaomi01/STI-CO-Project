@@ -89,7 +89,7 @@
   line-height: 1.2;
 }
 
-.orgDept {
+.orgProgram {
   font-size: 1rem;
   font-style: italic;
   color: #3b4559;
@@ -184,7 +184,7 @@
     font-size: 1.25rem;
   }
 
-  .orgDept {
+  .orgProgram {
     font-size: 0.9rem;
   }
 

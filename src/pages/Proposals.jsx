@@ -667,7 +667,7 @@ function Proposals() {
                         <Building2 size={15} strokeWidth={2.2} aria-hidden="true" />
                         <span>
                           <strong>{p.organizations.name}</strong>
-                          {p.organizations.department && ` · ${p.organizations.department}`}
+                          {p.organizations.program && ` · ${p.organizations.program}`}
                         </span>
                       </li>
                     )}

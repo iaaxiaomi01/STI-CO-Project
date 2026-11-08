@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  APPROVER_STAGES,
   DESCRIPTION_MAX,
   OG_REWARD_MAX,
   TITLE_MAX,
   VENUE_MAX,
+  approverStages,
+  approversOf,
+  fetchApproverOptions,
   formatDateTime,
   isFutureSchedule,
   latestRevision,
+  lockedApproverStages,
   stageLabel,
   toOgReward,
   todayKey,
@@ -20,6 +25,7 @@ import {
   checkProposalFile,
   formatFileSize,
 } from '../lib/proposalFiles.js'
+import ApproverPicker from './ApproverPicker.jsx'
 import styles from './ProposalForm.module.css'
 
 /* ============================================================
@@ -42,6 +48,15 @@ import styles from './ProposalForm.module.css'
    pagkatapos ng School Head (ADD_SCHOOL_ADMINISTRATOR.sql).
    Pwede itong baguhin habang nire-revise.
 
+   APPROVERS (PROPOSAL_APPROVER_PICKER.sql, components/ApproverPicker.jsx):
+   pipili ang Officer kung SINO ang approver sa bawat stage — ISANG
+   Adviser (ng org niya), at ISA O HIGIT PANG SAO, School Head, at
+   School Administrator (kapag may budget). Kailangang may napili sa
+   lahat. Kapag iisa lang ang pagpipilian, kusa na itong napipili.
+   Sa pag-revise, naka-lock ang stage na nag-pa-revise at ang mga
+   nauna rito; ang mga susunod ay pwedeng palitan. Kapag hindi na
+   available ang dating napili, pwede na itong palitan.
+
    OG REWARD (OG_REWARD_FROM_PROPOSAL.sql): ilang OG ang makukuha
    ng bawat Member at Officer na may Time In AT Time Out. Blangko
    o 0 = walang reward. Kusang nare-release pagsara ng attendance
@@ -53,8 +68,10 @@ import styles from './ProposalForm.module.css'
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
    onSubmit(values, { file, keepExisting }) — ang page ang
    mag-a-upload at tatawag sa database.
-     file         → bagong file na pinili (o null)
-     keepExisting → true kapag pinanatili ang dating file
+     values.approvers → { adviser: [id], sao: [id, ...], school_head: [...],
+                          school_admin: [...] (may budget lang) }
+     file             → bagong file na pinili (o null)
+     keepExisting     → true kapag pinanatili ang dating file
    ============================================================ */
 function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const editing = Boolean(proposal)
@@ -70,6 +87,63 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const [ogReward, setOgReward] = useState(proposal?.og_reward ? String(proposal.og_reward) : '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  /* ---------- APPROVERS ----------
+     approvers → { adviser: ['id'], sao: ['id', 'id'], school_head: [...], school_admin: [...] }
+     options   → null habang kinukuha, o { adviser: [{ id, name }], ... } */
+  const [approvers, setApprovers] = useState(() =>
+    Object.fromEntries(
+      APPROVER_STAGES.map((stage) => [stage, approversOf(proposal, stage).map((a) => a.id)]),
+    ),
+  )
+  const [options, setOptions] = useState(null)
+  const [optionsError, setOptionsError] = useState('')
+
+  /* Sa pag-revise: ang stage na nag-pa-revise at ang mga nauna rito.
+     Naka-lock lang ito kapag may natira pang available sa dating
+     napili — kung wala na, pipili ulit (ganito rin sa database).
+     Itinatakda isang beses lang, pagkakuha ng listahan. */
+  const [lockedStages, setLockedStages] = useState([])
+
+  useEffect(() => {
+    let active = true
+
+    fetchApproverOptions()
+      .then((list) => {
+        if (!active) return
+        setOptions(list)
+        setLockedStages(
+          lockedApproverStages(proposal).filter((stage) =>
+            approversOf(proposal, stage).some((a) => (list[stage] ?? []).some((o) => o.id === a.id)),
+          ),
+        )
+        setApprovers((current) => {
+          const next = {}
+          for (const stage of APPROVER_STAGES) {
+            const choices = list[stage] ?? []
+            /* Alisin ang hindi na available sa dating napili */
+            next[stage] = current[stage].filter((id) => choices.some((o) => o.id === id))
+            /* Iisa lang ang pagpipilian → kusa nang napipili */
+            if (next[stage].length === 0 && choices.length === 1) next[stage] = [choices[0].id]
+          }
+          return next
+        })
+      })
+      .catch((err) => {
+        console.error('Hindi makuha ang listahan ng approvers:', err)
+        if (active) setOptionsError('Could not load the list of approvers. Please close this form and try again.')
+      })
+
+    return () => {
+      active = false
+    }
+    /* Isang beses lang pagbukas ng form */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function setApprover(stage, ids) {
+    setApprovers((current) => ({ ...current, [stage]: ids }))
+  }
 
   /* File na pinili (wala pang na-upload) */
   const [file, setFile] = useState(null)
@@ -120,6 +194,8 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
     e.preventDefault()
     setError('')
 
+    const neededStages = approverStages(hasBudget)
+
     const clean = {
       title: title.trim(),
       description: description.trim(),
@@ -129,6 +205,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       endTime,
       hasBudget,
       ogReward: toOgReward(ogReward),
+      approvers: Object.fromEntries(neededStages.map((stage) => [stage, approvers[stage]])),
     }
 
     if (
@@ -161,6 +238,17 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       return
     }
 
+    if (!options) {
+      setError(optionsError || 'The list of approvers is still loading. Please wait a moment.')
+      return
+    }
+
+    const missing = neededStages.find((stage) => clean.approvers[stage].length === 0)
+    if (missing) {
+      setError(`Please choose the ${stageLabel(missing)}.`)
+      return
+    }
+
     setSaving(true)
     try {
       await onSubmit(clean, { file, keepExisting: !file && keepExisting })
@@ -172,7 +260,8 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       } else if (err?.message === 'not-allowed') {
         message = "You don't have permission to revise this proposal."
       } else if (err?.code === 'P0001' && err.message) {
-        /* Mensahe galing sa resubmit_proposal() sa database */
+        /* Mensahe galing sa database: resubmit_proposal(), o ang
+           pagsusuri ng approvers (hal. "Please choose the SAO.") */
         message = err.message
       }
       setError(message)
@@ -317,6 +406,18 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             </span>
           </span>
         </label>
+
+        {/* ---------- APPROVERS (Adviser: isa · SAO, School Head, SA: isa o higit pa) ---------- */}
+        <ApproverPicker
+          stages={approverStages(hasBudget)}
+          options={options}
+          value={approvers}
+          onChange={setApprover}
+          lockedStages={lockedStages}
+          revisionFrom={proposal?.revision_from ?? null}
+          disabled={saving}
+          error={optionsError}
+        />
 
         {/* ---------- OG REWARD (opsyonal) ---------- */}
         <label className={styles.field}>

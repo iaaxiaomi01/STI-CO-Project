@@ -40,13 +40,31 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
      mga hinihintay pa ay galing sa RPC na
      proposal_pending_reviewers() (pending_reviewers sa bawat
      proposal). Isang Adviser lang ng org, tulad ng dati.
+     → Pinalitan na ito ng APPROVER PICKER sa ibaba para sa mga
+       bagong proposal. Ang LUMANG proposal (walang approvers) ay
+       ganito pa rin.
+
+   APPROVER PICKER (PROPOSAL_APPROVER_PICKER.sql)
+     Sa pagpasa, PUMIPILI ang Officer ng approver bawat stage:
+       Adviser                           → ISA (ng org niya)
+       SAO, School Head, SA (may budget) → ISA O HIGIT PA
+     Ang mga napili LANG ang makakaaksyon sa stage na iyon at sila lang
+     ang may notification. Kapag marami ang napili, LAHAT sila ay dapat
+     umaksyon bago umusad (tulad ng dating "lahat ng SAO"). Nasa
+     proposal.approvers ang pinili (laging listahan):
+       { adviser: [{ id, name }], sao: [{ id, name }, ...], ... }
+     Kapag hindi na pwede ang isang napili (na-deactivate, napalitan ang
+     role, o lumipat ng org ang Adviser), hindi na siya hihintayin. Kapag
+     wala nang natira, LAHAT ng aktibong may role na ang pwedeng umaksyon
+     sa stage na iyon — para hindi maipit.
+     Ang pending_reviewers (galing sa database) na ang batayan kung
+     sino ang pwedeng umaksyon — kasama na rin ang Adviser stage.
 
    MAY BUDGET (ADD_SCHOOL_ADMINISTRATOR.sql)
      Kapag naka-check ang "This proposal has a budget" (has_budget),
      may DAGDAG na huling stage: School Administrator (SA).
        Walang budget → Adviser → SAO → School Head        (School Head ang pinal)
        May budget    → Adviser → SAO → School Head → SA   (SA ang pinal)
-     Tulad ng SAO at School Head, LAHAT ng aktibong SA ang dadaanan.
      Laging gamitin ang finalStage() / reviewPath() imbes na isulat
      ang 'school_head' bilang pinal.
 
@@ -56,9 +74,8 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
      i-edit (stage = 'revision'). Nakahold ito — walang ibang
      makakaaksyon. Kapag naipasa ulit ng Officer, BABALIK ito sa
      nag-pa-revise (revision_from), hindi na uulit sa simula.
-     Sa SAO: mananatili ang Approve ng mga SAO na nakaaksyon na;
-     ang nag-pa-revise at ang hindi pa umaaksyon na lang ang
-     susuri.
+     Sa pag-revise, pwedeng palitan ng Officer ang approver ng mga
+     stage na hindi pa nadadaanan (lockedApproverStages()).
    ============================================================ */
 
 /* ---------- STATUS ----------
@@ -103,7 +120,8 @@ export function stageLabel(stage) {
   return STAGES[stage]?.label ?? ''
 }
 
-/* Mga stage na LAHAT ng may role ang dadaanan (hindi isa lang) */
+/* Mga stage na may sariling hakbang ang bawat umaksyon
+   (proposal_reviews). Sa lumang proposal, LAHAT ng may role ang dadaanan. */
 export const MULTI_STAGES = ['sao', 'school_head', 'school_admin']
 
 /* May budget ba ang proposal? (naka-check sa Proposal Form) */
@@ -143,6 +161,83 @@ export function isMultiStage(stage) {
   return MULTI_STAGES.includes(stage)
 }
 
+/* ============================================================
+   APPROVER PICKER (PROPOSAL_APPROVER_PICKER.sql)
+   ============================================================ */
+
+/* Ang mga stage na may picker, sunod-sunod */
+export const APPROVER_STAGES = ['adviser', 'sao', 'school_head', 'school_admin']
+
+/* Mga stage na kailangang may napili:
+   Walang budget → Adviser, SAO, School Head
+   May budget    → + School Administrator */
+export function approverStages(withBudget) {
+  return withBudget ? APPROVER_STAGES : APPROVER_STAGES.slice(0, 3)
+}
+
+/* Mga stage na pwedeng ISA O HIGIT PA ang piliin. Ang Adviser ay isa lang. */
+export const MULTI_APPROVER_STAGES = ['sao', 'school_head', 'school_admin']
+
+export function allowsManyApprovers(stage) {
+  return MULTI_APPROVER_STAGES.includes(stage)
+}
+
+/* Ang mga napiling approver ng isang stage: [{ id, name }]
+   ([] sa lumang proposal na walang pinili). Tinatanggap din ang
+   lumang hugis na iisang { id, name } lang. */
+export function approversOf(proposal, stage) {
+  const entry = proposal?.approvers?.[stage]
+  const list = Array.isArray(entry) ? entry : entry ? [entry] : []
+  return list
+    .filter((a) => a?.id)
+    .map((a) => ({ id: a.id, name: toTitleCase(a.name ?? '') }))
+}
+
+/* May pinili ba ang Officer? (wala sa mga lumang proposal) */
+export function hasChosenApprovers(proposal) {
+  return APPROVER_STAGES.some((stage) => approversOf(proposal, stage).length > 0)
+}
+
+/* Sa pag-revise: ang mga stage na HINDI na mapapalitan ang approver —
+   ang nag-pa-revise at ang mga nauna rito. Kapareho ng
+   resubmit_proposal() sa database (doon din, kapag hindi na pwede
+   ang dating napili, pwede na itong palitan). */
+export function lockedApproverStages(proposal) {
+  if (!proposal || !isInRevision(proposal)) return []
+  const index = APPROVER_STAGES.indexOf(proposal.revision_from)
+  return index >= 0 ? APPROVER_STAGES.slice(0, index + 1) : []
+}
+
+/* Mga pagpipilian sa picker (para sa Officer):
+   { adviser: [{ id, name }], sao: [...], school_head: [...], school_admin: [...] }
+   Galing sa RPC dahil hindi nababasa ng Officer ang profiles ng staff. */
+export async function fetchApproverOptions() {
+  const { data, error } = await supabase.rpc('proposal_approver_options')
+  if (error) throw error
+
+  const options = Object.fromEntries(APPROVER_STAGES.map((stage) => [stage, []]))
+  for (const row of data ?? []) {
+    options[row.stage]?.push({
+      id: row.approver_id,
+      name: toTitleCase(row.approver_name ?? ''),
+    })
+  }
+  return options
+}
+
+/* { adviser: ['uuid'], sao: ['uuid', 'uuid'], ... }
+     → { adviser: [{ id }], sao: [{ id }, { id }], ... }
+   Ang pangalan ay ang database ang naglalagay. Ang SA ay kasama
+   lang kapag may budget. */
+function approversPayload(approvers, withBudget) {
+  return Object.fromEntries(
+    approverStages(withBudget).map((stage) => [
+      stage,
+      (approvers?.[stage] ?? []).filter(Boolean).map((id) => ({ id })),
+    ]),
+  )
+}
+
 /* Mga aksyon sa isang stage (SAO o School Head), mula pinakaluma */
 export function stageReviews(proposal, stage = proposal.stage) {
   return (proposal.proposal_reviews ?? [])
@@ -155,8 +250,9 @@ export function hasReviewed(proposal, profileId, stage = proposal.stage) {
   return stageReviews(proposal, stage).some((r) => r.reviewer_id === profileId)
 }
 
-/* Sino pa ang hinihintay sa kasalukuyang stage (SAO / School Head):
-   [{ id, name }]. null kapag hindi alam (hal. hindi makuha). */
+/* Sino pa ang hinihintay sa kasalukuyang stage (Adviser, SAO,
+   School Head o SA): [{ id, name }]. null kapag hindi alam
+   (hal. hindi makuha). */
 export function pendingReviewers(proposal) {
   return proposal.pending_reviewers ?? null
 }
@@ -234,25 +330,26 @@ const COLUMNS = `
   attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id, author_position,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
-  stage, head_decision, admin_decision, has_budget, og_reward,
+  stage, head_decision, admin_decision, has_budget, og_reward, approvers,
   adviser_decision, adviser_comment, adviser_name, adviser_reviewed_at,
   sao_decision, sao_comment, sao_name, sao_reviewed_at,
   revision_from, revision_count,
   created_at, updated_at, updated_by,
-  organizations ( name, department, logo_url ),
+  organizations ( name, program, logo_url ),
   events ( id ),
   proposal_revisions ( id, stage, requester_name, comment, requested_at, resubmitted_at ),
   proposal_reviews ( id, stage, reviewer_id, reviewer_name, decision, comment, reviewed_at )
 `
 
-/* Idinadagdag sa bawat proposal ang pending_reviewers: ang mga SAO /
-   School Head na hinihintay pa. Galing sa RPC dahil hindi nababasa
-   ng Officer ang profiles ng staff (RLS).
+/* Idinadagdag sa bawat proposal ang pending_reviewers: ang mga
+   hinihintay pa sa kasalukuyang stage (Adviser, SAO, School Head o
+   SA). Galing sa RPC dahil hindi nababasa ng Officer ang profiles ng
+   staff (RLS).
 
    Kapag pumalya, null ang ilalagay — gagana pa rin ang page, hindi
    lang maipapakita kung sino ang hinihintay. */
 async function withPendingReviewers(list) {
-  const ids = list.filter((p) => isMultiStage(p.stage)).map((p) => p.id)
+  const ids = list.filter((p) => isInReview(p)).map((p) => p.id)
   if (ids.length === 0) return list.map((p) => ({ ...p, pending_reviewers: [] }))
 
   const { data, error } = await supabase.rpc('proposal_pending_reviewers', { p_ids: ids })
@@ -272,7 +369,7 @@ async function withPendingReviewers(list) {
 
   return list.map((p) => ({
     ...p,
-    pending_reviewers: isMultiStage(p.stage) ? (byProposal.get(p.id) ?? []) : [],
+    pending_reviewers: isInReview(p) ? (byProposal.get(p.id) ?? []) : [],
   }))
 }
 
@@ -327,11 +424,15 @@ function scheduleColumns({ venue, eventDate, startTime, endTime }) {
   }
 }
 
+/* approvers = { adviser: ['uuid'], sao: ['uuid', ...], school_head: [...],
+   school_admin: [...] } galing sa picker ng ProposalForm.
+   Sinusuri ulit ito ng database (proposals_set_approvers). */
 export async function createProposal({
   title,
   description,
   hasBudget = false,
   ogReward = 0,
+  approvers = {},
   attachment = null,
   ...schedule
 }) {
@@ -342,6 +443,7 @@ export async function createProposal({
       description,
       has_budget: Boolean(hasBudget),
       og_reward: Number(ogReward) || 0,
+      approvers: approversPayload(approvers, hasBudget),
       ...scheduleColumns(schedule),
       ...attachmentColumns(attachment),
     })
@@ -349,7 +451,7 @@ export async function createProposal({
     .single()
 
   if (error) throw error
-  return { ...data, pending_reviewers: [] }
+  return withPendingReviewers([data]).then(([withPending]) => withPending)
 }
 
 export async function deleteProposal(id) {
@@ -367,11 +469,11 @@ export async function deleteProposal(id) {
    AKSYON NG ADVISER, SAO AT SCHOOL HEAD — Approve, Reject, Noted
 
    Dumadaan sa function na review_proposal() sa database. Doon
-   sinusuri kung ikaw ang tamang tao para sa kasalukuyang stage,
-   at doon itinatakda ang pangalan mo, ang petsa, at ang
-   susunod na stage. Ang komento ay KAILANGAN sa lahat —
-   hinaharang ito ng database kahit malusutan ang check sa
-   browser.
+   sinusuri kung ikaw ang tamang tao para sa kasalukuyang stage
+   (ang napiling approver), at doon itinatakda ang pangalan mo,
+   ang petsa, at ang susunod na stage. Ang komento ay KAILANGAN
+   sa lahat — hinaharang ito ng database kahit malusutan ang
+   check sa browser.
 
    decision = 'approved' | 'rejected'  → kapag pending pa
             = 'noted'                  → kapag rejected na
@@ -406,10 +508,23 @@ export async function requestRevision(id, comment) {
 
 /* Officer: ipasa ulit ang na-edit na proposal.
    attachment = { path, name, size } o null kapag walang file.
-   Kapag pareho ang path sa dati, hindi binago ang file. */
+   Kapag pareho ang path sa dati, hindi binago ang file.
+   approvers  = kapareho ng sa createProposal(). Ang mga naka-lock na
+                stage ay hindi binabago ng database kahit ipadala. */
 export async function resubmitProposal(
   id,
-  { title, description, venue, eventDate, startTime, endTime, hasBudget, ogReward, attachment = null },
+  {
+    title,
+    description,
+    venue,
+    eventDate,
+    startTime,
+    endTime,
+    hasBudget,
+    ogReward,
+    approvers,
+    attachment = null,
+  },
 ) {
   const { error } = await supabase.rpc('resubmit_proposal', {
     p_id: id,
@@ -425,6 +540,7 @@ export async function resubmitProposal(
     /* undefined → hindi ipapadala → hindi babaguhin ng database */
     p_has_budget: hasBudget === undefined ? undefined : Boolean(hasBudget),
     p_og_reward: ogReward === undefined ? undefined : Number(ogReward) || 0,
+    p_approvers: approvers === undefined ? undefined : approversPayload(approvers, hasBudget),
   })
 
   if (error) throw rpcError(error)
@@ -472,10 +588,12 @@ export function canReviseProposal(proposal, profile) {
 }
 
 /* Ikaw ba ang dapat umaksyon ngayon?
-     stage 'adviser'     → Adviser ng org na iyon
-     stage 'sao'         → bawat SAO na HINDI pa nakaaksyon
-     stage 'school_head' → bawat School Head na HINDI pa nakaaksyon
-     stage 'school_admin'→ bawat SA na HINDI pa nakaaksyon (may budget lang)
+     Tamang role para sa stage, AT nasa pending_reviewers ka — ang
+     database ang nagsasabi kung sino: ang approver na pinili ng
+     Officer (o lahat ng may role, sa lumang proposal / kapag hindi
+     na pwede ang napili).
+   Kapag hindi makuha ang pending_reviewers (null), ang dating check
+   ang gagamitin; ang database pa rin ang huling nagbabantay.
    Kasama ang rejected na — "Noted" ang aksyon doon
    (tingnan ang awaitsNoted()). */
 export function canReviewProposal(proposal, profile) {
@@ -484,9 +602,14 @@ export function canReviewProposal(proposal, profile) {
   const stage = STAGES[proposal.stage]
   if (!stage || profile.role_id !== stage.roleId) return false
 
-  if (proposal.stage === 'adviser') {
-    return proposal.organization_id === profile.organization_id
+  if (proposal.stage === 'adviser' && proposal.organization_id !== profile.organization_id) {
+    return false
   }
+
+  const pending = pendingReviewers(proposal)
+  if (pending) return pending.some((r) => r.id === profile.id)
+
+  if (proposal.stage === 'adviser') return true
   return !hasReviewed(proposal, profile.id)
 }
 
@@ -702,40 +825,37 @@ export function formatDateTime(iso) {
 }
 
 /* Para sa stat tile sa Dashboard.
-     Officer                   → lahat ng naghihintay pa sa org niya
-                                 (kasama ang nakabalik para i-revise)
-     Adviser                   → lahat ng nasa Adviser stage ng org niya
-     SAO, School Head, SA      → ang nasa stage niya na HINDI pa niya
-                                 naaaksyunan (Approve/Reject o Noted)
+     Officer                          → lahat ng naghihintay pa sa org niya
+                                        (kasama ang nakabalik para i-revise)
+     Adviser, SAO, School Head, SA    → ang nasa stage niya na IKAW ang
+                                        hinihintay (napiling approver, at
+                                        hindi mo pa naaaksyunan)
    Ang RLS na ang nagsasala kung aling org ang kasama. */
 export async function countPendingProposals(roleId, profileId) {
   const stage = Object.keys(STAGES).find((key) => STAGES[key].roleId === roleId)
 
-  /* SAO / School Head / SA: bawasan ng mga naaksyunan na niya */
-  if (isMultiStage(stage)) {
-    const [atStage, mine] = await Promise.all([
-      supabase.from('proposals').select('id').eq('stage', stage),
-      supabase
-        .from('proposal_reviews')
-        .select('proposal_id')
-        .eq('stage', stage)
-        .eq('reviewer_id', profileId),
-    ])
-
+  if (stage) {
+    const atStage = await supabase.from('proposals').select('id').eq('stage', stage)
     if (atStage.error) throw atStage.error
-    if (mine.error) throw mine.error
 
-    const done = new Set((mine.data ?? []).map((r) => r.proposal_id))
-    return (atStage.data ?? []).filter((p) => !done.has(p.id)).length
+    const ids = (atStage.data ?? []).map((p) => p.id)
+    if (ids.length === 0) return 0
+
+    const pending = await supabase.rpc('proposal_pending_reviewers', { p_ids: ids })
+    if (pending.error) throw pending.error
+
+    return new Set(
+      (pending.data ?? [])
+        .filter((row) => row.reviewer_id === profileId)
+        .map((row) => row.proposal_id),
+    ).size
   }
 
-  let query = supabase.from('proposals').select('id', { count: 'exact', head: true })
-
-  /* Adviser: lahat ng nasa stage niya, kasama ang rejected na
-     naghihintay ng "Noted". Officer: ang hindi pa napapasyahan. */
-  query = stage ? query.eq('stage', stage) : query.eq('status', 'pending')
-
-  const { count, error } = await query
+  /* Officer: ang hindi pa napapasyahan */
+  const { count, error } = await supabase
+    .from('proposals')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending')
 
   if (error) throw error
   return count ?? 0

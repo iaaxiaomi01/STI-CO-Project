@@ -1,11 +1,15 @@
 import {
+  approversOf,
   authorName,
   awaitsNoted,
   decisionLabel,
   finalStage,
   formatDateTime,
   hasBudget,
+  hasChosenApprovers,
+  pendingReviewers,
   rejectedBy,
+  reviewPath,
   reviewProgress,
   reviewSteps,
   stageLabel,
@@ -26,9 +30,15 @@ import styles from './ReviewTrail.module.css'
    o ang huling Approve ng School Head. Ang mga sumunod sa isang
    Reject ay "Noted" na lang.
 
-   MARAMING SAO / SCHOOL HEAD: may sariling linya ang bawat isa
-   na nakaaksyon na. Sa huling linya, nakalista kung SINO pa ang
-   hinihintay (hal. "1 of 3 · Waiting for: Ana Cruz, Ben Reyes").
+   APPROVERS (PROPOSAL_APPROVER_PICKER.sql): sa unang linya,
+   nakalista ang mga approver na pinili ng Officer bawat stage —
+   pwedeng higit sa isa sa SAO, School Head at SA (wala ito sa mga
+   lumang proposal). Sa huling linya, nakasulat
+   kung SINO ang hinihintay ngayon — kasama na ang Adviser.
+
+   MARAMING SAO / SCHOOL HEAD (lumang proposal, o hindi na available
+   ang napili): nakalista kung SINO pa ang hinihintay
+   (hal. "1 of 3 · Waiting for: Ana Cruz, Ben Reyes").
 
      <ReviewTrail proposal={p} />            → para sa card
      <ReviewTrail proposal={p} variant="letter" /> → para sa sulat
@@ -59,12 +69,44 @@ function ReviewTrail({ proposal, variant = 'card' }) {
   const noted = awaitsNoted(proposal)
   const waiting = inRevision ? 'Officer' : stageLabel(proposal.stage)
   const progress = inRevision ? null : reviewProgress(proposal)
-  const names = progress?.pending.map((r) => r.name).filter(Boolean).join(', ')
+  const pending = inRevision ? null : (progress?.pending ?? pendingReviewers(proposal))
+  const names = pending?.map((r) => r.name).filter(Boolean).join(', ')
 
-  if (steps.length === 0 && !waiting) return null
+  /* Ang mga napili ng Officer: [{ stage, label, name: 'Ana Cruz, Ben Reyes' }] */
+  const chosen = hasChosenApprovers(proposal)
+    ? reviewPath(proposal)
+        .map((stage) => ({
+          stage,
+          label: stageLabel(stage),
+          name: approversOf(proposal, stage)
+            .map((a) => a.name)
+            .filter(Boolean)
+            .join(', '),
+        }))
+        .filter((a) => a.name)
+    : []
+
+  if (steps.length === 0 && !waiting && chosen.length === 0) return null
 
   return (
     <ol className={`${styles.trail} ${variant === 'letter' ? styles.letter : ''}`}>
+      {chosen.length > 0 && (
+        <li className={styles.step}>
+          <p className={styles.head}>
+            <span className={styles.role}>Approvers</span>
+            <span className={styles.decision}>Chosen by the Officer</span>
+          </p>
+          <p className={styles.by}>
+            {chosen.map((a, index) => (
+              <span key={a.stage}>
+                {index > 0 && ' · '}
+                {a.label}: <strong>{a.name}</strong>
+              </span>
+            ))}
+          </p>
+        </li>
+      )}
+
       {steps.map((step) => (
         <li
           key={step.key}
@@ -100,7 +142,7 @@ function ReviewTrail({ proposal, variant = 'card' }) {
             </span>
           </p>
           <p className={styles.by}>
-            {progress && progress.total === 0
+            {pending && pending.length === 0 && (!progress || progress.total === 0)
               ? `No active ${waiting} account yet. It will continue once one is assigned.`
               : noted
               ? `Already rejected by ${rejectedBy(proposal)}. Waiting for "Noted" from ${

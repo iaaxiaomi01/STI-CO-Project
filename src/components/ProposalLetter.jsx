@@ -108,7 +108,7 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
 
           <div className={styles.orgText}>
             <h1 className={styles.orgName}>{org?.name ?? 'Organization'}</h1>
-            {org?.department && <p className={styles.orgDept}>{org.department}</p>}
+            {org?.program && <p className={styles.orgProgram}>{org.program}</p>}
           </div>
         </header>
 
