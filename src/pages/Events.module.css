@@ -405,6 +405,14 @@
   font-weight: 600;
 }
 
+/* Kasabay ng event na sinalihan mo na — kapalit ng Join */
+.conflictNote {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: #b42318;
+  font-weight: 600;
+}
+
 /* ---------- OG REWARD ---------- */
 .reward {
   display: inline-flex;
@@ -785,6 +793,12 @@
   color: var(--dash-muted);
 }
 
+/* Kasabay ng event na sinalihan mo na */
+.noteConflict {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
 .ticketFooter {
   display: flex;
   flex-wrap: wrap;
@@ -963,6 +977,30 @@
   transform: rotate(-6deg);
 }
 
+/* Kapalit ng Join kapag kasabay ng event na sinalihan mo na.
+   Hindi ito button — paalala lang (nasa katawan ng ticket ang
+   buong detalye). */
+.tConflict {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 2px dashed #b42318;
+  border-radius: 14px;
+  background-color: #fff;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: default;
+}
+
+.tConflict svg {
+  flex-shrink: 0;
+}
+
 /* ---------- KULAY AYON SA STATUS ---------- */
 .t_upcoming .stub {
   border-color: #e3bb00;
@@ -1132,7 +1170,8 @@
   }
 
   .tJoin,
-  .tCert {
+  .tCert,
+  .tConflict {
     width: auto;
     padding: 6px 18px;
   }

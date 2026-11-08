@@ -504,6 +504,10 @@ export function wasEdited(event) {
    Hinaharang ng database ang Join kapag nagsimula na ang event
    (Ongoing o Completed) — EVENT_JOIN_BEFORE_START.sql.
 
+   Hinaharang din ang Join kapag KASABAY ng event na sinalihan
+   mo na — EVENT_JOIN_NO_CONFLICT.sql (tingnan ang
+   findScheduleConflict() sa ibaba).
+
    Sino ang nakakakita:
      Member           → sariling join lang, at ang BILANG ng sasali
      Officer, Adviser → buong listahan ng sasali
@@ -517,6 +521,34 @@ export function canJoinEvents(profile) {
 /* Officer at Adviser lang ang nakakakita ng listahan */
 export function canViewParticipants(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 2 || hasAdviserPowers(profile)))
+}
+
+/* ============================================================
+   MAGKASABAY NA EVENT — isa lang ang pwedeng salihan
+
+   Magkasabay ang dalawang event kapag pareho ang Date AT
+   nagpapatong ang oras:
+     A.start < B.end  at  B.start < A.end
+
+   Hindi magkasabay ang MAGKASUNOD (hal. 8:00–10:00 at
+   10:00–12:00) — pwedeng salihan pareho.
+
+   Dito, para lang palitan ng paalala ang Join button. Ang
+   trigger sa database (EVENT_JOIN_NO_CONFLICT.sql) ang totoong
+   nagbabantay — kapag binago mo ang isa, baguhin mo rin ang isa.
+   ============================================================ */
+export function eventsOverlap(a, b) {
+  if (a.event_date !== b.event_date) return false
+  const hm = (t) => t.slice(0, 5)
+  return hm(a.start_time) < hm(b.end_time) && hm(b.start_time) < hm(a.end_time)
+}
+
+/* Ang sinalihan mong event na kasabay ng `event` (pinakamaaga
+   muna), o null kung wala */
+export function findScheduleConflict(event, joinedEvents) {
+  const clashes = joinedEvents.filter((j) => j.id !== event.id && eventsOverlap(event, j))
+  if (clashes.length === 0) return null
+  return clashes.reduce((first, e) => (e.start_time < first.start_time ? e : first))
 }
 
 /* Mga event_id na sinalihan mo → Set */
@@ -568,7 +600,8 @@ export function participantLabel(p) {
 }
 
 export function joinErrorMessage(err) {
-  /* Galing sa trigger — nakasulat na sa Tagalog */
+  /* Galing sa trigger — kasama rito ang "You already joined … at
+     the same time" (EVENT_JOIN_NO_CONFLICT.sql) */
   if (err?.code === 'P0001' && err.message) return err.message
   /* RLS: nagsimula na ang event o wala kang pahintulot */
   if (err?.code === '42501') return 'You can no longer join — the event has already started.'

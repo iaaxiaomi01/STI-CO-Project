@@ -67,13 +67,20 @@ function choiceLabel(p) {
 function EventForm({ initial = null, proposal = null, proposalChoices = null, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
-  /* Gumawa mula sa Events page: pipili muna ng proposal */
+  /* Gumawa mula sa Events page: pipili muna ng proposal.
+
+     `choices` ay LAGING array (walang laman kapag Edit). Huwag
+     gamitin nang direkta ang `proposalChoices` dito — null ito
+     kapag Edit, at ang React Compiler ay minsang binabasa ang
+     `proposalChoices[0]` kahit hindi pa natutupad ang kondisyon,
+     kaya nagka-crash ang Edit ("reading '0'"). */
   const picking = !isEdit && Array.isArray(proposalChoices)
+  const choices = picking ? proposalChoices : []
   const [pickedId, setPickedId] = useState(() =>
-    picking && proposalChoices.length === 1 ? proposalChoices[0].id : '',
+    choices.length === 1 ? (choices[0]?.id ?? '') : '',
   )
   const activeProposal = picking
-    ? (proposalChoices.find((p) => p.id === pickedId) ?? null)
+    ? (choices.find((p) => p.id === pickedId) ?? null)
     : proposal
 
   const [title, setTitle] = useState(initial?.title ?? '')
@@ -147,7 +154,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
     const id = e.target.value
     setPickedId(id)
     setError('')
-    const next = scheduleOf(proposalChoices.find((p) => p.id === id))
+    const next = scheduleOf(choices.find((p) => p.id === id))
     setEventDate(next.eventDate)
     setStartTime(next.startTime)
     setEndTime(next.endTime)
@@ -252,7 +259,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
               <option value="" disabled>
                 Choose a proposal…
               </option>
-              {proposalChoices.map((p) => (
+              {choices.map((p) => (
                 <option key={p.id} value={p.id}>
                   {choiceLabel(p)}
                 </option>

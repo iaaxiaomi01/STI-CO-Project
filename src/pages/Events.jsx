@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Award, Check, Clock, Download, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
+import {
+  Award,
+  CalendarX,
+  Check,
+  Clock,
+  Download,
+  MapPin,
+  Pencil,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { hasAdviserPowers } from '../config/roles.js'
 import {
@@ -19,6 +29,7 @@ import {
   eventStatusLabel,
   fetchEvents,
   fetchMyJoinedEventIds,
+  findScheduleConflict,
   formatEventDate,
   formatTime,
   joinEvent,
@@ -90,6 +101,12 @@ import styles from './Events.module.css'
                           (hindi pa nagsisimula) ang event.
                           Kapag Ongoing na, wala nang Join button.
                           Pagka-Join, lilipat sa Attendance tab.
+     MAGKASABAY NA EVENT → kapag KASABAY (parehong petsa, nagpapatong
+                          ang oras) ng event na sinalihan mo na,
+                          walang Join — "Schedule conflict" at
+                          paalala kung aling event ang kasabay.
+                          Hinaharang din ito ng database
+                          (EVENT_JOIN_NO_CONFLICT.sql).
      Walang bilang ng sasali dito para sa kahit anong role.
      Ang bilang at buong listahan ng sasali bawat event ay
      nasa Attendance page (Officer at Adviser).
@@ -187,6 +204,16 @@ function isFinished(status) {
   return status === 'completed' || status === MISSED_STATUS.value
 }
 
+/* Paalala kapag kasabay ng event na sinalihan mo na:
+   "Same schedule as “Sports Fest” (8:00 AM – 10:00 AM), which you already joined." */
+function conflictText(conflict) {
+  return (
+    `Same schedule as “${conflict.title}” ` +
+    `(${formatTime(conflict.start_time)} – ${formatTime(conflict.end_time)}), ` +
+    'which you already joined. You can only join one event at a time.'
+  )
+}
+
 /* Ilang OG ang sa iyo sa isang tapos na event na sinalihan mo.
    Pareho ng og_release_event(): kailangan may Time In AT Time Out.
    Ibinabalik: { tone: 'got' | 'pending' | 'none', text } o null */
@@ -274,6 +301,13 @@ function Events() {
      pumalya), walang "Missed" — para hindi magmukhang lahat ay
      na-miss mo sa unang segundo. */
   const [joinedLoaded, setJoinedLoaded] = useState(false)
+
+  /* Ang mismong mga event na sinalihan mo — para malaman kung
+     KASABAY ng isa sa mga ito ang ibang event (findScheduleConflict) */
+  const joinedEvents = useMemo(
+    () => events.filter((e) => joinedIds.has(e.id)),
+    [events, joinedIds],
+  )
 
   /* "Missed" — Member at Officer (sila ang nagja-Join) */
   const showMissed = profile?.role_id === 1 || profile?.role_id === 2
@@ -414,7 +448,11 @@ function Events() {
      ang error at mananatiling bukas ang dialog.
 
      WALANG "Umalis": kapag nakasali na, hindi na makakaalis
-     (hinaharang din ng database — EVENT_JOIN_NO_LEAVE.sql). */
+     (hinaharang din ng database — EVENT_JOIN_NO_LEAVE.sql).
+
+     Kapag may kasabay na event na nasalihan na (hal. sa ibang
+     tab), ang database ang haharang at ang mensahe nito ang
+     lalabas sa dialog (EVENT_JOIN_NO_CONFLICT.sql). */
   async function handleJoin() {
     const event = confirmingJoin
     setJoiningId(event.id)
@@ -685,12 +723,20 @@ function Events() {
                 const isDone = isFinished(ev.status)
                 const missed = ev.status === MISSED_STATUS.value
                 const joinBusy = joiningId === ev.id
+                /* Kasabay (parehong petsa, nagpapatong ang oras) ng event
+                   na sinalihan mo na → walang Join, may paalala.
+                   Hinaharang din ito ng database (EVENT_JOIN_NO_CONFLICT.sql). */
+                const conflict =
+                  joinable && !joined && ev.status === 'upcoming'
+                    ? findScheduleConflict(ev, joinedEvents)
+                    : null
                 /* Join: Upcoming lang. Kapag Ongoing na (nagsimula na ang
                    event), sarado na ang pagsali — wala nang Join button.
                    Hinaharang din ito ng database (EVENT_JOIN_BEFORE_START.sql). */
-                const canJoinNow = joinable && !joined && ev.status === 'upcoming'
-                /* May Join, "Nakasali ka" o "Hindi ka nakasali" na ipapakita */
-                const hasJoinAction = joinable && (joined || canJoinNow || missed)
+                const canJoinNow = joinable && !joined && ev.status === 'upcoming' && !conflict
+                /* May Join, "Nakasali ka", "Hindi ka nakasali" o
+                   "Schedule conflict" na ipapakita */
+                const hasJoinAction = joinable && (joined || canJoinNow || missed || Boolean(conflict))
 
                 /* Certificate: drop box para sa Officer/Adviser ng org,
                    at status ng sariling certificate para sa sumali */
@@ -771,6 +817,13 @@ function Events() {
                             </li>
                           )}
                         </ul>
+
+                        {/* ---------- KASABAY NG SINALIHAN MO ---------- */}
+                        {conflict && (
+                          <p className={`${styles.ticketNote} ${styles.noteConflict}`}>
+                            {conflictText(conflict)}
+                          </p>
+                        )}
 
                         {/* ---------- CERTIFICATE NOTE (wala pang file) ---------- */}
                         {showCertStatus && !myCert && completedMine && (
@@ -888,6 +941,14 @@ function Events() {
                             </button>
                           )}
 
+                          {/* Kasabay ng sinalihan mo — kapalit ng Join */}
+                          {conflict && (
+                            <span className={styles.tConflict} title={conflictText(conflict)}>
+                              <CalendarX size={16} strokeWidth={2.4} aria-hidden="true" />
+                              Schedule conflict
+                            </span>
+                          )}
+
                           {/* Hindi na kasabay ng Download — sa sumali lang
                               lumalabas ang Download */}
                           {joinable && joined && !certReady && (
@@ -991,6 +1052,11 @@ function Events() {
                             >
                               {joinBusy ? 'Joining…' : 'Join'}
                             </button>
+                          )}
+
+                          {/* Kasabay ng sinalihan mo — kapalit ng Join */}
+                          {conflict && (
+                            <span className={styles.conflictNote}>{conflictText(conflict)}</span>
                           )}
 
                           {joinable && joined && (
