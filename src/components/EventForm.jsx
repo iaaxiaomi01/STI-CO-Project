@@ -6,6 +6,8 @@ import {
   computeStatus,
   eventErrorMessage,
   eventStatusLabel,
+  formatEventDate,
+  formatTime,
   isScheduleFromProposal,
   toTimeInput,
 } from '../lib/events.js'
@@ -16,43 +18,87 @@ import styles from './EventForm.module.css'
 /* ============================================================
    EVENT FORM — modal para sa GUMAWA at MAG-EDIT ng event
 
-   Gumawa  → may `proposal`: BLANGKO ang Title at Description —
-             ang Officer ang magsusulat. Ang pamagat ng proposal
-             ay ipinapakita lang sa itaas bilang sanggunian.
-             Ang Date, oras at Location ay KINUKUHA sa proposal
-             (venue, event_date, start_time, end_time) at
-             NAKA-LOCK — hindi na mababago.
+   Gumawa  → sa EVENTS page na ito ginagawa (wala na sa Proposals).
+             May `proposalChoices`: ang mga APPROVED na proposal ng
+             Officer (sa org niya) na wala pang event. Pipili muna
+             siya ng proposal sa itaas ng form.
+             BLANGKO ang Title at Description — ang Officer ang
+             magsusulat. Ang Date, oras at Location ay KINUKUHA sa
+             napiling proposal (venue, event_date, start_time,
+             end_time) at NAKA-LOCK — hindi na mababago.
+             (Gumagana pa rin ang lumang `proposal` na prop: iisang
+             proposal, walang pagpipilian.)
    Edit    → may `initial`: ang kasalukuyang event. Naka-lock din
              ang Date, oras at Location kapag galing ang event sa
              proposal na may schedule (initial.proposals).
 
    Ang lumang proposal na walang schedule ay hindi naka-lock.
 
-   Laman: Title, Description, Date, Start Time, End Time,
-          Location, OG reward per attendee (Gumawa lang, basa
-          lang — galing sa proposal), Picture (optional)
+   Laman: Approved proposal (Gumawa lang), Title, Description,
+          Date, Start Time, End Time, Location, OG reward per
+          attendee (Gumawa lang, basa lang — galing sa proposal),
+          Picture (optional)
 
    Walang Status — kusa itong kinukuwenta mula sa Date at oras
    (tingnan ang computeStatus() sa lib/events.js).
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
-   onSubmit(values, { imageFile, removeImage }).
+   onSubmit(values, { imageFile, removeImage, proposal }).
    ============================================================ */
-function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
+
+/* Ang Date, oras at Location na galing sa proposal */
+function scheduleOf(proposal) {
+  return {
+    eventDate: proposal?.event_date ?? '',
+    startTime: toTimeInput(proposal?.start_time),
+    endTime: toTimeInput(proposal?.end_time),
+    location: proposal?.venue ?? '',
+  }
+}
+
+/* "Sports Fest — Monday, December 1, 2026 · 8:00 AM" */
+function choiceLabel(p) {
+  const when = p.event_date
+    ? ` — ${formatEventDate(p.event_date)}${p.start_time ? ` · ${formatTime(p.start_time)}` : ''}`
+    : ''
+  return `${p.title}${when}`
+}
+
+function EventForm({ initial = null, proposal = null, proposalChoices = null, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
+
+  /* Gumawa mula sa Events page: pipili muna ng proposal */
+  const picking = !isEdit && Array.isArray(proposalChoices)
+  const [pickedId, setPickedId] = useState(() =>
+    picking && proposalChoices.length === 1 ? proposalChoices[0].id : '',
+  )
+  const activeProposal = picking
+    ? (proposalChoices.find((p) => p.id === pickedId) ?? null)
+    : proposal
 
   const [title, setTitle] = useState(initial?.title ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
-  /* Edit → galing sa event. Gumawa → galing sa proposal. */
-  const source = initial ?? proposal
-  const [eventDate, setEventDate] = useState(source?.event_date ?? '')
-  const [startTime, setStartTime] = useState(toTimeInput(source?.start_time))
-  const [endTime, setEndTime] = useState(toTimeInput(source?.end_time))
-  const [location, setLocation] = useState(initial?.location ?? proposal?.venue ?? '')
 
-  /* Naka-lock ang Date, oras at Location kapag itinakda na ng proposal */
-  const scheduleLocked = isScheduleFromProposal(isEdit ? initial?.proposals : proposal)
-  const lockedClass = scheduleLocked ? ` ${styles.locked}` : ''
+  /* Edit → galing sa event. Gumawa → galing sa proposal. */
+  const start = isEdit
+    ? {
+        eventDate: initial.event_date ?? '',
+        startTime: toTimeInput(initial.start_time),
+        endTime: toTimeInput(initial.end_time),
+        location: initial.location ?? '',
+      }
+    : scheduleOf(activeProposal)
+  const [eventDate, setEventDate] = useState(start.eventDate)
+  const [startTime, setStartTime] = useState(start.startTime)
+  const [endTime, setEndTime] = useState(start.endTime)
+  const [location, setLocation] = useState(start.location)
+
+  /* Naka-lock ang Date, oras at Location kapag itinakda na ng proposal.
+     Naka-lock din habang wala pang napiling proposal. */
+  const scheduleLocked = isScheduleFromProposal(isEdit ? initial?.proposals : activeProposal)
+  const waitingForPick = picking && !activeProposal
+  const fieldsLocked = scheduleLocked || waitingForPick
+  const lockedClass = fieldsLocked ? ` ${styles.locked}` : ''
 
   /* Picture: ang bagong pinili (file + preview), o ang dati */
   const [imageFile, setImageFile] = useState(null)
@@ -63,6 +109,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
   const [error, setError] = useState('')
 
   const titleRef = useRef(null)
+  const pickRef = useRef(null)
 
   /* Silip lang kung ano ang magiging status */
   const previewStatus =
@@ -71,8 +118,12 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
       : null
   const fileRef = useRef(null)
 
+  /* Sa unang bukas: sa pagpipilian ng proposal kapag wala pang
+     napili, kung hindi ay sa Title */
+  const focusPickFirst = useRef(waitingForPick)
   useEffect(() => {
-    titleRef.current?.focus()
+    if (focusPickFirst.current) pickRef.current?.focus()
+    else titleRef.current?.focus()
   }, [])
 
   useEffect(() => {
@@ -90,6 +141,18 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
     setPreview(url)
     return () => URL.revokeObjectURL(url)
   }, [imageFile])
+
+  /* Pumili ng proposal → kunin ang Date, oras at Location nito */
+  function handlePickProposal(e) {
+    const id = e.target.value
+    setPickedId(id)
+    setError('')
+    const next = scheduleOf(proposalChoices.find((p) => p.id === id))
+    setEventDate(next.eventDate)
+    setStartTime(next.startTime)
+    setEndTime(next.endTime)
+    setLocation(next.location)
+  }
 
   function handlePickImage(e) {
     const file = e.target.files?.[0]
@@ -114,6 +177,11 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+
+    if (!isEdit && !activeProposal) {
+      setError('Choose the approved proposal this event is for.')
+      return
+    }
 
     const clean = {
       title: title.trim(),
@@ -143,7 +211,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
 
     setSaving(true)
     try {
-      await onSubmit(clean, { imageFile, removeImage })
+      await onSubmit(clean, { imageFile, removeImage, proposal: activeProposal })
     } catch (err) {
       console.error('Hindi na-save ang event:', err)
       setError(eventErrorMessage(err))
@@ -169,7 +237,37 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
           {isEdit ? 'Edit event' : 'Create event'}
         </h2>
 
-        {proposal && (
+        {/* ---------- APPROVED PROPOSAL (pagpipilian) ---------- */}
+        {picking && (
+          <label className={base.field}>
+            <span className={base.label}>Approved proposal</span>
+            <select
+              ref={pickRef}
+              className={base.input}
+              value={pickedId}
+              onChange={handlePickProposal}
+              disabled={saving}
+              required
+            >
+              <option value="" disabled>
+                Choose a proposal…
+              </option>
+              {proposalChoices.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {choiceLabel(p)}
+                </option>
+              ))}
+            </select>
+            <span className={base.hint}>
+              Only your organization&rsquo;s fully approved proposals that you submitted and that
+              don&rsquo;t have an event yet are listed. The date, time and venue come from the
+              proposal.
+            </span>
+          </label>
+        )}
+
+        {/* Lumang paraan: iisang proposal lang, walang pagpipilian */}
+        {!picking && proposal && (
           <p className={base.note}>
             From approved proposal: <strong>{proposal.title}</strong>
           </p>
@@ -215,7 +313,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
               className={`${base.input}${lockedClass}`}
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              disabled={scheduleLocked}
+              disabled={fieldsLocked}
               required
             />
           </label>
@@ -227,7 +325,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
               className={`${base.input}${lockedClass}`}
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              disabled={scheduleLocked}
+              disabled={fieldsLocked}
               required
             />
           </label>
@@ -239,7 +337,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
               className={`${base.input}${lockedClass}`}
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              disabled={scheduleLocked}
+              disabled={fieldsLocked}
               required
             />
           </label>
@@ -260,7 +358,7 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             value={location}
             maxLength={LOCATION_MAX}
             onChange={(e) => setLocation(e.target.value)}
-            disabled={scheduleLocked}
+            disabled={fieldsLocked}
             required
           />
         </label>
@@ -269,12 +367,12 @@ function EventForm({ initial = null, proposal = null, onSubmit, onCancel }) {
             Galing sa proposal at NAKA-LOCK. Hindi ito kasama sa
             ise-save ng form — ang database na ang kumokopya nito
             sa event (events_copy_og_reward). */}
-        {proposal && (
+        {activeProposal && (
           <label className={base.field}>
             <span className={base.label}>OG reward per attendee</span>
             <input
               className={`${base.input} ${styles.locked}`}
-              value={Number(proposal.og_reward) || 0}
+              value={Number(activeProposal.og_reward) || 0}
               disabled
               readOnly
             />

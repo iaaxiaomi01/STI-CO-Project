@@ -5,7 +5,6 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
-  CalendarPlus,
   Check,
   Coins,
   Eye,
@@ -51,12 +50,7 @@ import {
   formatFileSize,
   uploadProposalFile,
 } from '../lib/proposalFiles.js'
-import {
-  canCreateEventFrom,
-  createEventFromProposal,
-  eventOfProposal,
-  nowKey,
-} from '../lib/events.js'
+import { eventOfProposal, nowKey } from '../lib/events.js'
 import PageHeader from '../components/PageHeader.jsx'
 import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
@@ -64,7 +58,6 @@ import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
 import ReviewDialog from '../components/ReviewDialog.jsx'
 import ReviewTrail from '../components/ReviewTrail.jsx'
-import EventForm from '../components/EventForm.jsx'
 import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
 import styles from './Proposals.module.css'
 
@@ -104,10 +97,10 @@ import styles from './Proposals.module.css'
    ay may "I-revise" na button (ProposalForm na naka-edit mode).
    Pagkapasa ulit, babalik ito sa nag-pa-revise.
 
-   Kapag APPROVED na ng School Head, ang Officer na NAGPASA ay
-   may lalabas na "Gumawa ng Event". Kapag REJECTED, wala.
-   Isang event lang bawat proposal — kapag nagawa na,
-   "Tingnan ang Event" na ang lalabas.
+   PAGGAWA NG EVENT: WALA NA DITO. Inilipat na sa Events page
+   ("+ Create Event" ng Officer — pipili siya ng sarili niyang
+   approved na proposal ng org niya). Dito, kapag may event na
+   ang isang approved na proposal, "View Event" lang ang lalabas.
 
    Ang bawat proposal ay binubuksan bilang PORMAL NA SULAT
    (components/ProposalLetter.jsx), na pwedeng i-print.
@@ -263,9 +256,6 @@ function Proposals() {
      null, o { proposal, action: 'approved' | 'rejected' | 'revision' } */
   const [reviewing, setReviewing] = useState(null)
 
-  /* Aling approved na proposal ang ginagawan ng event */
-  const [eventFor, setEventFor] = useState(null)
-
   /* Aling proposal ang dina-download ang file */
   const [downloadingId, setDownloadingId] = useState(null)
 
@@ -315,7 +305,6 @@ function Proposals() {
   const closeRevise = useCallback(() => setRevising(null), [])
   const closeLetter = useCallback(() => setViewing(null), [])
   const closeReview = useCallback(() => setReviewing(null), [])
-  const closeEventForm = useCallback(() => setEventFor(null), [])
 
   /* Inilalagay ang na-update na proposal sa listahan, at sa
      sulat kung iyon ang nakabukas. */
@@ -375,7 +364,7 @@ function Proposals() {
     } else {
       setNotice(
         last
-          ? 'The proposal was approved (final). The Officer can now create an event.'
+          ? 'The proposal was approved (final). The Officer can now create its event in Events.'
           : `You approved the proposal.${next}`,
       )
     }
@@ -421,15 +410,6 @@ function Proposals() {
   )
   const showFilters = isReviewer || (isProposer && mine.length > 0)
   const shown = showFilters && filter === 'mine' ? mine : orgScoped
-
-  /* Galing sa EventForm. Kapag nag-throw, doon lalabas ang
-     error at mananatiling bukas ang form. */
-  async function handleCreateEvent(values, { imageFile }) {
-    const created = await createEventFromProposal(eventFor, values, imageFile)
-    replaceProposal({ ...eventFor, events: { id: created.id } })
-    setEventFor(null)
-    setNotice('Event created. Members can now see it in Events.')
-  }
 
   /* Galing sa ProposalForm. Kapag nag-throw, doon lalabas ang
      error at mananatiling bukas ang form.
@@ -797,20 +777,6 @@ function Proposals() {
                     </button>
                   )}
 
-                  {canCreateEventFrom(p, profile) && (
-                    <button
-                      type="button"
-                      className={styles.eventButton}
-                      onClick={() => {
-                        setNotice('')
-                        setEventFor(p)
-                      }}
-                    >
-                      <CalendarPlus size={16} strokeWidth={2.4} aria-hidden="true" />
-                      Create Event
-                    </button>
-                  )}
-
                   {p.status === 'approved' && eventOfProposal(p) && (
                     <Link to="/events" className={styles.eventLink}>
                       View Event
@@ -857,14 +823,6 @@ function Proposals() {
           onClose={closeLetter}
           onDownload={handleDownload}
           downloading={downloadingId === viewing.id}
-        />
-      )}
-
-      {eventFor && (
-        <EventForm
-          proposal={eventFor}
-          onSubmit={handleCreateEvent}
-          onCancel={closeEventForm}
         />
       )}
 

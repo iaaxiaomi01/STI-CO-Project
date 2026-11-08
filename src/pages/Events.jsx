@@ -7,10 +7,13 @@ import {
   EVENT_STATUSES,
   MISSED_STATUS,
   authorLabel,
+  canCreateEventFrom,
+  canCreateEvents,
   canJoinEvents,
   canDeleteEvent,
   canEditEvent,
   computeStatus,
+  createEventFromProposal,
   deleteEvent,
   eventErrorMessage,
   eventStatusLabel,
@@ -23,6 +26,7 @@ import {
   updateEvent,
   wasEdited,
 } from '../lib/events.js'
+import { fetchProposals } from '../lib/proposals.js'
 import { PHASE_CLOSED, attendancePhase, fetchMyAttendance } from '../lib/attendance.js'
 import {
   canManageCertificates,
@@ -37,6 +41,7 @@ import {
 import { fetchEventRewards } from '../lib/og.js'
 import { OgAmount } from '../components/OgGem.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
 import JoinConfirmDialog from '../components/JoinConfirmDialog.jsx'
@@ -47,13 +52,24 @@ import styles from './Events.module.css'
    EVENTS — TOTOONG DATA mula sa public.events
 
    Saan galing ang event:
-     Officer nagpasa ng proposal → Adviser nag-Approve →
-     ang NAGPASA ang gumagawa ng event (sa Proposals page).
-     Kaya walang "+ Gumawa ng Event" dito.
+     Officer nagpasa ng proposal → APPROVED na ang buong daan →
+     ang NAGPASA ang gumagawa ng event DITO sa Events page
+     ("+ Create Event" sa itaas). Wala na ito sa Proposals.
+
+   + CREATE EVENT (Officer lang — canCreateEvents()):
+     PER ORG pa rin. Pagkapindot, kinukuha ang proposals (RLS:
+     sariling org lang), at ang ipinapakita lang ay ang pasado sa
+     canCreateEventFrom(): sariling org, ikaw ang nagpasa,
+     approved, at wala pang event. Pipili siya ng proposal sa
+     EventForm; ang Date, oras, Location at OG reward ay galing
+     doon at naka-lock. Kapag wala, may paalala lang.
+     Ang trigger sa database pa rin ang totoong nagbabantay
+     (events_before_insert).
 
    Member  → nakikita ang events ng org niya
-   Officer → nakikita lahat; nag-e-edit ng SARILI niyang gawa,
-             pero HINDI na ito mabubura kapag nagawa na
+   Officer → nakikita lahat; gumagawa (mula sa approved na proposal);
+             nag-e-edit ng SARILI niyang gawa, pero HINDI na ito
+             mabubura kapag nagawa na
    Adviser → nakikita lahat; nag-e-edit/nagbubura ng LAHAT sa org
 
    I-EDIT: nawawala ang button 30 minuto bago magsimula ang
@@ -126,6 +142,16 @@ function sortEvents(list) {
     const ka = `${a.event_date} ${a.start_time}`
     const kb = `${b.event_date} ${b.start_time}`
     return STATUS_ORDER[a.status] === 2 ? kb.localeCompare(ka) : ka.localeCompare(kb)
+  })
+}
+
+/* Mga pagpipiliang proposal sa "+ Create Event": pinakamalapit
+   na petsa muna; ang walang petsa (luma) ay sa dulo */
+function sortChoices(list) {
+  return [...list].sort((a, b) => {
+    const ka = a.event_date ? `${a.event_date} ${a.start_time ?? ''}` : '9999'
+    const kb = b.event_date ? `${b.event_date} ${b.start_time ?? ''}` : '9999'
+    return ka.localeCompare(kb)
   })
 }
 
@@ -218,6 +244,13 @@ function Events() {
   /* Ang event na ine-edit (bukas ang form) */
   const [editing, setEditing] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+
+  /* ---------- + CREATE EVENT (Officer) ----------
+     null = sarado, o ang listahan ng approved na proposal na
+     pwedeng gawan ng event (bukas ang form) */
+  const canCreate = canCreateEvents(profile)
+  const [createChoices, setCreateChoices] = useState(null)
+  const [openingCreate, setOpeningCreate] = useState(false)
 
   /* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo
      para kusang lumipat ang status habang bukas ang page */
@@ -439,6 +472,46 @@ function Events() {
   }, [highlightId])
 
   const closeForm = useCallback(() => setEditing(null), [])
+  const closeCreate = useCallback(() => setCreateChoices(null), [])
+
+  /* "+ Create Event" → kunin ang approved na proposals ng org mo
+     na ikaw ang nagpasa at wala pang event. Laging bago ang
+     kinukuha, para kasama agad ang kaaa-approve lang. */
+  async function openCreate() {
+    if (openingCreate) return
+    setNotice('')
+    setOpeningCreate(true)
+    try {
+      const proposals = await fetchProposals()
+      const choices = sortChoices(proposals.filter((p) => canCreateEventFrom(p, profile)))
+      if (choices.length === 0) {
+        setNotice(
+          'No approved proposals are waiting for an event. Once a proposal you submitted is fully approved, you can create its event here.',
+        )
+        return
+      }
+      setCreateChoices(choices)
+    } catch (err) {
+      console.error('Hindi makuha ang approved na proposals:', err)
+      setNotice('Could not load your approved proposals. Please try again.')
+    } finally {
+      setOpeningCreate(false)
+    }
+  }
+
+  /* Galing sa EventForm. Kapag nag-throw, doon lalabas ang
+     error at mananatiling bukas ang form. */
+  async function handleCreate(values, { imageFile, proposal }) {
+    const created = await createEventFromProposal(proposal, values, imageFile)
+    setEvents((list) => [...list, created])
+    setCreateChoices(null)
+    setFilter('all')
+    setSearch('')
+    setHighlightId(created.id)
+    setNotice('Event created. Members of your organization can now see and join it.')
+    /* Kinokopya ng database ang OG reward ng proposal sa event */
+    loadRewards()
+  }
 
   /* Mga event na tumutugma sa search (lahat kapag blangko).
      Hindi mahalaga ang malaki o maliit na titik. */
@@ -509,7 +582,16 @@ function Events() {
 
   return (
     <div className={ticketView ? styles.ticketPage : undefined}>
-      <PageHeader title="Events" />
+      <PageHeader
+        title="Events"
+        action={
+          canCreate && (
+            <ActionButton onClick={openCreate}>
+              {openingCreate ? 'Loading…' : '+ Create Event'}
+            </ActionButton>
+          )
+        }
+      />
 
       {notice && (
         <p className={styles.notice} role="status">
@@ -1017,6 +1099,14 @@ function Events() {
             </ul>
           )}
         </>
+      )}
+
+      {createChoices && (
+        <EventForm
+          proposalChoices={createChoices}
+          onSubmit={handleCreate}
+          onCancel={closeCreate}
+        />
       )}
 
       {editing && <EventForm initial={editing} onSubmit={handleUpdate} onCancel={closeForm} />}

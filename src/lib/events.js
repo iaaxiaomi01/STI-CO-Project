@@ -8,8 +8,9 @@ import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js
    EVENTS — lahat ng pakikipag-usap sa database
 
    Ang event ay laging galing sa isang APPROVED na proposal:
-     Officer nagpasa → Adviser nag-Approve → ang NAGPASA ang
-     may "Gumawa ng Event" na button sa Proposals.
+     Officer nagpasa → approved na ang buong daan → ang NAGPASA
+     ang gumagawa ng event sa EVENTS page ("+ Create Event").
+     Wala na ito sa Proposals.
 
    Walang .eq('organization_id', ...) sa pagkuha. Ang RLS na ang
    nagsasala: events lang ng SARILI mong org.
@@ -366,8 +367,11 @@ export async function deleteEvent(event) {
    sa database. Dito, para lang itago ang mga button — kapag
    binago mo ang isa, baguhin mo rin ang isa.
 
-     Gumawa  → Officer na NAGPASA ng proposal, kapag approved
-               na, at wala pang event
+     Gumawa  → Officer (aktibo, may org) LANG ang may
+               "+ Create Event" sa Events page — canCreateEvents().
+               Ang mapipili niyang proposal: sa SARILI niyang org,
+               siya ang NAGPASA, approved na, at wala pang event —
+               canCreateEventFrom().
      Edit    → Officer: sariling gawa · Adviser: lahat sa org
                HANGGANG 30 minuto bago magsimula ang event.
                Pagkatapos noon, wala nang "I-edit" — tingnan ang
@@ -387,10 +391,16 @@ export function eventOfProposal(proposal) {
   return e ?? null
 }
 
+/* May "+ Create Event" ba sa Events page? Officer lang na
+   aktibo at kabilang sa isang org (per org ang events). */
+export function canCreateEvents(profile) {
+  return Boolean(profile?.is_active && profile.role_id === 2 && profile.organization_id)
+}
+
+/* Pwede bang gawan ng event ang proposal na ito? */
 export function canCreateEventFrom(proposal, profile) {
   return Boolean(
-    profile?.is_active &&
-      profile.role_id === 2 &&
+    canCreateEvents(profile) &&
       proposal.organization_id === profile.organization_id &&
       proposal.author_id === profile.id &&
       proposal.status === 'approved' &&
