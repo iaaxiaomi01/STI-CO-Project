@@ -216,8 +216,8 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
             </>
           ) : final ? (
             <>
-              <strong>This is the final approval.</strong> The Officer will be able to create an event
-              from this proposal.
+              <strong>This is the final approval.</strong> The Officer will be able to create its
+              event in Events.
             </>
           ) : !lastInStage ? (
             <>

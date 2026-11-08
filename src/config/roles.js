@@ -111,8 +111,9 @@ export function isSchoolAdmin(profile) {
    dahil ang Officer at Adviser ay may PAREHONG sidebar pero
    MAGKAIBANG trabaho:
 
-     create — kaya niyang gumawa: may "+ Gumawa ng Event" at
-              iba pang button siya sa kanang itaas
+     create — hindi na ito ginagamit ng anumang button. Ang
+              "+ Create Event" sa Events page ay para sa Officer
+              lang — tingnan ang canCreateEvents() sa lib/events.js.
 
      review — siya ang umaaksyon sa mga proposal: nakikita
               niya ang Proposals at may Aprubahan/Tanggihan
@@ -273,7 +274,7 @@ export const ROLES = {
     /* Nagpapasa siya ng proposal. Dadaan ito sa Adviser, SAO,
        at School Head. Kapag na-approve ng School Head (pinal),
        SIYA (ang nagpasa) ang gagawa ng event mula
-       roon — "+ Gumawa ng Event" sa Proposals page.
+       roon — "+ Create Event" sa Events page.
        Pwede rin siyang magpaskil ng announcement. */
     can: {
       create: false,
