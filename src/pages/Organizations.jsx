@@ -20,8 +20,9 @@ import styles from './Admin.module.css'
 
    Lahat ng org (pati inactive):
      + New organization → gumawa
-     Edit               → pangalan, department, description,
-                          active, at "Post to all organizations"
+     Edit               → pangalan, department, program,
+                          description, active, at "Post to all
+                          organizations"
      Manage             → gawing acting org at buksan ang Org
                           Profile (logo, officer positions)
 
@@ -30,6 +31,7 @@ import styles from './Admin.module.css'
 
    Database: sa_list_organizations(), sa_save_organization(),
    sa_set_acting_org() — SCHOOL_ADMIN_SUPERADMIN.sql
+   Program: ADD_ORG_PROGRAM.sql
    ============================================================ */
 
 const STATUS_ALL = ''
@@ -73,7 +75,7 @@ function Organizations() {
       if (status === STATUS_ACTIVE && !o.is_active) return false
       if (status === STATUS_INACTIVE && o.is_active) return false
       if (!q) return true
-      return [o.name, o.department, o.description]
+      return [o.name, o.department, o.program, o.description]
         .filter(Boolean)
         .some((f) => f.toLowerCase().includes(q))
     })
@@ -153,7 +155,7 @@ function Organizations() {
               <input
                 type="search"
                 className={list.search}
-                placeholder="Search by name, department or description…"
+                placeholder="Search by name, department, program or description…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -208,6 +210,9 @@ function Organizations() {
                 <tbody>
                   {filtered.map((o) => {
                     const isCurrent = o.id === profile?.organization_id
+                    /* "Information Technology · BSIT" */
+                    const subline =
+                      [o.department, o.program].filter(Boolean).join(' · ') || 'No department'
                     return (
                       <tr key={o.id} className={o.is_active ? '' : list.inactive}>
                         <td className={list.nameCell}>
@@ -217,7 +222,7 @@ function Organizations() {
                             </span>
                             <div className={list.personText}>
                               <span className={list.name}>{o.name}</span>
-                              <span className={list.email}>{o.department || 'No department'}</span>
+                              <span className={list.email}>{subline}</span>
                             </div>
                           </div>
                         </td>
@@ -307,6 +312,7 @@ function Organizations() {
 function OrganizationDialog({ org, specialOrg, onSave, onCancel }) {
   const [name, setName] = useState(org?.name ?? '')
   const [department, setDepartment] = useState(org?.department ?? '')
+  const [program, setProgram] = useState(org?.program ?? '')
   const [description, setDescription] = useState(org?.description ?? '')
   const [isActive, setIsActive] = useState(org?.is_active ?? true)
   const [canAnnounceAll, setCanAnnounceAll] = useState(org?.can_announce_all ?? false)
@@ -344,7 +350,7 @@ function OrganizationDialog({ org, specialOrg, onSave, onCancel }) {
     }
     setSaving(true)
     try {
-      await onSave({ name, department, description, isActive, canAnnounceAll })
+      await onSave({ name, department, program, description, isActive, canAnnounceAll })
     } catch (err) {
       console.error('Hindi na-save ang org:', err)
       setError(adminErrorMessage(err))
@@ -371,19 +377,19 @@ function OrganizationDialog({ org, specialOrg, onSave, onCancel }) {
         </h2>
 
         <fieldset disabled={saving} style={{ border: 0, padding: 0, margin: 0 }}>
-          <div className={styles.grid2}>
-            <label className={base.field}>
-              <span className={base.label}>Name</span>
-              <input
-                ref={firstRef}
-                className={base.input}
-                value={name}
-                maxLength={100}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </label>
+          <label className={base.field}>
+            <span className={base.label}>Name</span>
+            <input
+              ref={firstRef}
+              className={base.input}
+              value={name}
+              maxLength={100}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </label>
 
+          <div className={styles.grid2}>
             <label className={base.field}>
               <span className={base.label}>
                 Department <span className={base.optional}>(optional)</span>
@@ -394,6 +400,19 @@ function OrganizationDialog({ org, specialOrg, onSave, onCancel }) {
                 maxLength={100}
                 placeholder="e.g. CCS, SHS, Tertiary"
                 onChange={(e) => setDepartment(e.target.value)}
+              />
+            </label>
+
+            <label className={base.field}>
+              <span className={base.label}>
+                Program <span className={base.optional}>(optional)</span>
+              </span>
+              <input
+                className={base.input}
+                value={program}
+                maxLength={100}
+                placeholder="e.g. BSIT, BSHM, BSTM"
+                onChange={(e) => setProgram(e.target.value)}
               />
             </label>
           </div>

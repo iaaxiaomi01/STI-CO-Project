@@ -95,12 +95,14 @@ export async function fetchAllOrganizations() {
   return data ?? []
 }
 
-/* id = null → bagong org. Ibinabalik ang id. */
+/* id = null → bagong org. Ibinabalik ang id.
+   p_program — ADD_ORG_PROGRAM.sql */
 export async function saveOrganization(id, values) {
   const { data, error } = await supabase.rpc('sa_save_organization', {
     p_id: id ?? null,
     p_name: values.name,
     p_department: values.department || null,
+    p_program: values.program || null,
     p_description: values.description || null,
     p_is_active: values.isActive,
     p_can_announce_all: values.canAnnounceAll,

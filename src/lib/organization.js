@@ -4,9 +4,10 @@ import { checkImageFile, extensionFor, resizeToSquare } from './image.js'
 /* ============================================================
    ORGANIZATION — Org Profile ng Adviser
 
-   Name, Description at Logo lang ang nababago. Ang Department
-   at status ay sa Supabase SQL Editor / Table Editor na lang
-   binabago (REMOVE_IT_ADMIN_FUNCTIONS.sql).
+   Name, Description at Logo lang ang nababago. Ang Department,
+   Program at status ay ang School Administrator ang nagpapalit
+   sa Organizations page (sa_save_organization —
+   ADD_ORG_PROGRAM.sql).
 
    Ang database ang totoong bantay:
      - RLS "orgs_adviser_update_own": sariling org lang
@@ -25,7 +26,7 @@ export const NAME_MIN = 2
 export const NAME_MAX = 100
 export const DESCRIPTION_MAX = 2000
 
-const COLUMNS = 'id, name, department, description, logo_url, is_active, updated_at'
+const COLUMNS = 'id, name, department, program, description, logo_url, is_active, updated_at'
 
 /* Isinasalin ang error ng database sa mensaheng maiintindihan */
 export function orgErrorMessage(err) {

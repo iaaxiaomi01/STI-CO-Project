@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Building2, ImagePlus, Trash2 } from 'lucide-react'
+import { Building2, GraduationCap, ImagePlus, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { ACCEPTED_TYPES, ImageError } from '../lib/image.js'
 import {
@@ -23,7 +23,9 @@ import styles from './OrgProfile.module.css'
 
    Ang organisasyong hawak ng Adviser (profiles.organization_id).
    Nababago: Name, Description, Logo
-   Hindi nababago: Department (sa Supabase SQL Editor / Table Editor lang)
+   Hindi nababago: Department at Program — ang School
+   Administrator ang nagpapalit sa Organizations page
+   (ADD_ORG_PROGRAM.sql)
 
    Sa ilalim nito ang OFFICER POSITIONS — ang listahan ng
    position ng org (President, VP, atbp.). Tingnan ang
@@ -302,9 +304,20 @@ function OrgProfile() {
                 disabled
                 readOnly
               />
+            </label>
+
+            {/* Program — read-only din, gaya ng Department */}
+            <label className={styles.field}>
+              <span className={styles.label}>Program</span>
+              <input
+                className={styles.input}
+                value={org.program ?? '—'}
+                disabled
+                readOnly
+              />
               <span className={styles.hint}>
-                This can't be changed here. The School Administrator can change it in
-                Organizations.
+                The Department and Program can't be changed here. The School Administrator can
+                change them in Organizations.
               </span>
             </label>
 
@@ -356,6 +369,13 @@ function OrgProfile() {
               <dd className={styles.value}>
                 <Building2 size={16} strokeWidth={2.3} aria-hidden="true" />
                 {org.department || '—'}
+              </dd>
+            </div>
+            <div className={styles.row}>
+              <dt className={styles.label}>Program</dt>
+              <dd className={styles.value}>
+                <GraduationCap size={16} strokeWidth={2.3} aria-hidden="true" />
+                {org.program || '—'}
               </dd>
             </div>
             <div className={styles.row}>
