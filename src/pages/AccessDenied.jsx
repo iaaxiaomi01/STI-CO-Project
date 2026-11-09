@@ -18,14 +18,14 @@ function AccessDenied() {
 
   let message =
     'Your email is not on the student records list. ' +
-    'Please contact the SAO or IT Administrator to be added.'
+    'Please contact the School Administrator to be added.'
 
   if (profileError) {
     message =
       'Could not connect to the database right now. Please try again later.'
   } else if (profile && !profile.is_active) {
     message =
-      'Your account has been deactivated. Please contact the SAO or IT Administrator.'
+      'Your account has been deactivated. Please contact the School Administrator.'
   }
 
   async function handleLogout() {

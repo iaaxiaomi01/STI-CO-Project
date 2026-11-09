@@ -166,7 +166,7 @@ function OrgProfile() {
         <EmptyState
           icon="◈"
           title="You have no organization"
-          message="You are not assigned to an organization yet. Please contact the SAO or IT Administrator."
+          message="You are not assigned to an organization yet. Please contact the School Administrator."
         />
       </>
     )

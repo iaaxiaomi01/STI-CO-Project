@@ -83,7 +83,7 @@ function Login() {
 
         <p className={styles.helpText}>
           You need an STI Microsoft account to sign in.
-          If you don't have one yet, please contact IT support.
+          If you don't have one yet, please contact School Administrator.
         </p>
       </div>
     </section>
