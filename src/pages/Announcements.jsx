@@ -66,6 +66,10 @@ import styles from './Announcements.module.css'
        parang emergency alert ng iPhone (LatestAlert sa ibaba).
        Ang pinakabago ay ang una sa listahan, dahil naka-order
        na sa created_at (pinakabago una) ang fetchAnnouncements().
+       ISANG BESES LANG bawat announcement: kapag naisara na
+       (View, pindot sa labas, o Esc), hindi na ito lalabas ulit.
+       Lalabas lang ulit kapag may MAS BAGONG announcement.
+       Tingnan ang "NAKITA NA BA ANG POP-UP?" sa ibaba.
      - Ang pinakabago ay malaking navy na card sa itaas
        ("Latest"); ang iba ay nasa "Earlier".
    ============================================================ */
@@ -80,6 +84,61 @@ const TYPE_ICONS = {
 function TypeIcon({ type, size = 20 }) {
   const Icon = TYPE_ICONS[type] ?? Megaphone
   return <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
+}
+
+/* ============================================================
+   NAKITA NA BA ANG POP-UP?
+
+   Sa localStorage ng browser itinatago ang created_at (ms) ng
+   pinakabagong announcement na naisara na ng user. Lalabas
+   lang ang pop-up kapag ang pinakabago ngayon ay MAS BAGO pa
+   roon.
+
+   Bakit petsa at hindi id:
+     - Kapag na-delete ang pinakabago, ang susunod (mas luma
+       at nakita na) ay hindi na lalabas ulit.
+     - Ang pag-edit ay hindi binabago ang created_at, kaya
+       hindi rin ito lalabas ulit dahil lang na-edit.
+
+   Bawat user AT bawat org ang susi — para sa School
+   Administrator na nagpapalit ng acting org, at para sa
+   magkakaibang account sa iisang computer.
+
+   Paalala: nasa browser lang ito. Sa ibang device o browser
+   (o kapag na-clear ang site data), lalabas ulit ito nang
+   isang beses doon.
+   ============================================================ */
+function seenKeyFor(profile) {
+  if (!profile?.id) return null
+  return `stico:announcement-seen:${profile.id}:${profile.organization_id ?? 'none'}`
+}
+
+function readSeenAt(key) {
+  if (!key) return 0
+  try {
+    return Number(window.localStorage.getItem(key)) || 0
+  } catch {
+    return 0
+  }
+}
+
+/* Itatala lang kung mas bago kaysa sa naitala na */
+function markSeen(key, announcement) {
+  if (!key || !announcement) return
+  const time = Date.parse(announcement.created_at)
+  if (!Number.isFinite(time)) return
+  try {
+    if (time > readSeenAt(key)) window.localStorage.setItem(key, String(time))
+  } catch {
+    /* Naka-block ang storage (hal. private mode) — lalabas
+       lang ulit ang pop-up sa susunod, walang masisira */
+  }
+}
+
+function isUnseen(key, announcement) {
+  const time = Date.parse(announcement?.created_at)
+  if (!Number.isFinite(time)) return false
+  return time > readSeenAt(key)
 }
 
 /* ============================================================
@@ -196,28 +255,34 @@ function Announcements() {
   const closeForm = useCallback(() => setEditing(null), [])
 
   /* ---------- POP-UP NG PINAKABAGO (itsura lang) ----------
-     Isang beses lumalabas bawat pagbukas ng page, pagkatapos
-     makuha ang listahan. Wala nang "Show alert" na button
-     para ipakita ulit. */
+     Sinusuri isang beses bawat pagbukas ng page, pagkatapos
+     makuha ang listahan. Lalabas lang kapag HINDI pa naisasara
+     ng user ang pinakabagong announcement (isUnseen). */
   const latest = announcements[0] ?? null
+  const seenKey = seenKeyFor(profile)
   const [alertOpen, setAlertOpen] = useState(false)
-  const alertShown = useRef(false)
+  const alertChecked = useRef(false)
   const latestRef = useRef(null)
   const [latestFlash, setLatestFlash] = useState(false)
 
   useEffect(() => {
-    if (loading || alertShown.current || !latest) return
-    alertShown.current = true
-    setAlertOpen(true)
-  }, [loading, latest])
+    if (loading || alertChecked.current || !latest) return
+    alertChecked.current = true
+    if (isUnseen(seenKey, latest)) setAlertOpen(true)
+  }, [loading, latest, seenKey])
 
-  const closeAlert = useCallback(() => setAlertOpen(false), [])
+  /* Naisara ang pop-up (View, labas, o Esc) → nakita na */
+  const closeAlert = useCallback(() => {
+    markSeen(seenKey, latest)
+    setAlertOpen(false)
+  }, [seenKey, latest])
 
   const viewLatest = useCallback(() => {
+    markSeen(seenKey, latest)
     setAlertOpen(false)
     latestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     setLatestFlash(true)
-  }, [])
+  }, [seenKey, latest])
 
   /* Patayin ang highlight ng Latest card pagkatapos ng animation */
   useEffect(() => {
@@ -233,6 +298,8 @@ function Announcements() {
         orgId: profile?.organization_id,
         imageFile: media.imageFile,
       })
+      /* Sarili mong post — hindi na kailangang i-pop-up sa iyo */
+      markSeen(seenKey, created)
       setAnnouncements((list) => [created, ...list])
       setNotice('Announcement posted.')
     } else {
