@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   DESCRIPTION_MAX,
   LOCATION_MAX,
+  PROPOSAL_STARTED_MESSAGE,
   TITLE_MAX,
   computeStatus,
   eventErrorMessage,
@@ -9,6 +10,8 @@ import {
   formatEventDate,
   formatTime,
   isScheduleFromProposal,
+  nowKey,
+  proposalHasStarted,
   toTimeInput,
 } from '../lib/events.js'
 import { ACCEPTED_TYPES, ImageError, checkImageFile } from '../lib/image.js'
@@ -33,6 +36,14 @@ import styles from './EventForm.module.css'
              proposal na may schedule (initial.proposals).
 
    Ang lumang proposal na walang schedule ay hindi naka-lock.
+
+   DUMATING NA ANG PROPOSED NA PETSA AT ORAS:
+     Habang bukas ang form, sinusuri bawat 30 segundo ang oras
+     ngayon (Pilipinas). Kapag dumating na ang Start Time ng isang
+     proposal, KUSA itong nawawala sa "Approved proposal". Kapag
+     iyon ang napili, aalisin ang pagpili at may paalala. Kapag
+     wala nang natira, may paalala at hindi na makaka-Create.
+     Hinaharang din ito ng database (EVENT_CREATE_BEFORE_SCHEDULE.sql).
 
    Laman: Approved proposal (Gumawa lang), Title, Description,
           Date, Start Time, End Time, Location, OG reward per
@@ -67,15 +78,26 @@ function choiceLabel(p) {
 function EventForm({ initial = null, proposal = null, proposalChoices = null, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
+  /* Oras ngayon sa Pilipinas — nire-refresh bawat 30 segundo para
+     kusang mawala ang proposal na dumating na ang oras */
+  const [now, setNow] = useState(() => nowKey())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(nowKey()), 30 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   /* Gumawa mula sa Events page: pipili muna ng proposal.
 
      `choices` ay LAGING array (walang laman kapag Edit). Huwag
      gamitin nang direkta ang `proposalChoices` dito — null ito
      kapag Edit, at ang React Compiler ay minsang binabasa ang
      `proposalChoices[0]` kahit hindi pa natutupad ang kondisyon,
-     kaya nagka-crash ang Edit ("reading '0'"). */
+     kaya nagka-crash ang Edit ("reading '0'").
+
+     Ang mga proposal na dumating na ang Start Time ay inaalis. */
   const picking = !isEdit && Array.isArray(proposalChoices)
-  const choices = picking ? proposalChoices : []
+  const allChoices = picking ? proposalChoices : []
+  const choices = allChoices.filter((p) => !proposalHasStarted(p, now))
   const [pickedId, setPickedId] = useState(() =>
     choices.length === 1 ? (choices[0]?.id ?? '') : '',
   )
@@ -100,13 +122,6 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
   const [endTime, setEndTime] = useState(start.endTime)
   const [location, setLocation] = useState(start.location)
 
-  /* Naka-lock ang Date, oras at Location kapag itinakda na ng proposal.
-     Naka-lock din habang wala pang napiling proposal. */
-  const scheduleLocked = isScheduleFromProposal(isEdit ? initial?.proposals : activeProposal)
-  const waitingForPick = picking && !activeProposal
-  const fieldsLocked = scheduleLocked || waitingForPick
-  const lockedClass = fieldsLocked ? ` ${styles.locked}` : ''
-
   /* Picture: ang bagong pinili (file + preview), o ang dati */
   const [imageFile, setImageFile] = useState(null)
   const [preview, setPreview] = useState(initial?.image_url ?? null)
@@ -114,6 +129,34 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  /* Dumating na ang oras ng NAPILING proposal → nawala ito sa
+     choices. Alisin ang pagpili at linisin ang Date, oras at
+     Location. (Inaayos habang nagre-render, ayon sa React docs:
+     "adjusting state when a prop changes".) */
+  if (picking && pickedId !== '' && !activeProposal && !saving) {
+    const lost = allChoices.find((p) => p.id === pickedId)
+    setPickedId('')
+    setEventDate('')
+    setStartTime('')
+    setEndTime('')
+    setLocation('')
+    setError(
+      lost
+        ? `“${lost.title}” has reached its proposed date and time, so an event can no longer be created for it.`
+        : PROPOSAL_STARTED_MESSAGE,
+    )
+  }
+
+  /* Wala nang natirang proposal na pwedeng gawan ng event */
+  const noChoicesLeft = picking && choices.length === 0
+
+  /* Naka-lock ang Date, oras at Location kapag itinakda na ng proposal.
+     Naka-lock din habang wala pang napiling proposal. */
+  const scheduleLocked = isScheduleFromProposal(isEdit ? initial?.proposals : activeProposal)
+  const waitingForPick = picking && !activeProposal
+  const fieldsLocked = scheduleLocked || waitingForPick
+  const lockedClass = fieldsLocked ? ` ${styles.locked}` : ''
 
   const titleRef = useRef(null)
   const pickRef = useRef(null)
@@ -186,7 +229,18 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
     setError('')
 
     if (!isEdit && !activeProposal) {
-      setError('Choose the approved proposal this event is for.')
+      setError(
+        noChoicesLeft
+          ? 'None of your approved proposals can be used anymore — their proposed date and time have already arrived.'
+          : 'Choose the approved proposal this event is for.',
+      )
+      return
+    }
+
+    /* Sigurado: baka dumating ang oras sa pagitan ng 30 segundo */
+    if (!isEdit && proposalHasStarted(activeProposal, nowKey())) {
+      setNow(nowKey())
+      setError(PROPOSAL_STARTED_MESSAGE)
       return
     }
 
@@ -253,11 +307,11 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
               className={base.input}
               value={pickedId}
               onChange={handlePickProposal}
-              disabled={saving}
+              disabled={saving || noChoicesLeft}
               required
             >
               <option value="" disabled>
-                Choose a proposal…
+                {noChoicesLeft ? 'No proposals available' : 'Choose a proposal…'}
               </option>
               {choices.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -266,9 +320,9 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
               ))}
             </select>
             <span className={base.hint}>
-              Only your organization&rsquo;s fully approved proposals that you submitted and that
-              don&rsquo;t have an event yet are listed. The date, time and venue come from the
-              proposal.
+              {noChoicesLeft
+                ? 'Your remaining approved proposals have reached their proposed date and time, so events can no longer be created for them.'
+                : 'Only your organization’s fully approved proposals that you submitted, that don’t have an event yet, and whose proposed date and time haven’t arrived yet are listed. The date, time and venue come from the proposal.'}
             </span>
           </label>
         )}
@@ -451,7 +505,11 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
           >
             Cancel
           </button>
-          <button type="submit" className={base.primary} disabled={saving}>
+          <button
+            type="submit"
+            className={base.primary}
+            disabled={saving || noChoicesLeft}
+          >
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create Event'}
           </button>
         </div>

@@ -277,7 +277,20 @@ function toRow(values) {
   }
 }
 
+/* Mensahe kapag dumating na ang proposed na petsa at oras ng
+   proposal. Kapareho ng nasa EVENT_CREATE_BEFORE_SCHEDULE.sql. */
+export const PROPOSAL_STARTED_MESSAGE =
+  'An event can no longer be created for this proposal — its proposed date and time have already arrived.'
+
 export async function createEventFromProposal(proposal, values, imageFile = null) {
+  /* Sinuri muna bago mag-upload ng larawan, para walang file na
+     maiiwan. Ang database pa rin ang totoong nagbabantay. */
+  if (proposalHasStarted(proposal)) {
+    const err = new Error(PROPOSAL_STARTED_MESSAGE)
+    err.code = 'P0001'
+    throw err
+  }
+
   let uploaded = null
   if (imageFile) {
     uploaded = await uploadImage(proposal.organization_id, proposal.id, imageFile)
@@ -370,8 +383,12 @@ export async function deleteEvent(event) {
      Gumawa  → Officer (aktibo, may org) LANG ang may
                "+ Create Event" sa Events page — canCreateEvents().
                Ang mapipili niyang proposal: sa SARILI niyang org,
-               siya ang NAGPASA, approved na, at wala pang event —
-               canCreateEventFrom().
+               siya ang NAGPASA, approved na, wala pang event, at
+               HINDI PA DUMARATING ang proposed na petsa at oras
+               (Start Time) nito — canCreateEventFrom().
+               Pagdating ng oras na iyon, kusang nawawala ang
+               proposal sa pagpipilian. Hinaharang din ito ng
+               database (EVENT_CREATE_BEFORE_SCHEDULE.sql).
      Edit    → Officer: sariling gawa · Adviser: lahat sa org
                HANGGANG 30 minuto bago magsimula ang event.
                Pagkatapos noon, wala nang "I-edit" — tingnan ang
@@ -397,14 +414,27 @@ export function canCreateEvents(profile) {
   return Boolean(profile?.is_active && profile.role_id === 2 && profile.organization_id)
 }
 
-/* Pwede bang gawan ng event ang proposal na ito? */
-export function canCreateEventFrom(proposal, profile) {
+/* Dumating na ba ang proposed na petsa at oras (Start Time) ng
+   proposal? Kapag oo, hindi na ito magagawan ng event.
+   Oras ng Pilipinas, tulad ng nowKey(). Ang lumang proposal na
+   walang petsa o oras ay hindi apektado.
+   Kapareho ng EVENT_CREATE_BEFORE_SCHEDULE.sql sa database. */
+export function proposalHasStarted(proposal, now = nowKey()) {
+  if (!proposal?.event_date || !proposal?.start_time) return false
+  return `${proposal.event_date} ${proposal.start_time.slice(0, 5)}` <= now
+}
+
+/* Pwede bang gawan ng event ang proposal na ito?
+   `now` → para kusang mawala ang proposal pagdating ng oras nito
+   (hal. ang "now" na nire-refresh sa Event Form). */
+export function canCreateEventFrom(proposal, profile, now = nowKey()) {
   return Boolean(
     canCreateEvents(profile) &&
       proposal.organization_id === profile.organization_id &&
       proposal.author_id === profile.id &&
       proposal.status === 'approved' &&
-      !eventOfProposal(proposal),
+      !eventOfProposal(proposal) &&
+      !proposalHasStarted(proposal, now),
   )
 }
 
