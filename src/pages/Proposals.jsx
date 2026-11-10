@@ -45,10 +45,11 @@ import {
   stageLabel,
 } from '../lib/proposals.js'
 import {
-  deleteProposalFile,
+  attachmentsOf,
+  deleteProposalFiles,
   downloadProposalFile,
   formatFileSize,
-  uploadProposalFile,
+  uploadProposalFiles,
 } from '../lib/proposalFiles.js'
 import { eventOfProposal, nowKey } from '../lib/events.js'
 import PageHeader from '../components/PageHeader.jsx'
@@ -96,6 +97,10 @@ import styles from './Proposals.module.css'
    na NAGPASA, may komento kung ano ang babaguhin. Ang Officer
    ay may "I-revise" na button (ProposalForm na naka-edit mode).
    Pagkapasa ulit, babalik ito sa nag-pa-revise.
+
+   FILES (PROPOSAL_MULTIPLE_FILES.sql): KAILANGAN may kahit isang
+   file, hanggang 10. Bawat file ay may sariling download link sa
+   card at sa sulat. Nasa folder pa rin ng org ang mga file.
 
    PAGGAWA NG EVENT: WALA NA DITO. Inilipat na sa Events page
    ("+ Create Event" ng Officer — pipili siya ng sarili niyang
@@ -256,8 +261,8 @@ function Proposals() {
      null, o { proposal, action: 'approved' | 'rejected' | 'revision' } */
   const [reviewing, setReviewing] = useState(null)
 
-  /* Aling proposal ang dina-download ang file */
-  const [downloadingId, setDownloadingId] = useState(null)
+  /* Aling file ang dina-download (ang path nito) */
+  const [downloadingPath, setDownloadingPath] = useState(null)
 
   /* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo para
      kusang mawala ang Approve, Revise, Reject at Noted pagpatak ng
@@ -414,18 +419,18 @@ function Proposals() {
   /* Galing sa ProposalForm. Kapag nag-throw, doon lalabas ang
      error at mananatiling bukas ang form.
 
-     Ang file ay ina-upload MUNA, bago i-save ang proposal.
+     Ang mga file ay ina-upload MUNA, bago i-save ang proposal.
      Kapag pumalya ang pag-save, binubura ang na-upload para
      walang maiwang file na walang gumagamit. */
-  async function handleSubmit(values, { file }) {
-    const uploaded = file ? await uploadProposalFile(profile, file) : null
+  async function handleSubmit(values, { files }) {
+    const uploaded = await uploadProposalFiles(profile, files)
 
     try {
-      const created = await createProposal({ ...values, attachment: uploaded })
+      const created = await createProposal({ ...values, attachments: uploaded })
       setProposals((list) => [created, ...list])
       setNotice('Proposal submitted.')
     } catch (err) {
-      if (uploaded) await deleteProposalFile(uploaded.path)
+      await deleteProposalFiles(uploaded.map((f) => f.path))
       throw err
     }
     setFormOpen(false)
@@ -434,34 +439,30 @@ function Proposals() {
   /* Galing sa ProposalForm (naka-edit mode). Kapag nag-throw,
      doon lalabas ang error at mananatiling bukas ang form.
 
-     Bagong file → i-upload muna. Kapag pumalya ang pag-save,
-     binubura ang bagong upload. Kapag tagumpay at napalitan o
-     naalis ang dating file, binubura ang dati sa storage. */
-  async function handleResubmit(values, { file, keepExisting }) {
+     kept  → mga dating file na pinanatili
+     files → mga bagong file → i-upload muna.
+     Kapag pumalya ang pag-save, binubura ang bagong upload. Kapag
+     tagumpay, binubura sa storage ang mga dating file na inalis. */
+  async function handleResubmit(values, { files, kept }) {
     const proposal = revising
-    const uploaded = file ? await uploadProposalFile(profile, file) : null
-
-    const attachment =
-      uploaded ??
-      (keepExisting && proposal.attachment_path
-        ? {
-            path: proposal.attachment_path,
-            name: proposal.attachment_name,
-            size: proposal.attachment_size,
-          }
-        : null)
+    const uploaded = await uploadProposalFiles(profile, files)
 
     let updated
     try {
-      updated = await resubmitProposal(proposal.id, { ...values, attachment })
+      updated = await resubmitProposal(proposal.id, {
+        ...values,
+        attachments: [...kept, ...uploaded],
+      })
     } catch (err) {
-      if (uploaded) await deleteProposalFile(uploaded.path)
+      await deleteProposalFiles(uploaded.map((f) => f.path))
       throw err
     }
 
-    if (proposal.attachment_path && proposal.attachment_path !== updated.attachment_path) {
-      await deleteProposalFile(proposal.attachment_path)
-    }
+    const stillUsed = new Set(attachmentsOf(updated).map((f) => f.path))
+    const removed = attachmentsOf(proposal)
+      .map((f) => f.path)
+      .filter((path) => !stillUsed.has(path))
+    await deleteProposalFiles(removed)
 
     replaceProposal(updated)
     setRevising(null)
@@ -469,16 +470,17 @@ function Proposals() {
     setNotice(`Proposal resubmitted. It is back with ${stageLabel(updated.stage)}.`)
   }
 
-  async function handleDownload(proposal) {
+  /* Dina-download ang isang file ({ path, name }) */
+  async function handleDownload(file) {
     setNotice('')
-    setDownloadingId(proposal.id)
+    setDownloadingPath(file.path)
     try {
-      await downloadProposalFile(proposal)
+      await downloadProposalFile(file)
     } catch (err) {
       console.error('Hindi ma-download ang file:', err)
       setNotice('Could not download the file. Please try again.')
     } finally {
-      setDownloadingId(null)
+      setDownloadingPath(null)
     }
   }
 
@@ -492,7 +494,7 @@ function Proposals() {
     setNotice('')
     try {
       await deleteProposal(proposal.id)
-      await deleteProposalFile(proposal.attachment_path)
+      await deleteProposalFiles(attachmentsOf(proposal).map((f) => f.path))
       setProposals((list) => list.filter((p) => p.id !== proposal.id))
       setNotice('Proposal deleted.')
     } catch (err) {
@@ -606,6 +608,7 @@ function Proposals() {
             const tone = toneOf(p)
             const ToneIcon = TONE_ICON[tone]
             const yourTurn = canReviewProposal(p, profile) || canReviseProposal(p, profile)
+            const files = attachmentsOf(p)
 
             return (
               <li
@@ -678,23 +681,28 @@ function Proposals() {
                     )}
                   </ul>
 
-                  {/* Naka-attach na file — pindutin para i-download */}
-                  {p.attachment_path && (
-                    <button
-                      type="button"
-                      className={styles.fileChip}
-                      onClick={() => handleDownload(p)}
-                      disabled={downloadingId === p.id}
-                      title="Download file"
-                    >
-                      <Paperclip size={15} strokeWidth={2.3} aria-hidden="true" />
-                      <span className={styles.fileChipName}>{p.attachment_name}</span>
-                      <span className={styles.fileChipMeta}>
-                        {downloadingId === p.id
-                          ? 'Downloading…'
-                          : `${formatFileSize(p.attachment_size)} · Download`}
-                      </span>
-                    </button>
+                  {/* Mga naka-attach na file — pindutin ang bawat isa para i-download */}
+                  {files.length > 0 && (
+                    <div className={styles.fileList}>
+                      {files.map((f) => (
+                        <button
+                          key={f.path}
+                          type="button"
+                          className={styles.fileChip}
+                          onClick={() => handleDownload(f)}
+                          disabled={downloadingPath === f.path}
+                          title={`Download ${f.name}`}
+                        >
+                          <Paperclip size={15} strokeWidth={2.3} aria-hidden="true" />
+                          <span className={styles.fileChipName}>{f.name}</span>
+                          <span className={styles.fileChipMeta}>
+                            {downloadingPath === f.path
+                              ? 'Downloading…'
+                              : `${f.size ? `${formatFileSize(f.size)} · ` : ''}Download`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   )}
 
                   {/* Route map: Officer → Adviser → SAO → School Head (→ SA) */}
@@ -822,7 +830,7 @@ function Proposals() {
           proposal={viewing}
           onClose={closeLetter}
           onDownload={handleDownload}
-          downloading={downloadingId === viewing.id}
+          downloadingPath={downloadingPath}
         />
       )}
 

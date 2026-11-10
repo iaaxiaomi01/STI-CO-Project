@@ -8,6 +8,7 @@ import {
   scheduleDateLabel,
   scheduleTimeLabel,
 } from '../lib/proposals.js'
+import { attachmentsOf } from '../lib/proposalFiles.js'
 import ReviewTrail from './ReviewTrail.jsx'
 import styles from './ProposalLetter.module.css'
 
@@ -23,8 +24,9 @@ import styles from './ProposalLetter.module.css'
      Description                → katawan ng sulat
      Proposed by                → ang gumawa, ang officer position
                                   niya (kung meron), at ang role
-     Attachment                 → pangalan ng file (kung meron);
-                                  "I-download" sa itaas na toolbar
+     Attachments                → listahan ng mga file; pindutin
+                                  ang pangalan para i-download
+                                  (PROPOSAL_MULTIPLE_FILES.sql)
      Budget                     → "With budget" kapag naka-check
      OG Reward                  → ilang OG ng org bawat dadalo
                                   (kapag higit sa 0). Dito lang
@@ -40,11 +42,13 @@ import styles from './ProposalLetter.module.css'
 
    PAG-PRINT: ang sulat lang ang lalabas sa papel — nakatago
    ang sidebar at ang mga button (tingnan ang @media print sa
-   ProposalLetter.module.css).
+   ProposalLetter.module.css). Ang mga pangalan ng file ay
+   lumalabas bilang karaniwang teksto.
    ============================================================ */
-function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) {
+function ProposalLetter({ proposal, onClose, onDownload, downloadingPath = null }) {
   const org = proposal.organizations
   const ogReward = Number(proposal.og_reward) || 0
+  const files = attachmentsOf(proposal)
 
   /* Esc para isara */
   useEffect(() => {
@@ -70,16 +74,6 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
       }}
     >
       <div className={styles.toolbar}>
-        {proposal.attachment_path && onDownload && (
-          <button
-            type="button"
-            className={styles.toolButton}
-            onClick={() => onDownload(proposal)}
-            disabled={downloading}
-          >
-            {downloading ? 'Downloading…' : 'Download file'}
-          </button>
-        )}
         <button type="button" className={styles.toolButton} onClick={() => window.print()}>
           Print
         </button>
@@ -143,7 +137,7 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
               {proposal.has_budget && (
                 <div className={styles.detailRow}>
                   <dt>Budget:</dt>
-                  <dd>(Please see the attached file)</dd>
+                  <dd>(Please see the attached {files.length > 1 ? 'files' : 'file'})</dd>
                 </div>
               )}
               {/* OG ng org na ito — para sa bawat dadalo na may
@@ -177,11 +171,34 @@ function ProposalLetter({ proposal, onClose, onDownload, downloading = false }) 
             </p>
           </div>
 
-          {proposal.attachment_name && (
-            <p className={styles.attachment}>
-              <span className={styles.attachmentLabel}>Attachment:</span>{' '}
-              {proposal.attachment_name}
-            </p>
+          {files.length > 0 && (
+            <div className={styles.attachment}>
+              <span className={styles.attachmentLabel}>
+                {files.length > 1 ? `Attachments (${files.length}):` : 'Attachment:'}
+              </span>
+              <ol className={styles.attachmentList}>
+                {files.map((f) => (
+                  <li key={f.path}>
+                    {onDownload ? (
+                      <button
+                        type="button"
+                        className={styles.attachmentLink}
+                        onClick={() => onDownload(f)}
+                        disabled={downloadingPath === f.path}
+                        title={`Download ${f.name}`}
+                      >
+                        {f.name}
+                        {downloadingPath === f.path && (
+                          <span className={styles.attachmentBusy}> (downloading…)</span>
+                        )}
+                      </button>
+                    ) : (
+                      f.name
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
 
           <ReviewTrail proposal={proposal} variant="letter" />

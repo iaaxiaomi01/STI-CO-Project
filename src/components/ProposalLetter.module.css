@@ -232,6 +232,16 @@
     border-radius: 0;
     box-shadow: none;
   }
+
+  /* Pangalan ng file = karaniwang teksto sa papel */
+  .attachmentLink {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .attachmentBusy {
+    display: none;
+  }
 }
 
 /* ---------- AKSYON NG ADVISER SA SULAT ---------- */
@@ -268,7 +278,7 @@
   overflow-wrap: anywhere;
 }
 
-/* ---------- ATTACHMENT ---------- */
+/* ---------- ATTACHMENTS ---------- */
 .attachment {
   margin-top: 1.75rem;
   font-size: 0.92rem;
@@ -278,6 +288,34 @@
 
 .attachmentLabel {
   font-weight: 700;
+}
+
+.attachmentList {
+  margin: 0.25rem 0 0;
+  padding-left: 1.4rem;
+}
+
+/* Pangalan ng file na pinipindot para i-download */
+.attachmentLink {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.attachmentLink:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.attachmentBusy {
+  font-style: italic;
 }
 
 .toolButton:disabled {

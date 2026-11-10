@@ -340,13 +340,19 @@
   font-weight: 800;
 }
 
-/* ---------- NAKA-ATTACH NA FILE — link na may dilaw na underline ---------- */
+/* ---------- MGA NAKA-ATTACH NA FILE — link na may dilaw na underline ---------- */
+.fileList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin-top: 12px;
+}
+
 .fileChip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   max-width: 100%;
-  margin-top: 12px;
   padding: 4px 0;
   border: none;
   border-bottom: 2px solid var(--yellow);
@@ -752,6 +758,12 @@
 
   .meta {
     font-size: 13.5px;
+  }
+
+  /* Mga file: isa bawat hanay */
+  .fileList {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .fileChip {

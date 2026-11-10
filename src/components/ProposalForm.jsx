@@ -21,7 +21,9 @@ import { toTitleCase } from '../lib/profile.js'
 import {
   ACCEPT_ATTRIBUTE,
   ACCEPTED_LABEL,
+  MAX_FILES,
   ProposalFileError,
+  attachmentsOf,
   checkProposalFile,
   formatFileSize,
 } from '../lib/proposalFiles.js'
@@ -36,12 +38,16 @@ import styles from './ProposalForm.module.css'
      <ProposalForm proposal={p} onSubmit ... />    → i-revise
 
    Sa pag-revise, nakalagay na ang dating Title, Description,
-   Venue, Date, oras at file, at nasa itaas ang komento ng nag-pa-revise. Pwedeng
-   panatilihin, palitan, o alisin ang file.
+   Venue, Date, oras at mga file, at nasa itaas ang komento ng
+   nag-pa-revise. Pwedeng panatilihin o alisin ang bawat dating
+   file, at magdagdag ng bago.
 
    Tinatype: Title, Description, Venue, Date, Start Time at
-   End Time (kailangan lahat). May opsyonal na File
-   (isa lang) — hal. ang pirmadong proposal o budget.
+   End Time (kailangan lahat).
+
+   FILES (PROPOSAL_MULTIPLE_FILES.sql): KAILANGAN may kahit ISANG
+   file, hanggang MAX_FILES (10). Pwedeng pumili ng marami nang
+   sabay-sabay. Hal. ang pirmadong proposal, budget, program flow.
 
    May checkbox na "This proposal has a budget" (has_budget).
    Kapag naka-check, dadaan pa ito sa School Administrator
@@ -66,13 +72,19 @@ import styles from './ProposalForm.module.css'
    nilalagay — galing sila sa org at sa account mo.
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
-   onSubmit(values, { file, keepExisting }) — ang page ang
+   onSubmit(values, { files, kept }) — ang page ang
    mag-a-upload at tatawag sa database.
      values.approvers → { adviser: [id], sao: [id, ...], school_head: [...],
                           school_admin: [...] (may budget lang) }
-     file             → bagong file na pinili (o null)
-     keepExisting     → true kapag pinanatili ang dating file
+     files            → mga BAGONG file na pinili (File[])
+     kept             → mga dating file na pinanatili ([{ path, name, size }])
    ============================================================ */
+
+/* Para hindi madoble ang parehong file na napili ulit */
+function fileKey(file) {
+  return `${file.name}|${file.size}|${file.lastModified}`
+}
+
 function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const editing = Boolean(proposal)
   const revision = editing ? latestRevision(proposal) : null
@@ -145,35 +157,62 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
     setApprovers((current) => ({ ...current, [stage]: ids }))
   }
 
-  /* File na pinili (wala pang na-upload) */
-  const [file, setFile] = useState(null)
+  /* ---------- FILES ----------
+     kept     → mga dating file ng proposal (sa pag-revise lang)
+                na hindi pa inaalis: [{ path, name, size }]
+     newFiles → mga bagong pinili (wala pang na-upload): [{ key, file }] */
+  const [kept, setKept] = useState(() => attachmentsOf(proposal))
+  const [newFiles, setNewFiles] = useState([])
   const [fileError, setFileError] = useState('')
 
-  /* Ang dating file ng proposal (sa pag-revise lang).
-     Nagiging false kapag inalis o pinalitan. */
-  const [keepExisting, setKeepExisting] = useState(Boolean(proposal?.attachment_path))
+  const fileCount = kept.length + newFiles.length
+  const canAddMore = fileCount < MAX_FILES
 
   const titleRef = useRef(null)
   const fileInputRef = useRef(null)
 
   function handleFileChange(e) {
-    const picked = e.target.files?.[0]
+    const picked = Array.from(e.target.files ?? [])
     e.target.value = '' // para mapili ulit ang parehong file
-    if (!picked) return
+    if (picked.length === 0) return
 
-    try {
-      checkProposalFile(picked)
-      setFile(picked)
-      setKeepExisting(false)
-      setFileError('')
-    } catch (err) {
-      setFileError(err.message)
+    const problems = []
+    const accepted = []
+    const existing = new Set(newFiles.map((f) => f.key))
+    let room = MAX_FILES - fileCount
+
+    for (const file of picked) {
+      const key = fileKey(file)
+      if (existing.has(key)) continue // napili na
+
+      try {
+        checkProposalFile(file)
+      } catch (err) {
+        problems.push(err.message)
+        continue
+      }
+
+      if (room <= 0) {
+        problems.push(`You can attach up to ${MAX_FILES} files only.`)
+        break
+      }
+
+      existing.add(key)
+      accepted.push({ key, file })
+      room -= 1
     }
+
+    if (accepted.length > 0) setNewFiles((list) => [...list, ...accepted])
+    setFileError(problems.join(' '))
   }
 
-  function clearFile() {
-    setFile(null)
-    setKeepExisting(false)
+  function removeNew(key) {
+    setNewFiles((list) => list.filter((f) => f.key !== key))
+    setFileError('')
+  }
+
+  function removeKept(path) {
+    setKept((list) => list.filter((f) => f.path !== path))
     setFileError('')
   }
 
@@ -216,7 +255,17 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       !clean.startTime ||
       !clean.endTime
     ) {
-      setError('All fields except File and OG reward are required.')
+      setError('All fields except OG reward are required.')
+      return
+    }
+
+    if (fileCount === 0) {
+      setError('Please upload at least one file.')
+      return
+    }
+
+    if (fileCount > MAX_FILES) {
+      setError(`You can attach up to ${MAX_FILES} files only.`)
       return
     }
 
@@ -251,7 +300,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
 
     setSaving(true)
     try {
-      await onSubmit(clean, { file, keepExisting: !file && keepExisting })
+      await onSubmit(clean, { files: newFiles.map((f) => f.file), kept })
     } catch (err) {
       console.error('Hindi na-save ang proposal:', err)
       let message = 'Could not save. Please try again.'
@@ -260,8 +309,9 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       } else if (err?.message === 'not-allowed') {
         message = "You don't have permission to revise this proposal."
       } else if (err?.code === 'P0001' && err.message) {
-        /* Mensahe galing sa database: resubmit_proposal(), o ang
-           pagsusuri ng approvers (hal. "Please choose the SAO.") */
+        /* Mensahe galing sa database: resubmit_proposal(), ang
+           pagsusuri ng approvers (hal. "Please choose the SAO."),
+           o ng mga file (hal. "Please upload at least one file.") */
         message = err.message
       }
       setError(message)
@@ -438,52 +488,74 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
           </span>
         </label>
 
-        {/* ---------- FILE (opsyonal) ---------- */}
+        {/* ---------- FILES (kailangan, 1 hanggang MAX_FILES) ---------- */}
         <div className={styles.field}>
-          <span className={styles.label}>
-            File <span className={styles.optional}>(Required)</span>
+          <span className={styles.labelRow}>
+            <span className={styles.label}>
+              Files <span className={styles.required}>(Required)</span>
+            </span>
+            <span className={styles.counter}>
+              {fileCount} / {MAX_FILES}
+            </span>
           </span>
 
-          {file || keepExisting ? (
-            <div className={styles.fileBox}>
-              <span className={styles.fileIcon} aria-hidden="true">
-                📎
-              </span>
-              <span className={styles.fileInfo}>
-                <span className={styles.fileName}>
-                  {file ? file.name : proposal.attachment_name}
-                </span>
-                <span className={styles.fileSize}>
-                  {file
-                    ? formatFileSize(file.size)
-                    : `${formatFileSize(proposal.attachment_size)} · current file`}
-                </span>
-              </span>
-              <button
-                type="button"
-                className={styles.fileAction}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={saving}
-              >
-                Change
-              </button>
-              <button
-                type="button"
-                className={`${styles.fileAction} ${styles.fileRemove}`}
-                onClick={clearFile}
-                disabled={saving}
-              >
-                Remove
-              </button>
-            </div>
-          ) : (
+          {fileCount > 0 && (
+            <ul className={styles.fileList}>
+              {kept.map((f) => (
+                <li key={f.path} className={styles.fileBox}>
+                  <span className={styles.fileIcon} aria-hidden="true">
+                    📎
+                  </span>
+                  <span className={styles.fileInfo}>
+                    <span className={styles.fileName}>{f.name}</span>
+                    <span className={styles.fileSize}>
+                      {f.size ? `${formatFileSize(f.size)} · ` : ''}current file
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.fileAction} ${styles.fileRemove}`}
+                    onClick={() => removeKept(f.path)}
+                    disabled={saving}
+                    aria-label={`Remove ${f.name}`}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+
+              {newFiles.map(({ key, file }) => (
+                <li key={key} className={styles.fileBox}>
+                  <span className={styles.fileIcon} aria-hidden="true">
+                    📎
+                  </span>
+                  <span className={styles.fileInfo}>
+                    <span className={styles.fileName}>{file.name}</span>
+                    <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.fileAction} ${styles.fileRemove}`}
+                    onClick={() => removeNew(key)}
+                    disabled={saving}
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {canAddMore && (
             <button
               type="button"
               className={styles.uploadButton}
               onClick={() => fileInputRef.current?.click()}
               disabled={saving}
             >
-              <span aria-hidden="true">⬆</span> Upload a file
+              <span aria-hidden="true">⬆</span>{' '}
+              {fileCount === 0 ? 'Upload files' : 'Add more files'}
             </button>
           )}
 
@@ -491,19 +563,18 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             ref={fileInputRef}
             type="file"
             accept={ACCEPT_ATTRIBUTE}
+            multiple
             onChange={handleFileChange}
             className={styles.hiddenInput}
             tabIndex={-1}
             aria-hidden="true"
           />
 
-          {fileError ? (
-            <span className={styles.fileError}>{fileError}</span>
-          ) : (
-            <span className={styles.hint}>
-              {ACCEPTED_LABEL} · up to 10 MB.
-            </span>
-          )}
+          {fileError && <span className={styles.fileError}>{fileError}</span>}
+          <span className={styles.hint}>
+            At least 1 file is required (up to {MAX_FILES}). {ACCEPTED_LABEL} · up to 10 MB each.
+            You can select several files at once.
+          </span>
         </div>
 
         {error && <p className={styles.error}>{error}</p>}

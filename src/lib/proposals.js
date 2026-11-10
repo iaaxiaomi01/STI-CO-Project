@@ -11,9 +11,10 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
    Adviser: proposals lang ng SARILI nilang org. SAO at School
    Head: lahat ng org. Ang Member ay walang makukuha dito.
 
-   Sa paggawa, title, description, venue, petsa, oras at (kung
-   meron) ang file ang ipinapadala. Ang org, author at petsa ay itinatakda ng
-   trigger sa database — hindi mapepeke mula sa browser.
+   Sa paggawa, title, description, venue, petsa, oras at ang mga
+   file (attachments — kailangan may kahit isa) ang ipinapadala.
+   Ang org, author at petsa ay itinatakda ng trigger sa database —
+   hindi mapepeke mula sa browser.
 
    Ang Organization Name at Logo sa sulat ay galing sa
    organizations ( ... ) na join, hindi nakakopya sa proposal.
@@ -76,6 +77,12 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
      nag-pa-revise (revision_from), hindi na uulit sa simula.
      Sa pag-revise, pwedeng palitan ng Officer ang approver ng mga
      stage na hindi pa nadadaanan (lockedApproverStages()).
+
+   MARAMING FILE (PROPOSAL_MULTIPLE_FILES.sql)
+     proposals.attachments = [{ path, name, size }, ...]
+     KAILANGAN may kahit isang file (1 hanggang 10), sa paggawa at
+     sa pag-resubmit. Sinusuri ito ng database. Ang mga file ay
+     nasa folder pa rin ng org (tingnan ang lib/proposalFiles.js).
    ============================================================ */
 
 /* ---------- STATUS ----------
@@ -327,7 +334,7 @@ export function toOgReward(value) {
 const COLUMNS = `
   id, organization_id, title, description,
   venue, event_date, start_time, end_time,
-  attachment_path, attachment_name, attachment_size,
+  attachments, attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id, author_position,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
   stage, head_decision, admin_decision, has_budget, og_reward, approvers,
@@ -402,14 +409,14 @@ export async function fetchProposals() {
   return withPendingReviewers(data ?? [])
 }
 
-/* attachment = { path, name, size } galing sa uploadProposalFile()
-   (lib/proposalFiles.js), o null kapag walang file. */
-function attachmentColumns(attachment) {
-  return {
-    attachment_path: attachment?.path ?? null,
-    attachment_name: attachment?.name ?? null,
-    attachment_size: attachment?.size ?? null,
-  }
+/* attachments = [{ path, name, size }, ...] galing sa
+   uploadProposalFiles() (lib/proposalFiles.js) at sa mga
+   pinanatiling dating file. Ang database ang sumusuri ulit
+   (proposal_build_attachments). */
+function attachmentsPayload(attachments) {
+  return (attachments ?? [])
+    .filter((f) => f?.path)
+    .map(({ path, name, size }) => ({ path, name, size: size ?? null }))
 }
 
 /* Venue, petsa at oras ng activity (PROPOSAL_VENUE_DATE_TIME.sql).
@@ -426,14 +433,16 @@ function scheduleColumns({ venue, eventDate, startTime, endTime }) {
 
 /* approvers = { adviser: ['uuid'], sao: ['uuid', ...], school_head: [...],
    school_admin: [...] } galing sa picker ng ProposalForm.
-   Sinusuri ulit ito ng database (proposals_set_approvers). */
+   Sinusuri ulit ito ng database (proposals_set_approvers).
+   attachments = [{ path, name, size }, ...] — kailangan may kahit isa
+   (proposals_set_attachments). */
 export async function createProposal({
   title,
   description,
   hasBudget = false,
   ogReward = 0,
   approvers = {},
-  attachment = null,
+  attachments = [],
   ...schedule
 }) {
   const { data, error } = await supabase
@@ -444,8 +453,8 @@ export async function createProposal({
       has_budget: Boolean(hasBudget),
       og_reward: Number(ogReward) || 0,
       approvers: approversPayload(approvers, hasBudget),
+      attachments: attachmentsPayload(attachments),
       ...scheduleColumns(schedule),
-      ...attachmentColumns(attachment),
     })
     .select(COLUMNS)
     .single()
@@ -507,10 +516,11 @@ export async function requestRevision(id, comment) {
 }
 
 /* Officer: ipasa ulit ang na-edit na proposal.
-   attachment = { path, name, size } o null kapag walang file.
-   Kapag pareho ang path sa dati, hindi binago ang file.
-   approvers  = kapareho ng sa createProposal(). Ang mga naka-lock na
-                stage ay hindi binabago ng database kahit ipadala. */
+   attachments = [{ path, name, size }, ...] — ang mga pinanatiling
+                 dating file + ang mga bagong upload. Kailangan may
+                 kahit isa. Ang dating file na wala rito ay aalisin.
+   approvers   = kapareho ng sa createProposal(). Ang mga naka-lock na
+                 stage ay hindi binabago ng database kahit ipadala. */
 export async function resubmitProposal(
   id,
   {
@@ -523,20 +533,18 @@ export async function resubmitProposal(
     hasBudget,
     ogReward,
     approvers,
-    attachment = null,
+    attachments = [],
   },
 ) {
   const { error } = await supabase.rpc('resubmit_proposal', {
     p_id: id,
     p_title: title,
     p_description: description,
-    p_attachment_path: attachment?.path ?? null,
-    p_attachment_name: attachment?.name ?? null,
-    p_attachment_size: attachment?.size ?? null,
     p_venue: venue,
     p_event_date: eventDate,
     p_start_time: startTime,
     p_end_time: endTime,
+    p_attachments: attachmentsPayload(attachments),
     /* undefined → hindi ipapadala → hindi babaguhin ng database */
     p_has_budget: hasBudget === undefined ? undefined : Boolean(hasBudget),
     p_og_reward: ogReward === undefined ? undefined : Number(ogReward) || 0,

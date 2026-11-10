@@ -175,10 +175,16 @@
   cursor: not-allowed;
 }
 
-/* ---------- FILE (Upload a file) ---------- */
+/* ---------- FILES (Upload files — kailangan, marami) ---------- */
 .optional {
   font-weight: 400;
   color: var(--color-muted);
+}
+
+/* "(Required)" sa tabi ng Files */
+.required {
+  font-weight: 400;
+  color: #a61b1b;
 }
 
 /* Nakatago ang totoong <input type="file">; ang button ang pinipindot */
@@ -206,6 +212,16 @@
 .uploadButton:hover:not(:disabled) {
   border-color: var(--color-primary);
   background-color: var(--color-primary-soft);
+}
+
+/* Listahan ng mga napiling file */
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
 }
 
 .fileBox {
