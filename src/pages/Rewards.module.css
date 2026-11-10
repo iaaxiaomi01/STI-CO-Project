@@ -1260,7 +1260,7 @@
   cursor: not-allowed;
 }
 
-/* ---------- MEMBERS' OG — leaderboard ---------- */
+/* ---------- MEMBERS' OG — leaderboard (ayon sa OG na nagastos) ---------- */
 .num {
   flex-shrink: 0;
   display: grid;
@@ -1289,10 +1289,27 @@
   font-weight: 800;
 }
 
-.earned {
+/* "120 OG left" — natitirang OG, maliit lang */
+.left {
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
+}
+
+/* Ang OG na nagastos — ito ang batayan ng ranking */
+.spent {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 800;
+}
+
+.spentLabel {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .person > :last-child {

@@ -81,7 +81,8 @@ import styles from './Rewards.module.css'
      - tabs: pill dock na may icon
      - Shop: "shelf" na walang card; price tag sa larawan, at
        progress bar kung gaano ka na kalapit sa presyo
-     - OG history: timeline · Members' OG: leaderboard (top 3)
+     - OG history: timeline · Members' OG: leaderboard ayon sa
+       OG na nagastos (top 3 may medalya)
    ============================================================ */
 
 /* Icon ng bawat tab */
@@ -932,7 +933,30 @@ function ClaimsTab({ profile }) {
 
 /* ============================================================
    MEMBERS' OG — Adviser
+
+   Leaderboard ng org mo LANG — ang org_og_balances() ay kumukuha
+   lang sa org ng Adviser (o sa acting org ng School Admin).
+
+   RANKING: kung sino ang PINAKAMARAMING OG NA NAGASTOS ang una.
+   Walang "OG earned" na ipinapakita.
+
+   Walang "spent" column sa database, kaya kinukuwenta ito rito.
+   event_reward, redemption at refund lang ang laman ng ledger:
+     balance = earned − redemptions + refunds
+     spent   = earned − balance
+   Kaya kasama ang refund (na-cancel na lumang redemption) —
+   hindi ito bilang na nagastos.
    ============================================================ */
+function fullName(r) {
+  return `${r.first_name ?? ''} ${r.last_name ?? ''}`.trim()
+}
+
+function rankBySpent(rows) {
+  return rows
+    .map((r) => ({ ...r, spent: Math.max(0, r.earned - r.balance) }))
+    .sort((a, b) => b.spent - a.spent || fullName(a).localeCompare(fullName(b)))
+}
+
 function MembersOgTab() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -942,7 +966,7 @@ function MembersOgTab() {
     let active = true
     fetchOrgBalances()
       .then((data) => {
-        if (active) setRows(data)
+        if (active) setRows(rankBySpent(data))
       })
       .catch((err) => {
         console.error('Hindi makuha ang OG ng members:', err)
@@ -970,29 +994,32 @@ function MembersOgTab() {
     return <EmptyState icon="▲" title="No members yet" message="" />
   }
 
-  const total = rows.reduce((s, r) => s + r.balance, 0)
-  const earned = rows.reduce((s, r) => s + r.earned, 0)
+  const spent = rows.reduce((s, r) => s + r.spent, 0)
+  const left = rows.reduce((s, r) => s + r.balance, 0)
 
   return (
     <>
       <p className={styles.summary}>
-        <strong>{rows.length}</strong> members · <strong>{earned.toLocaleString('en-PH')}</strong> OG
-        earned in total · <strong>{total.toLocaleString('en-PH')}</strong> OG not yet spent
+        <strong>{rows.length}</strong> members · <strong>{spent.toLocaleString('en-PH')}</strong> OG
+        spent in total · <strong>{left.toLocaleString('en-PH')}</strong> OG not yet spent · ranked
+        by OG spent
       </p>
 
       <ol className={styles.people}>
         {rows.map((r, i) => {
-          const { name, role } = personLabel(`${r.first_name} ${r.last_name}`, r.role_id)
-          /* Naka-ayos na ayon sa OG (pinakamarami una) mula sa
-             org_og_balances(), kaya ang top 3 ay may medalya */
-          const medal = ['rank1', 'rank2', 'rank3'][i] ?? ''
+          const { name, role } = personLabel(fullName(r), r.role_id)
+          /* Medalya sa top 3 — kapag may nagastos na talaga */
+          const medal = r.spent > 0 ? (['rank1', 'rank2', 'rank3'][i] ?? '') : ''
           return (
             <li key={r.profile_id} className={`${styles.person} ${styles[medal] ?? ''}`}>
               <span className={styles.num}>{i + 1}</span>
               <span className={styles.name}>{name}</span>
               <span className={styles.role}>{role}</span>
-              <span className={styles.earned}>{r.earned.toLocaleString('en-PH')} earned</span>
-              <OgAmount value={r.balance} size={14} />
+              <span className={styles.left}>{r.balance.toLocaleString('en-PH')} OG left</span>
+              <span className={styles.spent}>
+                <OgAmount value={r.spent} size={14} />
+                <span className={styles.spentLabel}>spent</span>
+              </span>
             </li>
           )
         })}
