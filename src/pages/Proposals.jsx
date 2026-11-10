@@ -40,8 +40,7 @@ import {
   reviewPath,
   reviewProposal,
   reviewSteps,
-  scheduleDateLabel,
-  scheduleTimeLabel,
+  scheduleLabel,
   stageLabel,
 } from '../lib/proposals.js'
 import {
@@ -101,6 +100,10 @@ import styles from './Proposals.module.css'
    FILES (PROPOSAL_MULTIPLE_FILES.sql): KAILANGAN may kahit isang
    file, hanggang 10. Bawat file ay may sariling download link sa
    card at sa sulat. Nasa folder pa rin ng org ang mga file.
+
+   START DATE AT END DATE (PROPOSAL_START_END_DATE.sql): ang "When"
+   sa card ay may petsa at oras ng simula at katapusan kapag higit
+   isang araw ang activity (scheduleLabel()).
 
    PAGGAWA NG EVENT: WALA NA DITO. Inilipat na sa Events page
    ("+ Create Event" ng Officer — pipili siya ng sarili niyang
@@ -662,12 +665,14 @@ function Proposals() {
                       </span>
                     </li>
 
-                    {/* Kailan at saan ang activity (wala sa mga lumang proposal) */}
+                    {/* Kailan ang activity (wala sa mga lumang proposal).
+                        Iisang araw: "Monday, October 5, 2026, 1:30 PM – 5:00 PM"
+                        Maraming araw: "Fri, Nov 20, 2026, 8:00 AM – Sun, Nov 22, 2026, 5:00 PM" */}
                     {hasSchedule(p) && (
                       <li className={styles.meta}>
                         <CalendarDays size={15} strokeWidth={2.2} aria-hidden="true" />
                         <span>
-                          When: <strong>{scheduleDateLabel(p)}</strong>, {scheduleTimeLabel(p)}
+                          When: <strong>{scheduleLabel(p)}</strong>
                         </span>
                       </li>
                     )}

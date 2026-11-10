@@ -87,6 +87,27 @@
   }
 }
 
+/* Start Date · End Date, at Start Time · End Time — tig-dalawa
+   bawat hilera (Proposal Form at Event Form) */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+}
+
+@media (max-width: 380px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* "3 days · Fri, Nov 20, 2026, 8:00 AM – Sun, Nov 22, 2026, 5:00 PM" */
+.schedulePreview {
+  margin: -0.35rem 0 1rem;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
 .error {
   margin-bottom: 1rem;
   padding: 0.7rem 0.9rem;

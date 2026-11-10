@@ -5,7 +5,10 @@ import {
   authorRoleLabel,
   formatLetterDate,
   hasSchedule,
+  isMultiDaySchedule,
   scheduleDateLabel,
+  scheduleEndLabel,
+  scheduleStartLabel,
   scheduleTimeLabel,
 } from '../lib/proposals.js'
 import { attachmentsOf } from '../lib/proposalFiles.js'
@@ -20,7 +23,11 @@ import styles from './ProposalLetter.module.css'
      Petsa                      → kailan ginawa
      Title                      → nagiging SUBJECT ng sulat
      Venue, Date, Time          → kailan at saan ang activity
-                                  (wala sa mga lumang proposal)
+                                  (wala sa mga lumang proposal).
+                                  Kapag MARAMING ARAW
+                                  (PROPOSAL_START_END_DATE.sql):
+                                  "Start:" at "End:" — petsa at
+                                  oras ng simula at katapusan.
      Description                → katawan ng sulat
      Proposed by                → ang gumawa, ang officer position
                                   niya (kung meron), at ang role
@@ -122,7 +129,21 @@ function ProposalLetter({ proposal, onClose, onDownload, downloadingPath = null 
                   <dd>{proposal.venue}</dd>
                 </div>
               )}
-              {hasSchedule(proposal) && (
+              {/* Maraming araw: Start at End, may petsa at oras bawat isa */}
+              {isMultiDaySchedule(proposal) && (
+                <>
+                  <div className={styles.detailRow}>
+                    <dt>Start:</dt>
+                    <dd>{scheduleStartLabel(proposal)}</dd>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <dt>End:</dt>
+                    <dd>{scheduleEndLabel(proposal)}</dd>
+                  </div>
+                </>
+              )}
+              {/* Iisang araw: Date at Time, tulad ng dati */}
+              {hasSchedule(proposal) && !isMultiDaySchedule(proposal) && (
                 <>
                   <div className={styles.detailRow}>
                     <dt>Date:</dt>

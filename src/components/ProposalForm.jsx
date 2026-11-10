@@ -16,7 +16,7 @@ import {
   toOgReward,
   todayKey,
 } from '../lib/proposals.js'
-import { toTimeInput } from '../lib/events.js'
+import { addDaysKey, formatSchedule, toTimeInput } from '../lib/events.js'
 import { toTitleCase } from '../lib/profile.js'
 import {
   ACCEPT_ATTRIBUTE,
@@ -38,12 +38,23 @@ import styles from './ProposalForm.module.css'
      <ProposalForm proposal={p} onSubmit ... />    → i-revise
 
    Sa pag-revise, nakalagay na ang dating Title, Description,
-   Venue, Date, oras at mga file, at nasa itaas ang komento ng
-   nag-pa-revise. Pwedeng panatilihin o alisin ang bawat dating
-   file, at magdagdag ng bago.
+   Venue, Start Date, End Date, oras at mga file, at nasa itaas
+   ang komento ng nag-pa-revise. Pwedeng panatilihin o alisin ang
+   bawat dating file, at magdagdag ng bago.
 
-   Tinatype: Title, Description, Venue, Date, Start Time at
-   End Time (kailangan lahat).
+   Tinatype: Title, Description, Venue, Start Date, End Date,
+   Start Time at End Time (kailangan lahat).
+
+   START DATE AT END DATE (PROPOSAL_START_END_DATE.sql):
+     Tuloy-tuloy ang activity mula (Start Date + Start Time)
+     hanggang (End Date + End Time). Kapag iisang araw lang,
+     pareho ang Start Date at End Date.
+     - Pagpili ng Start Date, kusang sumusunod ang End Date kapag
+       blangko pa ito o mas maaga sa Start Date.
+     - Hindi pwedeng mas maaga ang End Date sa Start Date.
+     - Kapag iisang araw, ang End Time ay dapat lampas sa Start Time.
+     Sinusuri ulit ito ng database (proposals_check_schedule,
+     resubmit_proposal).
 
    FILES (PROPOSAL_MULTIPLE_FILES.sql): KAILANGAN may kahit ISANG
    file, hanggang MAX_FILES (10). Pwedeng pumili ng marami nang
@@ -74,6 +85,7 @@ import styles from './ProposalForm.module.css'
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
    onSubmit(values, { files, kept }) — ang page ang
    mag-a-upload at tatawag sa database.
+     values.eventDate → Start Date · values.endDate → End Date
      values.approvers → { adviser: [id], sao: [id, ...], school_head: [...],
                           school_admin: [...] (may budget lang) }
      files            → mga BAGONG file na pinili (File[])
@@ -85,6 +97,14 @@ function fileKey(file) {
   return `${file.name}|${file.size}|${file.lastModified}`
 }
 
+/* Ilang araw mula Start Date hanggang End Date (kasama pareho) */
+function dayCount(start, end) {
+  if (!start || !end || end < start) return 0
+  let count = 1
+  for (let key = start; key < end && count <= 366; key = addDaysKey(key, 1)) count += 1
+  return count
+}
+
 function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const editing = Boolean(proposal)
   const revision = editing ? latestRevision(proposal) : null
@@ -92,13 +112,35 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   const [title, setTitle] = useState(proposal?.title ?? '')
   const [description, setDescription] = useState(proposal?.description ?? '')
   const [venue, setVenue] = useState(proposal?.venue ?? '')
+  /* eventDate = START DATE (event_date sa database) */
   const [eventDate, setEventDate] = useState(proposal?.event_date ?? '')
+  /* Ang lumang proposal na walang end_date ay iisang araw */
+  const [endDate, setEndDate] = useState(proposal?.end_date ?? proposal?.event_date ?? '')
   const [startTime, setStartTime] = useState(toTimeInput(proposal?.start_time))
   const [endTime, setEndTime] = useState(toTimeInput(proposal?.end_time))
   const [hasBudget, setHasBudget] = useState(Boolean(proposal?.has_budget))
   const [ogReward, setOgReward] = useState(proposal?.og_reward ? String(proposal.og_reward) : '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  /* Pagpili ng Start Date: sumusunod ang End Date kapag blangko pa
+     ito o naging mas maaga sa bagong Start Date */
+  function handleStartDateChange(value) {
+    setEventDate(value)
+    if (value && (!endDate || endDate < value)) setEndDate(value)
+  }
+
+  /* Ilang araw ang activity — para sa maliit na paalala sa ilalim */
+  const days = dayCount(eventDate, endDate)
+  const schedulePreview =
+    eventDate && endDate && startTime && endTime && days > 0
+      ? formatSchedule({
+          event_date: eventDate,
+          end_date: endDate,
+          start_time: startTime,
+          end_time: endTime,
+        })
+      : ''
 
   /* ---------- APPROVERS ----------
      approvers → { adviser: ['id'], sao: ['id', 'id'], school_head: [...], school_admin: [...] }
@@ -240,6 +282,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       description: description.trim(),
       venue: venue.trim(),
       eventDate,
+      endDate,
       startTime,
       endTime,
       hasBudget,
@@ -252,6 +295,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       !clean.description ||
       !clean.venue ||
       !clean.eventDate ||
+      !clean.endDate ||
       !clean.startTime ||
       !clean.endTime
     ) {
@@ -277,13 +321,20 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       return
     }
 
-    if (clean.endTime <= clean.startTime) {
+    if (clean.endDate < clean.eventDate) {
+      setError('End Date cannot be earlier than Start Date.')
+      return
+    }
+
+    /* Iisang araw: ang End Time ay dapat lampas sa Start Time.
+       Maraming araw: laging lampas na ang katapusan. */
+    if (clean.endDate === clean.eventDate && clean.endTime <= clean.startTime) {
       setError('End Time must be later than Start Time.')
       return
     }
 
     if (!isFutureSchedule(clean.eventDate, clean.startTime)) {
-      setError('The date and time of the activity must be in the future.')
+      setError('The start date and time of the activity must be in the future.')
       return
     }
 
@@ -311,8 +362,11 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       } else if (err?.code === 'P0001' && err.message) {
         /* Mensahe galing sa database: resubmit_proposal(), ang
            pagsusuri ng approvers (hal. "Please choose the SAO."),
-           o ng mga file (hal. "Please upload at least one file.") */
+           ng mga file (hal. "Please upload at least one file."),
+           o ng petsa (hal. "End Date cannot be earlier than Start Date.") */
         message = err.message
+      } else if (err?.code === '23514' && err.message?.includes('proposals_schedule_order')) {
+        message = 'The end (End Date and End Time) must be later than the start.'
       }
       setError(message)
       setSaving(false)
@@ -402,20 +456,35 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
           />
         </label>
 
-        {/* ---------- DATE AT ORAS ---------- */}
-        <div className={styles.grid3}>
+        {/* ---------- START DATE · END DATE ---------- */}
+        <div className={styles.grid2}>
           <label className={styles.field}>
-            <span className={styles.label}>Date</span>
+            <span className={styles.label}>Start Date</span>
             <input
               type="date"
               className={styles.input}
               value={eventDate}
               min={todayKey()}
-              onChange={(e) => setEventDate(e.target.value)}
+              onChange={(e) => handleStartDateChange(e.target.value)}
               required
             />
           </label>
 
+          <label className={styles.field}>
+            <span className={styles.label}>End Date</span>
+            <input
+              type="date"
+              className={styles.input}
+              value={endDate}
+              min={eventDate || todayKey()}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        {/* ---------- START TIME · END TIME ---------- */}
+        <div className={styles.grid2}>
           <label className={styles.field}>
             <span className={styles.label}>Start Time</span>
             <input
@@ -438,6 +507,14 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             />
           </label>
         </div>
+
+        {/* Silip ng buong schedule — lalo na kapag maraming araw */}
+        {schedulePreview && (
+          <p className={styles.schedulePreview}>
+            {days > 1 ? `${days} days · ` : 'One day · '}
+            {schedulePreview}
+          </p>
+        )}
 
         {/* ---------- MAY BUDGET? ---------- */}
         <label className={styles.check}>

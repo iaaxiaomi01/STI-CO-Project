@@ -25,13 +25,15 @@ import {
   computeStatus,
   createEventFromProposal,
   deleteEvent,
+  endDateOf,
   eventErrorMessage,
   eventStatusLabel,
   fetchEvents,
   fetchMyJoinedEventIds,
   findScheduleConflict,
-  formatEventDate,
-  formatTime,
+  formatEventDateRange,
+  formatEventTimeRange,
+  isMultiDay,
   joinEvent,
   nowKey,
   updateEvent,
@@ -72,8 +74,8 @@ import styles from './Events.module.css'
      sariling org lang), at ang ipinapakita lang ay ang pasado sa
      canCreateEventFrom(): sariling org, ikaw ang nagpasa,
      approved, at wala pang event. Pipili siya ng proposal sa
-     EventForm; ang Date, oras, Location at OG reward ay galing
-     doon at naka-lock. Kapag wala, may paalala lang.
+     EventForm; ang Start Date, End Date, oras, Location at OG
+     reward ay galing doon at naka-lock. Kapag wala, may paalala lang.
      Ang trigger sa database pa rin ang totoong nagbabantay
      (events_before_insert).
 
@@ -88,8 +90,12 @@ import styles from './Events.module.css'
    Hinaharang din ito ng database (EVENT_EDIT_LOCK.sql).
 
    Ang Status (Upcoming/Ongoing/Completed) ay AUTOMATIC —
-   kinukuwenta mula sa Date at oras, at nire-refresh bawat
-   30 segundo habang bukas ang page.
+   kinukuwenta mula sa Start Date, End Date at oras, at
+   nire-refresh bawat 30 segundo habang bukas ang page.
+
+   MARAMING ARAW (PROPOSAL_START_END_DATE.sql): ang stub ng
+   ticket ay ang Start Date, may "to <End Date>" sa ilalim; ang
+   oras ay may petsa ng simula at katapusan.
 
    MISSED (Member at Officer): kapag Completed na ang event at
    HINDI siya nag-Join, "Missed" ang ipinapakita imbes na "Completed",
@@ -101,10 +107,11 @@ import styles from './Events.module.css'
                           (hindi pa nagsisimula) ang event.
                           Kapag Ongoing na, wala nang Join button.
                           Pagka-Join, lilipat sa Attendance tab.
-     MAGKASABAY NA EVENT → kapag KASABAY (parehong petsa, nagpapatong
-                          ang oras) ng event na sinalihan mo na,
-                          walang Join — "Schedule conflict" at
-                          paalala kung aling event ang kasabay.
+     MAGKASABAY NA EVENT → kapag KASABAY (nagpapatong ang buong
+                          saklaw ng petsa at oras) ng event na
+                          sinalihan mo na, walang Join —
+                          "Schedule conflict" at paalala kung
+                          aling event ang kasabay.
                           Hinaharang din ito ng database
                           (EVENT_JOIN_NO_CONFLICT.sql).
      Walang bilang ng sasali dito para sa kahit anong role.
@@ -189,6 +196,17 @@ function dateParts(ymd) {
   }
 }
 
+/* Event na maraming araw → "to Sun, Nov 22" (sa ilalim ng Start
+   Date sa stub ng ticket) */
+function untilLabel(ev) {
+  const [y, m, d] = endDateOf(ev).split('-').map(Number)
+  return `to ${new Date(y, m - 1, d).toLocaleDateString('en-PH', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })}`
+}
+
 /* Diamond sa poster kapag walang larawan ang event */
 function PosterMark() {
   return (
@@ -205,11 +223,12 @@ function isFinished(status) {
 }
 
 /* Paalala kapag kasabay ng event na sinalihan mo na:
-   "Same schedule as “Sports Fest” (8:00 AM – 10:00 AM), which you already joined." */
+   "Same schedule as “Sports Fest” (8:00 AM – 10:00 AM), which you already joined."
+   Maraming araw: "(Nov 20, 8:00 AM – Nov 22, 5:00 PM)" */
 function conflictText(conflict) {
   return (
     `Same schedule as “${conflict.title}” ` +
-    `(${formatTime(conflict.start_time)} – ${formatTime(conflict.end_time)}), ` +
+    `(${formatEventTimeRange(conflict)}), ` +
     'which you already joined. You can only join one event at a time.'
   )
 }
@@ -552,7 +571,8 @@ function Events() {
   }
 
   /* Mga event na tumutugma sa search (lahat kapag blangko).
-     Hindi mahalaga ang malaki o maliit na titik. */
+     Hindi mahalaga ang malaki o maliit na titik.
+     Kasama ang Start Date at End Date. */
   const query = search.trim().toLowerCase()
   const matched = useMemo(() => {
     if (!query) return withStatus
@@ -563,7 +583,8 @@ function Events() {
         e.location,
         e.author_name,
         e.event_date,
-        formatEventDate(e.event_date),
+        e.end_date,
+        formatEventDateRange(e),
       ]
         .filter(Boolean)
         .some((field) => field.toLowerCase().includes(query)),
@@ -723,7 +744,7 @@ function Events() {
                 const isDone = isFinished(ev.status)
                 const missed = ev.status === MISSED_STATUS.value
                 const joinBusy = joiningId === ev.id
-                /* Kasabay (parehong petsa, nagpapatong ang oras) ng event
+                /* Kasabay (nagpapatong ang petsa at oras) ng event
                    na sinalihan mo na → walang Join, may paalala.
                    Hinaharang din ito ng database (EVENT_JOIN_NO_CONFLICT.sql). */
                 const conflict =
@@ -803,7 +824,7 @@ function Events() {
                           <li>
                             <Clock size={15} aria-hidden="true" />
                             <span className={styles.srOnly}>Time: </span>
-                            {formatTime(ev.start_time)} – {formatTime(ev.end_time)}
+                            {formatEventTimeRange(ev)}
                           </li>
                           <li>
                             <MapPin size={15} aria-hidden="true" />
@@ -918,14 +939,18 @@ function Events() {
                           {eventStatusLabel(ev.status)}
                         </span>
 
+                        {/* Start Date; kapag maraming araw, "to <End Date>"
+                            ang kapalit ng weekday */}
                         <p className={styles.stubDate}>
-                          <span className={styles.srOnly}>{formatEventDate(ev.event_date)}</span>
+                          <span className={styles.srOnly}>{formatEventDateRange(ev)}</span>
                           <span className={styles.stubDay} aria-hidden="true">
                             {date.day}
                           </span>
                           <span className={styles.stubMeta} aria-hidden="true">
                             <span className={styles.stubMonth}>{date.month}</span>
-                            <span className={styles.stubWeekday}>{date.weekday}</span>
+                            <span className={styles.stubWeekday}>
+                              {isMultiDay(ev) ? untilLabel(ev) : date.weekday}
+                            </span>
                           </span>
                         </p>
 
@@ -998,14 +1023,12 @@ function Events() {
 
                       <dl className={styles.details}>
                         <div>
-                          <dt>Date</dt>
-                          <dd>{formatEventDate(ev.event_date)}</dd>
+                          <dt>{isMultiDay(ev) ? 'Dates' : 'Date'}</dt>
+                          <dd>{formatEventDateRange(ev)}</dd>
                         </div>
                         <div>
                           <dt>Time</dt>
-                          <dd>
-                            {formatTime(ev.start_time)} – {formatTime(ev.end_time)}
-                          </dd>
+                          <dd>{formatEventTimeRange(ev)}</dd>
                         </div>
                         <div>
                           <dt>Location</dt>

@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { formatEventDate, formatTime, joinErrorMessage } from '../lib/events.js'
+import {
+  formatEventDateRange,
+  formatEventTimeRange,
+  isMultiDay,
+  joinErrorMessage,
+} from '../lib/events.js'
 import base from './ProposalForm.module.css'
 import styles from './JoinConfirmDialog.module.css'
 
@@ -12,6 +17,10 @@ import styles from './JoinConfirmDialog.module.css'
    button, at hinaharang din ito ng database
    (EVENT_JOIN_NO_LEAVE.sql).
 
+   Kapag maraming araw ang event (PROPOSAL_START_END_DATE.sql),
+   "Dates" at buong saklaw ng oras ang ipinapakita, at ang stub
+   ay ang Start Date.
+
    Hindi dito nagse-save. Tinatawag lang ang onConfirm(); kapag
    nag-throw, dito lalabas ang error at mananatiling bukas ang
    dialog.
@@ -19,6 +28,7 @@ import styles from './JoinConfirmDialog.module.css'
 function JoinConfirmDialog({ event, onConfirm, onCancel }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const multiDay = isMultiDay(event)
 
   /* Nasa "Kanselahin" ang focus, hindi sa "Oo, mag-Join" —
      hindi na mababawi ang pagsali, kaya hindi dapat ito
@@ -73,14 +83,12 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
           <p className={styles.title}>{event.title}</p>
           <dl className={styles.details}>
             <div>
-              <dt>Date</dt>
-              <dd>{formatEventDate(event.event_date)}</dd>
+              <dt>{multiDay ? 'Dates' : 'Date'}</dt>
+              <dd>{formatEventDateRange(event)}</dd>
             </div>
             <div>
               <dt>Time</dt>
-              <dd>
-                {formatTime(event.start_time)} – {formatTime(event.end_time)}
-              </dd>
+              <dd>{formatEventTimeRange(event)}</dd>
             </div>
             <div>
               <dt>Location</dt>

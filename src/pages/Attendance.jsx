@@ -27,8 +27,8 @@ import {
   fetchParticipantCounts,
   fetchParticipants,
   formatDateTimeShort,
-  formatEventDate,
-  formatTime,
+  formatEventDateRange,
+  formatEventTimeRange,
   nowKey,
   participantLabel,
 } from '../lib/events.js'
@@ -49,6 +49,7 @@ import {
   fetchEventAttendance,
   fetchMyAttendance,
   formatClock,
+  formatWindowKey,
   manualAttendance,
   modeForPhase,
 } from '../lib/attendance.js'
@@ -92,6 +93,9 @@ import styles from './Attendance.module.css'
        30 min bago ang Start → Start   Time In lang
        Start → End                     sarado (nagaganap)
        End → 1 oras pagkatapos         Time Out lang
+     Start = Start Date + Start Time · End = End Date + End Time.
+     Sa event na maraming araw, may petsa ang mga oras sa paalala
+     (formatWindowKey()).
 
    ITSURA ("check-in tracker" — UI lang, walang binago sa data):
      - segmented switch para sa dalawang tab
@@ -109,7 +113,7 @@ const TAB_ICONS = {
 }
 
 /* "2026-10-07" → { day: '07', month: 'OCT' } — para sa petsa
-   sa ibabaw ng larawan. Display lang. */
+   sa ibabaw ng larawan (ang Start Date). Display lang. */
 function dateParts(ymd) {
   const [y, m, d] = ymd.split('-').map(Number)
   const date = new Date(y, m - 1, d)
@@ -250,17 +254,19 @@ function StatusBadge({ status }) {
   )
 }
 
-/* Petsa · oras · lugar, bawat isa may icon */
+/* Petsa · oras · lugar, bawat isa may icon.
+   Maraming araw: "Fri, Nov 20, 2026 – Sun, Nov 22, 2026" at
+   "Nov 20, 8:00 AM – Nov 22, 5:00 PM" */
 function EventMeta({ event }) {
   return (
     <ul className={styles.metaList}>
       <li>
         <CalendarDays size={15} strokeWidth={2.2} aria-hidden="true" />
-        {formatEventDate(event.event_date)}
+        {formatEventDateRange(event)}
       </li>
       <li>
         <Clock size={15} strokeWidth={2.2} aria-hidden="true" />
-        {formatTime(event.start_time)} – {formatTime(event.end_time)}
+        {formatEventTimeRange(event)}
       </li>
       <li>
         <MapPin size={15} strokeWidth={2.2} aria-hidden="true" />
@@ -425,19 +431,16 @@ function MyJoinedEvents({ profile }) {
   )
 }
 
-/* "2026-10-04 08:30" → "8:30 AM" */
-function clockOfKey(key) {
-  return formatTime(key.slice(11))
-}
-
 /* Ano ang ipapakita sa tabi ng Time In / Time Out mo.
    Ibinabalik ang { qr: 'Time In' | 'Time Out' | null, hint } */
 function myAttendanceState(event, record, now) {
   const phase = attendancePhase(event, now)
   const w = attendanceWindows(event)
+  /* "8:30 AM", o "Nov 22, 5:00 PM" kapag maraming araw */
+  const at = (key) => formatWindowKey(key, event)
   const hasIn = Boolean(record?.time_in)
   const hasOut = Boolean(record?.time_out)
-  const outRange = `${clockOfKey(w.outOpens)} – ${clockOfKey(w.outCloses)}`
+  const outRange = `${at(w.outOpens)} – ${at(w.outCloses)}`
 
   if (hasOut) return { qr: null, hint: '' }
 
@@ -445,19 +448,19 @@ function myAttendanceState(event, record, now) {
     case PHASE_BEFORE:
       return {
         qr: null,
-        hint: `The QR for Time In opens from ${clockOfKey(w.inOpens)} to ${clockOfKey(w.inCloses)}`,
+        hint: `The QR for Time In opens from ${at(w.inOpens)} to ${at(w.inCloses)}`,
       }
     case PHASE_IN:
       return hasIn
         ? { qr: null, hint: `You're timed in. Time Out: ${outRange}` }
-        : { qr: 'Time In', hint: `Time In is only until ${clockOfKey(w.inCloses)}` }
+        : { qr: 'Time In', hint: `Time In is only until ${at(w.inCloses)}` }
     case PHASE_ONGOING:
       return hasIn
         ? { qr: null, hint: `The event is in progress. Time Out: ${outRange}` }
         : { qr: null, hint: 'You did not time in' }
     case PHASE_OUT:
       return hasIn
-        ? { qr: 'Time Out', hint: `Time Out is only until ${clockOfKey(w.outCloses)}` }
+        ? { qr: 'Time Out', hint: `Time Out is only until ${at(w.outCloses)}` }
         : { qr: null, hint: 'You did not time in' }
     case PHASE_CLOSED:
     default:
@@ -693,11 +696,12 @@ function ParticipantsPerEvent({ profile }) {
             const scanOpen = canScan && total > 0 && scanMode !== null
             const showAtt = att.timedIn > 0 || ev.status !== 'upcoming'
             const w = attendanceWindows(ev)
+            const at = (key) => formatWindowKey(key, ev)
             const scanHint =
               canScan && total > 0
                 ? {
-                    [PHASE_BEFORE]: `Time In: ${clockOfKey(w.inOpens)} – ${clockOfKey(w.inCloses)}`,
-                    [PHASE_ONGOING]: `Closed while in progress. Time Out: ${clockOfKey(w.outOpens)} – ${clockOfKey(w.outCloses)}`,
+                    [PHASE_BEFORE]: `Time In: ${at(w.inOpens)} – ${at(w.inCloses)}`,
+                    [PHASE_ONGOING]: `Closed while in progress. Time Out: ${at(w.outOpens)} – ${at(w.outCloses)}`,
                   }[phase] ?? ''
                 : ''
 

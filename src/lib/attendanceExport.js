@@ -2,8 +2,8 @@ import { supabase } from './supabaseClient.js'
 import {
   fetchParticipants,
   formatDateTimeShort,
-  formatEventDate,
-  formatTime,
+  formatEventDateRange,
+  formatEventTimeRange,
   nowKey,
   participantLabel,
 } from './events.js'
@@ -31,6 +31,8 @@ import stiLogoUrl from '../assets/sti-logo.png'
 
    Laman:
      - itaas: banner, detalye ng event at ng org, at buod
+       (Date at Time — may Start Date at End Date kapag
+       maraming araw ang event)
      - talaan: lahat ng nag-Join, may Time In / Time Out at status
 
    Ang RLS pa rin ang nagbabantay: Officer/Adviser lang ang
@@ -80,7 +82,7 @@ async function fetchProfiles(ids) {
   return map
 }
 
-/* "attendance-general-assembly-2026-10-18.xlsx" */
+/* "attendance-general-assembly-2026-10-18.xlsx" (Start Date) */
 function fileNameFor(event) {
   const slug =
     String(event.title ?? 'event')
@@ -182,8 +184,8 @@ export async function exportEventAttendance(event, { exportedBy = null } = {}) {
     orgName: org.name,
     department: org.department,
     title: event.title,
-    date: formatEventDate(event.event_date),
-    time: `${formatTime(event.start_time)} – ${formatTime(event.end_time)}`,
+    date: formatEventDateRange(event),
+    time: formatEventTimeRange(event),
     location: event.location,
     exportedOn: formatDateTimeShort(new Date().toISOString()),
     exportedBy: exportedBy ? fullNameOf(exportedBy) : '',

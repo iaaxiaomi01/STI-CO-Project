@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react'
 import {
   computeStatus,
+  eventDayKeys,
   eventStatusLabel,
   fetchPublicCalendarEvents,
   formatEventDate,
-  formatTime,
+  formatEventTimeRange,
   nowKey,
 } from '../../lib/events.js'
 import styles from './EventCalendar.module.css'
@@ -29,6 +30,9 @@ import styles from './EventCalendar.module.css'
         sobra ay "+N more". Sa phone: tuldok lang.
      3. I-click ang araw para makita sa ilalim ang buong listahan
         ng events nito.
+
+   MARAMING ARAW (PROPOSAL_START_END_DATE.sql): lumalabas ang
+   event sa BAWAT araw mula Start Date hanggang End Date.
 
    Kulay: bawat org ay may sariling kulay (ORG_COLORS), at ang
    "ORGANIZATIONS" sa kaliwa ang legend — mga org na may event
@@ -134,23 +138,27 @@ function EventCalendar() {
     }
   }, [rangeFrom, rangeTo])
 
-  /* "2026-10-20" → [mga event ng araw na iyon] */
+  /* "2026-10-20" → [mga event ng araw na iyon]
+     Ang event na maraming araw ay nasa BAWAT araw nito. */
   const eventsByDay = useMemo(() => {
     const map = new Map()
     for (const event of events) {
-      const list = map.get(event.event_date) ?? []
-      list.push(event)
-      map.set(event.event_date, list)
+      for (const key of eventDayKeys(event)) {
+        const list = map.get(key) ?? []
+        list.push(event)
+        map.set(key, list)
+      }
     }
     return map
   }, [events])
 
-  /* Mga org na may event sa BUWANG ito — para sa legend */
+  /* Mga org na may event sa BUWANG ito — para sa legend.
+     Kasama ang event na tumatawid lang sa buwang ito. */
   const legend = useMemo(() => {
     const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}-`
     const seen = new Map()
     for (const event of events) {
-      if (!event.event_date.startsWith(monthPrefix)) continue
+      if (!eventDayKeys(event).some((key) => key.startsWith(monthPrefix))) continue
       if (!seen.has(event.organization_id)) seen.set(event.organization_id, event)
     }
     return [...seen.values()].sort((a, b) =>
@@ -351,7 +359,7 @@ function EventCalendar() {
                           <div className={styles.detailsMeta}>
                             <span>
                               <Clock size={15} aria-hidden="true" />
-                              {formatTime(event.start_time)} – {formatTime(event.end_time)}
+                              {formatEventTimeRange(event)}
                             </span>
                             <span>
                               <MapPin size={15} aria-hidden="true" />

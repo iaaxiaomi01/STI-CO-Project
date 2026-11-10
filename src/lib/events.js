@@ -19,6 +19,14 @@ import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js
    sa database. Sinusuri din doon na approved ang proposal at
    ikaw ang nagpasa — hindi ito malulusutan mula sa browser.
 
+   START DATE AT END DATE (PROPOSAL_START_END_DATE.sql):
+     event_date → START DATE (hindi pinalitan ang pangalan)
+     end_date   → END DATE (bago)
+   Tuloy-tuloy ang event mula (Start Date + Start Time) hanggang
+   (End Date + End Time). Kapag iisang araw, pareho ang dalawa.
+   Ang lumang event/proposal na walang end_date ay iisang araw —
+   laging gamitin ang endDateOf().
+
    Picture: event-images/<org id>/<proposal id>/<timestamp>.webp
    ============================================================ */
 
@@ -43,14 +51,62 @@ export function eventStatusLabel(value) {
 }
 
 /* ============================================================
+   START DATE / END DATE — mga helper
+
+   Gumagana sa event, sa proposal, at sa row ng calendar
+   (lahat ay may event_date, end_date, start_time, end_time).
+   ============================================================ */
+
+/* Ang End Date. Ang luma (walang end_date) ay iisang araw. */
+export function endDateOf(item) {
+  return item?.end_date || item?.event_date || ''
+}
+
+/* Higit isang araw ba? */
+export function isMultiDay(item) {
+  return Boolean(item?.event_date) && endDateOf(item) !== item.event_date
+}
+
+/* "2026-11-20 08:00" — simula, pareho ang anyo ng nowKey() */
+export function startKeyOf(item) {
+  return `${item.event_date} ${item.start_time.slice(0, 5)}`
+}
+
+/* "2026-11-22 17:00" — katapusan (End Date + End Time) */
+export function endKeyOf(item) {
+  return `${endDateOf(item)} ${item.end_time.slice(0, 5)}`
+}
+
+/* "2026-11-20" + 2 → "2026-11-22" (kinukuwenta bilang UTC para
+   hindi magulo ng timezone ng computer) */
+export function addDaysKey(ymd, days) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
+}
+
+/* Lahat ng araw na saklaw ng event: ["2026-11-20", "2026-11-21", "2026-11-22"].
+   Para sa calendar — lumalabas ang event sa BAWAT araw nito.
+   May hangganan (62 araw) para hindi bumigat kung may maling petsa. */
+export function eventDayKeys(item, maxDays = 62) {
+  if (!item?.event_date) return []
+  const end = endDateOf(item)
+  const days = []
+  for (let key = item.event_date; key <= end && days.length < maxDays; key = addDaysKey(key, 1)) {
+    days.push(key)
+  }
+  return days
+}
+
+/* ============================================================
    AUTOMATIC NA STATUS
 
-   Hindi na pinipili ang status. Kinukuwenta ito mula sa Date,
-   Start Time at End Time, kumpara sa oras NGAYON sa Pilipinas:
+   Hindi na pinipili ang status. Kinukuwenta ito mula sa Start
+   Date, End Date, Start Time at End Time, kumpara sa oras NGAYON
+   sa Pilipinas:
 
-     bago mag-Start Time          → Upcoming
-     mula Start hanggang End Time → Ongoing
-     lampas na sa End Time        → Completed
+     bago mag-Start (Start Date + Start Time)   → Upcoming
+     mula Start hanggang End (End Date + End Time) → Ongoing
+     lampas na sa End                           → Completed
 
    Laging oras ng Pilipinas (Asia/Manila) ang gamit, kahit iba
    ang timezone ng computer ng tumitingin.
@@ -80,10 +136,8 @@ export function nowKey(date = new Date()) {
 /* Pareho ang anyo ng "YYYY-MM-DD HH:MM", kaya pwedeng
    ikumpara bilang text. */
 export function computeStatus(event, now = nowKey()) {
-  const start = `${event.event_date} ${event.start_time.slice(0, 5)}`
-  const end = `${event.event_date} ${event.end_time.slice(0, 5)}`
-  if (now < start) return 'upcoming'
-  if (now < end) return 'ongoing'
+  if (now < startKeyOf(event)) return 'upcoming'
+  if (now < endKeyOf(event)) return 'ongoing'
   return 'completed'
 }
 
@@ -93,16 +147,17 @@ export const LOCATION_MAX = 200
 
 const COLUMNS = `
   id, organization_id, proposal_id,
-  title, description, event_date, start_time, end_time, location, image_url,
+  title, description, event_date, end_date, start_time, end_time, location, image_url,
   author_id, author_name, author_role_id,
   created_at, updated_at, updated_by,
-  proposals ( venue, event_date, start_time, end_time )
+  proposals ( venue, event_date, end_date, start_time, end_time )
 `
 
 /* May itinakdang Venue, Date, Start Time at End Time ang proposal?
-   Kapag mayroon, NAKA-LOCK ang mga ito sa event — hindi na mababago
-   sa Event Form, sa paggawa man o sa pag-edit. Ang trigger na
-   events_lock_schedule sa database ang totoong nagbabantay.
+   Kapag mayroon, NAKA-LOCK ang mga ito sa event (kasama ang End
+   Date) — hindi na mababago sa Event Form, sa paggawa man o sa
+   pag-edit. Ang trigger na events_lock_schedule sa database ang
+   totoong nagbabantay.
 
    Ang mga lumang proposal na walang schedule ay hindi naka-lock.
    Pwedeng ang proposal mismo o ang event.proposals ang ibigay. */
@@ -117,8 +172,11 @@ export function eventErrorMessage(err) {
   if (err instanceof ImageError) return err.message
   if (err?.code === '23505') return 'An event already exists for this proposal.'
   if (err?.code === '23514') {
-    if (err.message?.includes('events_time_order')) {
-      return 'End Time must be later than Start Time.'
+    if (
+      err.message?.includes('events_schedule_order') ||
+      err.message?.includes('events_time_order')
+    ) {
+      return 'The end (End Date and End Time) must be later than the start.'
     }
     return 'Some of your input is invalid. Please check the fields.'
   }
@@ -147,6 +205,10 @@ export async function fetchEvents() {
    ng events ng LAHAT ng aktibong org, pero pang-calendar na
    detalye lang: title, petsa, oras, lugar, at pangalan ng org.
    Tingnan ang DASHBOARD_CALENDAR_ALL_ORGS.sql.
+
+   Kasama ang event na may PAGPAPATONG sa from/to — kaya ang
+   event na nagsimula noong nakaraang buwan pero tuloy pa ay
+   kasama rin (PROPOSAL_START_END_DATE.sql).
 
    from/to: "YYYY-MM-DD", hanggang 62 araw ang pagitan.
    ============================================================ */
@@ -183,9 +245,9 @@ export async function fetchPublicCalendarEvents(from, to) {
    BILANG PARA SA DASHBOARD
 
    Automatic ang status (kinukuwenta sa browser), kaya hindi ito
-   mabibilang sa database. Kinukuha ang petsa at oras ng mga
-   event mula NGAYONG ARAW pataas — ang mas luma ay siguradong
-   Completed na — tapos binibilang dito.
+   mabibilang sa database. Kinukuha ang mga event na ang END DATE
+   ay ngayong araw pataas — ang mas luma ay siguradong Completed
+   na — tapos binibilang dito.
 
      upcoming → hindi pa nagsisimula
      ongoing  → nagaganap ngayon
@@ -197,8 +259,8 @@ export async function countEventsByStatus() {
 
   const { data, error } = await supabase
     .from('events')
-    .select('event_date, start_time, end_time')
-    .gte('event_date', today)
+    .select('event_date, end_date, start_time, end_time')
+    .gte('end_date', today)
 
   if (error) throw error
 
@@ -271,6 +333,7 @@ function toRow(values) {
     title: values.title,
     description: values.description,
     event_date: values.eventDate,
+    end_date: values.endDate || values.eventDate,
     start_time: values.startTime,
     end_time: values.endTime,
     location: values.location,
@@ -385,7 +448,7 @@ export async function deleteEvent(event) {
                Ang mapipili niyang proposal: sa SARILI niyang org,
                siya ang NAGPASA, approved na, wala pang event, at
                HINDI PA DUMARATING ang proposed na petsa at oras
-               (Start Time) nito — canCreateEventFrom().
+               (Start Date + Start Time) nito — canCreateEventFrom().
                Pagdating ng oras na iyon, kusang nawawala ang
                proposal sa pagpipilian. Hinaharang din ito ng
                database (EVENT_CREATE_BEFORE_SCHEDULE.sql).
@@ -414,14 +477,14 @@ export function canCreateEvents(profile) {
   return Boolean(profile?.is_active && profile.role_id === 2 && profile.organization_id)
 }
 
-/* Dumating na ba ang proposed na petsa at oras (Start Time) ng
-   proposal? Kapag oo, hindi na ito magagawan ng event.
-   Oras ng Pilipinas, tulad ng nowKey(). Ang lumang proposal na
-   walang petsa o oras ay hindi apektado.
+/* Dumating na ba ang proposed na petsa at oras (Start Date +
+   Start Time) ng proposal? Kapag oo, hindi na ito magagawan ng
+   event. Oras ng Pilipinas, tulad ng nowKey(). Ang lumang
+   proposal na walang petsa o oras ay hindi apektado.
    Kapareho ng EVENT_CREATE_BEFORE_SCHEDULE.sql sa database. */
 export function proposalHasStarted(proposal, now = nowKey()) {
   if (!proposal?.event_date || !proposal?.start_time) return false
-  return `${proposal.event_date} ${proposal.start_time.slice(0, 5)}` <= now
+  return startKeyOf(proposal) <= now
 }
 
 /* Pwede bang gawan ng event ang proposal na ito?
@@ -447,10 +510,10 @@ export function canManageEvent(event, profile) {
 }
 
 /* ---------- PAG-LOCK NG PAG-EDIT ----------
-   Ilang minuto bago mag-Start Time hindi na mae-edit ang
-   event. Kapareho ito ng nasa events_before_update() sa
-   database (EVENT_EDIT_LOCK.sql) — kapag binago mo ang isa,
-   baguhin mo rin ang isa. */
+   Ilang minuto bago mag-Start (Start Date + Start Time) hindi
+   na mae-edit ang event. Kapareho ito ng nasa
+   events_before_update() sa database (EVENT_EDIT_LOCK.sql) —
+   kapag binago mo ang isa, baguhin mo rin ang isa. */
 export const EDIT_LOCK_MINUTES = 30
 
 /* "2026-12-01 08:30" — mula rito, hindi na mae-edit ang event
@@ -484,18 +547,38 @@ export function canDeleteEvent(event, profile) {
 
 /* ---------- PAG-FORMAT ---------- */
 
-/* "2026-10-05" → "Monday, October 5, 2026"
-   Binabasa bilang lokal na petsa para hindi umatras ng isang
-   araw dahil sa timezone. */
+/* "2026-10-05" → Date (lokal na petsa, para hindi umatras ng
+   isang araw dahil sa timezone) */
+function localDate(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/* "2026-10-05" → "Monday, October 5, 2026" */
 export function formatEventDate(ymd) {
   if (!ymd) return ''
-  const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-PH', {
+  return localDate(ymd).toLocaleDateString('en-PH', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+}
+
+/* "2026-11-20" → "Fri, Nov 20, 2026" */
+export function formatShortDate(ymd) {
+  if (!ymd) return ''
+  return localDate(ymd).toLocaleDateString('en-PH', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+/* "2026-11-20" → "Nov 20" */
+function formatMonthDay(ymd) {
+  return localDate(ymd).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
 }
 
 /* "13:30:00" → "1:30 PM" */
@@ -504,6 +587,44 @@ export function formatTime(hms) {
   const [h, min] = hms.split(':').map(Number)
   const d = new Date(2000, 0, 1, h, min)
   return d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
+/* Petsa ng event o proposal:
+     iisang araw → "Monday, October 5, 2026"
+     maraming araw → "Fri, Nov 20, 2026 – Sun, Nov 22, 2026" */
+export function formatEventDateRange(item) {
+  if (!item?.event_date) return ''
+  if (!isMultiDay(item)) return formatEventDate(item.event_date)
+  return `${formatShortDate(item.event_date)} – ${formatShortDate(endDateOf(item))}`
+}
+
+/* Oras ng event o proposal:
+     iisang araw → "1:30 PM – 5:00 PM"
+     maraming araw → "Nov 20, 8:00 AM – Nov 22, 5:00 PM"
+   (Sa maraming araw, kasama ang petsa — tuloy-tuloy ang event
+   mula simula hanggang katapusan, hindi araw-araw.) */
+export function formatEventTimeRange(item) {
+  if (!item?.start_time || !item?.end_time) return ''
+  if (!isMultiDay(item)) return `${formatTime(item.start_time)} – ${formatTime(item.end_time)}`
+  return (
+    `${formatMonthDay(item.event_date)}, ${formatTime(item.start_time)} – ` +
+    `${formatMonthDay(endDateOf(item))}, ${formatTime(item.end_time)}`
+  )
+}
+
+/* Buong schedule sa iisang linya:
+     iisang araw → "Monday, October 5, 2026, 1:30 PM – 5:00 PM"
+     maraming araw → "Fri, Nov 20, 2026, 8:00 AM – Sun, Nov 22, 2026, 5:00 PM" */
+export function formatSchedule(item) {
+  if (!item?.event_date) return ''
+  if (!isMultiDay(item)) {
+    const time = formatEventTimeRange(item)
+    return time ? `${formatEventDate(item.event_date)}, ${time}` : formatEventDate(item.event_date)
+  }
+  return (
+    `${formatShortDate(item.event_date)}, ${formatTime(item.start_time)} – ` +
+    `${formatShortDate(endDateOf(item))}, ${formatTime(item.end_time)}`
+  )
 }
 
 /* "13:30:00" → "13:30" para sa <input type="time"> */
@@ -556,21 +677,24 @@ export function canViewParticipants(profile) {
 /* ============================================================
    MAGKASABAY NA EVENT — isa lang ang pwedeng salihan
 
-   Magkasabay ang dalawang event kapag pareho ang Date AT
-   nagpapatong ang oras:
+   Magkasabay ang dalawang event kapag nagpapatong ang BUONG
+   saklaw nila (Start Date + Start Time hanggang End Date + End
+   Time), kahit magkaiba ang Start Date:
      A.start < B.end  at  B.start < A.end
+
+   Hal. ang 3-araw na Camp (Nov 20–22) at ang Seminar sa Nov 21
+   ay magkasabay.
 
    Hindi magkasabay ang MAGKASUNOD (hal. 8:00–10:00 at
    10:00–12:00) — pwedeng salihan pareho.
 
    Dito, para lang palitan ng paalala ang Join button. Ang
-   trigger sa database (EVENT_JOIN_NO_CONFLICT.sql) ang totoong
-   nagbabantay — kapag binago mo ang isa, baguhin mo rin ang isa.
+   trigger sa database (EVENT_JOIN_NO_CONFLICT.sql,
+   PROPOSAL_START_END_DATE.sql) ang totoong nagbabantay — kapag
+   binago mo ang isa, baguhin mo rin ang isa.
    ============================================================ */
 export function eventsOverlap(a, b) {
-  if (a.event_date !== b.event_date) return false
-  const hm = (t) => t.slice(0, 5)
-  return hm(a.start_time) < hm(b.end_time) && hm(b.start_time) < hm(a.end_time)
+  return startKeyOf(a) < endKeyOf(b) && startKeyOf(b) < endKeyOf(a)
 }
 
 /* Ang sinalihan mong event na kasabay ng `event` (pinakamaaga
@@ -578,7 +702,7 @@ export function eventsOverlap(a, b) {
 export function findScheduleConflict(event, joinedEvents) {
   const clashes = joinedEvents.filter((j) => j.id !== event.id && eventsOverlap(event, j))
   if (clashes.length === 0) return null
-  return clashes.reduce((first, e) => (e.start_time < first.start_time ? e : first))
+  return clashes.reduce((first, e) => (startKeyOf(e) < startKeyOf(first) ? e : first))
 }
 
 /* Mga event_id na sinalihan mo → Set */
@@ -646,7 +770,7 @@ export async function fetchMyJoinedEvents(profileId) {
     .from('event_participants')
     .select(
       `joined_at,
-       events ( id, title, event_date, start_time, end_time, location, image_url )`,
+       events ( id, title, event_date, end_date, start_time, end_time, location, image_url )`,
     )
     .eq('profile_id', profileId)
     .order('joined_at', { ascending: false })

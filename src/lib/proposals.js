@@ -1,7 +1,17 @@
 import { supabase } from './supabaseClient.js'
 import { getRoleConfig, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
-import { formatEventDate, formatTime, nowKey } from './events.js'
+import {
+  endDateOf,
+  formatEventDate,
+  formatEventDateRange,
+  formatEventTimeRange,
+  formatSchedule,
+  formatTime,
+  isMultiDay,
+  nowKey,
+  startKeyOf,
+} from './events.js'
 
 /* ============================================================
    PROPOSALS — lahat ng pakikipag-usap sa database
@@ -11,10 +21,11 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
    Adviser: proposals lang ng SARILI nilang org. SAO at School
    Head: lahat ng org. Ang Member ay walang makukuha dito.
 
-   Sa paggawa, title, description, venue, petsa, oras at ang mga
-   file (attachments — kailangan may kahit isa) ang ipinapadala.
-   Ang org, author at petsa ay itinatakda ng trigger sa database —
-   hindi mapepeke mula sa browser.
+   Sa paggawa, title, description, venue, Start Date, End Date,
+   oras at ang mga file (attachments — kailangan may kahit isa)
+   ang ipinapadala. Ang org, author at petsa ng paggawa ay
+   itinatakda ng trigger sa database — hindi mapepeke mula sa
+   browser.
 
    Ang Organization Name at Logo sa sulat ay galing sa
    organizations ( ... ) na join, hindi nakakopya sa proposal.
@@ -83,6 +94,10 @@ import { formatEventDate, formatTime, nowKey } from './events.js'
      KAILANGAN may kahit isang file (1 hanggang 10), sa paggawa at
      sa pag-resubmit. Sinusuri ito ng database. Ang mga file ay
      nasa folder pa rin ng org (tingnan ang lib/proposalFiles.js).
+
+   START DATE AT END DATE (PROPOSAL_START_END_DATE.sql)
+     event_date → START DATE · end_date → END DATE (bago)
+     Ang lumang proposal na walang end_date ay iisang araw.
    ============================================================ */
 
 /* ---------- STATUS ----------
@@ -333,7 +348,7 @@ export function toOgReward(value) {
 
 const COLUMNS = `
   id, organization_id, title, description,
-  venue, event_date, start_time, end_time,
+  venue, event_date, end_date, start_time, end_time,
   attachments, attachment_path, attachment_name, attachment_size,
   author_id, author_name, author_role_id, author_position,
   status, review_comment, reviewed_by, reviewer_name, reviewed_at,
@@ -419,13 +434,15 @@ function attachmentsPayload(attachments) {
     .map(({ path, name, size }) => ({ path, name, size: size ?? null }))
 }
 
-/* Venue, petsa at oras ng activity (PROPOSAL_VENUE_DATE_TIME.sql).
-   Galing sa ProposalForm: eventDate "2026-10-05",
+/* Venue, petsa at oras ng activity (PROPOSAL_VENUE_DATE_TIME.sql,
+   PROPOSAL_START_END_DATE.sql). Galing sa ProposalForm:
+   eventDate (Start Date) "2026-10-05", endDate "2026-10-07",
    startTime/endTime "13:30". */
-function scheduleColumns({ venue, eventDate, startTime, endTime }) {
+function scheduleColumns({ venue, eventDate, endDate, startTime, endTime }) {
   return {
     venue,
     event_date: eventDate,
+    end_date: endDate || eventDate,
     start_time: startTime,
     end_time: endTime,
   }
@@ -520,7 +537,9 @@ export async function requestRevision(id, comment) {
                  dating file + ang mga bagong upload. Kailangan may
                  kahit isa. Ang dating file na wala rito ay aalisin.
    approvers   = kapareho ng sa createProposal(). Ang mga naka-lock na
-                 stage ay hindi binabago ng database kahit ipadala. */
+                 stage ay hindi binabago ng database kahit ipadala.
+   endDate     = End Date (PROPOSAL_START_END_DATE.sql). Kapag wala,
+                 kapareho ng Start Date. */
 export async function resubmitProposal(
   id,
   {
@@ -528,6 +547,7 @@ export async function resubmitProposal(
     description,
     venue,
     eventDate,
+    endDate,
     startTime,
     endTime,
     hasBudget,
@@ -542,6 +562,7 @@ export async function resubmitProposal(
     p_description: description,
     p_venue: venue,
     p_event_date: eventDate,
+    p_end_date: endDate || eventDate,
     p_start_time: startTime,
     p_end_time: endTime,
     p_attachments: attachmentsPayload(attachments),
@@ -874,20 +895,46 @@ export async function countPendingProposals(roleId, profileId) {
 
    Ang mga LUMANG proposal (bago ang PROPOSAL_VENUE_DATE_TIME.sql)
    ay walang laman dito — kaya laging suriin ang hasSchedule().
+   Ang walang end_date (bago ang PROPOSAL_START_END_DATE.sql) ay
+   iisang araw lang.
    ============================================================ */
 export function hasSchedule(proposal) {
   return Boolean(proposal?.event_date && proposal?.start_time && proposal?.end_time)
 }
 
-/* "Monday, October 5, 2026" */
-export function scheduleDateLabel(proposal) {
-  return hasSchedule(proposal) ? formatEventDate(proposal.event_date) : ''
+/* Higit isang araw ba ang activity? */
+export function isMultiDaySchedule(proposal) {
+  return hasSchedule(proposal) && isMultiDay(proposal)
 }
 
-/* "1:30 PM – 5:00 PM" */
+/* Iisang araw → "Monday, October 5, 2026"
+   Maraming araw → "Fri, Nov 20, 2026 – Sun, Nov 22, 2026" */
+export function scheduleDateLabel(proposal) {
+  return hasSchedule(proposal) ? formatEventDateRange(proposal) : ''
+}
+
+/* Iisang araw → "1:30 PM – 5:00 PM"
+   Maraming araw → "Nov 20, 8:00 AM – Nov 22, 5:00 PM" */
 export function scheduleTimeLabel(proposal) {
+  return hasSchedule(proposal) ? formatEventTimeRange(proposal) : ''
+}
+
+/* Buong schedule sa iisang linya (para sa card) */
+export function scheduleLabel(proposal) {
+  return hasSchedule(proposal) ? formatSchedule(proposal) : ''
+}
+
+/* Para sa sulat kapag maraming araw:
+   "Friday, November 20, 2026 · 8:00 AM" */
+export function scheduleStartLabel(proposal) {
   if (!hasSchedule(proposal)) return ''
-  return `${formatTime(proposal.start_time)} – ${formatTime(proposal.end_time)}`
+  return `${formatEventDate(proposal.event_date)} · ${formatTime(proposal.start_time)}`
+}
+
+/* "Sunday, November 22, 2026 · 5:00 PM" */
+export function scheduleEndLabel(proposal) {
+  if (!hasSchedule(proposal)) return ''
+  return `${formatEventDate(endDateOf(proposal))} · ${formatTime(proposal.end_time)}`
 }
 
 /* "2026-10-20" — ngayong araw sa Pilipinas, para sa min ng
@@ -896,7 +943,8 @@ export function todayKey() {
   return nowKey().slice(0, 10)
 }
 
-/* Nasa hinaharap ba ang simula? Kapareho ng check sa database. */
+/* Nasa hinaharap ba ang simula (Start Date + Start Time)?
+   Kapareho ng check sa database. */
 export function isFutureSchedule(eventDate, startTime) {
   return `${eventDate} ${startTime.slice(0, 5)}` > nowKey()
 }
@@ -907,5 +955,5 @@ export function isFutureSchedule(eventDate, startTime) {
    Ang lumang proposal na walang schedule ay hindi apektado. */
 export function isPastSchedule(proposal, now = nowKey()) {
   if (!hasSchedule(proposal)) return false
-  return `${proposal.event_date} ${proposal.start_time.slice(0, 5)}` <= now
+  return startKeyOf(proposal) <= now
 }

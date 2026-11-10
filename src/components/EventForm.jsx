@@ -5,9 +5,10 @@ import {
   PROPOSAL_STARTED_MESSAGE,
   TITLE_MAX,
   computeStatus,
+  endDateOf,
   eventErrorMessage,
   eventStatusLabel,
-  formatEventDate,
+  formatEventDateRange,
   formatTime,
   isScheduleFromProposal,
   nowKey,
@@ -26,51 +27,56 @@ import styles from './EventForm.module.css'
              Officer (sa org niya) na wala pang event. Pipili muna
              siya ng proposal sa itaas ng form.
              BLANGKO ang Title at Description — ang Officer ang
-             magsusulat. Ang Date, oras at Location ay KINUKUHA sa
-             napiling proposal (venue, event_date, start_time,
-             end_time) at NAKA-LOCK — hindi na mababago.
+             magsusulat. Ang Start Date, End Date, oras at Location
+             ay KINUKUHA sa napiling proposal (venue, event_date,
+             end_date, start_time, end_time) at NAKA-LOCK — hindi
+             na mababago.
              (Gumagana pa rin ang lumang `proposal` na prop: iisang
              proposal, walang pagpipilian.)
    Edit    → may `initial`: ang kasalukuyang event. Naka-lock din
-             ang Date, oras at Location kapag galing ang event sa
+             ang petsa, oras at Location kapag galing ang event sa
              proposal na may schedule (initial.proposals).
 
    Ang lumang proposal na walang schedule ay hindi naka-lock.
+   Ang walang end_date ay iisang araw (End Date = Start Date).
 
    DUMATING NA ANG PROPOSED NA PETSA AT ORAS:
      Habang bukas ang form, sinusuri bawat 30 segundo ang oras
-     ngayon (Pilipinas). Kapag dumating na ang Start Time ng isang
-     proposal, KUSA itong nawawala sa "Approved proposal". Kapag
-     iyon ang napili, aalisin ang pagpili at may paalala. Kapag
-     wala nang natira, may paalala at hindi na makaka-Create.
+     ngayon (Pilipinas). Kapag dumating na ang Start Date + Start
+     Time ng isang proposal, KUSA itong nawawala sa "Approved
+     proposal". Kapag iyon ang napili, aalisin ang pagpili at may
+     paalala. Kapag wala nang natira, may paalala at hindi na
+     makaka-Create.
      Hinaharang din ito ng database (EVENT_CREATE_BEFORE_SCHEDULE.sql).
 
    Laman: Approved proposal (Gumawa lang), Title, Description,
-          Date, Start Time, End Time, Location, OG reward per
-          attendee (Gumawa lang, basa lang — galing sa proposal),
-          Picture (optional)
+          Start Date, End Date, Start Time, End Time, Location,
+          OG reward per attendee (Gumawa lang, basa lang — galing
+          sa proposal), Picture (optional)
 
-   Walang Status — kusa itong kinukuwenta mula sa Date at oras
+   Walang Status — kusa itong kinukuwenta mula sa petsa at oras
    (tingnan ang computeStatus() sa lib/events.js).
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
    onSubmit(values, { imageFile, removeImage, proposal }).
    ============================================================ */
 
-/* Ang Date, oras at Location na galing sa proposal */
+/* Ang petsa, oras at Location na galing sa proposal */
 function scheduleOf(proposal) {
   return {
     eventDate: proposal?.event_date ?? '',
+    endDate: proposal?.event_date ? endDateOf(proposal) : '',
     startTime: toTimeInput(proposal?.start_time),
     endTime: toTimeInput(proposal?.end_time),
     location: proposal?.venue ?? '',
   }
 }
 
-/* "Sports Fest — Monday, December 1, 2026 · 8:00 AM" */
+/* "Sports Fest — Monday, December 1, 2026 · 8:00 AM"
+   "Camp — Fri, Nov 20, 2026 – Sun, Nov 22, 2026 · 8:00 AM" */
 function choiceLabel(p) {
   const when = p.event_date
-    ? ` — ${formatEventDate(p.event_date)}${p.start_time ? ` · ${formatTime(p.start_time)}` : ''}`
+    ? ` — ${formatEventDateRange(p)}${p.start_time ? ` · ${formatTime(p.start_time)}` : ''}`
     : ''
   return `${p.title}${when}`
 }
@@ -112,12 +118,15 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
   const start = isEdit
     ? {
         eventDate: initial.event_date ?? '',
+        endDate: initial.event_date ? endDateOf(initial) : '',
         startTime: toTimeInput(initial.start_time),
         endTime: toTimeInput(initial.end_time),
         location: initial.location ?? '',
       }
     : scheduleOf(activeProposal)
+  /* eventDate = START DATE (event_date sa database) */
   const [eventDate, setEventDate] = useState(start.eventDate)
+  const [endDate, setEndDate] = useState(start.endDate)
   const [startTime, setStartTime] = useState(start.startTime)
   const [endTime, setEndTime] = useState(start.endTime)
   const [location, setLocation] = useState(start.location)
@@ -131,13 +140,14 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
   const [error, setError] = useState('')
 
   /* Dumating na ang oras ng NAPILING proposal → nawala ito sa
-     choices. Alisin ang pagpili at linisin ang Date, oras at
+     choices. Alisin ang pagpili at linisin ang petsa, oras at
      Location. (Inaayos habang nagre-render, ayon sa React docs:
      "adjusting state when a prop changes".) */
   if (picking && pickedId !== '' && !activeProposal && !saving) {
     const lost = allChoices.find((p) => p.id === pickedId)
     setPickedId('')
     setEventDate('')
+    setEndDate('')
     setStartTime('')
     setEndTime('')
     setLocation('')
@@ -151,7 +161,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
   /* Wala nang natirang proposal na pwedeng gawan ng event */
   const noChoicesLeft = picking && choices.length === 0
 
-  /* Naka-lock ang Date, oras at Location kapag itinakda na ng proposal.
+  /* Naka-lock ang petsa, oras at Location kapag itinakda na ng proposal.
      Naka-lock din habang wala pang napiling proposal. */
   const scheduleLocked = isScheduleFromProposal(isEdit ? initial?.proposals : activeProposal)
   const waitingForPick = picking && !activeProposal
@@ -161,11 +171,20 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
   const titleRef = useRef(null)
   const pickRef = useRef(null)
 
+  /* Tama ba ang pagkakasunod ng petsa at oras? (para sa silip ng status) */
+  const scheduleValid =
+    Boolean(eventDate && endDate && startTime && endTime) &&
+    `${endDate} ${endTime}` > `${eventDate} ${startTime}`
+
   /* Silip lang kung ano ang magiging status */
-  const previewStatus =
-    eventDate && startTime && endTime
-      ? computeStatus({ event_date: eventDate, start_time: startTime, end_time: endTime })
-      : null
+  const previewStatus = scheduleValid
+    ? computeStatus({
+        event_date: eventDate,
+        end_date: endDate,
+        start_time: startTime,
+        end_time: endTime,
+      })
+    : null
   const fileRef = useRef(null)
 
   /* Sa unang bukas: sa pagpipilian ng proposal kapag wala pang
@@ -192,16 +211,24 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
     return () => URL.revokeObjectURL(url)
   }, [imageFile])
 
-  /* Pumili ng proposal → kunin ang Date, oras at Location nito */
+  /* Pumili ng proposal → kunin ang petsa, oras at Location nito */
   function handlePickProposal(e) {
     const id = e.target.value
     setPickedId(id)
     setError('')
     const next = scheduleOf(choices.find((p) => p.id === id))
     setEventDate(next.eventDate)
+    setEndDate(next.endDate)
     setStartTime(next.startTime)
     setEndTime(next.endTime)
     setLocation(next.location)
+  }
+
+  /* Start Date (kapag hindi naka-lock, hal. lumang event):
+     sumusunod ang End Date kapag blangko o mas maaga */
+  function handleStartDateChange(value) {
+    setEventDate(value)
+    if (value && (!endDate || endDate < value)) setEndDate(value)
   }
 
   function handlePickImage(e) {
@@ -248,6 +275,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
       title: title.trim(),
       description: description.trim(),
       eventDate,
+      endDate,
       startTime,
       endTime,
       location: location.trim(),
@@ -257,6 +285,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
       !clean.title ||
       !clean.description ||
       !clean.eventDate ||
+      !clean.endDate ||
       !clean.startTime ||
       !clean.endTime ||
       !clean.location
@@ -265,7 +294,12 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
       return
     }
 
-    if (clean.endTime <= clean.startTime) {
+    if (clean.endDate < clean.eventDate) {
+      setError('End Date cannot be earlier than Start Date.')
+      return
+    }
+
+    if (clean.endDate === clean.eventDate && clean.endTime <= clean.startTime) {
       setError('End Time must be later than Start Time.')
       return
     }
@@ -322,7 +356,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
             <span className={base.hint}>
               {noChoicesLeft
                 ? 'Your remaining approved proposals have reached their proposed date and time, so events can no longer be created for them.'
-                : 'Only your organization’s fully approved proposals that you submitted, that don’t have an event yet, and whose proposed date and time haven’t arrived yet are listed. The date, time and venue come from the proposal.'}
+                : 'Only your organization’s fully approved proposals that you submitted, that don’t have an event yet, and whose proposed date and time haven’t arrived yet are listed. The dates, times and venue come from the proposal.'}
             </span>
           </label>
         )}
@@ -365,20 +399,36 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
           />
         </label>
 
-        {/* ---------- DATE AT ORAS ---------- */}
-        <div className={styles.grid3}>
+        {/* ---------- START DATE · END DATE ---------- */}
+        <div className={base.grid2}>
           <label className={base.field}>
-            <span className={base.label}>Date</span>
+            <span className={base.label}>Start Date</span>
             <input
               type="date"
               className={`${base.input}${lockedClass}`}
               value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
+              onChange={(e) => handleStartDateChange(e.target.value)}
               disabled={fieldsLocked}
               required
             />
           </label>
 
+          <label className={base.field}>
+            <span className={base.label}>End Date</span>
+            <input
+              type="date"
+              className={`${base.input}${lockedClass}`}
+              value={endDate}
+              min={eventDate || undefined}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={fieldsLocked}
+              required
+            />
+          </label>
+        </div>
+
+        {/* ---------- START TIME · END TIME ---------- */}
+        <div className={base.grid2}>
           <label className={base.field}>
             <span className={base.label}>Start Time</span>
             <input
@@ -404,7 +454,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
           </label>
         </div>
 
-        {eventDate && startTime && endTime && endTime > startTime && (
+        {scheduleValid && (
           <p className={styles.autoStatus}>
             Status: <strong>{eventStatusLabel(previewStatus)}</strong>
             <span> · updates automatically based on date and time</span>

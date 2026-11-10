@@ -8,11 +8,12 @@ import {
   attendancePhase,
   attendanceWindows,
   formatClock,
+  formatWindowKey,
   modeForPhase,
   parseQrValue,
   scanAttendance,
 } from '../lib/attendance.js'
-import { formatTime, nowKey } from '../lib/events.js'
+import { nowKey } from '../lib/events.js'
 import { toTitleCase } from '../lib/profile.js'
 import styles from './AttendanceDialog.module.css'
 
@@ -26,6 +27,8 @@ import styles from './AttendanceDialog.module.css'
      Start → End                     sarado (nagaganap)
      End → 1 oras pagkatapos         Time Out
    Kapag sarado, hindi tumatanggap ng scan.
+   (Start = Start Date + Start Time · End = End Date + End Time.
+   Sa maraming araw, may petsa ang mga oras sa mensahe.)
 
    Ang database ang nagsusuri (scan_attendance):
      - hindi expired ang QR at para sa event na ito
@@ -47,19 +50,15 @@ const SAME_QR_IGNORE_MS = 6000
 const MODE_LABEL = { [MODE_IN]: 'Time In', [MODE_OUT]: 'Time Out' }
 const PHASE_CHECK_MS = 5000
 
-/* "2026-10-04 08:30" → "8:30 AM" */
-function clockOfKey(key) {
-  return formatTime(key.slice(11))
-}
-
 /* Mensahe kapag sarado ang pag-scan */
 function closedMessage(event, phase) {
   const w = attendanceWindows(event)
+  const at = (key) => formatWindowKey(key, event)
   if (phase === PHASE_BEFORE) {
-    return `Not open yet. Time In is from ${clockOfKey(w.inOpens)} to ${clockOfKey(w.inCloses)}.`
+    return `Not open yet. Time In is from ${at(w.inOpens)} to ${at(w.inCloses)}.`
   }
   if (nowKey() < w.outOpens) {
-    return `The event is in progress — Time In and Time Out are closed. Time Out opens from ${clockOfKey(w.outOpens)} to ${clockOfKey(w.outCloses)}.`
+    return `The event is in progress — Time In and Time Out are closed. Time Out opens from ${at(w.outOpens)} to ${at(w.outCloses)}.`
   }
   return 'Attendance for this event is already closed.'
 }

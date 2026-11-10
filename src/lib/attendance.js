@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js'
 import { hasAdviserPowers } from '../config/roles.js'
+import { endDateOf, formatTime, isMultiDay } from './events.js'
 
 /* ============================================================
    ATTENDANCE (QR) — lahat ng pakikipag-usap sa database
@@ -22,6 +23,12 @@ import { hasAdviserPowers } from '../config/roles.js'
    Ang database ang nagsusuri ng LAHAT (oras, org, Join, role).
    Ang mga function dito na tungkol sa oras ay para lang itago
    o ipakita ang mga button.
+
+   START DATE AT END DATE (PROPOSAL_START_END_DATE.sql):
+     Time In  → sa Start Date (bago ang Start Time)
+     Time Out → sa END DATE (pagkatapos ng End Time)
+   Isang Time In at isang Time Out pa rin bawat event, kahit
+   maraming araw.
    ============================================================ */
 
 /* Nakasulat sa QR: "ORGATT:<token>". Ang prefix ay para
@@ -76,7 +83,10 @@ const CLOSE_AFTER_END = 60
      End            → End + 60 min   PHASE_OUT     Time Out lang
      bago / lampas niyan             PHASE_BEFORE / PHASE_CLOSED
 
-   KAPAREHO ng attendance_phase() sa ATTENDANCE_TIME_WINDOWS.sql.
+   Start = Start Date + Start Time · End = End Date + End Time
+
+   KAPAREHO ng attendance_phase() sa ATTENDANCE_TIME_WINDOWS.sql
+   at PROPOSAL_START_END_DATE.sql.
    ============================================================ */
 export const PHASE_BEFORE = 'before'
 export const PHASE_IN = 'in'
@@ -86,12 +96,23 @@ export const PHASE_CLOSED = 'closed'
 
 /* Mga oras ng bawat hangganan, "YYYY-MM-DD HH:MM" */
 export function attendanceWindows(event) {
+  const endDate = endDateOf(event)
   return {
     inOpens: addMinutes(event.event_date, event.start_time, -OPEN_BEFORE_START),
     inCloses: addMinutes(event.event_date, event.start_time, 0),
-    outOpens: addMinutes(event.event_date, event.end_time, 0),
-    outCloses: addMinutes(event.event_date, event.end_time, CLOSE_AFTER_END),
+    outOpens: addMinutes(endDate, event.end_time, 0),
+    outCloses: addMinutes(endDate, event.end_time, CLOSE_AFTER_END),
   }
+}
+
+/* "2026-11-22 17:00" → "5:00 PM" (iisang araw na event) o
+   "Nov 22, 5:00 PM" (maraming araw — para malinaw kung KAILAN) */
+export function formatWindowKey(key, event) {
+  const clock = formatTime(key.slice(11))
+  if (!isMultiDay(event)) return clock
+  const [y, m, d] = key.slice(0, 10).split('-').map(Number)
+  const day = new Date(y, m - 1, d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
+  return `${day}, ${clock}`
 }
 
 export function attendancePhase(event, now) {
