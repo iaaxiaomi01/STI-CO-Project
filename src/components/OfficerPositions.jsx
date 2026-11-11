@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext.js'
+import { ROLE_KEYS } from '../config/roles.js'
 import { fullNameOf } from '../lib/profile.js'
 import {
   POSITION_LIMIT,
@@ -19,20 +21,34 @@ import Avatar from './Avatar.jsx'
 import styles from './OfficerPositions.module.css'
 
 /* ============================================================
-   OFFICER POSITIONS — nasa ilalim ng Org Profile (Adviser)
+   OFFICER POSITIONS
+     Adviser              → nasa ilalim ng Org Profile
+     School Administrator → nasa "Officer positions" tab ng Edit
+                            dialog sa Organizations page
+                            (embedded — walang sariling title; ang box ay
+                            binabago ng className mula sa dialog)
 
-   Dito ginagawa ng Adviser ang listahan ng position ng org niya:
-   magdagdag, magpalit ng pangalan, at magbura. Ang pagkakasunod-sunod
+   Dito ginagawa ang listahan ng position ng org: magdagdag,
+   magpalit ng pangalan, at magbura. Ang pagkakasunod-sunod
    ay ayon sa pagkakadagdag (sort_order) — wala nang ↑ ↓ na button.
 
-   HINDI dito nag-a-assign ng tao. Sa Members page iyon ("Set
-   position"), dahil doon nakikita ang lahat ng member. Dito ay
-   ipinapakita lang kung sino ang may hawak ng bawat position.
+   HINDI dito nag-a-assign ng tao. "Set position" iyon sa:
+     Adviser              → Members page
+     School Administrator → Users page (wala na siyang Members)
+   Dito ay ipinapakita lang kung sino ang may hawak ng bawat position.
 
    Hindi mabubura ang position habang may may hawak pa — kaya
    naka-disable ang "Delete" (hinaharang din ito ng database).
    ============================================================ */
-function OfficerPositions({ orgId }) {
+function OfficerPositions({ orgId, embedded = false, className = '' }) {
+  const { role } = useAuth()
+
+  /* Saan ang "Set position" ng role na ito */
+  const assignPage =
+    role === ROLE_KEYS.SCHOOL_ADMIN
+      ? { to: '/users', label: 'Users' }
+      : { to: '/members', label: 'Members' }
+
   const [positions, setPositions] = useState([])
   const [holders, setHolders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -178,15 +194,22 @@ function OfficerPositions({ orgId }) {
   /* ---------- laman ---------- */
 
   return (
-    <section className={styles.section} aria-labelledby="officer-positions-title">
+    <section
+      className={`${styles.section} ${className}`}
+      aria-labelledby={embedded ? undefined : 'officer-positions-title'}
+      aria-label={embedded ? 'Officer positions' : undefined}
+    >
       <div className={styles.header}>
         <div>
-          <h2 id="officer-positions-title" className={styles.title}>
-            Officer Positions
-          </h2>
+          {!embedded && (
+            <h2 id="officer-positions-title" className={styles.title}>
+              Officer Positions
+            </h2>
+          )}
           <p className={styles.subtitle}>
-            The positions in your organization, from highest to lowest. To give a member a
-            position, go to <Link to="/members">Members</Link> and choose{' '}
+            {embedded ? 'The positions in this organization' : 'The positions in your organization'},
+            from highest to lowest. To give a member a position, go to{' '}
+            <Link to={assignPage.to}>{assignPage.label}</Link> and choose{' '}
             <strong>Set position</strong>.
           </p>
         </div>
@@ -328,7 +351,7 @@ function OfficerPositions({ orgId }) {
                         disabled={disabled || people.length > 0}
                         title={
                           people.length > 0
-                            ? 'Remove the officer from this position on the Members page first.'
+                            ? `Remove the officer from this position on the ${assignPage.label} page first.`
                             : undefined
                         }
                       >

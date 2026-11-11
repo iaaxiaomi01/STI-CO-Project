@@ -51,6 +51,9 @@ export function schoolAdminStatValue(overview, key) {
 
    Lahat ng pagbabago ay dumadaan sa mga RPC na ito — ang
    database ang sumusuri kung SA nga ang tumatawag.
+
+   Wala nang "acting org" (setActingOrg / sa_set_acting_org) —
+   inalis sa SA_REMOVE_ACTING_ORG.sql. Laging walang org ang SA.
    ============================================================ */
 
 /* Pinaikling mensahe ng error ng database para sa UI */
@@ -63,26 +66,6 @@ export function adminErrorMessage(err) {
     return 'Could not reach the server. Check your internet connection and try again.'
   }
   return msg || 'Something went wrong. Please try again.'
-}
-
-/* ---------- ACTING ORG ----------
-   Ang org na hinahawakan ng SA ngayon (profiles.organization_id
-   niya). null = wala. Pagkatapos nito, tawagin ang
-   refreshProfile() para magbago ang buong app. */
-export async function setActingOrg(orgId) {
-  const { error } = await supabase.rpc('sa_set_acting_org', { p_org: orgId ?? null })
-  if (error) throw error
-}
-
-/* Mga aktibong org para sa pagpili ng acting org */
-export async function fetchActiveOrganizations() {
-  const { data, error } = await supabase
-    .from('organizations')
-    .select('id, name')
-    .eq('is_active', true)
-    .order('name')
-  if (error) throw error
-  return data ?? []
 }
 
 /* ---------- ORGANIZATIONS ---------- */
@@ -114,11 +97,37 @@ export async function saveOrganization(id, values) {
 /* ---------- USERS ---------- */
 
 /* Lahat ng student record. Kapag naka-login na ang tao
-   (has_account), galing sa profile niya ang role, org at status. */
+   (has_account), galing sa profile niya ang role, org at status.
+   last_sign_in_at — huling login (SA_USERS_LOGIN_STATUS.sql);
+   wala ito kapag hindi pa napapatakbo ang SQL na iyon. */
 export async function fetchUsers() {
   const { data, error } = await supabase.rpc('sa_list_users')
   if (error) throw error
   return data ?? []
+}
+
+/* Dagdag na detalye mula sa profiles para sa Users page — ang
+   dating nasa Members page: profile picture at officer position
+   (position_id, para sa "Set position").
+
+   RLS: profiles_read_staff — nakikita ng SA ang lahat ng profile.
+   Kinukuha nang tig-1,000 dahil iyon ang limit ng Supabase sa
+   isang request. */
+const PROFILE_PAGE = 1000
+
+export async function fetchProfileExtras() {
+  const all = []
+  for (let from = 0; ; from += PROFILE_PAGE) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, avatar_url, position_id')
+      .order('id')
+      .range(from, from + PROFILE_PAGE - 1)
+    if (error) throw error
+    all.push(...(data ?? []))
+    if (!data || data.length < PROFILE_PAGE) break
+  }
+  return all
 }
 
 /* id = null → bagong record. Ibinabalik ang id ng record. */
@@ -140,11 +149,33 @@ export async function saveUser(id, values) {
   return data
 }
 
+/* PERMANENTENG pagbura ng user (student record + login + profile at
+   lahat ng sariling record niya). Ibinabalik ang pangalan.
+   SA_REMOVE_USER.sql — hindi mabubura ang sarili. */
+export async function removeUser(recordId) {
+  const { data, error } = await supabase.rpc('sa_remove_user', { p_record_id: recordId })
+  if (error) throw error
+  return data
+}
+
 /* Mga role na pwedeng piliin (galing sa public.roles) */
 export async function fetchRoles() {
   const { data, error } = await supabase.from('roles').select('id, name').order('id')
   if (error) throw error
   return data ?? []
+}
+
+/* Mga role na HINDI na pwedeng piliin sa Add user / Edit.
+   7 = IT Administrator (REMOVE_IT_ADMIN_FUNCTIONS.sql) */
+const UNASSIGNABLE_ROLE_IDS = [7]
+
+/* Mga role para sa dropdown ng Add user / Edit.
+   Kung IT Admin na ang ine-edit, ipakita pa rin ang role niya para
+   hindi mapalitan nang hindi sinasadya ang role niya pagka-Save. */
+export function assignableRoles(roles, currentRoleId = null) {
+  return roles.filter(
+    (r) => !UNASSIGNABLE_ROLE_IDS.includes(r.id) || r.id === currentRoleId,
+  )
 }
 
 /* Member, Officer, Adviser — kailangan ng org. Ang staff ay wala. */

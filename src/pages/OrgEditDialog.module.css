@@ -1,0 +1,218 @@
+/* ================================================================
+   EDIT DIALOG NG ORG (Organizations page — School Administrator)
+
+   Dito na napunta ang dating Org Profile ng SA:
+     Details tab           → logo + detalye ng org
+     Officer positions tab → components/OfficerPositions (embedded)
+
+   Ang mismong form ay gumagamit pa rin ng ProposalForm.module.css
+   at Admin.module.css; ito ay dagdag lang.
+   ================================================================ */
+
+/* Mas malapad kapag Edit — kasya ang listahan ng positions */
+.wide {
+  max-width: 720px;
+}
+
+/* ---------- TABS ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: -0.35rem 0 1.25rem;
+  padding: 4px;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+}
+
+.tab {
+  flex: 1;
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.tab:hover:not(:disabled):not(.tabActive) {
+  color: var(--color-text);
+}
+
+.tabActive {
+  background-color: #fff;
+  color: var(--dash-navy-deep, var(--color-text));
+  box-shadow: 0 1px 4px rgba(3, 27, 75, 0.14);
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---------- LOGO ---------- */
+.logoField {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  padding: 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.logoPreview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 210, 0, 0.28), transparent 55%),
+    var(--dash-navy-deep);
+  color: var(--dash-yellow);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logoPreview img {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+/* Umiikot habang nag-a-upload */
+.spinner {
+  position: absolute;
+  inset: -4px;
+  border: 3px solid rgba(255, 210, 0, 0.3);
+  border-top-color: var(--dash-yellow);
+  border-radius: 21px;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logoBody {
+  min-width: 0;
+}
+
+.logoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.logoButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.logoButton:hover:not(:disabled) {
+  background-color: #ffdc33;
+}
+
+.logoRemove {
+  padding: 0 4px;
+  background: none;
+  color: #b42318;
+}
+
+.logoRemove:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.logoButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.logoButton:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+.hint,
+.error,
+.message {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.hint {
+  color: var(--color-muted);
+}
+
+.error {
+  color: #a61b1b;
+  font-weight: 700;
+}
+
+.message {
+  color: #17683a;
+  font-weight: 700;
+}
+
+/* ---------- OFFICER POSITIONS sa loob ng dialog ----------
+   "section." para manalo sa .section ng OfficerPositions.module.css */
+section.positions {
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+.footer {
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .logoField {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+
+  .tab {
+    transition: none;
+  }
+}

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.js'
-import { ACTING_ORG_PAGES, ROLE_KEYS, getRoleConfig } from './config/roles.js'
+import { getRoleConfig } from './config/roles.js'
 import PublicLayout from './layouts/PublicLayout.jsx'
 import MemberLayout from './layouts/MemberLayout.jsx'
 import Home from './pages/Home.jsx'
@@ -18,8 +18,6 @@ import OrgHealth from './pages/OrgHealth.jsx'
 import AccessDenied from './pages/AccessDenied.jsx'
 import Organizations from './pages/Organizations.jsx'
 import Users from './pages/Users.jsx'
-import PageHeader from './components/PageHeader.jsx'
-import EmptyState from './components/EmptyState.jsx'
 
 /* ============================================================
    REHISTRO NG PAGES
@@ -57,7 +55,7 @@ const PAGE_COMPONENTS = {
    /members, ibabalik siya sa dashboard.
    ============================================================ */
 function App() {
-  const { user, role, profile, loading, accessDenied, profileError } = useAuth()
+  const { user, role, loading, accessDenied, profileError } = useAuth()
 
   /* Habang hinahanap pa ng Supabase ang naka-save na session
      at kinukuha ang profile mula sa database.
@@ -87,10 +85,6 @@ function App() {
 
   const roleConfig = getRoleConfig(role)
 
-  /* School Administrator na wala pang napiling acting org: ang mga
-     page na kailangan ng org ay may paalala muna */
-  const needsActingOrg = role === ROLE_KEYS.SCHOOL_ADMIN && !profile?.organization_id
-
   return (
     <Routes>
       {user ? (
@@ -103,19 +97,7 @@ function App() {
                page, laktawan imbes na mag-crash. */
             if (!PageComponent) return null
 
-            return (
-              <Route
-                key={item.to}
-                path={item.to}
-                element={
-                  needsActingOrg && ACTING_ORG_PAGES.includes(item.to) ? (
-                    <ChooseOrgFirst title={item.label} />
-                  ) : (
-                    <PageComponent />
-                  )
-                }
-              />
-            )
+            return <Route key={item.to} path={item.to} element={<PageComponent />} />
           })}
 
           {/* Kahit anong ibang URL — kasama ang mga page na bawal
@@ -131,20 +113,6 @@ function App() {
         </Route>
       )}
     </Routes>
-  )
-}
-
-/* Para sa School Administrator na wala pang acting org */
-function ChooseOrgFirst({ title }) {
-  return (
-    <>
-      <PageHeader title={title} />
-      <EmptyState
-        icon="◈"
-        title="Choose an organization first"
-        message={`Pick an organization under "Managing organization" in the menu. You will manage its ${title.toLowerCase()} the same way its adviser does.`}
-      />
-    </>
   )
 }
 

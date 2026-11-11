@@ -65,6 +65,9 @@ const ATTENDANCE = { label: 'Attendance', to: '/attendance', icon: '✓' }
 const MEMBERS = { label: 'Members', to: '/members', icon: '▲' }
 const PROPOSALS = { label: 'Proposals', to: '/proposals', icon: '✉' }
 const PROFILE = { label: 'Profile', to: '/profile', icon: '●' }
+
+/* Org Profile — Adviser lang. Ang School Administrator ay sa
+   Organizations → Edit na (logo, detalye, officer positions). */
 const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 
 /* Organization Gems (OG) — Shop, OG history, Hand out items, atbp.
@@ -84,20 +87,18 @@ const ORG_HEALTH = { label: 'Org Health', to: '/org-health', icon: '✚' }
 const ORGANIZATIONS = { label: 'Organizations', to: '/organizations', icon: '◈' }
 const USERS = { label: 'Users', to: '/users', icon: '▲' }
 
-/* Mga page na kailangan ng org. Ang School Administrator ay
-   walang sariling org, kaya pipili muna siya ng "acting org" sa
-   sidebar bago gumana ang mga ito (tingnan ang App.jsx). */
-export const ACTING_ORG_PAGES = ['/events', '/announcements', '/attendance', '/rewards', '/org-profile']
+/* May kapangyarihan ba ng Adviser sa org niya (Events, Attendance,
+   OG shop, atbp.)? Adviser lang.
 
-/* May kapangyarihan ba ng Adviser sa org na hawak niya?
-     Adviser                          → oo, sa sariling org
-     School Administrator + acting org → oo, sa org na pinili niya
+   Dati ay kasama ang School Administrator kapag may "acting org"
+   siya. Inalis na iyon: walang org ang SA at hindi na siya
+   humahawak ng Events, Attendance at Rewards
+   (SA_REMOVE_ACTING_ORG.sql).
+
    Para lang sa pagpapakita ng button; ang database pa rin ang
-   totoong nagbabantay (SCHOOL_ADMIN_SUPERADMIN.sql). */
+   totoong nagbabantay. */
 export function hasAdviserPowers(profile) {
-  if (!profile?.is_active) return false
-  if (profile.role_id === 3) return true
-  return profile.role_id === 8 && Boolean(profile.organization_id)
+  return Boolean(profile?.is_active && profile.role_id === 3)
 }
 
 export function isSchoolAdmin(profile) {
@@ -131,7 +132,8 @@ export function isSchoolAdmin(profile) {
               nagpapaskil pero hindi gumagawa ng events.
 
      assignPositions — nagbibigay ng officer position (President,
-              VP, atbp.) sa mga member ng org sa Members page.
+              VP, atbp.) sa mga member ng org sa Members page
+              (School Administrator: sa Users page na).
               May position → Officer; tinanggal → Member.
               Tingnan ang lib/officerPositions.js at
               OFFICER_POSITIONS.sql.
@@ -481,35 +483,58 @@ export const ROLES = {
      budget ay hindi na dumadaan sa kanya, at hindi rin niya nakikita
      (RLS: proposals_read_staff).
 
-     Dashboard: "School overview" lang — Active organizations at
-     Active members. Galing ang numero sa school_admin_overview()
-     (lib/schoolAdmin.js).
+     Dashboard:
+       "Proposals" → Pending proposals: mga budget proposal na
+                     nasa SA na at IKAW ang hinihintay (hindi mo pa
+                     naaaksyunan). Kapareho ng sa SAO / School Head —
+                     countPendingProposals() sa lib/proposals.js.
+                     Realtime: nag-a-update kapag may notification
+                     tungkol sa proposal.
+       "School overview" → Active organizations (→ Organizations) at
+                     Active members (→ Users).
+                     Galing sa school_admin_overview() (lib/schoolAdmin.js).
 
      Inalis na sa Dashboard: ang grupong "Budget proposals"
-     (Awaiting your action, Still with Adviser / SAO / School Head,
-     Approved, Rejected), ang "Officers" stat, at ang Sections cards
-     (Members, Profile). Nasa sidebar pa rin ang Proposals, Members,
-     at Profile.
+     (Still with Adviser / SAO / School Head, Approved, Rejected),
+     ang "Officers" stat, at ang Sections cards (Members, Profile).
+     Ibinalik lang ang "Pending proposals" (nasa itaas). Nasa sidebar
+     pa rin ang Proposals at Profile.
 
      SUPERADMIN (SCHOOL_ADMIN_SUPERADMIN.sql):
        Organizations → gumawa, mag-edit, mag-deactivate ng org,
-                       at piliin ang "special org"
+                       at piliin ang "special org". Nasa Edit na rin
+                       ang dating Org Profile: logo at officer
+                       positions ng KAHIT ANONG org
+                       (SA_ORG_LOGO_ANY_ORG.sql para sa logo)
        Users         → magdagdag/mag-edit ng student record, magpalit
-                       ng role at org, mag-deactivate
-       Members       → "Set position" sa kahit anong org
-       ACTING ORG    → pumipili ang SA ng org (sa sidebar). Habang
-                       nasa org na iyon, parang Adviser siya roon sa
-                       Events, Announcements, Attendance, Rewards at
-                       Org Profile (tingnan ang hasAdviserPowers()).
-                       Kapag wala pang napiling org, may paalala ang
-                       mga page na iyon (ACTING_ORG_PAGES, App.jsx).
+                       ng role at org, mag-deactivate, at "Set
+                       position" sa kahit anong org. May Status din
+                       kung naka-login na ang tao
+                       (SA_USERS_LOGIN_STATUS.sql para sa huling login)
+       Announcements → nagpo-post para sa LAHAT o sa PILING org (walang
+                       "My organization only" dahil wala siyang org).
+                       Nakikita at naa-edit/nabubura niya ang lahat ng
+                       announcement.
+
+     WALA NANG MEMBERS PAGE ANG SA. Inilipat na sa Users ang lahat ng
+     ginagawa niya roon (profile picture, officer position bilang
+     Role, "Set position"). Ang Users ay kumpleto pa: kasama pati ang
+     hindi pa nakaka-login. Dahil wala na sa sidebar, wala na rin
+     siyang /members na route (ibabalik siya sa dashboard).
+
+     INALIS NA (SA_REMOVE_ACTING_ORG.sql): ang "acting org" /
+     Managing organization, Org Profile, Events, Attendance at
+     Rewards. Laging walang org ang SA (profiles.organization_id =
+     null — may constraint sa database).
 
      Hindi nagbago ang proposal flow: budget proposals pa rin lang.
 
-     Kailangan sa Supabase: ADD_SCHOOL_ADMINISTRATOR.sql at
-     SCHOOL_ADMIN_SUPERADMIN.sql */
+     Kailangan sa Supabase: ADD_SCHOOL_ADMINISTRATOR.sql,
+     SCHOOL_ADMIN_SUPERADMIN.sql, SA_ORG_LOGO_ANY_ORG.sql,
+     SA_REMOVE_ACTING_ORG.sql at SA_USERS_LOGIN_STATUS.sql */
   [ROLE_KEYS.SCHOOL_ADMIN]: (() => {
     const base = staffRoleWithProposals('School Administrator')
+    const PROPOSALS_GROUP = 'Proposals'
     const SCHOOL_GROUP = 'School overview'
     return {
       ...base,
@@ -522,13 +547,8 @@ export const ROLES = {
         DASHBOARD,
         ORGANIZATIONS,
         USERS,
-        MEMBERS,
         PROPOSALS,
-        EVENTS,
         ANNOUNCEMENTS,
-        ATTENDANCE,
-        REWARDS,
-        ORG_PROFILE,
         PROFILE,
       ],
       dashboard: {
@@ -536,16 +556,23 @@ export const ROLES = {
         cards: [],
         stats: [
           {
+            label: 'Pending proposals',
+            value: '0',
+            to: '/proposals',
+            key: 'pendingProposals',
+            group: PROPOSALS_GROUP,
+          },
+          {
             label: 'Active organizations',
             value: '0',
-            to: '/members',
+            to: '/organizations',
             key: 'saOrganizations',
             group: SCHOOL_GROUP,
           },
           {
             label: 'Active members',
             value: '0',
-            to: '/members',
+            to: '/users',
             key: 'saMembers',
             group: SCHOOL_GROUP,
           },

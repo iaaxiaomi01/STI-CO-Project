@@ -17,11 +17,7 @@ import styles from './MemberLayout.module.css'
 function MemberLayout() {
   // Bukas ba ang sidebar sa mobile?
   const [menuOpen, setMenuOpen] = useState(false)
-  const { user, profile } = useAuth()
-
-  /* School Administrator: kapag nagpalit ng acting org, bubuuin
-     ulit ang page para kunin ang data ng bagong org */
-  const pageKey = profile?.role_id === 8 ? `sa-${profile.organization_id ?? 'none'}` : 'page'
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -69,7 +65,7 @@ function MemberLayout() {
           </p>
         </div>
 
-        <main key={pageKey} className={styles.content}>
+        <main className={styles.content}>
           <Outlet />
         </main>
       </div>

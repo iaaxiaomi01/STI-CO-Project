@@ -33,15 +33,25 @@ import styles from './AnnouncementForm.module.css'
                 mga piniling org (Officer/Adviser ng org na may
                 can_announce_all). Kailangan ang ownOrgId para
                 hindi isama ang sariling org sa listahan.
+                Kapag WALANG ownOrgId (School Administrator), lahat
+                ng org o piling org lang ang pagpipilian.
    Kapag nag-e-edit, hindi na mababago kung para kanino.
    ============================================================ */
 function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
+  /* Listahan ng org para sa "Selected organizations" */
+  const canChoose = !isEdit && audience === 'choose'
+
+  /* School Administrator: walang sariling org → walang "My
+     organization only" */
+  const noOwnOrg = canChoose && !ownOrgId
+  const audienceOptions = noOwnOrg ? AUDIENCES.filter((a) => a.value !== 'own') : AUDIENCES
+
   const [title, setTitle] = useState(initial?.title ?? '')
   const [type, setType] = useState(initial?.type ?? 'meeting')
   const [message, setMessage] = useState(initial?.message ?? '')
-  const [postTo, setPostTo] = useState('own')
+  const [postTo, setPostTo] = useState(noOwnOrg ? 'all' : 'own')
   const [orgIds, setOrgIds] = useState([])
   const [orgOptions, setOrgOptions] = useState(null) // null = kinukuha pa
   const [orgLoadError, setOrgLoadError] = useState(false)
@@ -61,8 +71,6 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
     titleRef.current?.focus()
   }, [])
 
-  /* Listahan ng org para sa "Selected organizations" */
-  const canChoose = !isEdit && audience === 'choose'
   useEffect(() => {
     if (!canChoose) return undefined
     let active = true
@@ -194,7 +202,7 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
               value={postTo}
               onChange={(e) => setPostTo(e.target.value)}
             >
-              {AUDIENCES.map((a) => (
+              {audienceOptions.map((a) => (
                 <option key={a.value} value={a.value}>
                   {a.label}
                 </option>
@@ -229,9 +237,11 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
                 ))}
               </div>
             )}
-            <p className={styles.counter}>
-              Your organization will also see this.
-            </p>
+            {!noOwnOrg && (
+              <p className={styles.counter}>
+                Your organization will also see this.
+              </p>
+            )}
           </fieldset>
         )}
 

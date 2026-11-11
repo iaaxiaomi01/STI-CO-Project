@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.js'
-import { getRoleConfig, isSchoolAdmin } from '../config/roles.js'
+import { getRoleConfig } from '../config/roles.js'
 import { displayNameOf } from '../lib/profile.js'
 import {
   Building2,
@@ -19,7 +19,6 @@ import {
   X,
 } from 'lucide-react'
 import Avatar from './Avatar.jsx'
-import ActingOrgSwitcher from './ActingOrgSwitcher.jsx'
 import styles from './Sidebar.module.css'
 
 /* Ang laman ng sidebar ay HINDI nakasulat dito — galing siya
@@ -27,7 +26,12 @@ import styles from './Sidebar.module.css'
 
    Kaya ibang-iba ang nakikita ng Member at ng Officer, pero
    iisa lang ang component na ito. Doon ka magdagdag ng items,
-   hindi dito. */
+   hindi dito.
+
+   School Administrator: wala na rito ang "Managing organization"
+   (ActingOrgSwitcher). Ang acting org ay pinipili na sa
+   Organizations → "Manage", at makikita pa rin sa ilalim ng
+   sidebar ("School Administrator · <org>"). */
 /* Icon ng bawat page (route → icon). Kapag may bagong page na
    wala rito, ang lumang simbolo sa config/roles.js (item.icon)
    ang lalabas. */
@@ -74,9 +78,6 @@ function Sidebar({ open, onClose, user, onLogout }) {
           <X size={20} strokeWidth={2.4} aria-hidden="true" />
         </button>
       </div>
-
-      {/* School Administrator: aling org ang hinahawakan ngayon */}
-      {isSchoolAdmin(profile) && <ActingOrgSwitcher />}
 
       <nav className={styles.nav}>
         {roleConfig.sidebar.map((item) => {

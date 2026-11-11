@@ -47,6 +47,42 @@
   color: #1a3d9c;
 }
 
+/* ---------- STATUS NG LOGIN (Users) ----------
+   Maliit na linya sa ilalim ng badge: "Last login today, 3:15 PM",
+   "Added Nov 3, 2026", o "Never logged in" */
+.statusMeta {
+  display: block;
+  margin-top: 5px;
+  color: #5b6275;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- USERS TABLE sa tablet at phone ----------
+   Magkahiwalay na ang Program at Year, kaya lima na ang detalye
+   (Status, Student ID, Program, Year, Organization). Sa Members
+   ay apat lang ang kasya sa ikalawang hanay, kaya dito:
+     Hanay 2: Status · Student ID · Program · Year
+     Hanay 3: Organization (buong lapad) */
+@container (max-width: 860px) {
+  table.usersTable td[data-label] {
+    grid-row: auto;
+  }
+
+  table.usersTable td[data-label='Organization'] {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Phone (3 column): Status sa sariling hanay, tapos
+   Student ID · Program · Year, tapos Organization */
+@container (max-width: 560px) {
+  table.usersTable td[data-label='Status'] {
+    grid-column: 1 / -1;
+  }
+}
+
 /* Mahabang text (hal. Program) na pwedeng bumaba sa dalawang linya
    para hindi lumampas ang table sa desktop */
 .wrapCell {

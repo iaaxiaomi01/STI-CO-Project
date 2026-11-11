@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.js'
+import { ROLE_KEYS } from '../config/roles.js'
 import { fullNameOf } from '../lib/profile.js'
 import { positionErrorMessage } from '../lib/officerPositions.js'
 import Avatar from './Avatar.jsx'
@@ -20,8 +22,14 @@ import styles from './PositionDialog.module.css'
    Hindi dito nagse-save. Tinatawag lang ang onSave(positionId)
    (null = tanggalin); kapag nag-throw, dito lalabas ang error
    at mananatiling bukas ang dialog.
+
+   Kapag wala pang position ang org:
+     Adviser              → link sa Org Profile
+     School Administrator → link sa Organizations (Edit → Officer
+                            positions); wala na siyang Org Profile
    ============================================================ */
 function PositionDialog({ member, positions, holdersByPosition, canManagePositions, onSave, onCancel }) {
+  const { role } = useAuth()
   const [selected, setSelected] = useState(member.position_id ?? null)
   const [saving, setSaving] = useState(null) // null | 'save' | 'remove'
   const [error, setError] = useState('')
@@ -44,6 +52,7 @@ function PositionDialog({ member, positions, holdersByPosition, canManagePositio
   const isOfficer = member.role_id === 2
   const current = member.officer_positions?.name ?? (isOfficer ? 'Officer (no position)' : 'Member')
   const unchanged = selected === (member.position_id ?? null)
+  const isSchoolAdmin = role === ROLE_KEYS.SCHOOL_ADMIN
 
   async function submit(positionId, kind) {
     setError('')
@@ -92,9 +101,16 @@ function PositionDialog({ member, positions, holdersByPosition, canManagePositio
           <p className={styles.none}>
             This organization has no officer positions yet.{' '}
             {canManagePositions ? (
-              <>
-                Add them first in <Link to="/org-profile">Org Profile</Link>.
-              </>
+              isSchoolAdmin ? (
+                <>
+                  Add them first in <Link to="/organizations">Organizations</Link> (Edit → Officer
+                  positions).
+                </>
+              ) : (
+                <>
+                  Add them first in <Link to="/org-profile">Org Profile</Link>.
+                </>
+              )
             ) : (
               'The adviser can add them in Org Profile.'
             )}
