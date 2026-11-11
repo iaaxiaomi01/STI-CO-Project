@@ -13,7 +13,8 @@ import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js
      Wala na ito sa Proposals.
 
    Walang .eq('organization_id', ...) sa pagkuha. Ang RLS na ang
-   nagsasala: events lang ng SARILI mong org.
+   nagsasala: events lang ng SARILI mong org — maliban sa SAO, na
+   nakikita ang LAHAT ng aktibong org (SAO_EVENTS_READ.sql).
 
    Sa paggawa, ang org, author at petsa ay itinatakda ng trigger
    sa database. Sinusuri din doon na approved ang proposal at
@@ -150,8 +151,28 @@ const COLUMNS = `
   title, description, event_date, end_date, start_time, end_time, location, image_url,
   author_id, author_name, author_role_id,
   created_at, updated_at, updated_by,
-  proposals ( venue, event_date, end_date, start_time, end_time )
+  proposals ( venue, event_date, end_date, start_time, end_time ),
+  organizations ( name )
 `
+
+/* Pangalan ng org ng event (galing sa organizations ( name ) sa
+   itaas). Ginagamit ng Events page ng SAO, kung saan halo-halo
+   ang mga org. */
+export function orgNameOf(event) {
+  const o = event?.organizations
+  return (Array.isArray(o) ? o[0]?.name : o?.name) ?? ''
+}
+
+/* ============================================================
+   SAO — nakikita ang events ng LAHAT ng aktibong org
+   (SAO_EVENTS_READ.sql: events_read_sao). Basa lang: walang
+   Join, Edit, Delete o Certificates — hindi siya kabilang sa
+   anumang org, kaya kusang false ang canEditEvent(),
+   canDeleteEvent() at canManageCertificates() para sa kanya.
+   ============================================================ */
+export function canViewAllEvents(profile) {
+  return Boolean(profile?.is_active && profile.role_id === 4)
+}
 
 /* May itinakdang Venue, Date, Start Time at End Time ang proposal?
    Kapag mayroon, NAKA-LOCK ang mga ito sa event (kasama ang End
@@ -669,7 +690,9 @@ export function canJoinEvents(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 1 || profile.role_id === 2))
 }
 
-/* Officer at Adviser lang ang nakakakita ng listahan */
+/* Officer at Adviser lang ang nakakakita ng listahan.
+   (Ang SAO ay BILANG lang ang nakikita — fetchParticipantCounts(),
+   SAO_EVENTS_READ.sql.) */
 export function canViewParticipants(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 2 || hasAdviserPowers(profile)))
 }

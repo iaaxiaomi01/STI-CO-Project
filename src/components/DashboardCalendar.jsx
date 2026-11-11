@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react'
+import { useAuth } from '../context/AuthContext.js'
 import {
+  canViewAllEvents,
   computeStatus,
   eventDayKeys,
   eventStatusLabel,
@@ -39,6 +41,10 @@ import styles from './DashboardCalendar.module.css'
    na label; ang is_own_org ay ginagamit lang para mauna ang
    sariling org sa legend at para sa "View in Events →" link
    (sariling org lang ang makikita sa Events page dahil sa RLS).
+
+   SAO: nakikita niya ang events ng LAHAT ng org sa Events page
+   (SAO_EVENTS_READ.sql), kaya may "View in Events →" sa BAWAT
+   event, papunta mismo sa event na iyon (/events?event=<id>).
    ============================================================ */
 
 const MONTHS = [
@@ -101,6 +107,9 @@ function buildCalendarDays(year, month) {
    sa bento Dashboard ng Member, kung saan wala nang hiwalay na
    heading sa labas ng calendar). */
 function DashboardCalendar({ eyebrow } = {}) {
+  const { profile } = useAuth()
+  const viewAllEvents = canViewAllEvents(profile)
+
   const today = new Date()
   const todayKey = toYmd(today)
 
@@ -374,8 +383,11 @@ function DashboardCalendar({ eyebrow } = {}) {
                           </span>
                         </div>
 
-                        {event.is_own_org && (
-                          <Link to="/events" className={styles.detailsLink}>
+                        {(event.is_own_org || viewAllEvents) && (
+                          <Link
+                            to={viewAllEvents ? `/events?event=${event.id}` : '/events'}
+                            className={styles.detailsLink}
+                          >
                             View in Events →
                           </Link>
                         )}

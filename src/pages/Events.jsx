@@ -2,14 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Award,
+  Building2,
   CalendarX,
   Check,
   Clock,
   Download,
+  Info,
   MapPin,
   Pencil,
   Search,
   Trash2,
+  Users,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { hasAdviserPowers } from '../config/roles.js'
@@ -21,6 +24,7 @@ import {
   canCreateEvents,
   canJoinEvents,
   canDeleteEvent,
+  canViewAllEvents,
   canEditEvent,
   computeStatus,
   createEventFromProposal,
@@ -30,12 +34,14 @@ import {
   eventStatusLabel,
   fetchEvents,
   fetchMyJoinedEventIds,
+  fetchParticipantCounts,
   findScheduleConflict,
   formatEventDateRange,
   formatEventTimeRange,
   isMultiDay,
   joinEvent,
   nowKey,
+  orgNameOf,
   updateEvent,
   wasEdited,
 } from '../lib/events.js'
@@ -59,6 +65,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
 import JoinConfirmDialog from '../components/JoinConfirmDialog.jsx'
 import CertificatesDialog from '../components/CertificatesDialog.jsx'
+import EventDetailsDialog from '../components/EventDetailsDialog.jsx'
 import styles from './Events.module.css'
 
 /* ============================================================
@@ -149,6 +156,22 @@ import styles from './Events.module.css'
      Kapag dumating ang "og_update" notification (na-release ang
      OG) habang bukas ang page → kukunin ulit ang mga reward.
      Basa lang ito; walang binabago sa database.
+
+   SAO (SAO_EVENTS_READ.sql — canViewAllEvents()):
+     Nakikita ang events ng LAHAT ng aktibong organisasyon, sa
+     ticket view. Basa lang: walang Join, Edit, Delete o
+     Certificates (hindi siya kabilang sa anumang org).
+     Dagdag para sa kanya:
+       • pangalan ng org sa bawat ticket
+       • filter ayon sa org (katabi ng search) — ang bilang sa
+         mga tab ay ayon sa napiling org
+       • bilang ng sumali (event_participant_counts())
+       • "View details" → EventDetailsDialog: kumpletong
+         detalye (larawan, org, petsa, oras, lugar, OG reward,
+         bilang ng sumali, gumawa, kailan ginawa/binago, at ang
+         buong description)
+     Galing sa Dashboard calendar: /events?event=<id> → dadalhin
+     sa mismong ticket (tulad ng sa notification).
 
    Ang RLS sa database ang totoong nagbabantay. Ang
    canEditEvent() at canDeleteEvent() dito ay para lang itago
@@ -328,6 +351,16 @@ function Events() {
     [events, joinedIds],
   )
 
+  /* ---------- SAO: events ng LAHAT ng org ----------
+     orgFilter: 'all' o organization_id
+     participantCounts: { [event_id]: bilang ng sumali }
+     detailsEvent: ang event na nasa "View details" */
+  const viewAllEvents = canViewAllEvents(profile)
+  const [orgFilter, setOrgFilter] = useState('all')
+  const [participantCounts, setParticipantCounts] = useState(null)
+  const [detailsEvent, setDetailsEvent] = useState(null)
+  const closeDetails = useCallback(() => setDetailsEvent(null), [])
+
   /* "Missed" — Member at Officer (sila ang nagja-Join) */
   const showMissed = profile?.role_id === 1 || profile?.role_id === 2
   const filters = showMissed ? MEMBER_FILTERS : FILTERS
@@ -338,7 +371,7 @@ function Events() {
      button sa stub niya — nasa ibaba ng ticket ang Certificates,
      Edit at Delete, tulad ng sa Officer.
      Ang dating card layout ay naiwan para sa ibang role. */
-  const ticketView = showMissed || hasAdviserPowers(profile)
+  const ticketView = showMissed || hasAdviserPowers(profile) || viewAllEvents
 
   /* Ang mga event, may kinuwentang status.
      Member/Officer: Completed + hindi nag-Join → Missed */
@@ -426,6 +459,14 @@ function Events() {
 
     loadRewards()
 
+    /* SAO: bilang ng sumali bawat event. Hiwalay — kapag pumalya,
+       "—" lang ang lalabas pero gagana pa rin ang page. */
+    if (viewAllEvents) {
+      fetchParticipantCounts()
+        .then(setParticipantCounts)
+        .catch((err) => console.error('Hindi makuha ang bilang ng sumali:', err))
+    }
+
     /* Hiwalay para hindi masira ang listahan ng events kung
        pumalya ang pagkuha ng mga sinalihan mo */
     if (!profileId) return
@@ -437,7 +478,7 @@ function Events() {
     }
 
     await loadMyCertificates()
-  }, [profileId, loadMyCertificates, loadRewards])
+  }, [profileId, loadMyCertificates, loadRewards, viewAllEvents])
 
   async function handleDownloadCertificate(event) {
     const cert = myCerts[event.id]
@@ -512,6 +553,7 @@ function Events() {
     if (!focusParam || loading) return
     setFilter('all')
     setSearch('')
+    setOrgFilter('all')
     setHighlightId(focusParam)
     setSearchParams({}, { replace: true })
     /* Sigurado: kunin ulit kahit may nakaligtaang realtime */
@@ -574,14 +616,37 @@ function Events() {
      Hindi mahalaga ang malaki o maliit na titik.
      Kasama ang Start Date at End Date. */
   const query = search.trim().toLowerCase()
+
+  /* SAO: mga org na may event — para sa filter. A–Z. */
+  const orgOptions = useMemo(() => {
+    if (!viewAllEvents) return []
+    const seen = new Map()
+    events.forEach((e) => {
+      if (!seen.has(e.organization_id)) seen.set(e.organization_id, orgNameOf(e) || 'Organization')
+    })
+    return [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [events, viewAllEvents])
+
+  /* Kapag nawala ang napiling org (hal. na-delete ang huling
+     event nito), balik sa "All organizations" */
+  const activeOrgFilter =
+    orgFilter !== 'all' && orgOptions.some((o) => o.id === orgFilter) ? orgFilter : 'all'
+
   const matched = useMemo(() => {
-    if (!query) return withStatus
-    return withStatus.filter((e) =>
+    const inOrg =
+      activeOrgFilter === 'all'
+        ? withStatus
+        : withStatus.filter((e) => e.organization_id === activeOrgFilter)
+    if (!query) return inOrg
+    return inOrg.filter((e) =>
       [
         e.title,
         e.description,
         e.location,
         e.author_name,
+        orgNameOf(e),
         e.event_date,
         e.end_date,
         formatEventDateRange(e),
@@ -589,7 +654,7 @@ function Events() {
         .filter(Boolean)
         .some((field) => field.toLowerCase().includes(query)),
     )
-  }, [withStatus, query])
+  }, [withStatus, query, activeOrgFilter])
 
   /* Ang bilang sa bawat tab ay ayon sa search */
   const counts = useMemo(() => {
@@ -672,6 +737,11 @@ function Events() {
         <EmptyState
           icon="◆"
           title="No events scheduled yet"
+          message={
+            viewAllEvents
+              ? 'Events created by any organization will show up here.'
+              : undefined
+          }
         />
       )}
 
@@ -685,7 +755,11 @@ function Events() {
             <input
               type="search"
               className={styles.search}
-              placeholder="Search by event, location, date, or creator…"
+              placeholder={
+                viewAllEvents
+                  ? 'Search by event, organization, location, date…'
+                  : 'Search by event, location, date, or creator…'
+              }
               aria-label="Search events"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -693,12 +767,31 @@ function Events() {
             {/* Member/Officer ticket view: wala — ang bilang sa "All"
                 tab na ang nagsasabi kung ilan ang tumugma.
                 Adviser: naiwan, tulad ng dati niyang layout. */}
-            {query && (!ticketView || isAdviser) && (
+            {query && (!ticketView || isAdviser || viewAllEvents) && (
               <span className={styles.searchCount}>
                 {matched.length} of {withStatus.length}
               </span>
             )}
           </div>
+
+          {/* SAO: filter ayon sa org */}
+          {viewAllEvents && orgOptions.length > 1 && (
+            <label className={styles.orgFilter}>
+              <Building2 size={17} aria-hidden="true" className={styles.orgFilterIcon} />
+              <span className={styles.srOnly}>Organization</span>
+              <select
+                value={activeOrgFilter}
+                onChange={(e) => setOrgFilter(e.target.value)}
+              >
+                <option value="all">All organizations</option>
+                {orgOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <div className={styles.filters} role="tablist" aria-label="Filter by status">
             {filters.map((f) => (
@@ -801,6 +894,12 @@ function Events() {
 
                       {/* ---------- KATAWAN ---------- */}
                       <div className={styles.ticketBody}>
+                        {viewAllEvents && orgNameOf(ev) && (
+                          <p className={styles.ticketOrg}>
+                            <Building2 size={14} aria-hidden="true" />
+                            {orgNameOf(ev)}
+                          </p>
+                        )}
                         <h2 className={styles.ticketTitle}>{ev.title}</h2>
 
                         <p
@@ -835,6 +934,12 @@ function Events() {
                             <li className={styles.chipOg}>
                               <span className={styles.srOnly}>Reward: </span>
                               <OgAmount value={reward.amount} size={15} />
+                            </li>
+                          )}
+                          {viewAllEvents && participantCounts && (
+                            <li>
+                              <Users size={15} aria-hidden="true" />
+                              {(participantCounts[ev.id] ?? 0).toLocaleString('en-PH')} joined
                             </li>
                           )}
                         </ul>
@@ -879,6 +984,20 @@ function Events() {
                             {authorLabel(ev)}
                             {wasEdited(ev) && <span className={styles.edited}> · edited</span>}
                           </p>
+
+                          {/* SAO: kumpletong detalye ng event */}
+                          {viewAllEvents && (
+                            <div className={`${styles.actions} ${styles.tActions}`}>
+                              <button
+                                type="button"
+                                className={`${styles.linkButton} ${styles.tAction}`}
+                                onClick={() => setDetailsEvent(ev)}
+                              >
+                                <Info size={16} strokeWidth={2.2} aria-hidden="true" />
+                                View details
+                              </button>
+                            </div>
+                          )}
 
                           {/* Officer at Adviser: Certificates / Edit / Delete */}
                           {(editable || deletable || manageCerts) && (
@@ -1201,6 +1320,15 @@ function Events() {
       {editing && <EventForm initial={editing} onSubmit={handleUpdate} onCancel={closeForm} />}
 
       {certEvent && <CertificatesDialog event={certEvent} onClose={closeCertificates} />}
+
+      {detailsEvent && (
+        <EventDetailsDialog
+          event={withStatus.find((e) => e.id === detailsEvent.id) ?? detailsEvent}
+          reward={rewards[detailsEvent.id] ?? null}
+          participants={participantCounts ? participantCounts[detailsEvent.id] ?? 0 : null}
+          onClose={closeDetails}
+        />
+      )}
 
       {confirmingJoin && (
         <JoinConfirmDialog event={confirmingJoin} onConfirm={handleJoin} onCancel={closeJoin} />

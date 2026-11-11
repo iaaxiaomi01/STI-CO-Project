@@ -446,7 +446,34 @@ export const ROLES = {
      Kailangan sa Supabase:
        ADD_SCHOOL_HEAD_PROPOSALS_READ.sql (makabasa)
        PROPOSAL_THREE_STEP_REVIEW.sql     (makaaksyon) */
-  [ROLE_KEYS.SAO]: staffRoleWithProposals('SAO'),
+  [ROLE_KEYS.SAO]: {
+    ...staffRoleWithProposals('SAO'),
+
+    /* EVENT CALENDAR SA DASHBOARD NG SAO
+       Events ng LAHAT ng aktibong organisasyon — iisang calendar
+       na ginagamit din ng Member, Officer at Adviser
+       (components/DashboardCalendar.jsx). Lumalabas ito sa ilalim
+       ng "Proposals awaiting your action" (staff layout sa
+       pages/Dashboard.jsx).
+
+       Walang bagong SQL na kailangan: ang calendar_events() sa
+       Supabase ay gumagana na sa kahit sinong aktibong naka-login,
+       may org man o wala.
+
+       Walang sariling org ang SAO, kaya is_own_org = false sa
+       lahat ng event. Pero dahil may Events page na siya, may
+       "View in Events →" sa BAWAT event, papunta mismo sa event
+       na iyon (/events?event=<id>). */
+    calendar: true,
+
+    /* EVENTS PAGE NG SAO (SAO_EVENTS_READ.sql)
+       Listahan ng events ng LAHAT ng aktibong organisasyon, may
+       pangalan ng org, filter ayon sa org, bilang ng sumali, at
+       "View details" para sa kumpletong detalye.
+       Basa lang — walang Join, Edit, Delete o Certificates.
+       Tingnan ang canViewAllEvents() sa lib/events.js. */
+    sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, PROFILE],
+  },
   [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals('School Head', { orgHealth: true }),
 
   /* School Administrator — PINAL na Approve/Reject ng mga proposal

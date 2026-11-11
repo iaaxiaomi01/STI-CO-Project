@@ -1,0 +1,244 @@
+/* ============================================================
+   EVENT DETAILS DIALOG — kumpletong detalye (SAO)
+   Kapareho ng itsura ng ticket sa Events page.
+   ============================================================ */
+
+/* div.modal: mas mataas kaysa sa .modal ng ProposalForm.module.css */
+div.modal {
+  position: relative;
+  max-width: 620px;
+  padding: 0;
+  border-radius: var(--dash-radius);
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+}
+
+/* ---------- Isara ---------- */
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background-color: #fff;
+  color: var(--dash-navy-deep);
+  box-shadow: 0 4px 14px rgba(3, 27, 75, 0.18);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.close:hover {
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+/* ---------- Larawan ---------- */
+.poster {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--dash-radius) var(--dash-radius) 0 0;
+  background-color: var(--dash-navy);
+}
+
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Ulo ---------- */
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 26px 26px 0;
+}
+
+/* Walang larawan → may puwang para sa X sa kanan */
+.head:first-of-type {
+  padding-right: 70px;
+}
+
+.poster + .head {
+  padding-right: 26px;
+}
+
+.status {
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Kapareho ng kulay ng badge sa Dashboard calendar */
+.upcoming {
+  background-color: #e6edfc;
+  color: #1740ad;
+}
+
+.ongoing {
+  background-color: #e3f4e8;
+  color: #1b6e33;
+}
+
+.completed {
+  background-color: #eef0f4;
+  color: #3b4660;
+}
+
+.org {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3a4766;
+  overflow-wrap: anywhere;
+}
+
+.org svg {
+  flex-shrink: 0;
+}
+
+div.modal .title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Detalye ---------- */
+.facts {
+  display: grid;
+  gap: 2px;
+  margin: 20px 26px 0;
+  padding: 6px;
+  border-radius: 20px;
+  background-color: #f3f5fa;
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+.facts > div:nth-child(odd) {
+  background-color: #fff;
+}
+
+.facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dash-muted);
+}
+
+.facts dt svg {
+  flex-shrink: 0;
+}
+
+.facts dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.og {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.og small,
+.when {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-muted);
+}
+
+.muted {
+  color: var(--dash-muted);
+}
+
+/* ---------- Description ---------- */
+.about {
+  padding: 22px 26px 26px;
+}
+
+.about h3 {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dash-muted);
+}
+
+.about p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #3a4766;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 520px) {
+  .head {
+    padding: 20px 20px 0;
+  }
+
+  .head:first-of-type {
+    padding-right: 64px;
+  }
+
+  .poster + .head {
+    padding-right: 20px;
+  }
+
+  div.modal .title {
+    font-size: 23px;
+  }
+
+  .facts {
+    margin: 16px 20px 0;
+  }
+
+  .facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .about {
+    padding: 18px 20px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .close {
+    transition: none;
+  }
+}
