@@ -12,7 +12,6 @@ import { Workbook } from './xlsx.js'
      ┌───────────────────────────────────────────────┐
      │ [logo]  STI COLLEGE SAN PABLO                 │  navy
      │         EVENT ATTENDANCE REPORT               │  dilaw na letra
-     │         Pangalan ng Org                       │
      ├───────────────────────────────────────────────┤  dilaw na guhit
      │ Event / Date / Time / Location │ Org / Dept / Exported on
      │ [Joined] [Timed In] [Completed] [Attendance Rate]   ← cards
@@ -20,6 +19,9 @@ import { Workbook } from './xlsx.js'
      │ │ zebra rows, may kulay ang Status         │  │
      │ └──────────────────────────────────────────┘  │
      └───────────────────────────────────────────────┘
+
+   Wala nang pangalan ng org sa banner — nasa "Organization"
+   na ito sa detalye ng event, kaya redundant.
 
    Para palitan ang kulay: baguhin ang COLORS sa ibaba.
    ============================================================ */
@@ -90,12 +92,17 @@ export function buildAttendanceWorkbook(info) {
   ws.showGridLines = false
   ws.setColumnWidths(COLUMNS.map((c) => c[1]))
 
-  /* ---------- 1–3: BANNER ---------- */
+  /* ---------- 1–3: BANNER ----------
+     Dalawang linya na lang: pangalan ng school at "EVENT
+     ATTENDANCE REPORT". Pareho pa rin ang kabuuang taas
+     (64 pt) para kasya ang logo; ang row 3 ay maliit na
+     navy na pagitan na lang, para hindi magbago ang mga row
+     sa ibaba. */
   const banner = { fill: COLORS.navy, align: { v: 'center' } }
   ws.styleRange(1, 1, 3, LAST_COL, banner)
-  ws.setRowHeight(1, 26)
-  ws.setRowHeight(2, 19)
-  ws.setRowHeight(3, 19)
+  ws.setRowHeight(1, 34)
+  ws.setRowHeight(2, 24)
+  ws.setRowHeight(3, 6)
 
   /* May logo → magsisimula ang teksto sa column C; wala → sa A */
   const textCol = info.logo ? 3 : 1
@@ -107,11 +114,6 @@ export function buildAttendanceWorkbook(info) {
   ws.merge(2, textCol, 2, LAST_COL, 'EVENT ATTENDANCE REPORT', {
     ...banner,
     font: { bold: true, size: 11, color: COLORS.yellow },
-    align: { v: 'center', indent: info.logo ? 0 : 1 },
-  })
-  ws.merge(3, textCol, 3, LAST_COL, info.orgName || '', {
-    ...banner,
-    font: { size: 10, color: 'C9D6F2' },
     align: { v: 'top', indent: info.logo ? 0 : 1 },
   })
 
