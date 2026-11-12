@@ -1,0 +1,640 @@
+/* ================================================================
+   PROPOSAL FORM — sariling disenyo (para sa Proposal form LANG)
+
+   Hiwalay ito sa ProposalForm.module.css dahil shared iyon ng
+   EventForm, ReviewDialog, ShopItemForm, Users, Organizations,
+   atbp. Kapag binago mo ito, ang Proposal form lang ang magbabago.
+
+   Kulay: PUTI ang background, DILAW ang accent at ang Submit,
+   ASUL (navy) para sa teksto, border at focus — hindi ginagamit
+   ang asul bilang background.
+
+     ┌──────────────────────────────────────┐ ← dilaw na guhit
+     │ [■] New proposal                     │ ← header (sticky)
+     ├──────────────────────────────────────┤
+     │  ⓘ paalala                           │
+     │  TITLE / DESCRIPTION / VENUE         │
+     │  ┌ schedule card ─────────────────┐  │
+     │  └────────────────────────────────┘  │
+     │  ☐ budget card · approvers · files   │
+     ├──────────────────────────────────────┤
+     │                   [Cancel] [Submit]  │ ← mga button (sticky)
+     └──────────────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --pf-navy: var(--dash-navy, #06358c);
+  --pf-deep: var(--dash-navy-deep, #031b4b);
+  --pf-blue: #1e4fd8;
+  --pf-yellow: var(--dash-yellow, #ffd200);
+  --pf-gold: var(--dash-gold, #f7b900);
+  --pf-cream: #fffbea;
+  --pf-cream-line: #f4e3a0;
+  --pf-line: #e2e8f2;
+  --pf-line-strong: #c9d3e6;
+  --pf-soft: #f8faff;
+  --pf-ink: #0e1a36;
+  --pf-muted: #5f6b85;
+  --pf-red: #c0362c;
+  --pf-ring: 0 0 0 4px rgba(255, 210, 0, 0.38);
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 24px;
+  background-color: #fff;
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.12);
+  color: var(--pf-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: thin;
+  scrollbar-color: var(--pf-line-strong) transparent;
+  animation: modalIn 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- HEADER ---------- */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 28px 18px;
+  border-bottom: 1px solid var(--pf-line);
+  /* Mapusyaw na dilaw na bilog at maliit na dilaw na singsing sa
+     kanang itaas — palamuti lang */
+  background:
+    radial-gradient(circle at calc(100% - 112px) 30px, transparent 0 8px, var(--pf-yellow) 8.5px 11px, transparent 11.5px),
+    radial-gradient(circle at 100% 0%, #fff3bf 0 80px, transparent 81px),
+    #fff;
+}
+
+/* Dilaw na guhit sa pinakaitaas */
+.head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--pf-yellow), var(--pf-gold) 60%, var(--pf-yellow));
+}
+
+.headIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--pf-yellow);
+  color: var(--pf-deep);
+  box-shadow: 0 8px 18px rgba(247, 185, 0, 0.38), inset 0 -3px 0 rgba(3, 27, 75, 0.08);
+}
+
+.heading {
+  font-family: var(--font-display, inherit);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--pf-deep);
+}
+
+/* ---------- LAMAN ---------- */
+.body {
+  padding: 22px 28px 6px;
+}
+
+/* Paalala sa itaas — mapusyaw na dilaw na may dilaw na guhit */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 12px 14px;
+  border: 1px solid var(--pf-cream-line);
+  border-left: 4px solid var(--pf-yellow);
+  border-radius: 12px;
+  background-color: var(--pf-cream);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #4a5470;
+}
+
+.note strong {
+  color: var(--pf-deep);
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #b38600;
+}
+
+/* Komento ng nag-pa-revise */
+.revisionBox {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #f1d98a;
+  border-left: 4px solid var(--pf-gold);
+  border-radius: 12px;
+  background-color: #fff7dc;
+}
+
+.revisionHead {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a5d00;
+}
+
+.revisionBy {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--pf-muted);
+}
+
+.revisionComment {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--pf-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- FIELDS ---------- */
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.labelRow .label {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pf-deep);
+}
+
+/* "(Required)" sa tabi ng Files */
+.required {
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--pf-red);
+}
+
+.counter {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background-color: #f1f4fa;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--pf-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--pf-line);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--pf-ink);
+  font: inherit;
+  font-size: 14.5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #a0a9bc;
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--pf-line-strong);
+}
+
+/* Focus: asul na border + dilaw na singsing */
+.input:focus {
+  outline: none;
+  border-color: var(--pf-navy);
+  box-shadow: var(--pf-ring);
+}
+
+.input:disabled {
+  background-color: var(--pf-soft);
+  cursor: not-allowed;
+}
+
+.textarea {
+  min-height: 160px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* ---------- SCHEDULE ---------- */
+.scheduleCard {
+  margin-bottom: 18px;
+  padding: 16px 16px 2px;
+  border: 1.5px solid var(--pf-line);
+  border-radius: 16px;
+  background-color: var(--pf-soft);
+}
+
+.scheduleCard .field {
+  margin-bottom: 14px;
+}
+
+/* Start Date · End Date, at Start Time · End Time */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+
+@media (max-width: 420px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* "3 days · Fri, Nov 20, 2026, 8:00 AM – Sun, Nov 22, 2026, 5:00 PM" */
+.schedulePreview {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: var(--pf-yellow);
+  color: var(--pf-deep);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.schedulePreview svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---------- "This proposal has a budget" — card na pinipindot ---------- */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--pf-line);
+  border-radius: 14px;
+  background-color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.check:hover {
+  border-color: var(--pf-line-strong);
+}
+
+/* Naka-check: dilaw ang card */
+.check:has(input:checked) {
+  border-color: var(--pf-gold);
+  background-color: var(--pf-cream);
+}
+
+.check:has(input:focus-visible) {
+  box-shadow: var(--pf-ring);
+}
+
+.check input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--pf-navy);
+  cursor: pointer;
+}
+
+.check strong {
+  display: block;
+  color: var(--pf-deep);
+}
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pf-muted);
+}
+
+/* ---------- FILES ---------- */
+.hiddenInput {
+  display: none;
+}
+
+/* Upload — malaking lugar na putol-putol ang gilid */
+.uploadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 18px;
+  border: 2px dashed var(--pf-line-strong);
+  border-radius: 14px;
+  background-color: #fff;
+  color: var(--pf-navy);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--pf-gold);
+  background-color: var(--pf-cream);
+}
+
+.uploadButton:focus-visible {
+  outline: none;
+  border-color: var(--pf-navy);
+  box-shadow: var(--pf-ring);
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--pf-yellow);
+  color: var(--pf-deep);
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.fileBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 12px;
+  border: 1.5px solid var(--pf-line);
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: #fff3c4;
+  color: #8a6400;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fileName {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pf-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  font-size: 12px;
+  color: var(--pf-muted);
+}
+
+.fileAction {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--pf-navy);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fileRemove {
+  color: var(--pf-red);
+}
+
+.fileRemove:hover:not(:disabled) {
+  background-color: #fdecea;
+}
+
+.fileError {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b42318;
+}
+
+/* ---------- ERROR ---------- */
+.error {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--pf-red);
+  border-radius: 12px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding: 16px 28px;
+  border-top: 1px solid var(--pf-line);
+  background-color: #fff;
+  box-shadow: 0 -12px 24px -18px rgba(3, 27, 75, 0.3);
+}
+
+.primary,
+.secondary {
+  padding: 12px 22px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    transform var(--transition), box-shadow var(--transition);
+}
+
+.secondary {
+  border: 1.5px solid var(--pf-line);
+  background-color: #fff;
+  color: var(--pf-deep);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--pf-navy);
+}
+
+/* Submit — dilaw na may anino */
+.primary {
+  min-width: 132px;
+  border: none;
+  background-color: var(--pf-yellow);
+  color: var(--pf-deep);
+  box-shadow: 0 8px 18px rgba(247, 185, 0, 0.4), inset 0 -3px 0 rgba(3, 27, 75, 0.1);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--pf-gold);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(247, 185, 0, 0.45), inset 0 -3px 0 rgba(3, 27, 75, 0.12);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--pf-navy);
+  outline-offset: 2px;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 20px;
+  }
+
+  .head {
+    padding: 22px 18px 14px;
+  }
+
+  .headIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .body {
+    padding: 18px 18px 4px;
+  }
+
+  .actions {
+    padding: 14px 18px;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .primary:hover:not(:disabled) {
+    transform: none;
+  }
+}

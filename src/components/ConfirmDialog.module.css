@@ -1,0 +1,242 @@
+/* ================================================================
+   CONFIRM DIALOG — kapalit ng window.confirm()
+
+   Kapamilya ng Event at Post form: asul at dilaw ng STI na guhit
+   sa itaas, pareho ang mga button. Kapag tone="danger" (delete),
+   PULA ang icon at ang confirm button.
+
+     ┌──────────────────────────────┐ ← asul + dilaw na guhit
+     │            (🗑)              │
+     │     Delete announcement?     │
+     │   ┌ "General Assembly" ┐     │ ← item
+     │   This cannot be undone.     │
+     ├──────────────────────────────┤
+     │        [Cancel] [Delete]     │
+     └──────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --cd-navy: var(--sti-blue, #06358c);
+  --cd-deep: var(--sti-blue-deep, #031b4b);
+  --cd-bright: var(--sti-blue-bright, #1249a8);
+  --cd-yellow: var(--sti-yellow, #ffd200);
+  --cd-sky: #eef3ff;
+  --cd-line: #e2e8f2;
+  --cd-soft: #f8faff;
+  --cd-ink: #0e1a36;
+  --cd-muted: #5f6b85;
+  --cd-red: #c0362c;
+  --cd-red-deep: #a12a21;
+
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  border-radius: 22px;
+  background-color: #fff;
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.12);
+  color: var(--cd-ink);
+  font-family: var(--font-ui, inherit);
+  animation: modalIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+/* Guhit sa itaas: asul, tapos dilaw sa dulo */
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--cd-navy) 0 72%, var(--cd-yellow) 72% 100%);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- LAMAN ---------- */
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 28px 22px;
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background-color: var(--cd-sky);
+  color: var(--cd-navy);
+  box-shadow: 0 0 0 7px rgba(6, 53, 140, 0.06);
+}
+
+.danger .icon {
+  background-color: #fde4e1;
+  color: var(--cd-red);
+  box-shadow: 0 0 0 7px rgba(192, 54, 44, 0.07);
+}
+
+.title {
+  font-family: var(--font-display, inherit);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--cd-deep);
+}
+
+/* Pangalan ng aaksyunan, hal. title ng announcement */
+.item {
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--cd-line);
+  border-left: 4px solid var(--cd-navy);
+  border-radius: 10px;
+  background-color: var(--cd-soft);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--cd-deep);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--cd-muted);
+}
+
+.error {
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--cd-red);
+  border-radius: 10px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid var(--cd-line);
+  background-color: #fff;
+}
+
+.cancel,
+.confirm {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    transform var(--transition), box-shadow var(--transition);
+}
+
+.cancel {
+  border: 1.5px solid var(--cd-line);
+  background-color: #fff;
+  color: var(--cd-deep);
+}
+
+.cancel:hover:not(:disabled) {
+  border-color: var(--cd-navy);
+}
+
+/* Confirm (primary) — asul na may dilaw na guhit sa ilalim */
+.confirm {
+  border: none;
+  background-color: var(--cd-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.3), inset 0 -3px 0 var(--cd-yellow);
+}
+
+.confirm:hover:not(:disabled) {
+  background-color: var(--cd-bright);
+  transform: translateY(-1px);
+}
+
+/* Confirm (danger) — pula */
+.danger .confirm {
+  background-color: var(--cd-red);
+  box-shadow: 0 8px 18px rgba(192, 54, 44, 0.3), inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+}
+
+.danger .confirm:hover:not(:disabled) {
+  background-color: var(--cd-red-deep);
+}
+
+.confirm:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cancel:focus-visible,
+.confirm:focus-visible {
+  outline: 3px solid var(--cd-yellow);
+  outline-offset: 2px;
+}
+
+.cancel:disabled,
+.confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+  .content {
+    padding: 28px 20px 18px;
+  }
+
+  .actions {
+    padding: 14px 16px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .confirm:hover:not(:disabled) {
+    transform: none;
+  }
+}

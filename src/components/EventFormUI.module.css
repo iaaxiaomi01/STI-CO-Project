@@ -1,0 +1,693 @@
+/* ================================================================
+   EVENT FORM — sariling disenyo (para sa Create/Edit Event LANG)
+
+   Kapareho ng ayos ng Proposal form (ProposalFormUI.module.css),
+   pero ASUL NG STI ang accent at ang Create button imbes na dilaw.
+   Ang tanging palamuti: pattern ng maliliit na tuldok sa kanan ng
+   header.
+
+   Hiwalay ito sa EventForm.module.css dahil ginagamit pa iyon ng
+   ShopItemForm. Kapag binago mo ito, ang Event form lang ang
+   magbabago.
+
+     ┌──────────────────────────────────────┐ ← asul na guhit
+     │ [■] Create event            · · · ·  │ ← header (sticky) + tuldok
+     ├──────────────────────────────────────┤
+     │  ⓘ paalala                           │
+     │  APPROVED PROPOSAL                   │
+     │  TITLE / DESCRIPTION                 │
+     │  ┌ schedule & venue card ─────────┐  │
+     │  └────────────────────────────────┘  │
+     │  OG reward · picture                 │
+     ├──────────────────────────────────────┤
+     │             [Cancel] [Create Event]  │ ← mga button (sticky)
+     └──────────────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --ef-navy: var(--sti-blue, #06358c);
+  --ef-deep: var(--sti-blue-deep, #031b4b);
+  --ef-bright: var(--sti-blue-bright, #1249a8);
+  --ef-blue: #1e4fd8;
+  --ef-sky: #eef3ff;
+  --ef-sky-line: #c9d8fb;
+  --ef-line: #e2e8f2;
+  --ef-line-strong: #c9d3e6;
+  --ef-soft: #f8faff;
+  --ef-ink: #0e1a36;
+  --ef-muted: #5f6b85;
+  --ef-red: #c0362c;
+  --ef-ring: 0 0 0 4px rgba(30, 79, 216, 0.2);
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 24px;
+  background-color: #fff;
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.12);
+  color: var(--ef-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ef-line-strong) transparent;
+  animation: modalIn 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Ang header, laman at mga button ay hindi dapat lumiit kapag
+   mas mahaba ang form kaysa sa screen (flex column ang .modal) */
+.head,
+.body,
+.actions {
+  flex-shrink: 0;
+}
+
+/* ---------- HEADER ---------- */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 28px 18px;
+  border-bottom: 1px solid var(--ef-line);
+  background-color: #fff;
+  overflow: hidden;
+}
+
+/* Asul na guhit sa pinakaitaas */
+.head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--ef-navy), var(--ef-blue) 60%, var(--ef-navy));
+}
+
+/* Pattern ng maliliit na tuldok sa kanan — palamuti lang.
+   Unti-unting nawawala papunta sa kaliwa. */
+.head::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 0;
+  bottom: 0;
+  width: 220px;
+  background-image: radial-gradient(rgba(6, 53, 140, 0.22) 1.3px, transparent 1.8px);
+  background-size: 14px 14px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 75%);
+  mask-image: linear-gradient(90deg, transparent, #000 75%);
+  pointer-events: none;
+}
+
+.headIcon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--ef-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.32), inset 0 -3px 0 rgba(0, 0, 0, 0.14);
+}
+
+.heading {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display, inherit);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ef-deep);
+}
+
+/* ---------- LAMAN ---------- */
+.body {
+  padding: 22px 28px 6px;
+}
+
+/* Paalala sa itaas — mapusyaw na asul na may asul na guhit */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 12px 14px;
+  border: 1px solid var(--ef-sky-line);
+  border-left: 4px solid var(--ef-navy);
+  border-radius: 12px;
+  background-color: var(--ef-sky);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #4a5470;
+}
+
+.note strong {
+  color: var(--ef-deep);
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ef-blue);
+}
+
+/* ---------- FIELDS ---------- */
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.labelRow .label {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ef-deep);
+}
+
+/* "(optional)" sa tabi ng Picture */
+.optional {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ef-muted);
+}
+
+.counter {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background-color: #f1f4fa;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ef-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ef-line);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--ef-ink);
+  font: inherit;
+  font-size: 14.5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #a0a9bc;
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--ef-line-strong);
+}
+
+/* Focus: asul na border + mapusyaw na asul na singsing */
+.input:focus {
+  outline: none;
+  border-color: var(--ef-navy);
+  box-shadow: var(--ef-ring);
+}
+
+.input:disabled {
+  background-color: var(--ef-soft);
+  cursor: not-allowed;
+}
+
+/* Pagpipilian ng proposal — may sariling palaso */
+.select {
+  padding-right: 42px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2306358c' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+
+.textarea {
+  min-height: 160px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ef-muted);
+}
+
+/* Petsa, oras at Location na galing sa proposal — hindi mababago */
+.locked,
+.locked:disabled {
+  border-color: var(--ef-line);
+  background-color: #f1f4fa;
+  color: #46526d;
+  -webkit-text-fill-color: #46526d;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* ---------- SCHEDULE & VENUE ---------- */
+.scheduleCard {
+  margin-bottom: 18px;
+  padding: 14px 16px 2px;
+  border: 1.5px solid var(--ef-line);
+  border-radius: 16px;
+  background-color: var(--ef-soft);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ef-navy);
+}
+
+/* "From proposal" / "Choose a proposal first" */
+.lockBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--ef-sky-line);
+  border-radius: 999px;
+  background-color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ef-navy);
+}
+
+.scheduleCard .field {
+  margin-bottom: 14px;
+}
+
+/* Start Date · End Date, at Start Time · End Time */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+
+@media (max-width: 420px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* "Status: Upcoming · updates automatically…" */
+.statusPreview {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: var(--ef-navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.statusPreview strong {
+  font-weight: 800;
+}
+
+.statusPreview svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---------- OG REWARD (basa lang) ---------- */
+.reward {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--ef-sky-line);
+  border-radius: 14px;
+  background-color: var(--ef-sky);
+}
+
+.rewardIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background-color: var(--ef-navy);
+  color: #fff;
+}
+
+.rewardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.rewardTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rewardLabel {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ef-deep);
+}
+
+.rewardValue {
+  font-family: var(--font-display, inherit);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ef-navy);
+  font-variant-numeric: tabular-nums;
+}
+
+.rewardValue small {
+  margin-left: 4px;
+  font-family: var(--font-ui, inherit);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ef-muted);
+}
+
+/* ---------- PICTURE ---------- */
+.uploadButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 22px 18px;
+  border: 2px dashed var(--ef-line-strong);
+  border-radius: 14px;
+  background-color: #fff;
+  color: var(--ef-navy);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.uploadButton .hint {
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--ef-blue);
+  background-color: var(--ef-sky);
+}
+
+.uploadButton:focus-visible {
+  outline: none;
+  border-color: var(--ef-navy);
+  box-shadow: var(--ef-ring);
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--ef-navy);
+  color: #fff;
+}
+
+.preview {
+  overflow: hidden;
+  border: 1.5px solid var(--ef-line);
+  border-radius: 14px;
+}
+
+.preview img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  background-color: var(--ef-soft);
+}
+
+.previewActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--ef-line);
+  background-color: #fff;
+}
+
+.smallButton {
+  padding: 7px 14px;
+  border: 1.5px solid var(--ef-line);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--ef-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.smallButton:hover:not(:disabled) {
+  border-color: var(--ef-navy);
+}
+
+.removeButton {
+  border-color: #f0c6c0;
+  color: var(--ef-red);
+}
+
+.removeButton:hover:not(:disabled) {
+  border-color: var(--ef-red);
+  background-color: #fdecea;
+}
+
+.smallButton:focus-visible {
+  outline: 3px solid var(--ef-navy);
+  outline-offset: 2px;
+}
+
+.smallButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- ERROR ---------- */
+.error {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--ef-red);
+  border-radius: 12px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding: 16px 28px;
+  border-top: 1px solid var(--ef-line);
+  background-color: #fff;
+  box-shadow: 0 -12px 24px -18px rgba(3, 27, 75, 0.3);
+}
+
+.primary,
+.secondary {
+  padding: 12px 22px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    transform var(--transition), box-shadow var(--transition);
+}
+
+.secondary {
+  border: 1.5px solid var(--ef-line);
+  background-color: #fff;
+  color: var(--ef-deep);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--ef-navy);
+}
+
+/* Create Event — asul ng STI na may anino */
+.primary {
+  min-width: 140px;
+  border: none;
+  background-color: var(--ef-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.32), inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--ef-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(6, 53, 140, 0.38), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--ef-blue);
+  outline-offset: 2px;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 20px;
+  }
+
+  .head {
+    padding: 22px 18px 14px;
+  }
+
+  .head::after {
+    width: 140px;
+  }
+
+  .headIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .body {
+    padding: 18px 18px 4px;
+  }
+
+  .actions {
+    padding: 14px 18px;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .primary:hover:not(:disabled) {
+    transform: none;
+  }
+}

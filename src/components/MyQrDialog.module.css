@@ -1,0 +1,483 @@
+/* ================================================================
+   MY QR DIALOG — "Attendance pass" (Member at Officer)
+
+   Parang digital na pass / boarding pass:
+     - asul na header: ATTENDANCE PASS, title ng event, badge ng
+       Time In / Time Out
+     - QR sa puting card na may dilaw na "scanner corners"
+     - ticket perforation (putol-putol na guhit na may bingaw)
+     - Time In / Time Out at paalala
+
+   Sariling CSS — HINDI gumagamit ng AttendanceDialog.module.css
+   (shared iyon ng AttendanceScanner).
+
+     ┌──────────────────────────────┐
+     │▓ ATTENDANCE PASS        [×] ▓│
+     │▓ Intramurals 2026           ▓│
+     │▓ (● TIME IN)                ▓│
+     │▓  ┌──────────────────────┐  ▓│
+     │   │ ┌─            ─┐     │   │
+     │   │      [ QR ]          │   │ ← scanner corners
+     │   │ └─            ─┘     │   │
+     │   │ ▬▬▬▬▬▬▬▬▬▬░░░  12s   │   │
+     │   └──────────────────────┘   │
+     ◖ - - - - - - - - - - - - - - ◗ ← perforation
+     │  [→ Time In 7:52] [← Time Out]│
+     │  🛡 Don't screenshot …        │
+     └──────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --qr-navy: var(--sti-blue, #06358c);
+  --qr-deep: var(--sti-blue-deep, #031b4b);
+  --qr-bright: var(--sti-blue-bright, #1249a8);
+  --qr-yellow: var(--sti-yellow, #ffd200);
+  --qr-gold: var(--sti-gold, #f7b900);
+  --qr-line: #e2e8f2;
+  --qr-soft: #f6f8fc;
+  --qr-ink: #0e1a36;
+  --qr-muted: #5f6b85;
+  --qr-green: #15803d;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 26px;
+  background-color: #fff;
+  box-shadow: 0 34px 80px rgba(3, 27, 75, 0.45), 0 4px 12px rgba(3, 27, 75, 0.14);
+  color: var(--qr-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: none;
+  animation: passIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+.modal::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes passIn {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- ITAAS: asul na header + QR ---------- */
+.top {
+  position: relative;
+  flex-shrink: 0;
+  padding: 22px 22px 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(260px 180px at 100% 0%, rgba(91, 133, 240, 0.55), transparent 70%),
+    linear-gradient(170deg, var(--qr-navy) 0%, var(--qr-deep) 100%);
+  color: #fff;
+}
+
+/* Puting ibaba sa likod ng QR card — para "lumulutang" ang card
+   sa pagitan ng asul at puti */
+.top::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  background-color: #fff;
+}
+
+/* Manipis na dilaw at asul na diagonal na banda sa kanang itaas */
+.top::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -40px;
+  right: 104px;
+  width: 22px;
+  height: 160px;
+  background: linear-gradient(var(--qr-yellow), var(--qr-gold));
+  box-shadow: 34px 0 0 rgba(255, 255, 255, 0.08);
+  transform: rotate(32deg);
+  opacity: 0.9;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--qr-yellow);
+}
+
+.close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--qr-yellow);
+  outline-offset: 2px;
+}
+
+.heading {
+  margin-top: 12px;
+  font-family: var(--font-display, inherit);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+/* Badge: TIME IN (dilaw) / TIME OUT (puti) / CLOSED */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.12);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.badgeIn {
+  background-color: var(--qr-yellow);
+  color: var(--qr-deep);
+}
+
+.badgeOut {
+  background-color: #fff;
+  color: var(--qr-navy);
+}
+
+/* Kumikislap nang mahina ang tuldok kapag bukas ang attendance */
+.badgeIn .badgeDot,
+.badgeOut .badgeDot {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ---------- QR CARD ---------- */
+.qrCard {
+  position: relative;
+  margin: 18px 0 0;
+  padding: 18px 18px 14px;
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 18px 40px rgba(3, 27, 75, 0.28);
+}
+
+/* Ang QR mismo + dilaw na scanner corners */
+.qrFrame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  /* apat na sulok: dilaw na L */
+  background:
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) top left / 26px 4px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) top left / 4px 26px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) top right / 26px 4px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) top right / 4px 26px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) bottom left / 26px 4px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) bottom left / 4px 26px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) bottom right / 26px 4px,
+    linear-gradient(var(--qr-yellow), var(--qr-yellow)) bottom right / 4px 26px;
+  background-repeat: no-repeat;
+  padding: 10px;
+}
+
+.qrFrame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Habang kumukuha o may error */
+.qrPlaceholder {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  border-radius: 10px;
+  background-color: var(--qr-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--qr-muted);
+  text-align: center;
+}
+
+.qrPlaceholder svg {
+  width: 30px;
+  height: 30px;
+  color: var(--qr-navy);
+}
+
+/* Refresh countdown */
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.timerTrack {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #e9eef7;
+}
+
+.timerBar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--qr-navy), var(--qr-bright));
+  transition: width 1s linear;
+}
+
+.timerText {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--qr-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- PERFORATION (parang ticket) ---------- */
+.perforation {
+  position: relative;
+  flex-shrink: 0;
+  height: 28px;
+  margin: 6px 0 0;
+}
+
+.perforation::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 22px;
+  right: 22px;
+  border-top: 2px dashed var(--qr-line);
+}
+
+/* Mga bingaw sa magkabilang gilid */
+.notchLeft,
+.notchRight {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: rgba(3, 27, 75, 0.62);
+  transform: translateY(-50%);
+}
+
+.notchLeft {
+  left: -13px;
+}
+
+.notchRight {
+  right: -13px;
+}
+
+/* ---------- IBABA: detalye ---------- */
+.bottom {
+  flex-shrink: 0;
+  padding: 4px 22px 22px;
+}
+
+/* Time In / Time Out */
+.status {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.statusCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--qr-line);
+  border-radius: 14px;
+  background-color: var(--qr-soft);
+}
+
+.statusIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background-color: #e9eef7;
+  color: var(--qr-muted);
+}
+
+.statusText {
+  min-width: 0;
+  display: grid;
+}
+
+.statusLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qr-muted);
+}
+
+.statusValue {
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--qr-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Na-scan na */
+.statusDone {
+  border-color: #bfe5cc;
+  background-color: #ecf8f0;
+}
+
+.statusDone .statusIcon {
+  background-color: var(--qr-green);
+  color: #fff;
+}
+
+.statusDone .statusValue {
+  color: var(--qr-green);
+}
+
+/* Paalala */
+.help {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background-color: #fff8db;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #5b4a12;
+}
+
+.help svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #a37800;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 420px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 22px;
+  }
+
+  .top {
+    padding: 18px 18px 0;
+  }
+
+  .bottom {
+    padding: 4px 18px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .badgeIn .badgeDot,
+  .badgeOut .badgeDot {
+    animation: none;
+  }
+
+  .timerBar {
+    transition: none;
+  }
+}

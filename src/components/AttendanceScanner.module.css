@@ -1,0 +1,520 @@
+/* ================================================================
+   ATTENDANCE SCANNER — "Scan attendance" (Officer at Adviser)
+
+   Kapamilya ng MyQrDialog ("attendance pass"), pero BALIGTAD ang
+   kulay: DILAW ang pangunahing kulay, ASUL ang mga palamuti.
+     - dilaw na header: ATTENDANCE SCANNER, title ng event, at
+       ang dalawang mode (Time In / Time Out) — asul ang bukas
+     - camera sa puting card na may ASUL na "scanner corners"
+     - ticket perforation (putol-putol na guhit na may bingaw)
+     - resulta ng scan, at bilang ng Time In / Time Out
+
+   Sariling CSS — hindi na gumagamit ng AttendanceDialog.module.css.
+
+     ┌──────────────────────────────┐
+     │░ ATTENDANCE SCANNER     [×] ░│ ← dilaw
+     │░ Intramurals 2026          ░│
+     │░ [● TIME IN] [ TIME OUT ]  ░│ ← asul ang bukas
+     │░  ┌──────────────────────┐ ░│
+     │   │ ┌─            ─┐     │   │
+     │   │     [ camera ]       │   │ ← asul na scanner corners
+     │   │ └─            ─┘     │   │
+     │   └──────────────────────┘   │
+     ◖ - - - - - - - - - - - - - - ◗ ← perforation
+     │  [✓ Juan Dela Cruz · 7:52]   │ ← resulta
+     │  [→ Time In 12/40] [← Out 3] │
+     └──────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --sc-navy: var(--sti-blue, #06358c);
+  --sc-deep: var(--sti-blue-deep, #031b4b);
+  --sc-bright: var(--sti-blue-bright, #1249a8);
+  --sc-yellow: var(--sti-yellow, #ffd200);
+  --sc-gold: var(--sti-gold, #f7b900);
+  --sc-line: #e2e8f2;
+  --sc-soft: #f6f8fc;
+  --sc-ink: #0e1a36;
+  --sc-muted: #5f6b85;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 26px;
+  background-color: #fff;
+  box-shadow: 0 34px 80px rgba(3, 27, 75, 0.45), 0 4px 12px rgba(3, 27, 75, 0.14);
+  color: var(--sc-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: none;
+  animation: passIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+.modal::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes passIn {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- ITAAS: dilaw na header + camera ---------- */
+.top {
+  position: relative;
+  flex-shrink: 0;
+  padding: 22px 22px 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(240px 170px at 100% 0%, rgba(255, 255, 255, 0.55), transparent 70%),
+    linear-gradient(170deg, var(--sc-yellow) 0%, var(--sc-gold) 100%);
+  color: var(--sc-deep);
+}
+
+/* Puting ibaba sa likod ng camera card — para "lumulutang" ito */
+.top::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  background-color: #fff;
+}
+
+/* Asul na diagonal na banda sa kanang itaas (palamuti) */
+.top::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -46px;
+  right: 92px;
+  width: 20px;
+  height: 104px;
+  background: linear-gradient(var(--sc-navy), var(--sc-bright));
+  box-shadow: 34px 0 0 rgba(6, 53, 140, 0.14);
+  transform: rotate(32deg);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sc-navy);
+}
+
+.close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(3, 27, 75, 0.18);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.45);
+  color: var(--sc-deep);
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.close:hover {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--sc-navy);
+  outline-offset: 2px;
+}
+
+.heading {
+  margin-top: 12px;
+  font-family: var(--font-display, inherit);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--sc-deep);
+  overflow-wrap: anywhere;
+}
+
+/* Ang dalawang mode — hindi pinipindot, ipinapakita lang ang bukas */
+.modes {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 4px;
+  border-radius: 999px;
+  background-color: rgba(3, 27, 75, 0.1);
+}
+
+.modeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(3, 27, 75, 0.55);
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.modeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.45;
+}
+
+/* Bukas: asul na pill, dilaw na kumikislap na tuldok */
+.modeActive {
+  background-color: var(--sc-navy);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(6, 53, 140, 0.3);
+}
+
+.modeActive .modeDot {
+  background-color: var(--sc-yellow);
+  opacity: 1;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ---------- CAMERA CARD ---------- */
+.cameraCard {
+  position: relative;
+  margin: 18px 0 0;
+  padding: 14px;
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 18px 40px rgba(3, 27, 75, 0.22);
+}
+
+/* Asul na scanner corners sa paligid ng camera */
+.cameraFrame {
+  padding: 10px;
+  border-radius: 14px;
+  background:
+    linear-gradient(var(--sc-navy), var(--sc-navy)) top left / 26px 4px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) top left / 4px 26px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) top right / 26px 4px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) top right / 4px 26px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) bottom left / 26px 4px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) bottom left / 4px 26px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) bottom right / 26px 4px,
+    linear-gradient(var(--sc-navy), var(--sc-navy)) bottom right / 4px 26px;
+  background-repeat: no-repeat;
+}
+
+.camera {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: #0b1220;
+}
+
+/* html5-qrcode ang naglalagay ng <video> dito */
+.camera video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+/* "Opening camera…" o error ng camera */
+.cameraMsg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  color: #e4e9f2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.cameraMsg svg {
+  color: var(--sc-yellow);
+}
+
+/* ---------- PERFORATION ---------- */
+.perforation {
+  position: relative;
+  flex-shrink: 0;
+  height: 28px;
+  margin: 6px 0 0;
+}
+
+.perforation::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 22px;
+  right: 22px;
+  border-top: 2px dashed var(--sc-line);
+}
+
+.notchLeft,
+.notchRight {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: rgba(3, 27, 75, 0.62);
+  transform: translateY(-50%);
+}
+
+.notchLeft {
+  left: -13px;
+}
+
+.notchRight {
+  right: -13px;
+}
+
+/* ---------- IBABA ---------- */
+.bottom {
+  flex-shrink: 0;
+  padding: 4px 22px 22px;
+}
+
+/* Resulta ng scan */
+.result {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 58px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.resultIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.resultText {
+  min-width: 0;
+}
+
+.resultText strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+/* Naghihintay ng scan — dilaw */
+.resultIdle {
+  border-color: #f1dd8f;
+  background-color: #fff8db;
+  color: #5b4a12;
+}
+
+.resultIdle .resultIcon {
+  background-color: var(--sc-yellow);
+  color: var(--sc-deep);
+}
+
+.resultOk {
+  border-color: #bfe5cc;
+  background-color: #ecf8f0;
+  color: #116632;
+}
+
+.resultOk .resultIcon {
+  background-color: #15803d;
+  color: #fff;
+}
+
+.resultAlready {
+  border-color: #f3d6ad;
+  background-color: #fff5e8;
+  color: #8a5a00;
+}
+
+.resultAlready .resultIcon {
+  background-color: #c26a06;
+  color: #fff;
+}
+
+.resultError {
+  border-color: #f3cbc5;
+  background-color: #fdf0ee;
+  color: #a61b1b;
+}
+
+.resultError .resultIcon {
+  background-color: #c0362c;
+  color: #fff;
+}
+
+/* Sinusuri — asul */
+.resultBusy {
+  border-color: #c9d8fb;
+  background-color: #eef3ff;
+  color: var(--sc-navy);
+}
+
+.resultBusy .resultIcon {
+  background-color: var(--sc-navy);
+  color: #fff;
+}
+
+.resultBusy .resultIcon svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Bilang: Time In / Time Out */
+.tally {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tallyCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--sc-line);
+  border-radius: 14px;
+  background-color: var(--sc-soft);
+}
+
+.tallyIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background-color: var(--sc-navy);
+  color: var(--sc-yellow);
+}
+
+.tallyText {
+  min-width: 0;
+  display: grid;
+}
+
+.tallyLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sc-muted);
+}
+
+.tallyValue {
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--sc-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tallyValue strong {
+  font-size: 19px;
+  color: var(--sc-ink);
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 420px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 22px;
+  }
+
+  .top {
+    padding: 18px 18px 0;
+  }
+
+  .bottom {
+    padding: 4px 18px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .modeActive .modeDot,
+  .resultBusy .resultIcon svg {
+    animation: none;
+  }
+}

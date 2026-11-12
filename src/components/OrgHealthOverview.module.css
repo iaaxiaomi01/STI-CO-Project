@@ -1,0 +1,150 @@
+/* ================================================================
+   ORGANIZATION HEALTH (Dashboard ng School Head)
+
+   Isang puting card na kusang nag-i-slide. Bawat slide: bilog na
+   graph (kulay ayon sa antas), porsiyento sa gitna, at pangalan
+   ng org. Kapareho ng kulay ng Org Health page.
+   ================================================================ */
+.card {
+  --c-healthy: #2fbf71;
+  --c-attention: #f5b014;
+  --c-critical: #ef5b4c;
+  --c-none: #9aa5bd;
+
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e3e8f1;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(3, 27, 75, 0.04);
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+}
+
+/* Tone → kulay ng bilog */
+.healthy {
+  --tone: var(--c-healthy);
+}
+
+.attention {
+  --tone: var(--c-attention);
+}
+
+.critical {
+  --tone: var(--c-critical);
+}
+
+.none {
+  --tone: var(--c-none);
+}
+
+/* ---------- CAROUSEL ---------- */
+.viewport {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track.moving {
+  transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Isang slide = buong lapad ng card */
+.slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+  padding: 36px 40px;
+}
+
+.orgName {
+  min-width: 0;
+  max-width: 520px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- BILOG NA GRAPH ---------- */
+.donut {
+  position: relative;
+  flex-shrink: 0;
+  width: 150px;
+  height: 150px;
+}
+
+.donut svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.donutTrack,
+.donutFill {
+  fill: none;
+  stroke-width: 11;
+}
+
+.donutTrack {
+  stroke: #edf0f6;
+}
+
+.donutFill {
+  stroke: var(--tone);
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s cubic-bezier(0.33, 1, 0.68, 1) 0.25s;
+}
+
+.donutValue {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--dash-ink);
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .slide {
+    flex-direction: column;
+    gap: 18px;
+    padding: 28px 22px 30px;
+    text-align: center;
+  }
+
+  .donut {
+    width: 132px;
+    height: 132px;
+  }
+
+  .donutValue {
+    font-size: 26px;
+  }
+
+  .orgName {
+    font-size: 22px;
+  }
+}
+
+/* Walang slide at walang animation ng bilog; lumilipat pa rin */
+@media (prefers-reduced-motion: reduce) {
+  .track.moving,
+  .donutFill {
+    transition: none;
+  }
+}

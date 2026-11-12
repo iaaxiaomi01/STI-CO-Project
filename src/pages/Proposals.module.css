@@ -308,10 +308,11 @@
   overflow-wrap: anywhere;
 }
 
+/* Sunod-sunod pababa: Proposed by · When · Venue (isa bawat hanay) */
 .metaList {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 20px;
+  flex-direction: column;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -399,7 +400,7 @@
    ================================================================ */
 .route {
   display: flex;
-  max-width: 620px;
+  max-width: 760px;
   margin: 20px 0 4px;
   padding: 0;
   list-style: none;
@@ -415,8 +416,9 @@
   min-width: 0;
 }
 
+/* Pantay ang lapad ng bawat istasyon, para nakatapat ang detalye */
 .station:last-child {
-  flex: 0 0 auto;
+  flex: 1 1 0;
 }
 
 /* Linya papunta sa susunod na istasyon */
@@ -510,6 +512,139 @@
 
 .st_upcoming .stationLabel {
   color: #8a96ae;
+}
+
+/* ---------- DETALYE SA ILALIM NG BAWAT ISTASYON ----------
+   (dating ReviewTrail sa ilalim ng mapa — mas maliit na, at
+   nakatapat na sa sariling istasyon)
+
+     ADVISER
+     [PENDING]                ← maliit na pill na may kulay
+     Waiting for: Test Adviser.
+   ---------------------------------------------------------- */
+.stationInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 1px;
+  padding-right: 12px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #4d5873;
+}
+
+/* Status — maliit na pill */
+.infoStatus {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background-color: rgba(3, 27, 75, 0.07);
+  color: var(--deep);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.infoText {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.infoText strong {
+  color: var(--deep);
+  font-weight: 700;
+}
+
+.infoDate {
+  font-size: 10.5px;
+  color: #8a96ae;
+}
+
+/* Komento ng nag-review — maliit na sipi */
+.infoComment {
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 5px 8px;
+  border-left: 2px solid rgba(3, 27, 75, 0.2);
+  border-radius: 0 8px 8px 0;
+  background-color: rgba(3, 27, 75, 0.04);
+  color: var(--dash-ink);
+  font-style: italic;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.infoResubmitted {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1c6b3f;
+}
+
+/* Kulay ng pill ayon sa desisyon */
+.info_approved .infoStatus,
+.info_submitted .infoStatus {
+  background-color: #e3f4ea;
+  color: #17713f;
+}
+
+.info_rejected .infoStatus {
+  background-color: #fdeae8;
+  color: #b42318;
+}
+
+.info_rejected .infoComment {
+  border-left-color: var(--red);
+}
+
+.info_noted .infoStatus {
+  background-color: #eceef3;
+  color: #4a5368;
+}
+
+.info_revision .infoStatus {
+  background-color: #ffeedd;
+  color: #a6510a;
+}
+
+.info_revision .infoComment {
+  border-left-color: var(--orange);
+}
+
+/* Naghihintay pa (narito ngayon) — dilaw */
+.info_waiting .infoStatus {
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.info_waiting .infoText {
+  color: var(--deep);
+  font-weight: 600;
+}
+
+/* Hindi pa nararating — malabo */
+.info_upcoming .infoStatus {
+  background-color: transparent;
+  padding: 0;
+  color: #8a96ae;
+}
+
+.info_upcoming .infoText {
+  color: #8a96ae;
+}
+
+/* Ang nagpasya ("Final: …") — may maliit na singsing ang pill */
+.infoFinal .infoStatus {
+  box-shadow: inset 0 0 0 1.5px currentColor;
 }
 
 /* ================================================================
@@ -817,6 +952,90 @@
   }
 }
 
+/* ================================================================
+   ROUTE MAP SA MAKITID NA LAPAD — patayo, para may puwang ang
+   detalye sa kanan ng bawat istasyon:
+
+     ●  OFFICER
+     │  [SUBMITTED]
+     ●  ADVISER
+     ┆  [PENDING] Waiting for: Test Adviser.
+     ◌  SAO
+   ================================================================ */
+@container (max-width: 560px) {
+  .route {
+    flex-direction: column;
+  }
+
+  .station,
+  .station:last-child {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 6px;
+    flex: none;
+    padding-bottom: 16px;
+  }
+
+  .station:last-child {
+    padding-bottom: 0;
+  }
+
+  .stationDot {
+    grid-row: 1 / span 2;
+  }
+
+  .stationLabel,
+  .stationInfo {
+    grid-column: 2;
+  }
+
+  .stationLabel {
+    align-self: center;
+  }
+
+  .stationInfo {
+    padding-right: 0;
+  }
+
+  /* Patayong linya papunta sa susunod na istasyon */
+  .station:not(:last-child)::after {
+    top: 30px;
+    bottom: 4px;
+    left: 11.5px;
+    right: auto;
+    width: 3px;
+    height: auto;
+  }
+
+  .station:has(+ .st_upcoming)::after,
+  .station:has(+ .st_current)::after {
+    background-image: linear-gradient(180deg, rgba(3, 27, 75, 0.28) 50%, transparent 50%);
+    background-size: 3px 9px;
+  }
+
+  .station:has(+ .st_current)::after {
+    background-image: linear-gradient(180deg, var(--gold) 50%, transparent 50%);
+  }
+
+  .info {
+    font-size: 12.5px;
+  }
+}
+
+/* Phone: mas maliit ang bilog (22px) */
+@container (max-width: 480px) {
+  .station,
+  .station:last-child {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .station:not(:last-child)::after {
+    top: 26px;
+    left: 9.5px;
+  }
+}
+
 /* Filter sa phone */
 @media (max-width: 560px) {
   .filters {
@@ -845,5 +1064,73 @@
 
   .filterChip::after {
     transition: none;
+  }
+}
+
+/* ================================================================
+   "CREATE PROPOSAL" — button sa kanang itaas (Officer lang)
+   Dilaw na pill, navy na teksto, puting bilog na may +.
+   Sariling style ito (hindi ang shared na ActionButton), kaya
+   ang button lang ng Proposals ang may ganitong itsura.
+   ================================================================ */
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px 7px 7px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--yellow, #ffd200);
+  color: var(--deep, #031b4b);
+  font-family: var(--font-ui, inherit);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(247, 185, 0, 0.38), inset 0 -3px 0 rgba(3, 27, 75, 0.12);
+  transition: background-color var(--transition), transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.createBtn:hover {
+  background-color: var(--gold, #f7b900);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(247, 185, 0, 0.45), inset 0 -3px 0 rgba(3, 27, 75, 0.14);
+}
+
+.createBtn:active {
+  transform: translateY(0);
+}
+
+.createBtn:focus-visible {
+  outline: 3px solid var(--navy, #06358c);
+  outline-offset: 3px;
+}
+
+/* Puting bilog na may + ; umiikot nang kaunti kapag naka-hover */
+.createIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #fff;
+  color: var(--deep, #031b4b);
+  box-shadow: 0 2px 6px rgba(3, 27, 75, 0.15);
+  transition: transform 0.25s ease;
+}
+
+.createBtn:hover .createIcon {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .createBtn:hover {
+    transform: none;
+  }
+
+  .createBtn:hover .createIcon {
+    transform: none;
   }
 }

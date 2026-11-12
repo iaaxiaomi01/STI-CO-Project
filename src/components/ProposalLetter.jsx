@@ -38,11 +38,14 @@ import styles from './ProposalLetter.module.css'
      OG Reward                  → ilang OG ng org bawat dadalo
                                   (kapag higit sa 0). Dito lang
                                   ito makikita, wala sa card.
-     Daan ng review             → Adviser → SAO → School Head
+     Review History             → Adviser → SAO → School Head
                                   (→ School Administrator kapag
                                   may budget), bawat isa ay may
                                   Approved/Rejected at dahilan.
-                                  Ang huli ang pinal.
+                                  Ang huli ang pinal. Pormal na
+                                  table sa dulo ng sulat. Hindi na
+                                  kasama dito ang listahan ng mga
+                                  approver na pinili ng Officer.
 
    Ang Logo at Organization Name ay hindi nakakopya sa
    proposal. Galing sila sa Org Profile, kaya kusang nag-a-update.
@@ -111,6 +114,9 @@ function ProposalLetter({ proposal, onClose, onDownload, downloadingPath = null 
             <h1 className={styles.orgName}>{org?.name ?? 'Organization'}</h1>
             {org?.program && <p className={styles.orgProgram}>{org.program}</p>}
           </div>
+
+          {/* Kasing-lapad ng logo, para nasa GITNA talaga ang pangalan */}
+          <div className={styles.logoSpacer} aria-hidden="true" />
         </header>
 
         {/* ---------- KATAWAN NG SULAT ---------- */}
@@ -118,7 +124,8 @@ function ProposalLetter({ proposal, onClose, onDownload, downloadingPath = null 
           <p className={styles.date}>{formatLetterDate(proposal.created_at)}</p>
 
           <p className={styles.subject}>
-            <span className={styles.subjectLabel}>SUBJECT:</span> {proposal.title}
+            <span className={styles.subjectLabel}>Subject:</span>
+            <span className={styles.subjectText}>{proposal.title}</span>
           </p>
 
           {(hasSchedule(proposal) || proposal.venue || proposal.has_budget || ogReward > 0) && (
@@ -194,9 +201,9 @@ function ProposalLetter({ proposal, onClose, onDownload, downloadingPath = null 
 
           {files.length > 0 && (
             <div className={styles.attachment}>
-              <span className={styles.attachmentLabel}>
-                {files.length > 1 ? `Attachments (${files.length}):` : 'Attachment:'}
-              </span>
+              <p className={styles.attachmentLabel}>
+                {files.length > 1 ? `Attachments (${files.length})` : 'Attachment'}
+              </p>
               <ol className={styles.attachmentList}>
                 {files.map((f) => (
                   <li key={f.path}>

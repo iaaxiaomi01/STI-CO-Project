@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CalendarDays, FileText, Info, Paperclip, Upload } from 'lucide-react'
 import {
   APPROVER_STAGES,
   DESCRIPTION_MAX,
@@ -20,7 +21,6 @@ import { addDaysKey, formatSchedule, toTimeInput } from '../lib/events.js'
 import { toTitleCase } from '../lib/profile.js'
 import {
   ACCEPT_ATTRIBUTE,
-  ACCEPTED_LABEL,
   MAX_FILES,
   ProposalFileError,
   attachmentsOf,
@@ -28,7 +28,10 @@ import {
   formatFileSize,
 } from '../lib/proposalFiles.js'
 import ApproverPicker from './ApproverPicker.jsx'
-import styles from './ProposalForm.module.css'
+/* Sariling itsura ng Proposal form. HINDI na ang ProposalForm.module.css —
+   shared iyon ng EventForm, ReviewDialog, ShopItemForm, atbp., kaya
+   hindi sila naaapektuhan ng disenyong ito. */
+import styles from './ProposalFormUI.module.css'
 
 /* ============================================================
    PROPOSAL FORM — modal para sa paggawa ng BAGONG proposal,
@@ -387,275 +390,294 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
         aria-modal="true"
         aria-labelledby="proposal-form-title"
       >
-        <h2 id="proposal-form-title" className={styles.heading}>
-          {editing ? 'Revise proposal' : 'New proposal'}
-        </h2>
-
-        {revision && (
-          <div className={styles.revisionBox}>
-            <p className={styles.revisionHead}>
-              Revision requested by {stageLabel(revision.stage)}
-            </p>
-            <p className={styles.revisionBy}>
-              {toTitleCase(revision.requester_name ?? '')} ·{' '}
-              {formatDateTime(revision.requested_at)}
-            </p>
-            <p className={styles.revisionComment}>{revision.comment}</p>
-          </div>
-        )}
-
-        <p className={styles.note}>
-          {editing ? (
-            <>
-              Make the needed changes, then press &quot;Resubmit&quot;. It will go back
-              to <strong>{stageLabel(proposal.revision_from)}</strong> for another review.
-            </>
-          ) : (
-            "The organization's logo and name, and your name as the submitter, will be added to the letter automatically."
-          )}
-        </p>
-
-        <label className={styles.field}>
-          <span className={styles.label}>Title</span>
-          <input
-            ref={titleRef}
-            className={styles.input}
-            value={title}
-            maxLength={TITLE_MAX}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.labelRow}>
-            <span className={styles.label}>Description</span>
-            <span className={styles.counter}>
-              {description.length} / {DESCRIPTION_MAX}
-            </span>
+        {/* ---------- HEADER (nakadikit sa itaas habang nag-i-scroll) ---------- */}
+        <div className={styles.head}>
+          <span className={styles.headIcon} aria-hidden="true">
+            <FileText size={22} strokeWidth={2.2} />
           </span>
-          <textarea
-            className={`${styles.input} ${styles.textarea}`}
-            value={description}
-            maxLength={DESCRIPTION_MAX}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={10}
-            required
-          />
-        </label>
-
-        {/* ---------- VENUE ---------- */}
-        <label className={styles.field}>
-          <span className={styles.label}>Venue</span>
-          <input
-            className={styles.input}
-            value={venue}
-            maxLength={VENUE_MAX}
-            onChange={(e) => setVenue(e.target.value)}
-            required
-          />
-        </label>
-
-        {/* ---------- START DATE · END DATE ---------- */}
-        <div className={styles.grid2}>
-          <label className={styles.field}>
-            <span className={styles.label}>Start Date</span>
-            <input
-              type="date"
-              className={styles.input}
-              value={eventDate}
-              min={todayKey()}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              required
-            />
-          </label>
-
-          <label className={styles.field}>
-            <span className={styles.label}>End Date</span>
-            <input
-              type="date"
-              className={styles.input}
-              value={endDate}
-              min={eventDate || todayKey()}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-            />
-          </label>
+          <h2 id="proposal-form-title" className={styles.heading}>
+            {editing ? 'Revise proposal' : 'New proposal'}
+          </h2>
         </div>
 
-        {/* ---------- START TIME · END TIME ---------- */}
-        <div className={styles.grid2}>
-          <label className={styles.field}>
-            <span className={styles.label}>Start Time</span>
-            <input
-              type="time"
-              className={styles.input}
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              required
-            />
-          </label>
+        <div className={styles.body}>
+          {revision && (
+            <div className={styles.revisionBox}>
+              <p className={styles.revisionHead}>
+                Revision requested by {stageLabel(revision.stage)}
+              </p>
+              <p className={styles.revisionBy}>
+                {toTitleCase(revision.requester_name ?? '')} ·{' '}
+                {formatDateTime(revision.requested_at)}
+              </p>
+              <p className={styles.revisionComment}>{revision.comment}</p>
+            </div>
+          )}
 
-          <label className={styles.field}>
-            <span className={styles.label}>End Time</span>
-            <input
-              type="time"
-              className={styles.input}
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-
-        {/* Silip ng buong schedule — lalo na kapag maraming araw */}
-        {schedulePreview && (
-          <p className={styles.schedulePreview}>
-            {days > 1 ? `${days} days · ` : 'One day · '}
-            {schedulePreview}
+          <p className={styles.note}>
+            <Info size={16} strokeWidth={2.4} className={styles.noteIcon} aria-hidden="true" />
+            <span>
+              {editing ? (
+                <>
+                  Make the needed changes, then press &quot;Resubmit&quot;. It will go back
+                  to <strong>{stageLabel(proposal.revision_from)}</strong> for another review.
+                </>
+              ) : (
+                "The organization’s name, logo, and submitter’s name are automatically included in the letter."
+              )}
+            </span>
           </p>
-        )}
 
-        {/* ---------- MAY BUDGET? ---------- */}
-        <label className={styles.check}>
-          <input
-            type="checkbox"
-            checked={hasBudget}
-            onChange={(e) => setHasBudget(e.target.checked)}
-            disabled={saving}
-          />
-          <span>
-            <strong>This proposal has a budget</strong>
-            <span className={styles.hint}>
-              {hasBudget
-                ? 'Review: Adviser → SAO → School Head → School Administrator'
-                : 'Review: Adviser → SAO → School Head'}
+          <label className={styles.field}>
+            <span className={styles.label}>Title</span>
+            <input
+              ref={titleRef}
+              className={styles.input}
+              value={title}
+              maxLength={TITLE_MAX}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.label}>Description</span>
+              <span className={styles.counter}>
+                {description.length} / {DESCRIPTION_MAX}
+              </span>
             </span>
-          </span>
-        </label>
+            <textarea
+              className={`${styles.input} ${styles.textarea}`}
+              value={description}
+              maxLength={DESCRIPTION_MAX}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={10}
+              required
+            />
+          </label>
 
-        {/* ---------- APPROVERS (Adviser: isa · SAO, School Head, SA: isa o higit pa) ---------- */}
-        <ApproverPicker
-          stages={approverStages(hasBudget)}
-          options={options}
-          value={approvers}
-          onChange={setApprover}
-          lockedStages={lockedStages}
-          revisionFrom={proposal?.revision_from ?? null}
-          disabled={saving}
-          error={optionsError}
-        />
+          {/* ---------- VENUE ---------- */}
+          <label className={styles.field}>
+            <span className={styles.label}>Venue</span>
+            <input
+              className={styles.input}
+              value={venue}
+              maxLength={VENUE_MAX}
+              onChange={(e) => setVenue(e.target.value)}
+              required
+            />
+          </label>
 
-        {/* ---------- OG REWARD (opsyonal) ---------- */}
-        <label className={styles.field}>
-          <span className={styles.label}>
-            OG reward per attendee
-          </span>
-          <input
-            className={styles.input}
-            inputMode="numeric"
-            value={ogReward}
-            onChange={(e) => setOgReward(e.target.value)}
-            placeholder="0"
-            disabled={saving}
-          />
-          <span className={styles.hint}>
-            Given automatically to Members and Officers with both Time In and Time Out,
-            once attendance closes. Blank or 0 means no reward. Max {OG_REWARD_MAX}.
-          </span>
-        </label>
+          {/* ---------- SCHEDULE (Start/End Date, Start/End Time, silip) ---------- */}
+          <div className={styles.scheduleCard}>
+            {/* ---------- START DATE · END DATE ---------- */}
+            <div className={styles.grid2}>
+              <label className={styles.field}>
+                <span className={styles.label}>Start Date</span>
+                <input
+                  type="date"
+                  className={styles.input}
+                  value={eventDate}
+                  min={todayKey()}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  required
+                />
+              </label>
 
-        {/* ---------- FILES (kailangan, 1 hanggang MAX_FILES) ---------- */}
-        <div className={styles.field}>
-          <span className={styles.labelRow}>
-            <span className={styles.label}>
-              Files <span className={styles.required}>(Required)</span>
-            </span>
-            <span className={styles.counter}>
-              {fileCount} / {MAX_FILES}
-            </span>
-          </span>
+              <label className={styles.field}>
+                <span className={styles.label}>End Date</span>
+                <input
+                  type="date"
+                  className={styles.input}
+                  value={endDate}
+                  min={eventDate || todayKey()}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
 
-          {fileCount > 0 && (
-            <ul className={styles.fileList}>
-              {kept.map((f) => (
-                <li key={f.path} className={styles.fileBox}>
-                  <span className={styles.fileIcon} aria-hidden="true">
-                    📎
-                  </span>
-                  <span className={styles.fileInfo}>
-                    <span className={styles.fileName}>{f.name}</span>
-                    <span className={styles.fileSize}>
-                      {f.size ? `${formatFileSize(f.size)} · ` : ''}current file
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    className={`${styles.fileAction} ${styles.fileRemove}`}
-                    onClick={() => removeKept(f.path)}
-                    disabled={saving}
-                    aria-label={`Remove ${f.name}`}
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
+            {/* ---------- START TIME · END TIME ---------- */}
+            <div className={styles.grid2}>
+              <label className={styles.field}>
+                <span className={styles.label}>Start Time</span>
+                <input
+                  type="time"
+                  className={styles.input}
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  required
+                />
+              </label>
 
-              {newFiles.map(({ key, file }) => (
-                <li key={key} className={styles.fileBox}>
-                  <span className={styles.fileIcon} aria-hidden="true">
-                    📎
-                  </span>
-                  <span className={styles.fileInfo}>
-                    <span className={styles.fileName}>{file.name}</span>
-                    <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
-                  </span>
-                  <button
-                    type="button"
-                    className={`${styles.fileAction} ${styles.fileRemove}`}
-                    onClick={() => removeNew(key)}
-                    disabled={saving}
-                    aria-label={`Remove ${file.name}`}
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+              <label className={styles.field}>
+                <span className={styles.label}>End Time</span>
+                <input
+                  type="time"
+                  className={styles.input}
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
 
-          {canAddMore && (
-            <button
-              type="button"
-              className={styles.uploadButton}
-              onClick={() => fileInputRef.current?.click()}
+            {/* Silip ng buong schedule — lalo na kapag maraming araw */}
+            {schedulePreview && (
+              <p className={styles.schedulePreview}>
+                <CalendarDays size={15} strokeWidth={2.4} aria-hidden="true" />
+                <span>
+                  {days > 1 ? `${days} days · ` : 'One day · '}
+                  {schedulePreview}
+                </span>
+              </p>
+            )}
+          </div>
+
+          {/* ---------- MAY BUDGET? ---------- */}
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={hasBudget}
+              onChange={(e) => setHasBudget(e.target.checked)}
               disabled={saving}
-            >
-              <span aria-hidden="true">⬆</span>{' '}
-              {fileCount === 0 ? 'Upload files' : 'Add more files'}
-            </button>
-          )}
+            />
+            <span>
+              <strong>This proposal has a budget</strong>
+              <span className={styles.hint}>
+                {hasBudget
+                  ? 'Review: Adviser → SAO → School Head → School Administrator'
+                  : 'Review: Adviser → SAO → School Head'}
+              </span>
+            </span>
+          </label>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ACCEPT_ATTRIBUTE}
-            multiple
-            onChange={handleFileChange}
-            className={styles.hiddenInput}
-            tabIndex={-1}
-            aria-hidden="true"
+          {/* ---------- APPROVERS (Adviser: isa · SAO, School Head, SA: isa o higit pa) ---------- */}
+          <ApproverPicker
+            stages={approverStages(hasBudget)}
+            options={options}
+            value={approvers}
+            onChange={setApprover}
+            lockedStages={lockedStages}
+            revisionFrom={proposal?.revision_from ?? null}
+            disabled={saving}
+            error={optionsError}
           />
 
-          {fileError && <span className={styles.fileError}>{fileError}</span>}
-          <span className={styles.hint}>
-            At least 1 file is required (up to {MAX_FILES}). {ACCEPTED_LABEL} · up to 10 MB each.
-            You can select several files at once.
-          </span>
+          {/* ---------- OG REWARD (opsyonal) ---------- */}
+          <label className={styles.field}>
+            <span className={styles.label}>
+              OG reward per attendee
+            </span>
+            <input
+              className={styles.input}
+              inputMode="numeric"
+              value={ogReward}
+              onChange={(e) => setOgReward(e.target.value)}
+              placeholder="0"
+              disabled={saving}
+            />
+            <span className={styles.hint}>
+              Automatically awarded to participants with complete Time In and Time Out records after attendance closes. 
+              Max {OG_REWARD_MAX}.
+            </span>
+          </label>
+
+          {/* ---------- FILES (kailangan, 1 hanggang MAX_FILES) ---------- */}
+          <div className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.label}>
+                Files <span className={styles.required}>(Required)</span>
+              </span>
+              <span className={styles.counter}>
+                {fileCount} / {MAX_FILES}
+              </span>
+            </span>
+
+            {fileCount > 0 && (
+              <ul className={styles.fileList}>
+                {kept.map((f) => (
+                  <li key={f.path} className={styles.fileBox}>
+                    <span className={styles.fileIcon} aria-hidden="true">
+                      <Paperclip size={16} strokeWidth={2.4} />
+                    </span>
+                    <span className={styles.fileInfo}>
+                      <span className={styles.fileName}>{f.name}</span>
+                      <span className={styles.fileSize}>
+                        {f.size ? `${formatFileSize(f.size)} · ` : ''}current file
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      className={`${styles.fileAction} ${styles.fileRemove}`}
+                      onClick={() => removeKept(f.path)}
+                      disabled={saving}
+                      aria-label={`Remove ${f.name}`}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+
+                {newFiles.map(({ key, file }) => (
+                  <li key={key} className={styles.fileBox}>
+                    <span className={styles.fileIcon} aria-hidden="true">
+                      <Paperclip size={16} strokeWidth={2.4} />
+                    </span>
+                    <span className={styles.fileInfo}>
+                      <span className={styles.fileName}>{file.name}</span>
+                      <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className={`${styles.fileAction} ${styles.fileRemove}`}
+                      onClick={() => removeNew(key)}
+                      disabled={saving}
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {canAddMore && (
+              <button
+                type="button"
+                className={styles.uploadButton}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={saving}
+              >
+                <span className={styles.uploadIcon} aria-hidden="true">
+                  <Upload size={16} strokeWidth={2.6} />
+                </span>
+                {fileCount === 0 ? 'Upload files' : 'Add more files'}
+              </button>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPT_ATTRIBUTE}
+              multiple
+              onChange={handleFileChange}
+              className={styles.hiddenInput}
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+
+            {fileError && <span className={styles.fileError}>{fileError}</span>}
+            <span className={styles.hint}>
+              Max 10 MB per file. Multiple files allowed.
+            </span>
+          </div>
+
+          {error && <p className={styles.error}>{error}</p>}
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
-
+        {/* ---------- MGA BUTTON (nakadikit sa ibaba habang nag-i-scroll) ---------- */}
         <div className={styles.actions}>
           <button
             type="button"

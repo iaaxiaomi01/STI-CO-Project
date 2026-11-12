@@ -1,0 +1,514 @@
+/* ================================================================
+   NEW ORGANIZATION — button at form
+
+   Kapareho ng tono ng Organizations page (maitim na navy, dilaw
+   na accent, manipis na guhit), pero may sariling anyo:
+     Button  → navy na may dilaw na "slot" para sa +
+     Form    → navy na ulo, malinis na katawan, settings na
+               magkakasama sa iisang panel na may switch
+   ================================================================ */
+
+/* ---------------------------------------------------------------
+   BUTTON — "New organization"
+   --------------------------------------------------------------- */
+.newButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 6px 20px 6px 6px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 6px 16px -8px rgba(3, 27, 75, 0.6);
+  transition: background-color var(--transition), box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.newIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  transition: transform 0.3s ease;
+}
+
+.newButton:hover {
+  background-color: var(--dash-navy);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 10px 22px -10px rgba(3, 27, 75, 0.7);
+  transform: translateY(-1px);
+}
+
+.newButton:hover .newIcon {
+  transform: rotate(90deg);
+}
+
+.newButton:active {
+  transform: translateY(0);
+}
+
+.newButton:focus-visible {
+  outline: 3px solid var(--dash-yellow);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------
+   DIALOG
+   --------------------------------------------------------------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.5);
+  backdrop-filter: blur(3px);
+  animation: fade 0.18s ease-out;
+}
+
+.dialog {
+  --ink: #141a2b;
+  --ink-soft: #5b6275;
+  --hair: rgba(20, 26, 43, 0.1);
+  --paper: #fffbea;
+  --paper-deep: #fff4cc;
+  --field: #ffffff;
+  --special: #1a3d9c;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  border-radius: 20px;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: 0 30px 60px -20px rgba(3, 27, 75, 0.45), 0 0 0 1px rgba(3, 27, 75, 0.06);
+  animation: rise 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- ULO (navy) ---------- */
+.head {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 28px 32px 26px;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(18, 73, 168, 0.55), transparent 60%),
+    var(--dash-navy-deep);
+  color: #fff;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Maikling dilaw na guhit sa ilalim ng pamagat */
+.title::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 3px;
+  margin-top: 12px;
+  border-radius: 3px;
+  background-color: var(--dash-yellow);
+}
+
+.hint {
+  margin-top: 12px;
+  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* ---------- KATAWAN ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 28px 32px 8px;
+  overflow-y: auto;
+}
+
+.fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.optional {
+  color: #8a91a3;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.counter {
+  color: #8a91a3;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Field: malambot na kulay, may guhit sa ilalim na nagiging navy
+   kapag naka-focus — kapareho ng search sa itaas ng page */
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(20, 26, 43, 0.08);
+  border-bottom: 2px solid rgba(20, 26, 43, 0.16);
+  border-radius: 10px 10px 4px 4px;
+  background-color: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background-color var(--transition), border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #9aa1b2;
+  font-weight: 500;
+}
+
+.input:hover:not(:focus):not(:disabled) {
+  border-bottom-color: rgba(20, 26, 43, 0.32);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--hair);
+  border-bottom-color: var(--dash-navy-deep);
+  background-color: #fff;
+  box-shadow: 0 4px 0 -2px var(--dash-yellow);
+}
+
+.input[aria-invalid='true'] {
+  border-bottom-color: #b42318;
+}
+
+/* Name ang pinakamahalaga: mas malaki */
+.nameInput {
+  padding: 14px 16px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.textarea {
+  min-height: 128px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+/* ---------- SETTINGS (Active, Post to all) ----------
+   Iisang panel; hinahati ng guhit, hindi magkahiwalay na kahon */
+.settings {
+  margin: 4px 0 20px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 26, 43, 0.12);
+  border-radius: 14px;
+}
+
+.setting {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.setting + .setting {
+  border-top: 1px solid var(--hair);
+}
+
+.setting:hover:not(:has(.switch:disabled)) {
+  background-color: #fff6d6;
+}
+
+.setting:has(.switch:disabled) {
+  cursor: not-allowed;
+}
+
+.setting:has(.switch:disabled) .settingText {
+  opacity: 0.55;
+}
+
+/* Naka-on ang "Post to all": asul na guhit sa kaliwa, kapareho ng
+   kulay ng "Posts to all" badge sa table */
+.settingSpecial::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background-color: var(--special);
+}
+
+.settingSpecial {
+  background-color: #f4f7ff;
+}
+
+.settingSpecial:hover:not(:has(.switch:disabled)) {
+  background-color: #eef3ff;
+}
+
+.settingText {
+  flex: 1;
+  min-width: 0;
+}
+
+.settingTitle {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.settingNote {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* Switch — totoong checkbox, iba lang ang itsura */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background-color: #cfd4df;
+  cursor: inherit;
+  appearance: none;
+  transition: background-color 0.2s ease;
+}
+
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(3, 27, 75, 0.3);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.switch:checked {
+  background-color: var(--dash-navy-deep);
+}
+
+.switch:checked::before {
+  transform: translateX(18px);
+  background-color: var(--dash-yellow);
+}
+
+.settingSpecial .switch:checked {
+  background-color: var(--special);
+}
+
+.switch:focus-visible {
+  outline: 3px solid var(--dash-yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- ERROR ---------- */
+.error {
+  margin: 0 0 20px;
+  padding: 10px 14px;
+  border-left: 3px solid #b42318;
+  border-radius: 0 10px 10px 0;
+  background-color: #fdeeec;
+  color: #8f1d14;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+/* ---------- PAA (buttons) ---------- */
+.foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 32px;
+  border-top: 1px solid var(--hair);
+  background-color: var(--paper-deep);
+}
+
+.cancel,
+.create {
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 800;
+  transition: background-color var(--transition), color var(--transition),
+    border-color var(--transition);
+}
+
+.cancel {
+  border: 1px solid transparent;
+  background: none;
+  color: var(--ink-soft);
+}
+
+.cancel:hover:not(:disabled) {
+  border-color: var(--hair);
+  background-color: #fff;
+  color: var(--ink);
+}
+
+.create {
+  min-width: 120px;
+  border: none;
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+}
+
+.create:hover:not(:disabled) {
+  background-color: var(--dash-navy);
+}
+
+.cancel:disabled,
+.create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel:focus-visible,
+.create:focus-visible {
+  outline: 3px solid var(--dash-yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- ANIMATION ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .head {
+    padding: 22px 20px 20px;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .body {
+    padding: 22px 20px 4px;
+  }
+
+  .pair {
+    grid-template-columns: 1fr;
+  }
+
+  .setting {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .foot {
+    padding: 14px 20px;
+  }
+
+  .cancel,
+  .create {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+
+  .newButton,
+  .newIcon,
+  .switch,
+  .switch::before {
+    transition: none;
+  }
+
+  .newButton:hover {
+    transform: none;
+  }
+
+  .newButton:hover .newIcon {
+    transform: none;
+  }
+}

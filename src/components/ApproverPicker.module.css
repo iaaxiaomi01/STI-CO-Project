@@ -1,132 +1,189 @@
-/* Approver picker sa loob ng ProposalForm.
-   Kapareho ng itsura ng .field / .input / .hint sa ProposalForm.module.css */
+/* ================================================================
+   APPROVER PICKER — nasa loob ng Proposal form LANG
+   Tugma sa ProposalFormUI.module.css: puting card, navy na
+   teksto/border, dilaw kapag napili. Hindi asul ang background.
+   (Galing sa .backdrop ng ProposalFormUI ang mga --pf-* na kulay;
+   may fallback kung sakaling gamitin sa labas.)
+   ================================================================ */
 
 .picker {
-  margin-bottom: 1rem;
+  margin-bottom: 18px;
+  padding: 16px 16px 4px;
+  border: 1.5px solid var(--pf-line, #e2e8f2);
+  border-radius: 16px;
+  background-color: #fff;
 }
 
 .heading {
   display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pf-deep, #031b4b);
 }
 
 .intro {
-  margin-bottom: 0.75rem;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: var(--color-muted);
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--pf-line, #e2e8f2);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--pf-muted, #5f6b85);
 }
 
 .stage {
-  margin-bottom: 0.85rem;
+  margin-bottom: 14px;
 }
 
 .stageHead {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
 }
 
+/* Pangalan ng stage na may maliit na dilaw na marka */
 .stageLabel {
-  font-size: 0.85rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--pf-deep, #031b4b);
 }
 
+.stageLabel::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--pf-yellow, #ffd200);
+  box-shadow: 0 0 0 3px #fff3bf;
+}
+
+/* "One or more" / "Choose one" — maliit na dilaw na pill */
 .stageRule {
-  font-size: 0.75rem;
-  color: var(--color-muted);
+  padding: 2px 9px;
+  border-radius: 999px;
+  background-color: #fff6cc;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a5900;
+  white-space: nowrap;
 }
 
 /* Adviser: dropdown */
 .select {
   width: 100%;
-  padding: 0.7rem 0.95rem;
-  font: inherit;
-  font-size: 0.95rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--pf-line, #e2e8f2);
+  border-radius: 12px;
   background-color: #fff;
-  color: var(--color-text);
+  color: var(--pf-ink, #0e1a36);
+  font: inherit;
+  font-size: 14.5px;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--pf-line-strong, #c9d3e6);
 }
 
 .select:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
+  outline: none;
+  border-color: var(--pf-navy, #06358c);
+  box-shadow: var(--pf-ring, 0 0 0 4px rgba(255, 210, 0, 0.38));
 }
 
 .select:disabled {
-  background-color: var(--color-surface);
+  background-color: var(--pf-soft, #f8faff);
   cursor: not-allowed;
 }
 
 /* SAO / School Head / SA: checkbox list */
 .list {
   display: grid;
-  gap: 0.15rem;
+  gap: 4px;
   max-height: 11rem;
   overflow-y: auto;
-  padding: 0.4rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  padding: 6px;
+  border: 1.5px solid var(--pf-line, #e2e8f2);
+  border-radius: 12px;
   background-color: #fff;
+  scrollbar-width: thin;
 }
 
 .listInactive {
-  background-color: var(--color-surface);
+  background-color: var(--pf-soft, #f8faff);
 }
 
 .option {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.55rem;
-  border-radius: 8px;
-  font-size: 0.92rem;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--pf-ink, #0e1a36);
   cursor: pointer;
-  transition: background-color var(--transition);
+  transition: background-color var(--transition), border-color var(--transition);
 }
 
 .option:hover {
-  background-color: var(--color-surface);
+  background-color: var(--pf-soft, #f8faff);
 }
 
+/* Napili: dilaw */
 .option:has(input:checked) {
-  background-color: var(--color-primary-soft);
-  font-weight: 600;
+  border-color: #f4dd85;
+  background-color: #fff6cc;
+  font-weight: 700;
+  color: var(--pf-deep, #031b4b);
 }
 
 .option:has(input:disabled) {
   cursor: not-allowed;
 }
 
+.option:has(input:focus-visible) {
+  box-shadow: var(--pf-ring, 0 0 0 4px rgba(255, 210, 0, 0.38));
+}
+
 .option input {
   flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--color-primary);
+  width: 17px;
+  height: 17px;
+  accent-color: var(--pf-navy, #06358c);
 }
 
 .placeholder {
-  padding: 0.45rem 0.55rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
+  padding: 9px 10px;
+  font-size: 13.5px;
+  color: var(--pf-muted, #5f6b85);
 }
 
 .hint {
   display: block;
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pf-muted, #5f6b85);
 }
 
 .errorHint,
 .error {
   display: block;
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  color: #a61b1b;
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b42318;
+}
+
+.error {
+  margin-bottom: 12px;
 }

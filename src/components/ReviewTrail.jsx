@@ -42,6 +42,11 @@ import styles from './ReviewTrail.module.css'
 
      <ReviewTrail proposal={p} />            → para sa card
      <ReviewTrail proposal={p} variant="letter" /> → para sa sulat
+
+   SA SULAT: pormal na table na "Review History" (Office, Action,
+   Name, Date) — itim na teksto lang, walang kulay. HINDI kasama
+   ang linya ng "Approvers · Chosen by the Officer"; sa card
+   (ReviewDialog) lang iyon makikita.
    ============================================================ */
 
 const DECISION_CLASS = {
@@ -73,7 +78,8 @@ function ReviewTrail({ proposal, variant = 'card' }) {
   const names = pending?.map((r) => r.name).filter(Boolean).join(', ')
 
   /* Ang mga napili ng Officer: [{ stage, label, name: 'Ana Cruz, Ben Reyes' }] */
-  const chosen = hasChosenApprovers(proposal)
+  const isLetter = variant === 'letter'
+  const chosen = !isLetter && hasChosenApprovers(proposal)
     ? reviewPath(proposal)
         .map((stage) => ({
           stage,
@@ -88,8 +94,92 @@ function ReviewTrail({ proposal, variant = 'card' }) {
 
   if (steps.length === 0 && !waiting && chosen.length === 0) return null
 
+  /* Ang mensahe sa huling linya — kanino nakatoka ngayon */
+  const waitingMessage = !waiting
+    ? ''
+    : pending && pending.length === 0 && (!progress || progress.total === 0)
+      ? `No active ${waiting} account yet. It will continue once one is assigned.`
+      : noted
+        ? `Already rejected by ${rejectedBy(proposal)}. Waiting for "Noted" from ${
+            names || waiting
+          }.`
+        : names
+          ? `Waiting for: ${names}.`
+          : inRevision
+            ? `Waiting for ${authorName(proposal)} to revise. It will go back to ${stageLabel(
+                proposal.revision_from,
+              )} afterwards.`
+            : proposal.stage === finalStage(proposal)
+              ? `Waiting for the ${waiting}'s final decision.`
+              : proposal.stage === 'school_head' && hasBudget(proposal)
+                ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
+                : `Waiting for action from ${waiting}.`
+
+  const waitingStatus = waiting
+    ? `${inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}${
+        progress && progress.total > 1 ? ` (${progress.done} of ${progress.total})` : ''
+      }`
+    : ''
+
+  /* ---------- SA SULAT: pormal na table ---------- */
+  if (isLetter) {
+    return (
+      <section className={styles.record} aria-label="Review history">
+        <h2 className={styles.recordTitle}>Review History</h2>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th scope="col" className={styles.colOffice}>Office</th>
+              <th scope="col" className={styles.colAction}>Action</th>
+              <th scope="col">Name</th>
+              <th scope="col" className={styles.colDate}>Date</th>
+            </tr>
+          </thead>
+          {steps.map((step) => (
+            <tbody key={step.key} className={step.final ? styles.finalRow : ''}>
+              <tr>
+                <td data-label="Office">{step.role}</td>
+                <td data-label="Action">{stepLabel(step)}</td>
+                <td data-label="Name">{step.name || '—'}</td>
+                <td data-label="Date">{step.at ? formatDateTime(step.at) : '—'}</td>
+              </tr>
+              {(step.comment || step.resubmittedAt) && (
+                <tr className={styles.remarksRow}>
+                  <td aria-hidden="true" className={styles.remarksSpacer} />
+                  <td colSpan={3}>
+                    {step.comment && (
+                      <p className={styles.remarks}>
+                        <span className={styles.remarksLabel}>Remarks:</span> {step.comment}
+                      </p>
+                    )}
+                    {step.resubmittedAt && (
+                      <p className={styles.remarks}>
+                        Revised and resubmitted on {formatDateTime(step.resubmittedAt)}.
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          ))}
+          {waiting && (
+            <tbody className={styles.waitingRow}>
+              <tr>
+                <td data-label="Office">{waiting}</td>
+                <td data-label="Action">{waitingStatus}</td>
+                <td data-label="Name" colSpan={2}>
+                  {waitingMessage}
+                </td>
+              </tr>
+            </tbody>
+          )}
+        </table>
+      </section>
+    )
+  }
+
   return (
-    <ol className={`${styles.trail} ${variant === 'letter' ? styles.letter : ''}`}>
+    <ol className={styles.trail}>
       {chosen.length > 0 && (
         <li className={styles.step}>
           <p className={styles.head}>
@@ -141,25 +231,7 @@ function ReviewTrail({ proposal, variant = 'card' }) {
               {progress && progress.total > 1 && ` · ${progress.done} of ${progress.total}`}
             </span>
           </p>
-          <p className={styles.by}>
-            {pending && pending.length === 0 && (!progress || progress.total === 0)
-              ? `No active ${waiting} account yet. It will continue once one is assigned.`
-              : noted
-              ? `Already rejected by ${rejectedBy(proposal)}. Waiting for "Noted" from ${
-                  names || waiting
-                }.`
-              : names
-              ? `Waiting for: ${names}.`
-              : inRevision
-              ? `Waiting for ${authorName(proposal)} to revise. It will go back to ${stageLabel(
-                  proposal.revision_from,
-                )} afterwards.`
-              : proposal.stage === finalStage(proposal)
-                ? `Waiting for the ${waiting}'s final decision.`
-                : proposal.stage === 'school_head' && hasBudget(proposal)
-                  ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
-                  : `Waiting for action from ${waiting}.`}
-          </p>
+          <p className={styles.by}>{waitingMessage}</p>
         </li>
       )}
     </ol>

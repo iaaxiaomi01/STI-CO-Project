@@ -115,79 +115,162 @@
   overflow-wrap: anywhere;
 }
 
-/* ---------- SA SULAT (pang-print) ----------
-   SIMPLE: walang kahon at walang kulay — itim na teksto lang,
-   may manipis na guhit sa pagitan ng bawat hakbang, para
-   bumagay sa pormal na sulat at malinis kapag na-print.
-   Ang card (Proposals page, ReviewDialog) ay hindi apektado. */
-.letter {
-  margin-top: 2.5rem;
-  gap: 0;
-  border-top: 1px solid #c9ced8;
+/* ---------- SA SULAT: "REVIEW HISTORY" ----------
+   Pormal na table sa dulo ng sulat: Office, Action, Name, Date.
+   Itim na teksto lang at manipis na guhit — walang kulay at
+   walang kahon, para malinis kapag na-print. Ang card
+   (ReviewDialog) ay hindi apektado. */
+.record {
+  margin-top: 2.75rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #111;
 }
 
-.letter .step {
-  padding: 0.7rem 0;
-  border: none;
-  border-bottom: 1px solid #e4e7ee;
-  border-radius: 0;
-  background: none;
+.recordTitle {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.letter .step:last-child {
-  border-bottom: none;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1.5px solid #111;
+  border-bottom: 1.5px solid #111;
 }
 
-.letter .head {
-  gap: 0.35rem;
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem 0.45rem 0;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
-.letter .role {
-  font-size: 0.8rem;
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0;
 }
 
-/* Desisyon: itim na teksto, may gitling bago ito
-   ("ADVISER — APPROVED") */
-.letter .decision,
-.letter .approved .decision,
-.letter .rejected .decision,
-.letter .noted .decision,
-.letter .revision .decision,
-.letter .waiting .decision {
-  color: var(--color-text, #1d2433);
+.table thead th {
+  font-weight: 700;
+  border-bottom: 1px solid #111;
+}
+
+.colOffice {
+  width: 22%;
+}
+
+.colAction {
+  width: 22%;
+}
+
+.colDate {
+  width: 26%;
+}
+
+/* Manipis na guhit sa pagitan ng bawat hakbang */
+.table tbody + tbody tr:first-child td {
+  border-top: 1px solid #cfd3da;
+}
+
+/* Remarks: nasa ilalim ng hakbang, naka-italic */
+.remarksRow td {
+  padding-top: 0;
+}
+
+.remarks {
+  font-style: italic;
+  white-space: pre-wrap;
+  color: #333;
+}
+
+.remarks + .remarks {
+  margin-top: 0.15rem;
+}
+
+.remarksLabel {
+  font-style: normal;
   font-weight: 600;
+  color: #111;
 }
 
-.letter .decision::before {
-  content: '— ';
+/* Ang nagpasya (hal. "Final: Approved") — naka-bold ang Action */
+.finalRow tr:first-child td:nth-child(2) {
+  font-weight: 700;
 }
 
-/* Ang nagpasya (hal. "Final: Approved") — mas makapal lang */
-.letter .final .decision {
-  font-weight: 800;
-}
-
-.letter .comment {
+/* Naghihintay pa — naka-italic at mas malabo nang kaunti */
+.waitingRow td {
   font-style: italic;
+  color: #4a4f59;
 }
 
-.letter .resubmitted {
-  font-weight: 400;
-  color: var(--color-muted, #5b6478);
-}
+/* Sa makitid na screen: bawat hakbang ay nakasalansan
+   (label sa kaliwa, laman sa kanan) para hindi masikip */
+@media (max-width: 640px) {
+  .table thead {
+    display: none;
+  }
 
-/* Naghihintay pa — naka-italic at malabo nang kaunti */
-.letter .waiting .by {
-  font-style: italic;
-}
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
 
-.letter .waiting .role,
-.letter .waiting .decision {
-  color: var(--color-muted, #5b6478);
+  .table tbody {
+    padding: 0.5rem 0;
+  }
+
+  .table td {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.5rem;
+    padding: 0.1rem 0;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-style: normal;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .table tbody + tbody tr:first-child td {
+    border-top: none;
+  }
+
+  .table tbody + tbody {
+    border-top: 1px solid #cfd3da;
+  }
+
+  .remarksSpacer {
+    display: none !important;
+  }
+
+  .remarksRow td {
+    display: block;
+    padding-top: 0.2rem;
+  }
+
+  .remarksRow td::before {
+    content: none;
+  }
 }
 
 @media print {
-  .step {
+  .step,
+  .table tbody {
     break-inside: avoid;
+  }
+
+  .table thead {
+    display: table-header-group;
   }
 }

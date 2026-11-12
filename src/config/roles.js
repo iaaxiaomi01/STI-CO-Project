@@ -157,20 +157,10 @@ function staffRole(label) {
     label,
     can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
     sidebar: [DASHBOARD, MEMBERS, PROFILE],
+    /* Inalis na ang "Sections" cards (Members, Profile) sa
+       Dashboard — nasa sidebar na sila. */
     dashboard: {
       stats: [],
-      cards: [
-        {
-          to: '/members',
-          icon: '▲',
-          title: 'Members',
-        },
-        {
-          to: '/profile',
-          icon: '●',
-          title: 'Profile',
-        },
-      ],
     },
   }
 }
@@ -255,11 +245,6 @@ export const ROLES = {
         { label: 'Your attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
         { label: 'Your Organization Gems', value: '0', to: '/rewards', key: 'ogBalance' },
       ],
-
-      /* Inalis ang "Sections" cards (Rewards Shop, Announcements,
-         Attendance): nasa sidebar na sila AT ang mga stat tile na
-         mismo ang link papunta roon — tatlong beses na paulit-ulit. */
-      cards: [],
     },
   },
 
@@ -298,8 +283,8 @@ export const ROLES = {
     ],
 
     dashboard: {
-      /* Kaparehong UI ng Member (bento). Pareho pa rin ang laman:
-         5 stat, Event Calendar, at Sections cards. */
+      /* Kaparehong UI ng Member (bento): 5 stat at Event Calendar.
+         Inalis na ang "Sections" cards — nasa sidebar na sila. */
       layout: 'bento',
 
       stats: [
@@ -316,28 +301,6 @@ export const ROLES = {
           key: 'myAttendanceRate',
         },
         { label: 'Your Organization Gems', value: '0', to: '/rewards', key: 'ogBalance' },
-      ],
-      cards: [
-        {
-          to: '/proposals',
-          icon: '✉',
-          title: 'Proposals',
-        },
-        {
-          to: '/members',
-          icon: '▲',
-          title: 'Members',
-        },
-        {
-          to: '/announcements',
-          icon: '★',
-          title: 'Announcements',
-        },
-        {
-          to: '/rewards',
-          icon: '❖',
-          title: 'Rewards',
-        },
       ],
     },
   },
@@ -379,46 +342,14 @@ export const ROLES = {
     ],
 
     dashboard: {
-      /* Kaparehong UI ng Member (bento). Pareho pa rin ang laman:
-         3 stat, Event Calendar, at Sections cards. */
+      /* Kaparehong UI ng Member (bento): 3 stat at Event Calendar.
+         Inalis na ang "Sections" cards — nasa sidebar na sila. */
       layout: 'bento',
 
       stats: [
         { label: 'Proposals awaiting your action', value: '0', to: '/proposals', key: 'pendingProposals' },
         { label: 'Active members', value: '0', to: '/members', key: 'memberCount' },
         { label: 'Org attendance rate', value: '—', to: '/attendance', key: 'attendanceRate' },
-      ],
-      cards: [
-        {
-          to: '/org-profile',
-          icon: '◈',
-          title: 'Org Profile',
-        },
-        {
-          to: '/announcements',
-          icon: '★',
-          title: 'Announcements',
-        },
-        {
-          to: '/proposals',
-          icon: '✉',
-          title: 'Proposals',
-        },
-        {
-          to: '/attendance',
-          icon: '✓',
-          title: 'Attendance',
-        },
-        {
-          to: '/org-health',
-          icon: '✚',
-          title: 'Org Health',
-        },
-        {
-          to: '/rewards',
-          icon: '❖',
-          title: 'Rewards',
-        },
       ],
     },
   },
@@ -553,7 +484,6 @@ export const ROLES = {
       ],
       dashboard: {
         ...base.dashboard,
-        cards: [],
         stats: [
           {
             label: 'Pending proposals',
@@ -589,7 +519,7 @@ export const ROLES = {
     label: 'IT Administrator',
     can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
     sidebar: [DASHBOARD],
-    dashboard: { stats: [], cards: [] },
+    dashboard: { stats: [] },
   },
 }
 
@@ -600,7 +530,7 @@ export const FALLBACK_ROLE = {
   label: 'No role',
   can: { create: false, review: false, announce: false, propose: false, assignPositions: false },
   sidebar: [DASHBOARD, PROFILE],
-  dashboard: { stats: [], cards: [] },
+  dashboard: { stats: [] },
 }
 
 /* Laging gamitin ito imbes na direktang ROLES[role] —

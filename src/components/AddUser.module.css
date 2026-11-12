@@ -1,0 +1,653 @@
+/* ================================================================
+   ADD USER — button at form (Users page, School Administrator)
+
+   Pormal at malinis:
+     - Puting form, manipis na STI blue na guhit sa itaas
+     - Tatlong grupo na hinahati lang ng manipis na guhit:
+         account · pangalan at detalye · role at organization
+     - Buong border ang mga field, asul kapag naka-focus
+     - Active: berdeng check (kakulay ng "Active" badge)
+   ================================================================ */
+
+/* ---------------------------------------------------------------
+   BUTTON — "Add user"
+   --------------------------------------------------------------- */
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 22px 0 18px;
+  border: none;
+  border-radius: 10px;
+  background-color: var(--sti-blue);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: inset 0 -3px 0 var(--sti-yellow), 0 8px 18px -10px rgba(6, 53, 140, 0.7);
+  transition: background-color var(--transition), box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.addButton svg {
+  color: var(--sti-yellow);
+}
+
+.addButton:hover {
+  background-color: var(--sti-blue-bright);
+  box-shadow: inset 0 -4px 0 var(--sti-yellow), 0 12px 22px -10px rgba(6, 53, 140, 0.75);
+  transform: translateY(-1px);
+}
+
+.addButton:active {
+  transform: translateY(0);
+}
+
+.addButton:focus-visible {
+  outline: 3px solid var(--sti-yellow);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------
+   DIALOG
+   --------------------------------------------------------------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.45);
+  animation: fade 0.16s ease-out;
+}
+
+.dialog {
+  --ink: #1a2440;
+  --ink-soft: #5c6886;
+  --line: #d5dceb;
+  --line-strong: #b5c2dc;
+  --hair: #e7ebf3;
+  --blue: var(--sti-blue);
+  --blue-bright: var(--sti-blue-bright);
+  --yellow: var(--sti-yellow);
+  --green: #16683a;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  border-top: 4px solid var(--blue);
+  border-radius: 14px;
+  background-color: #fff;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: 0 28px 56px -24px rgba(3, 27, 75, 0.45);
+  animation: pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- ABSTRACT NA DISENYO SA BACKGROUND ----------
+   Bilog, singsing at maikling bar sa kanang itaas; mga arko sa
+   kaliwang ibaba. Mahina ang kulay at nasa likod lang — hindi natatakpan ang
+   mga field (puti pa rin ang loob ng mga ito). */
+.dialog::before,
+.dialog::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+}
+
+.dialog::before {
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 210px;
+  background-image: url("data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='210'%20viewBox='0%200%20300%20210'><circle%20cx='250'%20cy='10'%20r='120'%20fill='%231249a8'%20fill-opacity='0.07'/><circle%20cx='250'%20cy='10'%20r='78'%20fill='%231249a8'%20fill-opacity='0.05'/><circle%20cx='140'%20cy='52'%20r='38'%20fill='none'%20stroke='%23ffd200'%20stroke-width='3'%20stroke-opacity='0.75'/><rect%20x='60'%20y='14'%20width='54'%20height='10'%20rx='5'%20transform='rotate(-35%2087%2019)'%20fill='%2306358c'%20fill-opacity='0.12'/></svg>");
+}
+
+.dialog::after {
+  bottom: 0;
+  left: 0;
+  width: 260px;
+  height: 240px;
+  background-image: url("data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20width='260'%20height='240'%20viewBox='0%200%20260%20240'><circle%20cx='0'%20cy='240'%20r='190'%20fill='none'%20stroke='%231249a8'%20stroke-width='34'%20stroke-opacity='0.05'/><circle%20cx='0'%20cy='240'%20r='112'%20fill='%23ffd200'%20fill-opacity='0.12'/></svg>");
+}
+
+/* Nasa ibabaw ng disenyo ang laman. Mas mataas ang body para
+   lumutang ang listahan ng Role/Organization sa ibabaw ng paa. */
+.head,
+.body,
+.foot {
+  position: relative;
+  z-index: 1;
+}
+
+.body {
+  z-index: 2;
+}
+
+/* ---------- ULO ---------- */
+.head {
+  flex-shrink: 0;
+  padding: 22px 30px 18px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.title {
+  color: var(--dash-navy-deep);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+/* ---------- KATAWAN ---------- */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 30px;
+  overflow-y: auto;
+}
+
+.fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Mga grupo — hinahati lang ng manipis na guhit */
+.group {
+  display: grid;
+  gap: 16px;
+  padding: 22px 0;
+}
+
+.group + .group {
+  border-top: 1px solid var(--hair);
+}
+
+.field {
+  display: block;
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  color: #2a3553;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.optional {
+  color: #8a93a8;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #a0a8bb;
+  font-weight: 500;
+}
+
+.input:hover:not(:focus):not(:disabled) {
+  border-color: var(--line-strong);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(18, 73, 168, 0.13);
+}
+
+.input:disabled {
+  background-color: #f3f5f9;
+  color: #7b849a;
+  cursor: not-allowed;
+}
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+/* Email: may Microsoft logo sa loob ng field */
+.emailBox {
+  position: relative;
+  display: block;
+}
+
+.msLogo {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  width: 17px;
+  height: 17px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.emailInput {
+  padding-left: 41px;
+}
+
+.row2,
+.row3 {
+  display: grid;
+  gap: 14px;
+}
+
+.row2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- DROPDOWN (Role, Organization) ----------
+   Kamukha ng ibang field ang pindutan, pero may dilaw na kahon
+   para sa chevron. Kapag bukas: dilaw ang gilid; sa listahan,
+   light yellow at gintong check ang napili. */
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 5px 6px 5px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pick:hover:not(:disabled) {
+  border-color: #e0b400;
+}
+
+.pick:focus-visible,
+.pickOpen {
+  outline: none;
+  border-color: #e0b400;
+  box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.32);
+}
+
+.pick:disabled {
+  background-color: #f3f5f9;
+  cursor: not-allowed;
+}
+
+.pickValue,
+.pickPlaceholder {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickPlaceholder {
+  color: #7b849a;
+  font-weight: 500;
+}
+
+/* Dilaw na kahon ng chevron */
+.pickArrow {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background-color: #fff3bf;
+  color: #7a5a00;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.pickArrow svg {
+  transition: transform 0.2s ease;
+}
+
+.pick:hover:not(:disabled) .pickArrow,
+.pickOpen .pickArrow {
+  background-color: var(--yellow);
+  color: var(--dash-navy-deep);
+}
+
+.pickOpen .pickArrow svg {
+  transform: rotate(180deg);
+}
+
+.pick:disabled .pickArrow {
+  background-color: #e8ebf1;
+  color: #a7afc2;
+}
+
+/* Logo o unang letra ng org */
+.pickTile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: var(--dash-navy-deep);
+  color: var(--yellow);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pickTile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+/* ---------- Listahan (nakalutang) ---------- */
+.pickList {
+  position: fixed;
+  z-index: 120;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid #ecd98a;
+  border-top: 3px solid var(--yellow);
+  border-radius: 6px 6px 10px 10px;
+  background-color: #fff;
+  box-shadow: 0 18px 36px -14px rgba(3, 27, 75, 0.35);
+  list-style: none;
+  outline: none;
+  animation: pickIn 0.14s ease-out;
+}
+
+.pickListUp {
+  border-top: 1px solid #ecd98a;
+  border-bottom: 3px solid var(--yellow);
+  border-radius: 10px 10px 6px 6px;
+}
+
+.pickOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pickActive {
+  background-color: #f4f6fb;
+}
+
+.pickSelected {
+  background-color: #fff6d1;
+  font-weight: 800;
+}
+
+.pickSelected.pickActive {
+  background-color: #ffefb3;
+}
+
+.pickText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.pickCheck {
+  flex-shrink: 0;
+  color: #c79500;
+  visibility: hidden;
+}
+
+.pickSelected .pickCheck {
+  visibility: visible;
+}
+
+@keyframes pickIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Paalala sa Officer */
+.note {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid #f7b900;
+  border-radius: 0 8px 8px 0;
+  background-color: #fff8db;
+  color: #5e4700;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* ---------- ACTIVE ---------- */
+.active {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.activeInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.activeBox {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 5px;
+  background-color: #fff;
+  color: transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.activeInput:checked + .activeBox {
+  border-color: var(--green);
+  background-color: var(--green);
+  color: #fff;
+}
+
+.activeInput:focus-visible + .activeBox {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.activeTitle {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.activeText {
+  display: block;
+  margin-top: 1px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* ---------- ERROR ---------- */
+.error {
+  margin: 0 0 20px;
+  padding: 10px 14px;
+  border: 1px solid #f3c4c0;
+  border-radius: 8px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+/* ---------- PAA ---------- */
+.foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 30px;
+  border-top: 1px solid var(--hair);
+  background-color: rgba(248, 249, 252, 0.78);
+}
+
+.cancel,
+.submit {
+  min-height: 42px;
+  padding: 0 22px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.cancel {
+  border: 1px solid var(--line);
+  background-color: #fff;
+  color: #2a3553;
+}
+
+.cancel:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background-color: #f3f5f9;
+}
+
+.submit {
+  min-width: 124px;
+  border: none;
+  background-color: var(--blue);
+  color: #fff;
+}
+
+.submit:hover:not(:disabled) {
+  background-color: var(--blue-bright);
+}
+
+.cancel:disabled,
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel:focus-visible,
+.submit:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- ANIMATION ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 640px) {
+  /* Mas maliit na disenyo para hindi dumikit sa pamagat */
+  .dialog::before {
+    width: 190px;
+    height: 133px;
+    background-size: 190px 133px;
+  }
+
+  .dialog::after {
+    width: 180px;
+    height: 166px;
+    background-size: 180px 166px;
+  }
+
+  .head {
+    padding: 18px 18px 14px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .body {
+    padding: 0 18px;
+  }
+
+  .row2,
+  .row3 {
+    grid-template-columns: 1fr;
+  }
+
+  .foot {
+    padding: 14px 18px;
+  }
+
+  .cancel,
+  .submit {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+
+  .addButton:hover {
+    transform: none;
+  }
+
+  .pickList {
+    animation: none;
+  }
+}

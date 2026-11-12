@@ -1,6 +1,30 @@
+/* ============================================================
+   NOTIFICATION BELL — disenyo (dilaw · asul · puti)
+
+     - Asul na header (STI blue) na may dilaw na guhit sa ibaba,
+       dilaw na bilog sa sulok, at pattern ng tuldok
+     - Puting card ang bawat notification sa maputlang asul
+     - Hindi pa nababasa: dilaw na guhit sa kaliwa, asul na icon
+       na may dilaw na simbolo, at dilaw na tuldok
+     - Dilaw na badge sa bell
+   Lahat ng kulay ay nasa .wrap sa ibaba — palitan mo lang doon.
+   Itsura lang ito; pareho ang laman at gawa ng component.
+   ============================================================ */
+
 .wrap {
   position: relative;
   flex-shrink: 0;
+
+  --nb-yellow: var(--dash-yellow, #ffd200);
+  --nb-yellow-soft: #fff6cc;
+  --nb-blue: var(--sti-blue-bright, #1249a8);
+  --nb-navy: var(--dash-navy, #06358c);
+  --nb-navy-deep: var(--dash-navy-deep, #031b4b);
+  --nb-sky: #eaf1ff;          /* maputlang asul */
+  --nb-ground: #f3f6fc;       /* background ng listahan */
+  --nb-line: #e1e9f7;
+  --nb-ink: #13203d;
+  --nb-muted: #66718a;
 }
 
 /* ---------- BUTTON ---------- */
@@ -11,302 +35,81 @@
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #e4e9f2);
   background-color: #fff;
-  color: var(--color-text);
+  color: var(--nb-navy);
   cursor: pointer;
   transition: border-color var(--transition), color var(--transition),
-    background-color var(--transition);
+    background-color var(--transition), transform var(--transition);
 }
 
 .bell:hover,
 .bellActive {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background-color: var(--color-primary-soft);
+  border-color: var(--nb-yellow);
+  background-color: var(--nb-yellow);
+  color: var(--nb-navy-deep);
+}
+
+.bell:active {
+  transform: scale(0.96);
 }
 
 .bell:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--nb-blue);
   outline-offset: 2px;
 }
 
-/* Pulang bilog na may bilang — lalabas lang kapag may unread */
+/* Dilaw na bilog na may bilang — lalabas lang kapag may unread */
 .badge {
   position: absolute;
-  top: -3px;
-  right: -3px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   border-radius: 999px;
   border: 2px solid #fff;
-  background-color: #e5373d;
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 14px;
+  background-color: var(--nb-yellow);
+  color: var(--nb-navy-deep);
+  font-family: var(--font-ui, inherit);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 16px;
   text-align: center;
+  box-shadow: 0 2px 6px rgba(3, 27, 75, 0.25);
 }
 
-/* ---------- PANEL ---------- */
-.panel {
-  position: absolute;
-  top: calc(100% + 0.6rem);
-  right: 0;
-  z-index: 50;
-  width: 320px;
-  max-width: calc(100vw - 2rem);
+/* ---------- variant="onDark" (navy na pagbati sa Dashboard) ---------- */
+.onDark {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border-color: transparent;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  color: var(--nb-navy);
+  box-shadow: 0 6px 16px rgba(3, 27, 75, 0.25);
 }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.9rem 1.1rem;
-  border-bottom: 1px solid var(--color-border);
+.onDark:hover,
+.onDark.bellActive {
+  border-color: transparent;
+  background-color: var(--nb-yellow);
+  color: var(--nb-navy-deep);
 }
 
-.panelTitle {
-  font-size: 0.95rem;
-  font-weight: 700;
-  white-space: nowrap;
+.onDark:focus-visible {
+  outline-color: var(--nb-yellow);
 }
 
-.markAll {
-  padding: 0.25rem 0.5rem;
-  border: none;
-  border-radius: 6px;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.markAll:hover {
-  background-color: var(--color-primary-soft);
-}
-
-/* "Mark all as read" + "Clear all" (o ang "Delete all? Yes / Cancel") */
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.confirmText {
-  margin-right: 0.2rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
-/* Pula — para sa pagbura */
-.markAll.danger {
-  color: #b42318;
-}
-
-.markAll.danger:hover {
-  background-color: #fdecec;
-}
-
-.status {
-  padding: 1.5rem 1.1rem;
-  font-size: 0.88rem;
-  color: var(--color-muted);
-  text-align: center;
-}
-
-.statusError {
-  color: #a61b1b;
-}
-
-/* ---------- LISTAHAN ---------- */
-.list {
-  max-height: min(420px, 60vh);
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.list li + li {
-  border-top: 1px solid var(--color-border);
-}
-
-/* Ang hanay: notification + ang × sa kanan */
-.row {
-  position: relative;
-}
-
-.item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  width: 100%;
-  /* May puwang sa kanan para sa × */
-  padding: 0.8rem 2.5rem 0.8rem 1.1rem;
-  border: none;
-  background-color: #fff;
-  color: var(--color-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--transition);
-}
-
-.item:hover {
-  background-color: var(--color-surface);
-}
-
-/* Hindi pa nababasa: may kulay ang likod */
-.unread {
-  background-color: #f4f7ff;
-}
-
-.unread:hover {
-  background-color: var(--color-primary-soft);
-}
-
-.itemIcon {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: 0.85rem;
-}
-
-.itemText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.itemTitle {
-  font-size: 0.87rem;
-  font-weight: 600;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.unread .itemTitle {
-  font-weight: 700;
-}
-
-.itemBody {
-  font-size: 0.8rem;
-  color: var(--color-muted);
-  overflow-wrap: anywhere;
-}
-
-.itemTime {
-  margin-top: 0.15rem;
-  font-size: 0.74rem;
-  color: var(--color-muted);
-}
-
-.unread .itemTime {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  margin-top: 0.4rem;
-  border-radius: 999px;
-  background-color: var(--color-primary);
-}
-
-/* ---------- × (BURAHIN) ----------
-   Lumalabas kapag naka-hover o naka-focus ang hanay. Sa phone
-   (walang hover) ay laging nakikita. */
-.deleteBtn {
-  position: absolute;
-  top: 0.65rem;
-  right: 0.55rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: none;
-  color: var(--color-muted);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--transition), background-color var(--transition),
-    color var(--transition);
-}
-
-.row:hover .deleteBtn,
-.row:focus-within .deleteBtn {
-  opacity: 1;
-}
-
-.deleteBtn:hover {
-  background-color: #fdecec;
-  color: #b42318;
-}
-
-.deleteBtn:focus-visible {
-  opacity: 1;
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
-}
-
-@media (hover: none) {
-  .deleteBtn {
-    opacity: 1;
-  }
-}
-
-/* ---------- KULAY AYON SA TONE ---------- */
-.itemIcon.tone_success {
-  background-color: #e8f6ee;
-  color: #1c6b3f;
-}
-
-.itemIcon.tone_danger {
-  background-color: #fdecec;
-  color: #b42318;
-}
-
-.itemIcon.tone_warning {
-  background-color: #fff4dc;
-  color: #8a5a00;
-}
-
-.toast.tone_success {
-  border-left-color: #1c6b3f;
-}
-
-.toast.tone_danger {
-  border-left-color: #b42318;
-}
-
-.toast.tone_warning {
-  border-left-color: #c98a00;
+.onDark .badge {
+  top: -7px;
+  right: -7px;
+  min-width: 22px;
+  height: 22px;
+  border: 3px solid var(--nb-navy);
+  font-size: 0.72rem;
+  line-height: 16px;
 }
 
 /* ---------- KALEMBANG (bagong notification) ---------- */
@@ -325,113 +128,528 @@
   100% { transform: rotate(0); }
 }
 
-/* ---------- MALIIT NA PAALALA ---------- */
+/* ================================================================
+   PANEL
+   ================================================================ */
+.panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 50;
+  width: 384px;
+  max-width: calc(100vw - 2rem);
+  border-radius: 20px;
+  background-color: var(--nb-ground);
+  box-shadow: 0 24px 56px rgba(3, 27, 75, 0.24), 0 2px 8px rgba(3, 27, 75, 0.08);
+  overflow: hidden;
+  animation: panelIn 0.18s ease-out;
+  transform-origin: top right;
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Huwag manahin ang puting text, font at alignment ng
+   pinaglagyan (hal. ang navy na pagbati sa Dashboard) */
+.panel,
+.toast {
+  color: var(--nb-ink);
+  font-family: var(--font-ui, inherit);
+  text-align: left;
+  letter-spacing: normal;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* ---------- HEADER (asul) ---------- */
+.panelHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 64px;
+  padding: 14px 16px 14px 20px;
+  border-bottom: 4px solid var(--nb-yellow);
+  background: linear-gradient(120deg, var(--nb-navy) 0%, var(--nb-blue) 100%);
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Pattern ng maliliit na tuldok sa kanan ng header */
+.panelHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 150px;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1.2px, transparent 1.7px);
+  background-size: 12px 12px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 70%);
+  mask-image: linear-gradient(90deg, transparent, #000 70%);
+  z-index: -1;
+}
+
+/* Malambot na puting bilog sa kanang itaas na sulok */
+.panelHeader::after {
+  content: '';
+  position: absolute;
+  top: -90px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.08);
+  z-index: -1;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-display, inherit);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* Dilaw na marka bago ang "Notifications" */
+.panelTitle::before {
+  content: '';
+  width: 6px;
+  height: 20px;
+  border-radius: 3px;
+  background-color: var(--nb-yellow);
+  box-shadow: 0 0 12px rgba(255, 210, 0, 0.55);
+}
+
+/* "Mark all as read" + "Clear all" (o ang "Delete all? Yes / Cancel") */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.markAll {
+  padding: 6px 11px;
+  border: none;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.markAll:hover {
+  background-color: var(--nb-yellow);
+  color: var(--nb-navy-deep);
+}
+
+.markAll:focus-visible {
+  outline: 2px solid var(--nb-yellow);
+  outline-offset: 2px;
+}
+
+.confirmText {
+  margin-right: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* Puti na may pulang teksto — para sa pagbura */
+.markAll.danger {
+  background-color: #fff;
+  color: #c0362c;
+}
+
+.markAll.danger:hover {
+  background-color: #ffe3e0;
+  color: #a12a21;
+}
+
+/* ---------- STATUS ---------- */
+.status {
+  padding: 30px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--nb-muted);
+  text-align: center;
+}
+
+.statusError {
+  color: #b42318;
+}
+
+/* ---------- LISTAHAN ---------- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(430px, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 12px;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: #c6d3ee transparent;
+}
+
+/* Ang hanay: notification + ang × sa kanan */
+.row {
+  position: relative;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  /* May puwang sa kanan para sa × */
+  padding: 12px 40px 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.65);
+  color: var(--nb-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color var(--transition), border-color var(--transition),
+    box-shadow var(--transition), transform var(--transition);
+}
+
+.item:hover {
+  border-color: var(--nb-line);
+  background-color: #fff;
+  transform: translateY(-1px);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--nb-blue);
+  outline-offset: 1px;
+}
+
+/* Hindi pa nababasa: puting card, anino, at dilaw na guhit sa kaliwa */
+.unread {
+  border-color: var(--nb-line);
+  background-color: #fff;
+  box-shadow: 0 8px 20px rgba(6, 53, 140, 0.08);
+}
+
+.unread::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--nb-yellow), #f7b900);
+}
+
+.unread:hover {
+  border-color: #cfdcf6;
+  box-shadow: 0 12px 26px rgba(6, 53, 140, 0.12);
+}
+
+/* Icon: maputlang asul kapag nabasa na; buong asul na may dilaw
+   na simbolo kapag hindi pa */
+.itemIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--nb-sky);
+  color: var(--nb-blue);
+}
+
+.unread .itemIcon {
+  background: linear-gradient(135deg, var(--nb-blue), var(--nb-navy));
+  color: var(--nb-yellow);
+  box-shadow: 0 6px 14px rgba(6, 53, 140, 0.28);
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #3a4663;
+  overflow-wrap: anywhere;
+}
+
+.unread .itemTitle {
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.itemBody {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--nb-muted);
+  overflow-wrap: anywhere;
+}
+
+.itemTime {
+  align-self: flex-start;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8f98ab;
+}
+
+/* Oras ng hindi pa nababasa: maliit na asul na "pill" */
+.unread .itemTime {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--nb-sky);
+  color: var(--nb-blue);
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background-color: var(--nb-yellow);
+  border: 2px solid var(--nb-blue);
+}
+
+/* ---------- × (BURAHIN) ----------
+   Lumalabas kapag naka-hover o naka-focus ang hanay. Sa phone
+   (walang hover) ay laging nakikita. */
+.deleteBtn {
+  position: absolute;
+  top: 9px;
+  right: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #9aa3b6;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), background-color var(--transition),
+    color var(--transition);
+}
+
+.row:hover .deleteBtn,
+.row:focus-within .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  background-color: #ffe9e6;
+  color: #c0362c;
+}
+
+.deleteBtn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--nb-blue);
+  outline-offset: 1px;
+}
+
+@media (hover: none) {
+  .deleteBtn {
+    opacity: 1;
+  }
+}
+
+/* ---------- KULAY AYON SA TONE ----------
+   success = approved · danger = rejected · warning = ipina-revise
+   (Mas matimbang ito kaysa sa kulay ng nabasa / hindi pa.) */
+.itemIcon.tone_success {
+  background: #e3f6ec;
+  color: #17804a;
+  box-shadow: none;
+}
+
+.itemIcon.tone_danger {
+  background: #fdebea;
+  color: #c0362c;
+  box-shadow: none;
+}
+
+.itemIcon.tone_warning {
+  background: var(--nb-yellow-soft);
+  color: #9a6400;
+  box-shadow: none;
+}
+
+.toast.tone_success {
+  border-left-color: #22a06b;
+}
+
+.toast.tone_danger {
+  border-left-color: #e5373d;
+}
+
+.toast.tone_warning {
+  border-left-color: #f59e0b;
+}
+
+/* ================================================================
+   MALIIT NA PAALALA (toast)
+   ================================================================ */
 .toast {
   position: absolute;
-  top: calc(100% + 0.6rem);
+  top: calc(100% + 12px);
   right: 0;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  width: 280px;
+  gap: 4px;
+  width: 310px;
   max-width: calc(100vw - 2rem);
-  padding: 0.75rem 0.95rem;
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--color-primary);
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: var(--shadow-lg);
-  color: var(--color-text);
+  padding: 14px 16px 15px 16px;
+  border: 1px solid var(--nb-line);
+  border-left: 5px solid var(--nb-yellow);
+  border-radius: 16px;
+  background:
+    radial-gradient(90px 60px at 100% 0%, var(--nb-sky), transparent 70%),
+    #fff;
+  box-shadow: 0 18px 40px rgba(3, 27, 75, 0.22);
   font: inherit;
-  text-align: left;
   cursor: pointer;
-  animation: toastIn 0.25s ease-out;
+  animation: toastIn 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  transition: transform var(--transition);
 }
 
+.toast:hover {
+  transform: translateY(-2px);
+}
+
+.toast:focus-visible {
+  outline: 2px solid var(--nb-blue);
+  outline-offset: 2px;
+}
+
+/* "New notification" — asul na pill */
 .toastLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background-color: var(--nb-navy);
+  color: var(--nb-yellow);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-primary);
 }
 
 .toastTitle {
-  font-size: 0.87rem;
-  font-weight: 700;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
   overflow-wrap: anywhere;
 }
 
 .toastBody {
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  font-size: 12.5px;
+  color: var(--nb-muted);
+  overflow-wrap: anywhere;
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ring svg,
-  .toast {
-    animation: none;
-  }
-}
-
+/* ---------- WALANG LAMAN ---------- */
 .empty {
-  padding: 2rem 1.4rem;
+  padding: 32px 20px 34px;
   text-align: center;
 }
 
 .emptyIcon {
-  display: block;
-  font-size: 1.6rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.6;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background-color: var(--nb-yellow);
+  color: var(--nb-navy);
+  box-shadow: 0 0 0 6px #fff, 0 0 0 7px var(--nb-line), 0 10px 22px rgba(6, 53, 140, 0.15);
 }
 
 .emptyTitle {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-family: var(--font-display, inherit);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--nb-navy-deep);
 }
 
-/* ---------- variant="onDark" (navy na pagbati sa Dashboard) ---------- */
-.onDark {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  border-color: transparent;
-  background-color: rgba(255, 255, 255, 0.14);
-  color: #fff;
+/* ---------- PHONE ----------
+   Halos buong lapad. Inuusog pakanan (-16px) para pumantay sa
+   gilid ng tile — ang bell ay 16px mula sa gilid ng tile, at 12px
+   ang padding ng page (MemberLayout), kaya may 12px na puwang sa
+   magkabilang gilid ng screen. */
+@media (max-width: 560px) {
+  .panel,
+  .toast {
+    right: -16px;
+    width: calc(100vw - 24px);
+    max-width: none;
+  }
+
+  .panelHeader {
+    padding: 12px 12px 12px 16px;
+  }
+
+  .panelTitle {
+    font-size: 16px;
+  }
+
+  .markAll {
+    padding: 6px 9px;
+    font-size: 11.5px;
+  }
+
+  .list {
+    max-height: 58vh;
+  }
 }
 
-.onDark:hover,
-.onDark.bellActive {
-  border-color: transparent;
-  background-color: rgba(255, 255, 255, 0.24);
-  color: #fff;
-}
+@media (prefers-reduced-motion: reduce) {
+  .ring svg,
+  .toast,
+  .panel {
+    animation: none;
+  }
 
-.onDark:focus-visible {
-  outline-color: var(--dash-yellow);
-}
-
-.onDark .badge {
-  top: -5px;
-  right: -5px;
-  min-width: 22px;
-  height: 22px;
-  border: 3px solid var(--dash-navy);
-  font-size: 0.72rem;
-  line-height: 16px;
-}
-
-/* Huwag manahin ang puting text kapag nasa madilim na background
-   (hal. ang navy na pagbati sa Dashboard) */
-.panel,
-.toast {
-  color: var(--color-text);
-  text-align: left;
+  .item:hover,
+  .toast:hover {
+    transform: none;
+  }
 }

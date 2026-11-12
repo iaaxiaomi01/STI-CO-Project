@@ -10,6 +10,7 @@ import {
   Info,
   MapPin,
   Pencil,
+  Plus,
   Search,
   Trash2,
   Users,
@@ -60,7 +61,6 @@ import {
 import { fetchEventRewards } from '../lib/og.js'
 import { OgAmount } from '../components/OgGem.jsx'
 import PageHeader from '../components/PageHeader.jsx'
-import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import EventForm from '../components/EventForm.jsx'
 import JoinConfirmDialog from '../components/JoinConfirmDialog.jsx'
@@ -710,9 +710,16 @@ function Events() {
         title="Events"
         action={
           canCreate && (
-            <ActionButton onClick={openCreate}>
-              {openingCreate ? 'Loading…' : '+ Create Event'}
-            </ActionButton>
+            /* Sariling itsura (.createBtn sa Events.module.css) —
+               kapareho ng "Create Proposal" pero STI blue. Hindi na
+               ang shared na ActionButton, para hindi magbago ang
+               button sa ibang page. */
+            <button type="button" className={styles.createBtn} onClick={openCreate}>
+              <span className={styles.createIcon} aria-hidden="true">
+                <Plus size={18} strokeWidth={2.8} />
+              </span>
+              {openingCreate ? 'Loading…' : 'Create Event'}
+            </button>
           )
         }
       />

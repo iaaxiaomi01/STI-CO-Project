@@ -54,37 +54,102 @@ function Login() {
 
   return (
     <section className={styles.page}>
+      {/* Palamuti lang sa background — tuldok-tuldok at malabong ilaw */}
+      <div className={styles.backdrop} aria-hidden="true" />
+
       <div className={styles.card}>
-        {/* PALITAN: logo ng site mo */}
-        <p className={styles.brand}>
-          STI<span className={styles.brandAccent}>-CO</span>
-        </p>
+        {/* ---------- KALIWA: BRAND PANEL ----------
+            Palamuti at pangalan ng site. Sa mobile, nagiging
+            maikling banner ito sa itaas ng form. */}
+        <aside className={styles.brandPanel}>
+          <div className={styles.orbit} aria-hidden="true">
+            <span className={styles.ringOuter} />
+            <span className={styles.ringMiddle}>
+              <span className={styles.satellite} />
+            </span>
+            <span className={styles.ringInner} />
+            <span className={styles.sun} />
+          </div>
 
-        <div className={styles.cardHead}>
-          <h1 className={styles.title}>Sign in</h1>
-          <p className={styles.subtitle}>
-            Use your Microsoft account to sign in.
+          <div className={styles.brandContent}>
+            {/* PALITAN: logo ng site mo */}
+            <p className={styles.brand}>
+              STI<span className={styles.brandAccent}>-CO</span>
+            </p>
+
+            <p className={styles.tagline}>
+              <span>All Organizations.</span>
+              <span>One Campus.</span>
+              <span className={styles.taglineAccent}>One Platform.</span>
+            </p>
+          </div>
+
+          <p className={styles.secureNote}>
+            <svg viewBox="0 0 24 24" className={styles.secureIcon} aria-hidden="true">
+              <path
+                d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8.6 7.5 10 4.3-1.4 7.5-5.4 7.5-10v-6L12 2.5Z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <path
+                d="m8.8 12.2 2.2 2.2 4.3-4.6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Secured by Microsoft sign-in
           </p>
+        </aside>
+
+        {/* ---------- KANAN: SIGN IN ---------- */}
+        <div className={styles.formPanel}>
+          <div className={styles.cardHead}>
+            <p className={styles.eyebrow}>Welcome to STI-CO</p>
+            <h1 className={styles.title}>Sign in</h1>
+            <p className={styles.subtitle}>
+              Use your Microsoft account to sign in.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className={styles.msButton}
+            onClick={handleMicrosoftSignIn}
+            disabled={busy}
+          >
+            {busy ? (
+              <span className={styles.spinner} aria-hidden="true" />
+            ) : (
+              <img src={msLogo} alt="" className={styles.msLogo} />
+            )}
+            <span className={styles.msButtonText}>
+              {busy ? 'Redirecting to Microsoft…' : 'Sign in with Microsoft'}
+            </span>
+          </button>
+
+          {error && (
+            <p className={styles.errorNotice} role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className={styles.helpText}>
+            <svg viewBox="0 0 24 24" className={styles.helpIcon} aria-hidden="true">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <circle cx="12" cy="7.8" r="1.1" fill="currentColor" />
+            </svg>
+            <p>
+              You need an STI Microsoft account to sign in.
+              If you don't have one yet, please contact School Administrator.
+            </p>
+          </div>
         </div>
-
-        <button
-          type="button"
-          className={styles.msButton}
-          onClick={handleMicrosoftSignIn}
-          disabled={busy}
-        >
-          <img src={msLogo} alt="" className={styles.msLogo} />
-          <span className={styles.msButtonText}>
-            {busy ? 'Redirecting to Microsoft…' : 'Sign in with Microsoft'}
-          </span>
-        </button>
-
-        {error && <p className={styles.errorNotice}>{error}</p>}
-
-        <p className={styles.helpText}>
-          You need an STI Microsoft account to sign in.
-          If you don't have one yet, please contact School Administrator.
-        </p>
       </div>
     </section>
   )

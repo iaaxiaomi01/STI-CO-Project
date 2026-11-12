@@ -1,0 +1,429 @@
+/* ================================================================
+   REVIEW DIALOG — Approve / Reject / Request revision / Noted
+
+   Simple at "pang-school" na itsura — parang opisyal na form:
+     - asul na header ng STI na may dilaw na guhit (letterhead)
+     - "What happens next", review history
+     - reason na may mahinang linya, parang papel ng notebook
+
+   Iba ang accent ayon sa aksyon (nakatakda sa .approved,
+   .rejected, .revision; ang Noted ay asul):
+     Approve → berde   Reject → pula   Revision → amber
+
+   Sariling CSS — hindi gumagamit ng ProposalForm.module.css.
+
+     ┌──────────────────────────────────────┐
+     │▓ [✓] PROPOSAL REVIEW              ▓▓│ ← asul na header
+     │▓     Approve proposal               │
+     ├══════════════════════════════════════┤ ← dilaw na guhit
+     │  WHAT HAPPENS NEXT …                 │
+     │  REVIEW HISTORY …                    │
+     │  REASON FOR APPROVAL                 │
+     │  [________________________________]  │ ← may linya
+     ├──────────────────────────────────────┤
+     │                   [Cancel] [Approve] │
+     └──────────────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --rd-navy: var(--sti-blue, #06358c);
+  --rd-deep: var(--sti-blue-deep, #031b4b);
+  --rd-bright: var(--sti-blue-bright, #1249a8);
+  --rd-yellow: var(--sti-yellow, #ffd200);
+  --rd-line: #e2e8f2;
+  --rd-line-strong: #c9d3e6;
+  --rd-soft: #f6f8fc;
+  --rd-ink: #0e1a36;
+  --rd-muted: #5f6b85;
+  --rd-red: #c0362c;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+/* ---------- ACCENT AYON SA AKSYON ---------- */
+.modal {
+  --accent: #1e4fd8;
+  --accent-deep: #163fae;
+  --accent-soft: #eef3ff;
+  --accent-line: #c9d8fb;
+}
+
+.approved {
+  --accent: #15803d;
+  --accent-deep: #116632;
+  --accent-soft: #ecf8f0;
+  --accent-line: #bfe5cc;
+}
+
+.rejected {
+  --accent: #c0362c;
+  --accent-deep: #a12a21;
+  --accent-soft: #fdf0ee;
+  --accent-line: #f3cbc5;
+}
+
+.revision {
+  --accent: #c26a06;
+  --accent-deep: #a25705;
+  --accent-soft: #fff5e8;
+  --accent-line: #f3d6ad;
+}
+
+/* ---------- MODAL ---------- */
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 28px 70px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.1);
+  color: var(--rd-ink);
+  font-family: var(--font-ui, inherit);
+  animation: modalIn 0.22s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- HEADER (letterhead ng STI) ---------- */
+.head {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px;
+  overflow: hidden;
+  background-color: var(--rd-navy);
+  border-bottom: 4px solid var(--rd-yellow);
+  color: #fff;
+}
+
+/* Konting palamuti: dalawang diagonal na banda sa kanan */
+.head::before,
+.head::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  bottom: -20px;
+  width: 46px;
+  background-color: rgba(255, 255, 255, 0.07);
+  transform: skewX(-24deg);
+  pointer-events: none;
+}
+
+.head::before {
+  right: 64px;
+}
+
+.head::after {
+  right: 6px;
+  background-color: rgba(255, 210, 0, 0.9);
+  width: 18px;
+}
+
+/* Icon ng aksyon — puting kahon, kulay ng accent ang icon */
+.headIcon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--accent);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.headText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rd-yellow);
+}
+
+.heading {
+  margin-top: 2px;
+  font-family: var(--font-display, inherit);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: #fff;
+}
+
+/* ---------- LAMAN ---------- */
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px 24px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rd-line-strong) transparent;
+}
+
+/* Pamagat ng bawat bahagi */
+.sectionTitle {
+  margin-bottom: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rd-navy);
+}
+
+/* "What happens next" */
+.next {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent-line);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background-color: var(--accent-soft);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #3d4762;
+}
+
+.next strong {
+  color: var(--rd-deep);
+}
+
+/* Review history — itinatago kapag walang laman ang ReviewTrail */
+.history {
+  margin-bottom: 20px;
+}
+
+.history:not(:has(ol, section)) {
+  display: none;
+}
+
+.history ol {
+  margin-top: 0;
+}
+
+/* ---------- REASON ---------- */
+.field {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.counter {
+  margin-bottom: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rd-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Parang papel ng notebook: mahinang pahalang na linya */
+.textarea {
+  --rule: 26px;
+
+  display: block;
+  width: 100%;
+  min-height: calc(var(--rule) * 5 + 16px);
+  padding: 8px 14px;
+  border: 1px solid var(--rd-line-strong);
+  border-radius: 10px;
+  background-color: #fff;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--rule) - 1px),
+    #e7ecf5 calc(var(--rule) - 1px),
+    #e7ecf5 var(--rule)
+  );
+  background-position: 0 8px;
+  background-attachment: local;
+  color: var(--rd-ink);
+  font: inherit;
+  font-size: 14.5px;
+  line-height: var(--rule);
+  resize: vertical;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.textarea::placeholder {
+  color: #a0a9bc;
+}
+
+.textarea:hover {
+  border-color: #a9b5cc;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.error {
+  margin: 14px 0 6px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--rd-red);
+  border-radius: 10px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--rd-line);
+  background-color: var(--rd-soft);
+}
+
+.secondary,
+.success,
+.danger,
+.warning,
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.secondary {
+  border: 1px solid var(--rd-line-strong);
+  background-color: #fff;
+  color: var(--rd-deep);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--rd-navy);
+}
+
+/* Ang action button — kulay ng accent ng aksyon */
+.success,
+.danger,
+.warning,
+.primary {
+  min-width: 140px;
+  border: 1px solid var(--accent-deep);
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.success:hover:not(:disabled),
+.danger:hover:not(:disabled),
+.warning:hover:not(:disabled),
+.primary:hover:not(:disabled) {
+  background-color: var(--accent-deep);
+}
+
+.secondary:focus-visible,
+.success:focus-visible,
+.danger:focus-visible,
+.warning:focus-visible,
+.primary:focus-visible {
+  outline: 3px solid var(--rd-yellow);
+  outline-offset: 2px;
+}
+
+.secondary:disabled,
+.success:disabled,
+.danger:disabled,
+.warning:disabled,
+.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .head {
+    padding: 16px 18px;
+  }
+
+  .heading {
+    font-size: 19px;
+  }
+
+  .content {
+    padding: 18px 18px 6px;
+  }
+
+  .actions {
+    padding: 12px 18px;
+  }
+
+  .secondary,
+  .success,
+  .danger,
+  .warning,
+  .primary {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+}

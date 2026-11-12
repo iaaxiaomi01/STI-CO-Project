@@ -1,46 +1,273 @@
+/* ============================================================
+   LOGIN PAGE
+
+   Dalawang panel sa iisang card:
+     Kaliwa → brand panel (STI blue, dilaw na "orbit" na
+              dahan-dahang umiikot — palamuti lang)
+     Kanan  → ang mismong sign in (puti, malinis, pormal)
+
+   Kulay: --sti-blue at --sti-yellow (index.css), para bagay
+   sa Header, Hero at Footer. Sa mobile, nagiging maikling
+   banner ang brand panel sa itaas ng form.
+   ============================================================ */
+
 .page {
-  min-height: 70vh;
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 109px); /* 106px header + 3px dilaw na border */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-section) 1.25rem;
-  background-color: var(--color-surface);
+  padding: 4rem 1.25rem;
+  background-color: #eef1f7;
+  overflow: hidden;
 }
 
+/* Tuldok-tuldok na background (kapareho ng pattern sa Footer),
+   na kumukupas papunta sa gilid, at malabong asul na ilaw */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18% 20%, rgba(6, 53, 140, 0.12), transparent 42%),
+    radial-gradient(circle at 85% 85%, rgba(255, 210, 0, 0.14), transparent 38%);
+}
+
+.backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(6, 53, 140, 0.16) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+
+/* ---------- ANG CARD ---------- */
 .card {
+  position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 940px;
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
   background-color: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  padding: 2.75rem 2.25rem 2.25rem;
-  text-align: center;
+  border-radius: 22px;
+  box-shadow:
+    0 1px 2px rgba(3, 27, 75, 0.06),
+    0 24px 60px -12px rgba(3, 27, 75, 0.28);
+  overflow: hidden;
+  animation: cardIn 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* ============================================================
+   KALIWA: BRAND PANEL
+   ============================================================ */
+.brandPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.75rem 2.75rem 2.25rem;
+  background:
+    linear-gradient(160deg, var(--sti-blue-bright) 0%, var(--sti-blue) 45%, var(--sti-blue-deep) 100%);
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Manipis na dilaw na guhit sa kanang gilid ng panel */
+.brandPanel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--sti-yellow), var(--sti-gold));
+}
+
+.brandContent {
+  position: relative;
+  z-index: 2;
 }
 
 .brand {
-  font-size: 1.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 4.25rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 2rem;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  animation: rise 0.7s 0.15s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .brandAccent {
-  color: var(--color-primary);
+  color: var(--sti-yellow);
+}
+
+.tagline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1.1rem;
+  font-family: var(--font-ui);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.tagline span {
+  animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.tagline span:nth-child(1) { animation-delay: 0.3s; }
+.tagline span:nth-child(2) { animation-delay: 0.4s; }
+.tagline span:nth-child(3) { animation-delay: 0.5s; }
+
+.taglineAccent {
+  color: var(--sti-yellow);
+}
+
+.secureNote {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  align-self: flex-start;
+  padding: 0.45rem 0.85rem 0.45rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.88);
+  animation: rise 0.6s 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.secureIcon {
+  width: 17px;
+  height: 17px;
+  color: var(--sti-yellow);
+}
+
+/* ---------- ORBIT: palamuti sa kanang-ibaba ng panel ----------
+   Dilaw na "araw" (kapareho ng bilog sa Hero) na may mga
+   singsing sa paligid. Ang gitnang singsing ay may maliit na
+   tuldok na dahan-dahang umiikot. */
+.orbit {
+  position: absolute;
+  right: -170px;
+  bottom: -170px;
+  width: 520px;
+  height: 520px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ringOuter,
+.ringMiddle,
+.ringInner,
+.sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ringOuter {
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ringMiddle {
+  width: 390px;
+  height: 390px;
+  border: 1px dashed rgba(255, 210, 0, 0.45);
+  animation: spin 40s linear infinite;
+}
+
+/* Ang tuldok na umiikot kasama ng singsing */
+.satellite {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background-color: var(--sti-yellow);
+  box-shadow: 0 0 0 5px rgba(255, 210, 0, 0.18), 0 0 18px rgba(255, 210, 0, 0.7);
+}
+
+.ringInner {
+  width: 270px;
+  height: 270px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.sun {
+  width: 170px;
+  height: 170px;
+  background: radial-gradient(circle at 35% 35%, #ffe066, var(--sti-yellow) 45%, var(--sti-gold) 100%);
+  box-shadow: 0 0 60px rgba(255, 210, 0, 0.35);
+}
+
+/* ============================================================
+   KANAN: SIGN IN
+   ============================================================ */
+.formPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3.25rem 3rem;
+  font-family: var(--font-ui);
+  animation: rise 0.7s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .cardHead {
-  margin-bottom: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+/* "Welcome to STI-CO" — maliit na label na may dilaw na guhit */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sti-blue);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 3px;
+  border-radius: 3px;
+  background-color: var(--sti-yellow);
 }
 
 .title {
-  font-size: 1.7rem;
+  font-family: var(--font-display);
+  font-size: 2.35rem;
   font-weight: 800;
-  margin-bottom: 0.4rem;
+  letter-spacing: -0.03em;
+  color: var(--sti-ink);
+  margin-bottom: 0.45rem;
 }
 
 .subtitle {
-  font-size: 0.95rem;
+  font-size: 0.97rem;
   color: var(--color-muted);
 }
 
@@ -54,31 +281,42 @@
    ========================================================== */
 .msButton {
   width: 100%;
-  min-height: 44px;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
   background-color: #fff;
   border: 1px solid #8c8c8c;
   border-radius: 4px; /* maliit lang ang radius sa spec nila */
   color: #5e5e5e;
   font-family: "Segoe UI", var(--font-sans);
-  font-size: 0.95rem;
+  font-size: 0.97rem;
   font-weight: 600;
-  transition: background-color var(--transition), border-color var(--transition);
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
 }
 
 .msButton:hover:not(:disabled) {
-  background-color: #f3f3f3;
+  background-color: #f6f6f6;
   border-color: #6f6f6f;
+  box-shadow: 0 6px 16px -6px rgba(3, 27, 75, 0.25);
+  transform: translateY(-1px);
+}
+
+.msButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* Kapag nagsa-sign in: hindi na mapipindot at bahagyang kupas */
 .msButton:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+  opacity: 0.75;
+  cursor: progress;
 }
 
 /* Opisyal na Microsoft logo asset */
@@ -92,33 +330,191 @@
   line-height: 1;
 }
 
+/* Umiikot na bilog habang papunta sa Microsoft */
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 2px solid #d0d0d0;
+  border-top-color: #5e5e5e;
+  border-radius: 50%;
+  animation: spinPlain 0.8s linear infinite;
+}
+
 /* ==========================================================
    MGA MENSAHE
    ========================================================== */
 /* Pulang kahon para sa error message sa ilalim ng button */
 .errorNotice {
-  margin-top: 1.25rem;
-  padding: 0.85rem 1rem;
+  margin-top: 1.1rem;
+  padding: 0.8rem 1rem;
   font-size: 0.88rem;
   text-align: left;
   color: #a12626;
   background-color: #fdeaea;
   border: 1px solid #f4c4c4;
-  border-radius: 10px;
+  border-left: 3px solid #c43232;
+  border-radius: 8px;
 }
 
 .helpText {
-  margin-top: 1.75rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--color-border);
-  font-size: 0.87rem;
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 2rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  background-color: #f4f6fb;
+  font-size: 0.85rem;
   line-height: 1.55;
   color: var(--color-muted);
 }
 
-/* ---------- MOBILE ---------- */
-@media (max-width: 480px) {
+.helpIcon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
+  color: var(--sti-blue);
+}
+
+/* ==========================================================
+   ANIMATIONS
+   ========================================================== */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Para sa spinner sa button (walang translate) */
+@keyframes spinPlain {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .brand,
+  .tagline span,
+  .secureNote,
+  .formPanel,
+  .ringMiddle {
+    animation: none;
+  }
+}
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+@media (max-width: 1023px) {
+  .page {
+    min-height: calc(100vh - 93px); /* 90px header + 3px border */
+    padding: 3rem 1.25rem;
+  }
+
   .card {
-    padding: 2.25rem 1.35rem 1.85rem;
+    max-width: 820px;
+  }
+
+  .brandPanel {
+    padding: 2.25rem 2rem 2rem;
+  }
+
+  .orbit {
+    right: -235px;
+    bottom: -235px;
+    transform: scale(0.8);
+  }
+
+  .formPanel {
+    padding: 2.75rem 2.25rem;
+  }
+}
+
+/* ==========================================================
+   MOBILE — brand panel → maikling banner sa itaas
+   ========================================================== */
+@media (max-width: 720px) {
+  .page {
+    align-items: flex-start;
+    padding: 2rem 1rem 2.5rem;
+  }
+
+  .card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    max-width: 460px;
+    border-radius: 18px;
+  }
+
+  .brandPanel {
+    gap: 1.25rem;
+    padding: 1.75rem 1.5rem 1.5rem;
+  }
+
+  /* Dilaw na guhit: sa ibaba na ng banner */
+  .brandPanel::after {
+    top: auto;
+    left: 0;
+    width: auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--sti-yellow), var(--sti-gold));
+  }
+
+  .brand {
+    font-size: 2.6rem;
+  }
+
+  .tagline {
+    margin-top: 0.7rem;
+    font-size: 1rem;
+  }
+
+  .orbit {
+    right: -260px;
+    bottom: -290px;
+    transform: scale(0.75);
+  }
+
+  .formPanel {
+    padding: 2rem 1.5rem 1.75rem;
+  }
+
+  .cardHead {
+    margin-bottom: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.9rem;
+  }
+
+  .helpText {
+    margin-top: 1.5rem;
   }
 }

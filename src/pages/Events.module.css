@@ -1297,3 +1297,69 @@
     flex: 1 1 100%;
   }
 }
+
+/* ---------- + CREATE EVENT (Officer) ----------
+   Kapareho ng "Create Proposal" sa Proposals.module.css, pero
+   STI blue (--sti-blue) imbes na dilaw: bilog na pill, puting
+   bilog na may + na umiikot nang kaunti kapag naka-hover. */
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px 7px 7px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--sti-blue, #06358c);
+  color: #fff;
+  font-family: var(--font-ui, inherit);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(6, 53, 140, 0.32), inset 0 -3px 0 rgba(3, 27, 75, 0.35);
+  transition: background-color var(--transition), transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.createBtn:hover {
+  background-color: var(--sti-blue-bright, #1249a8);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(6, 53, 140, 0.4), inset 0 -3px 0 rgba(3, 27, 75, 0.35);
+}
+
+.createBtn:active {
+  transform: translateY(0);
+}
+
+.createBtn:focus-visible {
+  outline: 3px solid var(--sti-yellow, #ffd200);
+  outline-offset: 3px;
+}
+
+/* Puting bilog na may + ; umiikot nang kaunti kapag naka-hover */
+.createIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #fff;
+  color: var(--sti-blue, #06358c);
+  box-shadow: 0 2px 6px rgba(3, 27, 75, 0.2);
+  transition: transform 0.25s ease;
+}
+
+.createBtn:hover .createIcon {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .createBtn:hover {
+    transform: none;
+  }
+
+  .createBtn:hover .createIcon {
+    transform: none;
+  }
+}

@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  Award,
+  BadgeCheck,
+  Bell,
+  CalendarDays,
+  Gem,
+  Mail,
+  Megaphone,
+  Pencil,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   NOTIFICATION_LIMIT,
@@ -13,14 +23,14 @@ import {
   timeAgo,
 } from '../lib/notifications.js'
 import styles from './NotificationBell.module.css'
-
+ 
 /* ============================================================
    NOTIFICATION BELL — REALTIME
-
+ 
    Galing ang laman sa public.notifications (EVENT_NOTIFICATIONS.sql).
    Ang database ang gumagawa ng notification kapag may bagong
    event; dito ay ipinapakita lang at minamarkahang nabasa.
-
+ 
    MGA URI:
      event_new       → may bagong event (Member, Officer at
                        Adviser — ADVISER_EVENT_NOTIFICATIONS.sql)
@@ -37,69 +47,79 @@ import styles from './NotificationBell.module.css'
      og_update       → nakatanggap ka ng OG mula sa event, o
                        na-cancel ang redemption mo
                        — OG_REWARDS_SHOP.sql
-
+ 
    REALTIME: nakikinig ang bell sa Supabase Realtime. Kapag may
    bagong notification:
      - tataas agad ang bilang sa pulang badge
      - kakalembang sandali ang bell
      - lalabas sandali ang maliit na paalala sa ilalim nito
    Walang refresh na kailangan.
-
+ 
    Kapag pinindot ang isang notification: mamarkahang nabasa,
    at dadalhin ka sa link nito (hal. /events).
-
+ 
    PAGBURA (DELETE_NOTIFICATIONS.sql):
      - ang × sa kanan ng bawat notification → buburahin iyon lang
      - "Clear all" sa itaas → may "Sigurado ka?" muna, tapos
        buburahin lahat ng notification mo
    Nawawala agad sa listahan; kapag pumalya sa database, kukunin
    ulit ang listahan para bumalik ang tamang laman.
+ 
+   DISENYO: light yellow na panel, puting card bawat notification,
+   at light blue / navy na accent. Itsura lang ang nasa CSS —
+   pareho ang laman at gawa.
    ============================================================ */
-
+ 
 /* Ilang segundo bago kusang mawala ang maliit na paalala */
 const TOAST_SECONDS = 6
-
+ 
+/* Icon ng bawat uri (dating mga simbolo: ◆ ✉ ✎ ⤓ ★ ❖ ✦) */
 const TYPE_ICON = {
-  event_new: '◆',
-  proposal_update: '✉',
-  proposal_review: '✎',
-  certificate_ready: '⤓',
-  position_update: '★',
-  og_update: '❖',
-  announcement_new: '✦',
+  event_new: CalendarDays,
+  proposal_update: Mail,
+  proposal_review: Pencil,
+  certificate_ready: Award,
+  position_update: BadgeCheck,
+  og_update: Gem,
+  announcement_new: Megaphone,
 }
-
+ 
+function TypeIcon({ type }) {
+  const Icon = TYPE_ICON[type] ?? Bell
+  return <Icon size={17} strokeWidth={2.2} />
+}
+ 
 /* Kulay ng icon ayon sa "tone" ng notification (PROPOSAL_NOTIFICATIONS.sql):
    success = approved · danger = rejected · warning = ipina-revise */
 function toneClass(n) {
   return styles[`tone_${n.tone}`] ?? ''
 }
-
+ 
 /* variant="onDark" — para sa madilim na background (hal. ang navy
    na pagbati sa bento Dashboard ng Member). Itsura lang ang iba. */
 function NotificationBell({ variant } = {}) {
   const { profile } = useAuth()
   const profileId = profile?.id
   const navigate = useNavigate()
-
+ 
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
+ 
   /* "Clear all" — naghihintay ng kumpirmasyon */
   const [confirmClear, setConfirmClear] = useState(false)
-
+ 
   /* Kalembang ng bell at ang maliit na paalala */
   const [ringing, setRinging] = useState(false)
   const [toast, setToast] = useState(null)
-
+ 
   /* Para sa "5 minuto na" — nire-refresh bawat minuto */
   const [now, setNow] = useState(() => Date.now())
-
+ 
   const wrapRef = useRef(null)
-
+ 
   const reload = useCallback(async () => {
     try {
       const [list, count] = await Promise.all([fetchNotifications(), countUnreadNotifications()])
@@ -113,14 +133,14 @@ function NotificationBell({ variant } = {}) {
       setLoading(false)
     }
   }, [])
-
+ 
   /* ---------- REALTIME ----------
      Ang unang pagkuha ng listahan ay sa onReconnect din — kaya
      kapag nawalan ng internet at bumalik, kukunin ulit ang
      listahan at walang makaligtaan. */
   useEffect(() => {
     if (!profileId) return undefined
-
+ 
     const unsubscribe = subscribeToNotifications(profileId, {
       onReconnect: reload,
       onInsert: (row) => {
@@ -133,33 +153,33 @@ function NotificationBell({ variant } = {}) {
         setToast(row)
       },
     })
-
+ 
     return unsubscribe
   }, [profileId, reload])
-
+ 
   /* Ihinto ang kalembang pagkalipas ng animation */
   useEffect(() => {
     if (!ringing) return undefined
     const timer = setTimeout(() => setRinging(false), 1200)
     return () => clearTimeout(timer)
   }, [ringing])
-
+ 
   /* Kusang mawawala ang paalala */
   useEffect(() => {
     if (!toast) return undefined
     const timer = setTimeout(() => setToast(null), TOAST_SECONDS * 1000)
     return () => clearTimeout(timer)
   }, [toast])
-
+ 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60 * 1000)
     return () => clearInterval(timer)
   }, [])
-
+ 
   /* Sasara ang panel kapag pumindot sa labas o pinindot ang Esc */
   useEffect(() => {
     if (!open) return undefined
-
+ 
     function handleClick(event) {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) {
         setOpen(false)
@@ -168,7 +188,7 @@ function NotificationBell({ variant } = {}) {
     function handleKey(event) {
       if (event.key === 'Escape') setOpen(false)
     }
-
+ 
     document.addEventListener('mousedown', handleClick)
     document.addEventListener('keydown', handleKey)
     return () => {
@@ -176,7 +196,7 @@ function NotificationBell({ variant } = {}) {
       document.removeEventListener('keydown', handleKey)
     }
   }, [open])
-
+ 
   function togglePanel() {
     setToast(null)
     setConfirmClear(false)
@@ -187,7 +207,7 @@ function NotificationBell({ variant } = {}) {
     }
     setOpen(!open)
   }
-
+ 
   /* Nabasa na: binabago agad ang itsura, tapos sinasabi sa database */
   function markLocal(id) {
     setItems((list) =>
@@ -195,7 +215,7 @@ function NotificationBell({ variant } = {}) {
     )
     setUnreadCount((c) => Math.max(0, c - 1))
   }
-
+ 
   async function openNotification(n) {
     setOpen(false)
     setToast(null)
@@ -207,7 +227,7 @@ function NotificationBell({ variant } = {}) {
     }
     if (n.link) navigate(n.link)
   }
-
+ 
   async function handleMarkAll() {
     const stamp = new Date().toISOString()
     setItems((list) => list.map((n) => (n.read_at ? n : { ...n, read_at: stamp })))
@@ -219,14 +239,14 @@ function NotificationBell({ variant } = {}) {
       reload()
     }
   }
-
+ 
   /* Burahin ang isa: alisin agad sa listahan, tapos sa database */
   async function handleDelete(n) {
     const wasFull = items.length >= NOTIFICATION_LIMIT
     setItems((list) => list.filter((x) => x.id !== n.id))
     if (!n.read_at) setUnreadCount((c) => Math.max(0, c - 1))
     if (toast?.id === n.id) setToast(null)
-
+ 
     try {
       await deleteNotification(n.id)
       /* Puno ang panel kanina — kunin ulit para may pumalit
@@ -237,7 +257,7 @@ function NotificationBell({ variant } = {}) {
       reload()
     }
   }
-
+ 
   /* Burahin lahat (pagkatapos ng "Sigurado ka?") */
   async function handleClearAll() {
     setConfirmClear(false)
@@ -251,7 +271,7 @@ function NotificationBell({ variant } = {}) {
       reload()
     }
   }
-
+ 
   return (
     <div className={styles.wrap} ref={wrapRef}>
       <button
@@ -280,12 +300,12 @@ function NotificationBell({ variant } = {}) {
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
-
+ 
         {unreadCount > 0 && (
           <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
       </button>
-
+ 
       {/* ---------- MALIIT NA PAALALA (bagong notification) ---------- */}
       {toast && !open && (
         <button
@@ -299,7 +319,7 @@ function NotificationBell({ variant } = {}) {
           {toast.body && <span className={styles.toastBody}>{toast.body}</span>}
         </button>
       )}
-
+ 
       {open && (
         <div className={styles.panel} role="dialog" aria-label="Notifications">
           <div className={styles.panelHeader}>
@@ -341,7 +361,7 @@ function NotificationBell({ variant } = {}) {
               </div>
             )}
           </div>
-
+ 
           {loading && items.length === 0 ? (
             <p className={styles.status}>Loading notifications…</p>
           ) : error && items.length === 0 ? (
@@ -349,7 +369,7 @@ function NotificationBell({ variant } = {}) {
           ) : items.length === 0 ? (
             <div className={styles.empty}>
               <span className={styles.emptyIcon} aria-hidden="true">
-                🔔
+                <Bell size={22} strokeWidth={2.2} />
               </span>
               <p className={styles.emptyTitle}>No notifications yet</p>
             </div>
@@ -363,7 +383,7 @@ function NotificationBell({ variant } = {}) {
                     onClick={() => openNotification(n)}
                   >
                     <span className={`${styles.itemIcon} ${toneClass(n)}`} aria-hidden="true">
-                      {TYPE_ICON[n.type] ?? '•'}
+                      <TypeIcon type={n.type} />
                     </span>
                     <span className={styles.itemText}>
                       <span className={styles.itemTitle}>{n.title}</span>
@@ -372,7 +392,7 @@ function NotificationBell({ variant } = {}) {
                     </span>
                     {!n.read_at && <span className={styles.dot} aria-label="Unread" />}
                   </button>
-
+ 
                   {/* Hiwalay na button (hindi puwedeng button sa loob ng button) */}
                   <button
                     type="button"
@@ -403,5 +423,5 @@ function NotificationBell({ variant } = {}) {
     </div>
   )
 }
-
+ 
 export default NotificationBell

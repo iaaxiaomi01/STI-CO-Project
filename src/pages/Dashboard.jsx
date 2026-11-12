@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Activity,
-  ArrowUpRight,
-  Building2,
-  CalendarDays,
-  ClipboardCheck,
-  FileText,
-  Gem,
-  Megaphone,
-  Users,
-} from 'lucide-react'
+import { ArrowUpRight, Building2, CalendarDays, FileText, Megaphone, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig, ROLE_KEYS } from '../config/roles.js'
 import { supabase } from '../lib/supabaseClient.js'
@@ -33,6 +23,7 @@ import {
 import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import DashboardCalendar from '../components/DashboardCalendar.jsx'
+import OrgHealthOverview from '../components/OrgHealthOverview.jsx'
 import styles from './Dashboard.module.css'
 
 /* ISANG Dashboard component, MARAMING magkaibang itsura.
@@ -338,6 +329,11 @@ function Dashboard() {
      BENTO LAYOUT — layout: 'bento' sa config/roles.js
      (Member, Officer, Adviser)
 
+     Gamit na rin ng SAO, School Head at School Administrator:
+     may sarili silang puwesto sa BENTO_LAYOUTS sa ibaba, kaya
+     kapareho na nila ang itsura ng Officer. Pareho pa rin ang
+     laman (stats sa config/roles.js) — itsura lang ang nagbago.
+
      Pareho ang data at mga numero sa itaas (statValue); ibang
      hugis lang ng tile ayon sa key (BENTO_TILES):
        upcomingEvents, newAnnouncements,
@@ -348,10 +344,11 @@ function Dashboard() {
      Ang PUWESTO ng bawat tile sa grid ay nasa BENTO_LAYOUTS
      (iba-iba bawat role, dahil iba-iba ang bilang ng stat).
      ============================================================ */
-  if (roleConfig.dashboard.layout === 'bento') {
+  const usesBento = roleConfig.dashboard.layout === 'bento' || Boolean(BENTO_LAYOUTS[role])
+
+  if (usesBento) {
     const bento = BENTO_LAYOUTS[role] ?? BENTO_LAYOUTS[ROLE_KEYS.MEMBER]
     const orgName = profile?.organizations?.name
-    const cards = roleConfig.dashboard.cards
 
     return (
       <div className={styles.bentoPage}>
@@ -378,8 +375,8 @@ function Dashboard() {
                 </div>
               )}
 
-              {/* Officer at Adviser: avatar + role · org (galing sa
-                  lumang welcome card — hindi inalis, inilipat lang) */}
+              {/* Officer, Adviser at staff: avatar + role · org
+                  (galing sa lumang welcome card — inilipat lang) */}
               {bento.identity && (
                 <div className={styles.heroMeta}>
                   <Avatar
@@ -408,33 +405,12 @@ function Dashboard() {
 
         {roleConfig.calendar && <DashboardCalendar eyebrow="Event Calendar" />}
 
-        {/* Sections cards — Officer at Adviser (walang laman ang
-            cards ng Member, kaya hindi lumalabas sa kanya) */}
-        {cards.length > 0 && (
-          <section className={styles.sections}>
-            <h2 className={styles.sectionsTitle}>Sections</h2>
+        {/* School Head lang: buod ng Organization Health bawat org
+            (components/OrgHealthOverview.jsx) */}
+        {role === ROLE_KEYS.SCHOOL_HEAD && <OrgHealthOverview />}
 
-            <div className={styles.sectionsGrid}>
-              {cards.map((card) => {
-                const Icon = SECTION_ICONS[card.to]
-                return (
-                  <Link key={card.to} to={card.to} className={styles.sectionCard}>
-                    <span className={styles.sectionGo} aria-hidden="true">
-                      <ArrowUpRight size={16} strokeWidth={2.4} />
-                    </span>
-                    <span className={styles.sectionIcon} aria-hidden="true">
-                      {Icon ? <Icon size={22} /> : card.icon}
-                    </span>
-                    <div>
-                      <h3 className={styles.sectionName}>{card.title}</h3>
-                      {card.text && <p className={styles.sectionText}>{card.text}</p>}
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        )}
+        {/* Inalis na ang "Sections" cards (Officer, Adviser) — nasa
+            sidebar na ang lahat ng link na iyon. */}
       </div>
     )
   }
@@ -490,8 +466,13 @@ function Dashboard() {
           </>
         ) : (
           <>
-            <span className={styles.tileIcon} aria-hidden="true">
-              {tile.Icon && <tile.Icon size={22} />}
+            <span className={styles.tileTop}>
+              <span className={styles.tileIcon} aria-hidden="true">
+                {tile.Icon && <tile.Icon size={22} />}
+              </span>
+              {/* Grupo ng stat (School Administrator: "Proposals",
+                  "School overview") — dating heading sa itaas */}
+              {stat.group && <span className={styles.tileGroup}>{stat.group}</span>}
             </span>
             <span className={styles.numRow}>
               <span className={styles.num}>{value}</span>
@@ -506,6 +487,8 @@ function Dashboard() {
     )
   }
 
+  /* LUMANG LAYOUT — para na lang sa role na walang bento
+     (hal. IT Administrator) */
   return (
     <>
       <div className={styles.welcomeCard}>
@@ -552,24 +535,8 @@ function Dashboard() {
         </section>
       )}
 
-      {/* Walang "Sections" kapag walang card (hal. IT Admin) */}
-      {roleConfig.dashboard.cards.length > 0 && (
-        <>
-          <h2 className={styles.sectionTitle}>Sections</h2>
-
-          <div className={styles.cardGrid}>
-            {roleConfig.dashboard.cards.map((card) => (
-              <Link key={card.to} to={card.to} className={styles.card}>
-                <span className={styles.cardIcon} aria-hidden="true">
-                  {card.icon}
-                </span>
-                <h3 className={styles.cardTitle}>{card.title}</h3>
-                <p className={styles.cardText}>{card.text}</p>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
+      {/* Inalis na ang "Sections" cards (SAO, School Head) — nasa
+          sidebar na ang Members, Proposals at Profile. */}
     </>
   )
 }
@@ -595,6 +562,8 @@ const BENTO_TILES = {
   newAnnouncements: { Icon: Megaphone },
   pendingProposals: { Icon: FileText },
   memberCount: { Icon: Users },
+  saOrganizations: { Icon: Building2 },
+  saMembers: { Icon: Users },
   ogBalance: { className: styles.tileGem, kind: 'gem' },
   attendanceRate: { kind: 'ring' },
   myAttendanceRate: { kind: 'ring' },
@@ -611,7 +580,10 @@ const BENTO_TILES = {
    Officer: pagbati + proposals + members sa itaas;
             Gems, org attendance, at sariling attendance sa ibaba
    Adviser: pagbati + proposals + members sa kaliwa;
-            org attendance na matangkad sa kanan */
+            org attendance na matangkad sa kanan
+   SAO, School Head: pagbati + proposals na magkatabi
+   School Administrator: pagbati + pending proposals sa itaas;
+            active organizations at active members sa ibaba */
 const BENTO_LAYOUTS = {
   [ROLE_KEYS.MEMBER]: {
     tiles: {
@@ -641,19 +613,29 @@ const BENTO_LAYOUTS = {
       attendanceRate: styles.aAtt,
     },
   },
-}
-
-/* Icon ng Sections cards (card.to → icon). Kapag wala rito,
-   ang icon sa config/roles.js ang gagamitin. */
-const SECTION_ICONS = {
-  '/proposals': FileText,
-  '/members': Users,
-  '/announcements': Megaphone,
-  '/rewards': Gem,
-  '/attendance': ClipboardCheck,
-  '/org-health': Activity,
-  '/org-profile': Building2,
-  '/events': CalendarDays,
+  [ROLE_KEYS.SAO]: {
+    gridClass: styles.bentoStaff,
+    identity: true,
+    tiles: {
+      pendingProposals: styles.sProposals,
+    },
+  },
+  [ROLE_KEYS.SCHOOL_HEAD]: {
+    gridClass: styles.bentoStaff,
+    identity: true,
+    tiles: {
+      pendingProposals: styles.sProposals,
+    },
+  },
+  [ROLE_KEYS.SCHOOL_ADMIN]: {
+    gridClass: styles.bentoSchoolAdmin,
+    identity: true,
+    tiles: {
+      pendingProposals: styles.saProposals,
+      saOrganizations: styles.saOrgs,
+      saMembers: styles.saMembersTile,
+    },
+  },
 }
 
 /* Circumference ng ring (r = 78 sa viewBox na 184) */

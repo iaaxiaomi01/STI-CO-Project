@@ -43,9 +43,7 @@ function ApproverPicker({
         Approvers
       </span>
       <p className={styles.intro}>
-        Choose who reviews this proposal at each step. Only the people you choose can act on
-        it. For SAO, School Head and School Administrator you can choose more than one — all of
-        them must act before it moves to the next step.
+        Choose the reviewers for each step. All selected reviewers must act before the proposal moves forward.
       </p>
 
       {stages.map((stage) => (

@@ -1,0 +1,763 @@
+/* ================================================================
+   EDIT USER — Edit button sa bawat hilera at ang Edit form
+   (Users page, School Administrator)
+
+   Disenyo:
+     Button — maliit na pill na may navy na gilid at dilaw na bilog
+              para sa lapis
+     Form   — navy na ulo na may abstract na hugis (dilaw na quarter
+              circle, singsing, pahilis na guhit) at ang avatar ng
+              tao; mapusyaw na katawan na may tatlong puting panel:
+                account (asul na gilid) · pangalan at detalye ·
+                access (dilaw na gilid)
+   Role at Organization: sariling dropdown (.pick…), kapareho ng
+   itsura ng nasa Add user form.
+   Hindi ito ginagamit ng Add user (components/AddUser.jsx).
+   ================================================================ */
+
+/* ---------------------------------------------------------------
+   EDIT BUTTON (sa bawat hilera)
+   --------------------------------------------------------------- */
+.editButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 13px 0 4px;
+  border: 1.5px solid var(--dash-navy-deep);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--dash-navy-deep);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.editIcon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.editButton:hover {
+  background-color: var(--dash-navy-deep);
+  color: #fff;
+}
+
+.editButton:focus-visible {
+  outline: 3px solid var(--dash-yellow);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+   DIALOG
+   --------------------------------------------------------------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.5);
+  animation: fade 0.16s ease-out;
+}
+
+.dialog {
+  --ink: #141c33;
+  --ink-soft: #5d6883;
+  --line: #d5dceb;
+  --line-strong: #b6c3dc;
+  --navy: var(--dash-navy-deep);
+  --yellow: var(--dash-yellow);
+  --sky: #5b85f0;
+  --green: #16683a;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 700px;
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  border-radius: 18px;
+  background-color: #f5f7fb;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: 0 30px 60px -24px rgba(3, 27, 75, 0.55);
+  animation: rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- ULO ---------- */
+.head {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 18px;
+  padding: 26px 30px;
+  overflow: hidden;
+  background: linear-gradient(125deg, var(--navy) 0%, #08307f 60%, #0d43ad 100%);
+  color: #fff;
+}
+
+/* Abstract na hugis: dilaw na quarter circle sa kanang itaas,
+   manipis na singsing, at pahilis na guhit-guhit */
+.shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 100% 0%, var(--yellow) 0 64px, transparent 65px),
+    radial-gradient(circle at 100% 0%, transparent 0 86px, rgba(255, 210, 0, 0.4) 87px 89px, transparent 90px),
+    radial-gradient(circle at 78% 135%, transparent 0 58px, rgba(255, 255, 255, 0.16) 59px 61px, transparent 62px);
+}
+
+.shapes::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0 2px, transparent 2px 11px);
+  mask-image: linear-gradient(90deg, transparent 40%, #000 80%);
+}
+
+.shapes::after {
+  content: '';
+  position: absolute;
+  bottom: 18px;
+  right: 34%;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background-color: var(--sky);
+  transform: rotate(28deg);
+}
+
+/* Avatar ng tao — puting gilid at dilaw na singsing */
+.avatar {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 64px !important;
+  height: 64px !important;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 3px var(--yellow), 0 10px 20px -8px rgba(0, 8, 30, 0.6);
+}
+
+.title {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.titleVerb {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.titleName {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- KATAWAN ---------- */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 20px 24px 8px;
+  overflow-y: auto;
+}
+
+.fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Puting panel; ang account at access ay may kulay na gilid */
+.panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px 18px 18px;
+  border: 1px solid #e3e8f1;
+  border-radius: 14px;
+  background-color: #fff;
+}
+
+.panelAccount {
+  box-shadow: inset 4px 0 0 var(--sky);
+}
+
+.panelAccess {
+  box-shadow: inset 4px 0 0 var(--yellow);
+}
+
+.row2,
+.row3 {
+  display: grid;
+  gap: 12px;
+}
+
+.row2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.field {
+  display: block;
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  color: #2a3553;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.optional {
+  color: #8a93a8;
+  font-weight: 500;
+}
+
+/* Kahon ng field — may icon sa loob kung meron */
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: #fff;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.control:hover {
+  border-color: var(--line-strong);
+}
+
+/* Naka-focus: navy na gilid at dilaw na glow */
+.control:focus-within {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.38);
+}
+
+/* Naka-lock (hal. email ng naka-login na, role mo mismo) */
+.controlLocked,
+.controlLocked:hover {
+  border-style: dashed;
+  border-color: #c9d1e0;
+  background-color: #f2f4f8;
+}
+
+.controlLocked .input {
+  color: #7b849a;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #a0a8bb;
+  font-weight: 500;
+}
+
+.input:read-only,
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.msLogo {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+}
+
+.lockIcon {
+  flex-shrink: 0;
+  color: #8a94aa;
+}
+
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+/* ---------- DROPDOWN (Role, Organization) ----------
+   Kapareho ng nasa Add user form: kamukha ng ibang field ang
+   pindutan, may dilaw na kahon para sa chevron. Kapag bukas: dilaw
+   ang gilid; sa listahan, light yellow at gintong check ang napili. */
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 5px 6px 5px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pick:hover:not(:disabled) {
+  border-color: #e0b400;
+}
+
+.pick:focus-visible,
+.pickOpen {
+  outline: none;
+  border-color: #e0b400;
+  box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.32);
+}
+
+.pick:disabled {
+  background-color: #f3f5f9;
+  cursor: not-allowed;
+}
+
+.pickValue,
+.pickPlaceholder {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickPlaceholder {
+  color: #7b849a;
+  font-weight: 500;
+}
+
+/* Dilaw na kahon ng chevron */
+.pickArrow {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background-color: #fff3bf;
+  color: #7a5a00;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.pickArrow svg {
+  transition: transform 0.2s ease;
+}
+
+.pick:hover:not(:disabled) .pickArrow,
+.pickOpen .pickArrow {
+  background-color: var(--yellow);
+  color: var(--navy);
+}
+
+.pickOpen .pickArrow svg {
+  transform: rotate(180deg);
+}
+
+.pick:disabled .pickArrow {
+  background-color: #e8ebf1;
+  color: #a7afc2;
+}
+
+/* Logo o unang letra ng org */
+.pickTile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: var(--navy);
+  color: var(--yellow);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pickTile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+/* ---------- Listahan (nakalutang) ---------- */
+.pickList {
+  position: fixed;
+  z-index: 120;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid #ecd98a;
+  border-top: 3px solid var(--yellow);
+  border-radius: 6px 6px 10px 10px;
+  background-color: #fff;
+  box-shadow: 0 18px 36px -14px rgba(3, 27, 75, 0.35);
+  list-style: none;
+  outline: none;
+  animation: pickIn 0.14s ease-out;
+}
+
+.pickListUp {
+  border-top: 1px solid #ecd98a;
+  border-bottom: 3px solid var(--yellow);
+  border-radius: 10px 10px 6px 6px;
+}
+
+.pickOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pickActive {
+  background-color: #f4f6fb;
+}
+
+.pickSelected {
+  background-color: #fff6d1;
+  font-weight: 800;
+}
+
+.pickSelected.pickActive {
+  background-color: #ffefb3;
+}
+
+.pickText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.pickCheck {
+  flex-shrink: 0;
+  color: #c79500;
+  visibility: hidden;
+}
+
+.pickSelected .pickCheck {
+  visibility: visible;
+}
+
+/* "Inactive" na org */
+.pickNote {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background-color: #eef0f4;
+  color: #6b7285;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pickMuted .pickText {
+  color: var(--ink-soft);
+}
+
+.pickMuted .pickTile {
+  opacity: 0.55;
+}
+
+@keyframes pickIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ---------- Mga paalala ---------- */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: #eef3ff;
+  color: #1a3d9c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.noteWarn {
+  background-color: #fff6dc;
+  color: #7a5200;
+}
+
+/* ---------- Active (berdeng switch na may check) ---------- */
+.active {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1f6;
+  cursor: pointer;
+}
+
+.activeInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.activeTrack {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  margin-top: 1px;
+  border-radius: 999px;
+  background-color: #cfd5e1;
+  transition: background-color 0.2s ease;
+}
+
+.activeKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #fff;
+  color: transparent;
+  box-shadow: 0 1px 3px rgba(3, 27, 75, 0.3);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.activeInput:checked + .activeTrack {
+  background-color: var(--green);
+}
+
+.activeInput:checked + .activeTrack .activeKnob {
+  color: var(--green);
+  transform: translateX(18px);
+}
+
+.activeInput:focus-visible + .activeTrack {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.active:has(.activeInput:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.activeTitle {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.activeText {
+  display: block;
+  margin-top: 1px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* ---------- Error ---------- */
+.error {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-left: 4px solid #b42318;
+  border-radius: 0 10px 10px 0;
+  background-color: #fdeeec;
+  color: #8f1d14;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+/* ---------- PAA ---------- */
+.foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid #e3e8f1;
+  background-color: #fff;
+}
+
+.cancel,
+.save {
+  min-height: 42px;
+  padding: 0 22px;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.cancel {
+  border: 1px solid var(--line);
+  background-color: #fff;
+  color: var(--ink);
+}
+
+.cancel:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background-color: #f3f5f9;
+}
+
+.save {
+  min-width: 110px;
+  border: none;
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.save:hover:not(:disabled) {
+  background-color: var(--dash-navy);
+}
+
+.cancel:disabled,
+.save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel:focus-visible,
+.save:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- ANIMATION ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 640px) {
+  .head {
+    padding: 20px 18px;
+    gap: 14px;
+  }
+
+  .avatar {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .titleName {
+    font-size: 1.2rem;
+  }
+
+  .body {
+    padding: 14px 14px 4px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  .row2,
+  .row3 {
+    grid-template-columns: 1fr;
+  }
+
+  .foot {
+    padding: 12px 14px;
+  }
+
+  .cancel,
+  .save {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+
+  .activeTrack,
+  .activeKnob {
+    transition: none;
+  }
+
+  .pickList {
+    animation: none;
+  }
+}

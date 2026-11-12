@@ -10,8 +10,8 @@ import {
   Eye,
   Hourglass,
   MapPin,
-  Paperclip,
   Pencil,
+  Plus,
   RotateCcw,
   Trash2,
   User,
@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
+  approversOf,
   authorName,
   authorRoleLabel,
   awaitsNoted,
@@ -28,16 +29,22 @@ import {
   canReviewProposal,
   canReviseProposal,
   createProposal,
+  decisionLabel,
   deleteProposal,
   fetchProposals,
+  finalStage,
   formatDateTime,
+  hasBudget,
   hasSchedule,
   isInRevision,
   isPastSchedule,
+  pendingReviewers,
   progressLabel,
+  rejectedBy,
   requestRevision,
   resubmitProposal,
   reviewPath,
+  reviewProgress,
   reviewProposal,
   reviewSteps,
   scheduleLabel,
@@ -47,17 +54,14 @@ import {
   attachmentsOf,
   deleteProposalFiles,
   downloadProposalFile,
-  formatFileSize,
   uploadProposalFiles,
 } from '../lib/proposalFiles.js'
 import { eventOfProposal, nowKey } from '../lib/events.js'
 import PageHeader from '../components/PageHeader.jsx'
-import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
 import ReviewDialog from '../components/ReviewDialog.jsx'
-import ReviewTrail from '../components/ReviewTrail.jsx'
 import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
 import styles from './Proposals.module.css'
 
@@ -123,6 +127,12 @@ import styles from './Proposals.module.css'
      - ROUTE MAP: Officer → Adviser → SAO → School Head
        (→ School Admin) na parang mapa ng tren. Galing sa parehong
        data ng ReviewTrail (reviewPath + reviewSteps) — display lang.
+     - Ang detalye ng review (dating ReviewTrail sa ilalim ng mapa)
+       ay nakatapat na sa bawat istasyon: hal. sa ilalim ng ADVISER
+       → "Pending · Waiting for: Test Adviser." Pareho ang laman at
+       mga mensahe ng ReviewTrail; inilipat lang ng puwesto. Ang
+       ReviewTrail component ay ginagamit pa rin ng ReviewDialog
+       at ng sulat (ProposalLetter).
    ============================================================ */
 
 /* Kulay at icon ng bawat proposal ayon sa kalagayan nito */
@@ -191,24 +201,146 @@ const STATION_ICON = {
   revision: RotateCcw,
 }
 
+/* "Final: Approved" — kapareho ng stepLabel() sa ReviewTrail */
+function stepLabel(step) {
+  const label = decisionLabel(step.decision)
+  return step.final ? `Final: ${label}` : label
+}
+
+/* ---------- DETALYE BAWAT ISTASYON (display lang) ----------
+   Ang dating laman ng ReviewTrail, hinati ayon sa istasyon:
+     entries → mga aksyong nagawa na sa stage na iyon
+               (Approved / Rejected / Noted / Revision requested,
+               sino, kailan, komento)
+     waiting → kung naroon ngayon ang proposal: "Pending · 1 of 3"
+               at kung sino ang hinihintay — PAREHONG mensahe ng
+               ReviewTrail. Nasa Officer ito kapag ibinalik para
+               i-revise.
+     chosen  → mga approver na pinili ng Officer (para sa mga
+               stage na hindi pa nararating) */
+function stationInfo(p) {
+  const path = reviewPath(p)
+
+  /* Walang "stage" ang hakbang na pa-revise — galing sa pangalan */
+  const stageOfStep = (step) => {
+    if (step.stage === 'legacy') return 'adviser'
+    if (step.stage) return step.stage
+    return path.find((stage) => stageLabel(stage) === step.role) ?? null
+  }
+
+  const info = { officer: { entries: [], waiting: null, chosen: '' } }
+  for (const stage of path) {
+    info[stage] = {
+      entries: [],
+      waiting: null,
+      chosen: approversOf(p, stage)
+        .map((a) => a.name)
+        .filter(Boolean)
+        .join(', '),
+    }
+  }
+
+  for (const step of reviewSteps(p)) {
+    const stage = stageOfStep(step)
+    if (stage && info[stage]) info[stage].entries.push(step)
+  }
+
+  /* Naghihintay pa — kapareho ng huling linya ng ReviewTrail */
+  const inRevision = p.status === 'pending' && p.stage === 'revision'
+  const waiting = inRevision ? 'Officer' : stageLabel(p.stage)
+  const target = inRevision ? 'officer' : p.stage
+  if (waiting && info[target]) {
+    const noted = awaitsNoted(p)
+    const progress = inRevision ? null : reviewProgress(p)
+    const pending = inRevision ? null : (progress?.pending ?? pendingReviewers(p))
+    const names = pending?.map((r) => r.name).filter(Boolean).join(', ')
+
+    info[target].waiting = {
+      status: `${inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}${
+        progress && progress.total > 1 ? ` · ${progress.done} of ${progress.total}` : ''
+      }`,
+      text:
+        pending && pending.length === 0 && (!progress || progress.total === 0)
+          ? `No active ${waiting} account yet. It will continue once one is assigned.`
+          : noted
+            ? `Already rejected by ${rejectedBy(p)}. Waiting for "Noted" from ${names || waiting}.`
+            : names
+              ? `Waiting for: ${names}.`
+              : inRevision
+                ? `Waiting for ${authorName(p)} to revise. It will go back to ${stageLabel(
+                    p.revision_from,
+                  )} afterwards.`
+                : p.stage === finalStage(p)
+                  ? `Waiting for the ${waiting}'s final decision.`
+                  : p.stage === 'school_head' && hasBudget(p)
+                    ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
+                    : `Waiting for action from ${waiting}.`,
+    }
+  }
+
+  return info
+}
+
 function RouteMap({ proposal }) {
   const stations = stationsOf(proposal)
+  const info = stationInfo(proposal)
   return (
     <ol className={styles.route} aria-label="Review route">
       {stations.map((s) => {
         const Icon = STATION_ICON[s.state]
+        const { entries = [], waiting = null, chosen = '' } = info[s.key] ?? {}
         return (
-          <li
-            key={s.key}
-            className={`${styles.station} ${styles[`st_${s.state}`] ?? ''}`}
-            aria-label={`${s.label}: ${STATION_TEXT[s.state] ?? ''}`}
-          >
+          <li key={s.key} className={`${styles.station} ${styles[`st_${s.state}`] ?? ''}`}>
             <span className={styles.stationDot} aria-hidden="true">
               {Icon && <Icon size={13} strokeWidth={3} />}
             </span>
-            <span className={styles.stationLabel} aria-hidden="true">
-              {s.label}
-            </span>
+            <span className={styles.stationLabel}>{s.label}</span>
+
+            {/* Detalye — nakatapat sa istasyong ito */}
+            <div className={styles.stationInfo}>
+              {entries.map((step) => (
+                <div
+                  key={step.key}
+                  className={`${styles.info} ${styles[`info_${step.decision}`] ?? ''} ${
+                    step.final ? styles.infoFinal : ''
+                  }`}
+                >
+                  <span className={styles.infoStatus}>{stepLabel(step)}</span>
+                  <span className={styles.infoText}>
+                    by <strong>{step.name || '—'}</strong>
+                  </span>
+                  {step.at && <span className={styles.infoDate}>{formatDateTime(step.at)}</span>}
+                  {step.comment && <span className={styles.infoComment}>{step.comment}</span>}
+                  {step.resubmittedAt && (
+                    <span className={styles.infoResubmitted}>
+                      ✓ Revised and resubmitted · {formatDateTime(step.resubmittedAt)}
+                    </span>
+                  )}
+                </div>
+              ))}
+
+              {waiting && (
+                <div className={`${styles.info} ${styles.info_waiting}`}>
+                  <span className={styles.infoStatus}>{waiting.status}</span>
+                  <span className={styles.infoText}>{waiting.text}</span>
+                </div>
+              )}
+
+              {/* Officer: naipasa na (walang hinihintay sa kanya) */}
+              {s.key === 'officer' && !waiting && (
+                <div className={`${styles.info} ${styles.info_submitted}`}>
+                  <span className={styles.infoStatus}>{STATION_TEXT.done}</span>
+                </div>
+              )}
+
+              {/* Hindi pa nararating: "Not yet" + ang piniling approver */}
+              {s.key !== 'officer' && !waiting && entries.length === 0 && (
+                <div className={`${styles.info} ${styles.info_upcoming}`}>
+                  <span className={styles.infoStatus}>{STATION_TEXT.upcoming}</span>
+                  {chosen && <span className={styles.infoText}>{chosen}</span>}
+                </div>
+              )}
+            </div>
           </li>
         )
       })}
@@ -518,14 +650,22 @@ function Proposals() {
         title="Proposals"
         action={
           can.propose && (
-            <ActionButton
+            /* Sariling itsura (.createBtn sa Proposals.module.css) — hindi
+               na ang shared na ActionButton, para hindi magbago ang
+               button sa ibang page (Events, Announcements, atbp.) */
+            <button
+              type="button"
+              className={styles.createBtn}
               onClick={() => {
                 setNotice('')
                 setFormOpen(true)
               }}
             >
-              + Create Proposal
-            </ActionButton>
+              <span className={styles.createIcon} aria-hidden="true">
+                <Plus size={18} strokeWidth={2.8} />
+              </span>
+              Create Proposal
+            </button>
           )
         }
       />
@@ -611,7 +751,6 @@ function Proposals() {
             const tone = toneOf(p)
             const ToneIcon = TONE_ICON[tone]
             const yourTurn = canReviewProposal(p, profile) || canReviseProposal(p, profile)
-            const files = attachmentsOf(p)
 
             return (
               <li
@@ -686,37 +825,13 @@ function Proposals() {
                     )}
                   </ul>
 
-                  {/* Mga naka-attach na file — pindutin ang bawat isa para i-download */}
-                  {files.length > 0 && (
-                    <div className={styles.fileList}>
-                      {files.map((f) => (
-                        <button
-                          key={f.path}
-                          type="button"
-                          className={styles.fileChip}
-                          onClick={() => handleDownload(f)}
-                          disabled={downloadingPath === f.path}
-                          title={`Download ${f.name}`}
-                        >
-                          <Paperclip size={15} strokeWidth={2.3} aria-hidden="true" />
-                          <span className={styles.fileChipName}>{f.name}</span>
-                          <span className={styles.fileChipMeta}>
-                            {downloadingPath === f.path
-                              ? 'Downloading…'
-                              : `${f.size ? `${formatFileSize(f.size)} · ` : ''}Download`}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {/* Wala nang listahan ng file dito — makikita at mada-download
+                      ang mga attachment sa loob ng sulat (Open letter →
+                      ProposalLetter, "Attachments"). */}
 
-                  {/* Route map: Officer → Adviser → SAO → School Head (→ SA) */}
+                  {/* Route map: Officer → Adviser → SAO → School Head (→ SA),
+                      may detalye ng review sa ilalim ng bawat istasyon */}
                   <RouteMap proposal={p} />
-
-                  {/* Adviser → SAO → School Head (→ School Administrator) */}
-                  <div className={styles.trailWrap}>
-                    <ReviewTrail proposal={p} />
-                  </div>
                 </div>
 
                 <div className={styles.cardActions}>
