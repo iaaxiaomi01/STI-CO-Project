@@ -26,14 +26,15 @@ import styles from './Admin.module.css'
 import remove from './RemoveUserDialog.module.css'
 
 /* ============================================================
-   USERS — School Administrator at SAO
+   USERS — School Administrator, SAO at School Head
 
-   SAO (SAO_USERS_READ.sql) → PAREHONG listahan, search, filter at
-   status, pero BASA LANG: walang "+ Add user", Edit, Remove at
+   SAO at School Head (SAO_USERS_READ.sql,
+   SCHOOL_HEAD_USERS_READ.sql) → PAREHONG listahan, search, filter
+   at status, pero BASA LANG: walang "+ Add user", Edit, Remove at
    "Set position" (walang Actions column). Ang database rin ang
    humaharang: sa_save_user(), sa_remove_user() at
    set_officer_position() ay School Administrator pa rin lang.
-   Pinalitan nito ang Members page ng SAO.
+   Pinalitan nito ang Members page ng SAO at School Head.
 
    Lahat ng nasa student_records (ang listahan ng pwedeng
    mag-login), pati ang hindi pa nakaka-login.
@@ -136,7 +137,8 @@ function Users() {
   const { profile, refreshProfile } = useAuth()
 
   /* School Administrator → buong pamamahala.
-     SAO → basa lang (walang Add, Edit, Remove, Set position). */
+     SAO at School Head → basa lang (walang Add, Edit, Remove,
+     Set position). */
   const canManage = isSchoolAdmin(profile)
 
   const [users, setUsers] = useState([])
@@ -215,7 +217,7 @@ function Users() {
 
   /* Lahat ng officer position ng lahat ng org (RLS: nakikita ng SA
      ang lahat). Kailangan lang para sa "Set position" — kaya hindi
-     na kinukuha para sa SAO (basa lang). */
+     na kinukuha para sa SAO at School Head (basa lang). */
   useEffect(() => {
     if (!canManage) return
     fetchPositions()
@@ -409,7 +411,7 @@ function Users() {
                       <th>Program</th>
                       <th>Year</th>
                       <th>Organization</th>
-                      {/* SAO: walang Actions column (basa lang) */}
+                      {/* SAO at School Head: walang Actions column (basa lang) */}
                       {canManage && (
                         <th>
                           <span className={list.srOnly}>Actions</span>
@@ -536,7 +538,8 @@ function Users() {
         </>
       )}
 
-      {/* Mga dialog — School Administrator lang (hindi mabubuksan ng SAO) */}
+      {/* Mga dialog — School Administrator lang (hindi mabubuksan ng
+          SAO at School Head) */}
       {canManage && editing && (
         <UserDialog
           user={editing === 'new' ? null : editing}

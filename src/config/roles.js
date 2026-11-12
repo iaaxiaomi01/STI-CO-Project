@@ -435,8 +435,14 @@ export const ROLES = {
        "View details" para sa kumpletong detalye.
        Basa lang — walang Join, Edit, Delete o Certificates.
        Tingnan ang canViewAllEvents() sa lib/events.js.
-       Naiwan ang Org Health (kapareho na rin ng SAO). */
-    sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
+       Naiwan ang Org Health (kapareho na rin ng SAO).
+
+       USERS NG SCHOOL HEAD (SCHOOL_HEAD_USERS_READ.sql) — PINALITAN
+       ang Members, KAPAREHO NG SAO. Kaparehong Users page ng School
+       Administrator (lahat ng nasa student_records, may status ng
+       login), pero BASA LANG: walang Add user, Edit, Remove o Set
+       position. Tingnan ang canManage sa pages/Users.jsx. */
+    sidebar: [DASHBOARD, EVENTS, USERS, PROPOSALS, ORG_HEALTH, PROFILE],
   },
 
   /* School Administrator — PINAL na Approve/Reject ng mga proposal
