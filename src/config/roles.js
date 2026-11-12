@@ -105,6 +105,12 @@ export function isSchoolAdmin(profile) {
   return Boolean(profile?.is_active && profile.role_id === 8)
 }
 
+/* Katumbas ng is_school_head() sa database
+   (SCHOOL_HEAD_ANNOUNCEMENTS.sql) */
+export function isSchoolHead(profile) {
+  return Boolean(profile?.is_active && profile.role_id === 6)
+}
+
 /* ============================================================
    MGA KAKAYAHAN (capabilities)
 
@@ -418,32 +424,47 @@ export const ROLES = {
        Tingnan ang canManage sa pages/Users.jsx. */
     sidebar: [DASHBOARD, EVENTS, USERS, PROPOSALS, ORG_HEALTH, PROFILE],
   },
-  [ROLE_KEYS.SCHOOL_HEAD]: {
-    ...staffRoleWithProposals('School Head', { orgHealth: true }),
+  [ROLE_KEYS.SCHOOL_HEAD]: (() => {
+    const base = staffRoleWithProposals('School Head', { orgHealth: true })
+    return {
+      ...base,
 
-    /* EVENT CALENDAR SA DASHBOARD NG SCHOOL HEAD — KAPAREHO NG SAO
-       Events ng LAHAT ng aktibong organisasyon (calendar_events(),
-       walang bagong SQL para dito). Walang sariling org ang School
-       Head, pero dahil may Events page na siya, may
-       "View in Events →" sa BAWAT event (/events?event=<id>). */
-    calendar: true,
+      /* EVENT CALENDAR SA DASHBOARD NG SCHOOL HEAD — KAPAREHO NG SAO
+         Events ng LAHAT ng aktibong organisasyon (calendar_events(),
+         walang bagong SQL para dito). Walang sariling org ang School
+         Head, pero dahil may Events page na siya, may
+         "View in Events →" sa BAWAT event (/events?event=<id>). */
+      calendar: true,
 
-    /* EVENTS PAGE NG SCHOOL HEAD — KAPAREHO NG SAO
-       (SCHOOL_HEAD_EVENTS_READ.sql)
-       Listahan ng events ng LAHAT ng aktibong organisasyon, may
-       pangalan ng org, filter ayon sa org, bilang ng sumali, at
-       "View details" para sa kumpletong detalye.
-       Basa lang — walang Join, Edit, Delete o Certificates.
-       Tingnan ang canViewAllEvents() sa lib/events.js.
-       Naiwan ang Org Health (kapareho na rin ng SAO).
+      /* ANNOUNCEMENTS NG SCHOOL HEAD — KAPAREHO NG SCHOOL ADMINISTRATOR
+         (SCHOOL_HEAD_ANNOUNCEMENTS.sql)
+         Nagpo-post para sa LAHAT o sa PILING org (walang "My
+         organization only" dahil wala siyang org). Nakikita niya ang
+         LAHAT ng announcement, pero SARILI niyang post lang ang
+         naa-edit/nabubura niya. Picture: announcement-images/school-head/.
+         Tingnan ang postsWithoutOrg() sa lib/announcements.js. */
+      can: {
+        ...base.can,
+        announce: true,
+      },
 
-       USERS NG SCHOOL HEAD (SCHOOL_HEAD_USERS_READ.sql) — PINALITAN
-       ang Members, KAPAREHO NG SAO. Kaparehong Users page ng School
-       Administrator (lahat ng nasa student_records, may status ng
-       login), pero BASA LANG: walang Add user, Edit, Remove o Set
-       position. Tingnan ang canManage sa pages/Users.jsx. */
-    sidebar: [DASHBOARD, EVENTS, USERS, PROPOSALS, ORG_HEALTH, PROFILE],
-  },
+      /* EVENTS PAGE NG SCHOOL HEAD — KAPAREHO NG SAO
+         (SCHOOL_HEAD_EVENTS_READ.sql)
+         Listahan ng events ng LAHAT ng aktibong organisasyon, may
+         pangalan ng org, filter ayon sa org, bilang ng sumali, at
+         "View details" para sa kumpletong detalye.
+         Basa lang — walang Join, Edit, Delete o Certificates.
+         Tingnan ang canViewAllEvents() sa lib/events.js.
+         Naiwan ang Org Health (kapareho na rin ng SAO).
+
+         USERS NG SCHOOL HEAD (SCHOOL_HEAD_USERS_READ.sql) — PINALITAN
+         ang Members, KAPAREHO NG SAO. Kaparehong Users page ng School
+         Administrator (lahat ng nasa student_records, may status ng
+         login), pero BASA LANG: walang Add user, Edit, Remove o Set
+         position. Tingnan ang canManage sa pages/Users.jsx. */
+      sidebar: [DASHBOARD, EVENTS, ANNOUNCEMENTS, USERS, PROPOSALS, ORG_HEALTH, PROFILE],
+    }
+  })(),
 
   /* School Administrator — PINAL na Approve/Reject ng mga proposal
      na MAY BUDGET (Adviser → SAO → School Head → SA). Ang walang
@@ -480,8 +501,10 @@ export const ROLES = {
                        (SA_USERS_LOGIN_STATUS.sql para sa huling login)
        Announcements → nagpo-post para sa LAHAT o sa PILING org (walang
                        "My organization only" dahil wala siyang org).
-                       Nakikita at naa-edit/nabubura niya ang lahat ng
-                       announcement.
+                       Nakikita niya ang lahat ng announcement, pero
+                       sariling post lang ang naa-edit/nabubura niya.
+                       Kapareho na rin ng School Head
+                       (SCHOOL_HEAD_ANNOUNCEMENTS.sql).
 
      WALA NANG MEMBERS PAGE ANG SA. Inilipat na sa Users ang lahat ng
      ginagawa niya roon (profile picture, officer position bilang

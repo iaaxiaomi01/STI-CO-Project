@@ -21,6 +21,7 @@ import {
   deleteAnnouncement,
   fetchAnnouncements,
   formatDate,
+  postsWithoutOrg,
   selectedOrgsLabel,
   typeLabel,
   updateAnnouncement,
@@ -40,10 +41,15 @@ import styles from './Announcements.module.css'
              nag-e-edit at nagde-delete ng SARILI niyang post lang
    Adviser → nakikita lahat sa org niya, nagpapaskil,
              nag-e-edit at nagde-delete ng SARILI niyang post lang
+   School Administrator / School Head → PAREHO ang logic:
+             nakikita ang LAHAT, nagpapaskil para sa LAHAT o
+             PILING org (walang sariling org), at nag-e-edit at
+             nagde-delete ng SARILI nilang post lang
+             (SCHOOL_HEAD_ANNOUNCEMENTS.sql)
 
    ANG GUMAWA LANG ang makakapag-edit/delete ng post — kahit
-   ang Adviser o School Administrator ay hindi na makakagalaw
-   ng post ng iba (ANNOUNCEMENT_AUTHOR_ONLY.sql).
+   ang Adviser, School Head o School Administrator ay hindi na
+   makakagalaw ng post ng iba (ANNOUNCEMENT_AUTHOR_ONLY.sql).
 
    EDIT: Title, Type, Message at Picture lang ang nababago.
    Hindi na mababago kung para kanino (sariling org / lahat /
@@ -58,7 +64,8 @@ import styles from './Announcements.module.css'
    sa lahat, o sa mga piniling org lang.
 
    PICTURE (optional): naka-upload sa folder ng org ng nag-post
-   (announcement-images/<org id>/...). Lumalabas sa card at sa
+   (announcement-images/<org id>/...), o school-admin/ /
+   school-head/ kapag walang org. Lumalabas sa card at sa
    pop-up; pindutin para makita ang buong laki.
 
    Ang RLS sa database ang totoong nagbabantay. Ang
@@ -104,9 +111,8 @@ function TypeIcon({ type, size = 20 }) {
      - Ang pag-edit ay hindi binabago ang created_at, kaya
        hindi rin ito lalabas ulit dahil lang na-edit.
 
-   Bawat user AT bawat org ang susi — para sa School
-   Administrator na nagpapalit ng acting org, at para sa
-   magkakaibang account sa iisang computer.
+   Bawat user AT bawat org ang susi — para sa magkakaibang
+   account sa iisang computer.
 
    Paalala: nasa browser lang ito. Sa ibang device o browser
    (o kapag na-clear ang site data), lalabas ulit ito nang
@@ -228,6 +234,10 @@ function Announcements() {
   /* May "Post to" na pagpipilian (sariling org / lahat / pinili) */
   const audience = canPostToAllOrgs(profile, can) ? 'choose' : 'own'
 
+  /* School Administrator / School Head: walang sariling org — ang
+     post nila ay para sa lahat o piling org lang */
+  const ownOrgId = postsWithoutOrg(profile) ? null : profile?.organization_id ?? null
+
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -299,7 +309,8 @@ function Announcements() {
   async function handleSubmit(values, media = {}) {
     if (editing === 'new') {
       const created = await createAnnouncement(values, {
-        orgId: profile?.organization_id,
+        orgId: ownOrgId,
+        roleId: profile?.role_id,
         imageFile: media.imageFile,
       })
       /* Sarili mong post — hindi na kailangang i-pop-up sa iyo */
@@ -526,7 +537,7 @@ function Announcements() {
         <AnnouncementForm
           initial={editing === 'new' ? null : editing}
           audience={audience}
-          ownOrgId={profile?.organization_id}
+          ownOrgId={ownOrgId}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />

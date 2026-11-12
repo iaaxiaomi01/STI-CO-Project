@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js'
-import { getRoleConfig, isSchoolAdmin, roleKeyFromId } from '../config/roles.js'
+import { getRoleConfig, isSchoolAdmin, isSchoolHead, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
 import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.js'
 
@@ -23,21 +23,29 @@ import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.j
    at sinusuri ng trigger na galing doon ang image_url.
    Tingnan ang ANNOUNCEMENT_IMAGES.sql.
 
-   SCHOOL ADMINISTRATOR (SA_REMOVE_ACTING_ORG.sql):
-     Walang org ang SA, kaya ang post niya ay walang
+   SCHOOL ADMINISTRATOR (SA_REMOVE_ACTING_ORG.sql) at
+   SCHOOL HEAD (SCHOOL_HEAD_ANNOUNCEMENTS.sql) — PAREHO ang logic:
+     Walang org sila, kaya ang post nila ay walang
      organization_id. Para lang ito sa LAHAT ng org o sa PILING
-     org. Ang picture niya ay nasa announcement-images/school-admin/.
-     Nakikita niya ang lahat ng announcement, pero ang SARILI
-     niyang post lang ang naa-edit/nabubura niya
+     org. Ang picture ay nasa announcement-images/school-admin/
+     (SA) o announcement-images/school-head/ (School Head).
+     Nakikita nila ang lahat ng announcement, pero ang SARILI
+     nilang post lang ang naa-edit/nabubura nila
      (ANNOUNCEMENT_AUTHOR_ONLY.sql).
    ============================================================ */
 
 const BUCKET = 'announcement-images'
 const IMAGE_MAX_SIDE = 1600
 
-/* Folder ng picture ng mga post ng School Administrator (walang org).
-   Dapat tugma sa SA_REMOVE_ACTING_ORG.sql. */
+/* Folder ng picture ng mga post na walang org.
+   Dapat tugma sa announcement_image_folder() sa
+   SCHOOL_HEAD_ANNOUNCEMENTS.sql. */
 const SCHOOL_ADMIN_FOLDER = 'school-admin'
+const SCHOOL_HEAD_FOLDER = 'school-head'
+
+/* Mga role na nagpo-post nang WALANG org */
+const SCHOOL_HEAD_ROLE_ID = 6
+const SCHOOL_ADMIN_ROLE_ID = 8
 
 /* Dapat tugma sa check constraint na announcements_type_valid */
 export const ANNOUNCEMENT_TYPES = [
@@ -63,7 +71,8 @@ const COLUMNS = `
 
 /* Para kanino ang post — "Post to" sa form.
    'selected' = may rows sa announcement_orgs
-   Ang School Administrator ay walang 'own' (wala siyang org). */
+   Ang School Administrator at School Head ay walang 'own'
+   (wala silang org). */
 export const AUDIENCES = [
   { value: 'own', label: 'My organization only' },
   { value: 'all', label: 'All organizations' },
@@ -96,11 +105,18 @@ export function orgCanAnnounceAll(profile) {
   return Boolean(profile?.is_active && profile?.organizations?.can_announce_all)
 }
 
+/* Nagpo-post nang WALANG org: School Administrator o School Head.
+   Laging para sa lahat o piling org lang ang post nila.
+   Katumbas ng posts_without_org() sa database. */
+export function postsWithoutOrg(profile) {
+  return isSchoolAdmin(profile) || isSchoolHead(profile)
+}
+
 /* May "Post to: All organizations" ba sa form —
    Officer/Adviser (can.announce) ng special org, at ang School
-   Administrator (laging lahat o piling org lang) */
+   Administrator / School Head (laging lahat o piling org lang) */
 export function canPostToAllOrgs(profile, can) {
-  return Boolean(can?.announce) && (orgCanAnnounceAll(profile) || isSchoolAdmin(profile))
+  return Boolean(can?.announce) && (orgCanAnnounceAll(profile) || postsWithoutOrg(profile))
 }
 
 export async function fetchAnnouncements() {
@@ -115,10 +131,14 @@ export async function fetchAnnouncements() {
 
 /* ---------- PICTURE ---------- */
 
-/* folder = id ng org, o SCHOOL_ADMIN_FOLDER kapag walang org
-   (post ng School Administrator) */
-async function uploadImage(orgId, file) {
-  const folder = orgId || SCHOOL_ADMIN_FOLDER
+/* Folder ng picture: id ng org, o kapag walang org —
+   school-head/ (School Head) o school-admin/ (School Administrator) */
+function imageFolder(orgId, roleId) {
+  if (orgId) return orgId
+  return roleId === SCHOOL_HEAD_ROLE_ID ? SCHOOL_HEAD_FOLDER : SCHOOL_ADMIN_FOLDER
+}
+
+async function uploadImage(folder, file) {
   checkImageFile(file)
 
   const blob = await resizeToFit(file, IMAGE_MAX_SIDE)
@@ -165,17 +185,19 @@ async function removeFiles(paths) {
      audience: 'own' | 'all' | 'selected'
      orgIds:   mga piniling org kapag 'selected' (hindi kasama ang
                sariling org — laging kasama na iyon)
-   options: { orgId, imageFile }
+   options: { orgId, roleId, imageFile }
      orgId:     org ng nag-post (folder ng picture); null = School
-                Administrator
+                Administrator o School Head
+     roleId:    role ng nag-post — para malaman ang folder kapag
+                walang org (school-head o school-admin)
      imageFile: picture (optional) */
 export async function createAnnouncement(
   { title, message, type, audience = 'own', orgIds = [] },
-  { orgId = null, imageFile = null } = {},
+  { orgId = null, roleId = SCHOOL_ADMIN_ROLE_ID, imageFile = null } = {},
 ) {
   let uploaded = null
   if (imageFile) {
-    uploaded = await uploadImage(orgId, imageFile)
+    uploaded = await uploadImage(imageFolder(orgId, roleId), imageFile)
   }
 
   const { data: id, error } = await supabase.rpc('post_announcement', {
@@ -204,7 +226,7 @@ export async function createAnnouncement(
 
 /* Mga org na pwedeng piliin sa "Selected organizations":
    lahat ng aktibong org maliban sa sarili (ang School
-   Administrator ay walang sariling org → lahat) */
+   Administrator at School Head ay walang sariling org → lahat) */
 export async function fetchTargetOrganizations(ownOrgId) {
   let query = supabase
     .from('organizations')
@@ -234,7 +256,10 @@ export async function updateAnnouncement(
 
   let uploaded = null
   if (imageFile) {
-    uploaded = await uploadImage(announcement.organization_id, imageFile)
+    uploaded = await uploadImage(
+      imageFolder(announcement.organization_id, announcement.author_role_id),
+      imageFile,
+    )
     row.image_url = uploaded.publicUrl
   } else if (removeImage) {
     row.image_url = null
@@ -292,14 +317,15 @@ export async function countRecentAnnouncements(days = 7) {
    KAPAREHO ito ng can_manage_announcement() sa database. Dito,
    para lang itago ang mga button. Ang database pa rin ang
    totoong nagbabantay — kapag binago mo ang isa, baguhin
-   mo rin ang isa (ANNOUNCEMENT_AUTHOR_ONLY.sql).
+   mo rin ang isa (SCHOOL_HEAD_ANNOUNCEMENTS.sql).
 
    ANG GUMAWA LANG. Walang ibang makakapag-edit/delete ng post
-   mo — kahit Adviser o School Administrator.
+   mo — kahit Adviser, School Head o School Administrator.
 
      Officer / Adviser    → sariling post lang, at nasa org pa
                             rin siya na pinag-postan niya
      School Administrator → sariling post lang (walang org)
+     School Head          → sariling post lang (walang org)
 
    Kapag hindi na Officer/Adviser ang gumawa (hal. naging Member)
    o lumipat na siya ng org, hindi na niya ito mae-edit/delete.
@@ -308,12 +334,13 @@ export function canManageAnnouncement(announcement, profile) {
   if (!profile?.is_active) return false
   if (!announcement.author_id || announcement.author_id !== profile.id) return false
 
-  /* Nagpapaskil pa rin: Officer, Adviser o School Administrator */
-  if (![2, 3, 8].includes(profile.role_id)) return false
+  /* School Administrator / School Head → post na walang org */
+  if (postsWithoutOrg(profile)) return !announcement.organization_id
 
-  /* Post ng org → nasa org na iyon ka pa rin.
-     Post ng School Administrator → walang org (pareho ng profile niya). */
-  return (announcement.organization_id ?? null) === (profile.organization_id ?? null)
+  /* Officer / Adviser → nasa org na pinag-postan ka pa rin */
+  if (![2, 3].includes(profile.role_id)) return false
+  return Boolean(announcement.organization_id) &&
+    announcement.organization_id === profile.organization_id
 }
 
 /* Mga pangalan ng piniling org (walang laman = hindi 'selected') */
@@ -332,7 +359,7 @@ export function audienceOf(announcement) {
 }
 
 /* "Student Council, Org A, Org B" — kasama ang org ng gumawa
-   (wala kapag School Administrator ang gumawa).
+   (wala kapag School Administrator / School Head ang gumawa).
    null kapag hindi 'selected'. */
 export function selectedOrgsLabel(announcement) {
   if (audienceOf(announcement) !== 'selected') return null
@@ -342,7 +369,8 @@ export function selectedOrgsLabel(announcement) {
 
 /* "Juan Dela Cruz · Officer"
    Para sa ibang org: "Juan Dela Cruz · Officer · Student Council"
-   School Administrator: "Juan Dela Cruz · School Administrator" */
+   School Administrator: "Juan Dela Cruz · School Administrator"
+   School Head: "Juan Dela Cruz · School Head" */
 export function authorLabel(announcement) {
   const name = toTitleCase(announcement.author_name)
   const role = getRoleConfig(roleKeyFromId(announcement.author_role_id)).label
