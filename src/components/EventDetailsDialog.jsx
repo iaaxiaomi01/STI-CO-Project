@@ -26,7 +26,8 @@ import styles from './EventDetailsDialog.module.css'
 /* ============================================================
    EVENT DETAILS DIALOG — kumpletong detalye ng isang event
 
-   Para sa SAO sa Events page ("View details"). Basa lang —
+   Para sa SAO at School Head sa Events page ("View details").
+   Basa lang —
    walang button na nagbabago ng kahit ano.
 
    Laman:

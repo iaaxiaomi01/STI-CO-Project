@@ -407,7 +407,26 @@ export const ROLES = {
        Tingnan ang canViewAllEvents() sa lib/events.js. */
     sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, PROFILE],
   },
-  [ROLE_KEYS.SCHOOL_HEAD]: staffRoleWithProposals('School Head', { orgHealth: true }),
+  [ROLE_KEYS.SCHOOL_HEAD]: {
+    ...staffRoleWithProposals('School Head', { orgHealth: true }),
+
+    /* EVENT CALENDAR SA DASHBOARD NG SCHOOL HEAD — KAPAREHO NG SAO
+       Events ng LAHAT ng aktibong organisasyon (calendar_events(),
+       walang bagong SQL para dito). Walang sariling org ang School
+       Head, pero dahil may Events page na siya, may
+       "View in Events →" sa BAWAT event (/events?event=<id>). */
+    calendar: true,
+
+    /* EVENTS PAGE NG SCHOOL HEAD — KAPAREHO NG SAO
+       (SCHOOL_HEAD_EVENTS_READ.sql)
+       Listahan ng events ng LAHAT ng aktibong organisasyon, may
+       pangalan ng org, filter ayon sa org, bilang ng sumali, at
+       "View details" para sa kumpletong detalye.
+       Basa lang — walang Join, Edit, Delete o Certificates.
+       Tingnan ang canViewAllEvents() sa lib/events.js.
+       Naiwan ang Org Health (School Head lang). */
+    sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
+  },
 
   /* School Administrator — PINAL na Approve/Reject ng mga proposal
      na MAY BUDGET (Adviser → SAO → School Head → SA). Ang walang

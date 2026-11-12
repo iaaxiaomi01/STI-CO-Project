@@ -12,8 +12,9 @@ import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.j
      Wala na ito sa Proposals.
 
    Walang .eq('organization_id', ...) sa pagkuha. Ang RLS na ang
-   nagsasala: events lang ng SARILI mong org — maliban sa SAO, na
-   nakikita ang LAHAT ng aktibong org (SAO_EVENTS_READ.sql).
+   nagsasala: events lang ng SARILI mong org — maliban sa SAO at
+   School Head, na nakikita ang LAHAT ng aktibong org
+   (SAO_EVENTS_READ.sql, SCHOOL_HEAD_EVENTS_READ.sql).
 
    Sa paggawa, ang org, author at petsa ay itinatakda ng trigger
    sa database. Sinusuri din doon na approved ang proposal at
@@ -166,14 +167,15 @@ export function orgNameOf(event) {
 }
 
 /* ============================================================
-   SAO — nakikita ang events ng LAHAT ng aktibong org
-   (SAO_EVENTS_READ.sql: events_read_sao). Basa lang: walang
-   Join, Edit o Certificates — hindi siya kabilang sa anumang
-   org, kaya kusang false ang canEditEvent() at
-   canManageCertificates() para sa kanya.
+   SAO at SCHOOL HEAD — nakikita ang events ng LAHAT ng aktibong
+   org (SAO_EVENTS_READ.sql: events_read_sao ·
+   SCHOOL_HEAD_EVENTS_READ.sql: events_read_school_head).
+   Basa lang: walang Join, Edit o Certificates — hindi sila
+   kabilang sa anumang org, kaya kusang false ang canEditEvent()
+   at canManageCertificates() para sa kanila.
    ============================================================ */
 export function canViewAllEvents(profile) {
-  return Boolean(profile?.is_active && profile.role_id === 4)
+  return Boolean(profile?.is_active && (profile.role_id === 4 || profile.role_id === 6))
 }
 
 /* May itinakdang Venue, Date, Start Time at End Time ang proposal?
@@ -660,8 +662,9 @@ export function canJoinEvents(profile) {
 }
 
 /* Officer at Adviser lang ang nakakakita ng listahan.
-   (Ang SAO ay BILANG lang ang nakikita — fetchParticipantCounts(),
-   SAO_EVENTS_READ.sql.) */
+   (Ang SAO at School Head ay BILANG lang ang nakikita —
+   fetchParticipantCounts(), SAO_EVENTS_READ.sql,
+   SCHOOL_HEAD_EVENTS_READ.sql.) */
 export function canViewParticipants(profile) {
   return Boolean(profile?.is_active && (profile.role_id === 2 || hasAdviserPowers(profile)))
 }

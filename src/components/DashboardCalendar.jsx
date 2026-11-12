@@ -42,8 +42,9 @@ import styles from './DashboardCalendar.module.css'
    sariling org sa legend at para sa "View in Events →" link
    (sariling org lang ang makikita sa Events page dahil sa RLS).
 
-   SAO: nakikita niya ang events ng LAHAT ng org sa Events page
-   (SAO_EVENTS_READ.sql), kaya may "View in Events →" sa BAWAT
+   SAO at SCHOOL HEAD: nakikita nila ang events ng LAHAT ng org sa
+   Events page (SAO_EVENTS_READ.sql, SCHOOL_HEAD_EVENTS_READ.sql —
+   canViewAllEvents()), kaya may "View in Events →" sa BAWAT
    event, papunta mismo sa event na iyon (/events?event=<id>).
    ============================================================ */
 
