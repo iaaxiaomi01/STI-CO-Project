@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, ChevronDown, Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
+import { isSchoolAdmin } from '../config/roles.js'
 import { fullNameOf } from '../lib/profile.js'
 import { fetchPositions, setOfficerPosition } from '../lib/officerPositions.js'
 import {
@@ -25,7 +26,14 @@ import styles from './Admin.module.css'
 import remove from './RemoveUserDialog.module.css'
 
 /* ============================================================
-   USERS — School Administrator lang
+   USERS — School Administrator at SAO
+
+   SAO (SAO_USERS_READ.sql) → PAREHONG listahan, search, filter at
+   status, pero BASA LANG: walang "+ Add user", Edit, Remove at
+   "Set position" (walang Actions column). Ang database rin ang
+   humaharang: sa_save_user(), sa_remove_user() at
+   set_officer_position() ay School Administrator pa rin lang.
+   Pinalitan nito ang Members page ng SAO.
 
    Lahat ng nasa student_records (ang listahan ng pwedeng
    mag-login), pati ang hindi pa nakaka-login.
@@ -127,6 +135,10 @@ function formatWhen(iso) {
 function Users() {
   const { profile, refreshProfile } = useAuth()
 
+  /* School Administrator → buong pamamahala.
+     SAO → basa lang (walang Add, Edit, Remove, Set position). */
+  const canManage = isSchoolAdmin(profile)
+
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
   const [orgs, setOrgs] = useState([])
@@ -202,12 +214,14 @@ function Users() {
   }, [load])
 
   /* Lahat ng officer position ng lahat ng org (RLS: nakikita ng SA
-     ang lahat). Kailangan lang para sa "Set position". */
+     ang lahat). Kailangan lang para sa "Set position" — kaya hindi
+     na kinukuha para sa SAO (basa lang). */
   useEffect(() => {
+    if (!canManage) return
     fetchPositions()
       .then(setPositions)
       .catch((err) => console.error('Hindi makuha ang officer positions:', err))
-  }, [])
+  }, [canManage])
 
   const roleName = useMemo(() => new Map(roles.map((r) => [r.id, r.name])), [roles])
   const orgName = useMemo(() => new Map(orgs.map((o) => [o.id, o.name])), [orgs])
@@ -300,16 +314,22 @@ function Users() {
     <div className={list.page}>
       <PageHeader
         title="Users"
-        subtitle="Everyone who can log in: add people, see who has logged in, set officer positions, change roles or organizations, deactivate or remove them."
+        subtitle={
+          canManage
+            ? 'Everyone who can log in: add people, see who has logged in, set officer positions, change roles or organizations, deactivate or remove them.'
+            : 'Everyone who can log in: see their role, organization, program and whether they have logged in. View only.'
+        }
         action={
-          <ActionButton
-            onClick={() => {
-              setNotice('')
-              setEditing('new')
-            }}
-          >
-            + Add user
-          </ActionButton>
+          canManage && (
+            <ActionButton
+              onClick={() => {
+                setNotice('')
+                setEditing('new')
+              }}
+            >
+              + Add user
+            </ActionButton>
+          )
         }
       />
 
@@ -389,9 +409,12 @@ function Users() {
                       <th>Program</th>
                       <th>Year</th>
                       <th>Organization</th>
-                      <th>
-                        <span className={list.srOnly}>Actions</span>
-                      </th>
+                      {/* SAO: walang Actions column (basa lang) */}
+                      {canManage && (
+                        <th>
+                          <span className={list.srOnly}>Actions</span>
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -447,47 +470,49 @@ function Users() {
                           <td className={`${list.detail} ${list.orgCell}`} data-label="Organization">
                             {u.organization_id ? (orgName.get(u.organization_id) ?? '—') : '—'}
                           </td>
-                          <td className={list.actionCell}>
-                            <span className={styles.rowActions}>
-                              {u.extras_loaded && canSetPosition(u) && (
+                          {canManage && (
+                            <td className={list.actionCell}>
+                              <span className={styles.rowActions}>
+                                {u.extras_loaded && canSetPosition(u) && (
+                                  <button
+                                    type="button"
+                                    className={list.rowButton}
+                                    onClick={() => {
+                                      setNotice('')
+                                      setPositionFor(toMember(u))
+                                    }}
+                                  >
+                                    Set position
+                                    <ArrowUpRight size={16} strokeWidth={2.4} aria-hidden="true" />
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   className={list.rowButton}
                                   onClick={() => {
                                     setNotice('')
-                                    setPositionFor(toMember(u))
+                                    setEditing(u)
                                   }}
                                 >
-                                  Set position
-                                  <ArrowUpRight size={16} strokeWidth={2.4} aria-hidden="true" />
+                                  Edit
+                                  <Pencil size={14} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                className={list.rowButton}
-                                onClick={() => {
-                                  setNotice('')
-                                  setEditing(u)
-                                }}
-                              >
-                                Edit
-                                <Pencil size={14} strokeWidth={2.4} aria-hidden="true" />
-                              </button>
-                              {!isSelf(u) && (
-                                <button
-                                  type="button"
-                                  className={`${list.rowButton} ${remove.rowButton}`}
-                                  onClick={() => {
-                                    setNotice('')
-                                    setRemoving(u)
-                                  }}
-                                >
-                                  Remove
-                                  <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
-                                </button>
-                              )}
-                            </span>
-                          </td>
+                                {!isSelf(u) && (
+                                  <button
+                                    type="button"
+                                    className={`${list.rowButton} ${remove.rowButton}`}
+                                    onClick={() => {
+                                      setNotice('')
+                                      setRemoving(u)
+                                    }}
+                                  >
+                                    Remove
+                                    <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
+                                  </button>
+                                )}
+                              </span>
+                            </td>
+                          )}
                         </tr>
                       )
                     })}
@@ -511,7 +536,8 @@ function Users() {
         </>
       )}
 
-      {editing && (
+      {/* Mga dialog — School Administrator lang (hindi mabubuksan ng SAO) */}
+      {canManage && editing && (
         <UserDialog
           user={editing === 'new' ? null : editing}
           isSelf={editing !== 'new' && editing.profile_id === profile?.id}
@@ -522,7 +548,7 @@ function Users() {
         />
       )}
 
-      {removing && (
+      {canManage && removing && (
         <RemoveUserDialog
           user={removing}
           roleLabel={removing.position_name ?? roleName.get(removing.role_id) ?? 'User'}
@@ -536,7 +562,7 @@ function Users() {
         />
       )}
 
-      {positionFor && (
+      {canManage && positionFor && (
         <PositionDialog
           member={positionFor}
           positions={positions.filter((p) => p.organization_id === positionFor.organization_id)}

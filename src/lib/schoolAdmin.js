@@ -71,7 +71,8 @@ export function adminErrorMessage(err) {
 /* ---------- ORGANIZATIONS ---------- */
 
 /* Lahat ng org (pati inactive) na may bilang ng members,
-   officers at advisers */
+   officers at advisers. School Administrator at SAO (basa lang
+   ang SAO — para sa org filter ng Users page, SAO_USERS_READ.sql). */
 export async function fetchAllOrganizations() {
   const { data, error } = await supabase.rpc('sa_list_organizations')
   if (error) throw error
@@ -98,6 +99,8 @@ export async function saveOrganization(id, values) {
 
 /* Lahat ng student record. Kapag naka-login na ang tao
    (has_account), galing sa profile niya ang role, org at status.
+   School Administrator at SAO (basa lang ang SAO —
+   SAO_USERS_READ.sql).
    last_sign_in_at — huling login (SA_USERS_LOGIN_STATUS.sql);
    wala ito kapag hindi pa napapatakbo ang SQL na iyon. */
 export async function fetchUsers() {

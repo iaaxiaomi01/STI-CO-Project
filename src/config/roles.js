@@ -409,8 +409,14 @@ export const ROLES = {
        ORG HEALTH NG SAO — KAPAREHO NG SCHOOL HEAD
        (SAO_ORG_HEALTH.sql): listahan ng LAHAT ng org sa Org
        Health page, at ang buod (OrgHealthOverview) sa Dashboard.
-       Tingnan ang seesAllOrgHealth() sa lib/orgHealth.js. */
-    sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
+       Tingnan ang seesAllOrgHealth() sa lib/orgHealth.js.
+
+       USERS NG SAO (SAO_USERS_READ.sql) — PINALITAN ang Members.
+       Kaparehong Users page ng School Administrator (lahat ng
+       nasa student_records, may status ng login), pero BASA LANG:
+       walang Add user, Edit, Remove o Set position.
+       Tingnan ang canManage sa pages/Users.jsx. */
+    sidebar: [DASHBOARD, EVENTS, USERS, PROPOSALS, ORG_HEALTH, PROFILE],
   },
   [ROLE_KEYS.SCHOOL_HEAD]: {
     ...staffRoleWithProposals('School Head', { orgHealth: true }),
