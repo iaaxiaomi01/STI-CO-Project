@@ -20,8 +20,8 @@ import styles from './OrgHealth.module.css'
    ORGANIZATION HEALTH
 
    Adviser          → ang health ng SARILING org niya (isang report)
-   School Head      → listahan ng LAHAT ng org, Critical muna
-   (Inalis na sa SAO — REMOVE_SAO_ORG_HEALTH.sql)
+   SAO, School Head → listahan ng LAHAT ng org, Critical muna
+   (Ibinalik sa SAO — SAO_ORG_HEALTH.sql)
 
    Batayan: LAHAT ng natapos na event ng org (walang semester).
 

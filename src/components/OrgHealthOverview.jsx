@@ -3,7 +3,7 @@ import { fetchAllOrgHealth, formatScore, sortByConcern, toneOf } from '../lib/or
 import styles from './OrgHealthOverview.module.css'
 
 /* ============================================================
-   ORGANIZATION HEALTH — sa Dashboard ng SCHOOL HEAD lang
+   ORGANIZATION HEALTH — sa Dashboard ng SAO at SCHOOL HEAD
 
    ISANG card na kusang nag-i-slide (carousel), isang org bawat
    slide. Ang laman lang: bilog na graph ng health score,

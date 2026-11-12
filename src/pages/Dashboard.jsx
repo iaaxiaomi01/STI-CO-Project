@@ -8,6 +8,7 @@ import { displayNameOf, firstNameOf } from '../lib/profile.js'
 import { countRecentAnnouncements } from '../lib/announcements.js'
 import { countPendingProposals } from '../lib/proposals.js'
 import { countEventsByStatus } from '../lib/events.js'
+import { seesAllOrgHealth } from '../lib/orgHealth.js'
 import { fetchAttendanceRates } from '../lib/attendance.js'
 import {
   isOgNotification,
@@ -405,9 +406,9 @@ function Dashboard() {
 
         {roleConfig.calendar && <DashboardCalendar eyebrow="Event Calendar" />}
 
-        {/* School Head lang: buod ng Organization Health bawat org
-            (components/OrgHealthOverview.jsx) */}
-        {role === ROLE_KEYS.SCHOOL_HEAD && <OrgHealthOverview />}
+        {/* SAO at School Head: buod ng Organization Health bawat org
+            (components/OrgHealthOverview.jsx) — seesAllOrgHealth() */}
+        {seesAllOrgHealth(profile) && <OrgHealthOverview />}
 
         {/* Inalis na ang "Sections" cards (Officer, Adviser) — nasa
             sidebar na ang lahat ng link na iyon. */}

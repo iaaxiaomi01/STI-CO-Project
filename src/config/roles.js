@@ -76,9 +76,9 @@ const ORG_PROFILE = { label: 'Org Profile', to: '/org-profile', icon: '◈' }
 const REWARDS = { label: 'Rewards', to: '/rewards', icon: '❖' }
 
 /* Organization Health — score ng org, galing sa attendance sa
-   lahat ng natapos na event. Adviser: sariling org · School
-   Head: lahat ng org. Hindi kasama ang SAO at IT Admin
-   (inalis sa SAO — REMOVE_SAO_ORG_HEALTH.sql).
+   lahat ng natapos na event. Adviser: sariling org · SAO at
+   School Head: lahat ng org. Hindi kasama ang IT Admin
+   (ibinalik sa SAO — SAO_ORG_HEALTH.sql).
    Tingnan ang pages/OrgHealth.jsx at ORG_HEALTH.sql */
 const ORG_HEALTH = { label: 'Org Health', to: '/org-health', icon: '✚' }
 
@@ -170,8 +170,8 @@ function staffRole(label) {
    ang proposal (tingnan ang canReviewProposal() sa
    lib/proposals.js).
 
-   orgHealth: true — may Org Health sa sidebar (School Head lang;
-   inalis na sa SAO).
+   orgHealth: true — may Org Health sa sidebar (School Head;
+   ang SAO ay may sariling sidebar sa ibaba na may Org Health din).
 
    Walang hiwalay na Proposals card sa Dashboard nila — ang stat na
    "Proposals awaiting your action" na ang link papunta sa Proposals. */
@@ -404,8 +404,13 @@ export const ROLES = {
        pangalan ng org, filter ayon sa org, bilang ng sumali, at
        "View details" para sa kumpletong detalye.
        Basa lang — walang Join, Edit, Delete o Certificates.
-       Tingnan ang canViewAllEvents() sa lib/events.js. */
-    sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, PROFILE],
+       Tingnan ang canViewAllEvents() sa lib/events.js.
+
+       ORG HEALTH NG SAO — KAPAREHO NG SCHOOL HEAD
+       (SAO_ORG_HEALTH.sql): listahan ng LAHAT ng org sa Org
+       Health page, at ang buod (OrgHealthOverview) sa Dashboard.
+       Tingnan ang seesAllOrgHealth() sa lib/orgHealth.js. */
+    sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
   },
   [ROLE_KEYS.SCHOOL_HEAD]: {
     ...staffRoleWithProposals('School Head', { orgHealth: true }),
@@ -424,7 +429,7 @@ export const ROLES = {
        "View details" para sa kumpletong detalye.
        Basa lang — walang Join, Edit, Delete o Certificates.
        Tingnan ang canViewAllEvents() sa lib/events.js.
-       Naiwan ang Org Health (School Head lang). */
+       Naiwan ang Org Health (kapareho na rin ng SAO). */
     sidebar: [DASHBOARD, EVENTS, MEMBERS, PROPOSALS, ORG_HEALTH, PROFILE],
   },
 
