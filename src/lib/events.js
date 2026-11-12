@@ -2,7 +2,6 @@ import { supabase } from './supabaseClient.js'
 import { getRoleConfig, hasAdviserPowers, roleKeyFromId } from '../config/roles.js'
 import { toTitleCase } from './profile.js'
 import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.js'
-import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js'
 
 /* ============================================================
    EVENTS — lahat ng pakikipag-usap sa database
@@ -19,6 +18,9 @@ import { fetchCertificatePaths, removeCertificateFiles } from './certificates.js
    Sa paggawa, ang org, author at petsa ay itinatakda ng trigger
    sa database. Sinusuri din doon na approved ang proposal at
    ikaw ang nagpasa — hindi ito malulusutan mula sa browser.
+
+   WALANG PAG-DELETE: kahit sino (pati Adviser) ay hindi na
+   makakapagbura ng event mula sa app — EVENT_NO_DELETE.sql.
 
    START DATE AT END DATE (PROPOSAL_START_END_DATE.sql):
      event_date → START DATE (hindi pinalitan ang pangalan)
@@ -166,9 +168,9 @@ export function orgNameOf(event) {
 /* ============================================================
    SAO — nakikita ang events ng LAHAT ng aktibong org
    (SAO_EVENTS_READ.sql: events_read_sao). Basa lang: walang
-   Join, Edit, Delete o Certificates — hindi siya kabilang sa
-   anumang org, kaya kusang false ang canEditEvent(),
-   canDeleteEvent() at canManageCertificates() para sa kanya.
+   Join, Edit o Certificates — hindi siya kabilang sa anumang
+   org, kaya kusang false ang canEditEvent() at
+   canManageCertificates() para sa kanya.
    ============================================================ */
 export function canViewAllEvents(profile) {
   return Boolean(profile?.is_active && profile.role_id === 4)
@@ -331,6 +333,7 @@ async function removeFiles(paths) {
 }
 
 /* Binubura ang lahat ng larawan ng event na ito, maliban sa `keep`.
+   Ginagamit kapag pinalitan o inalis ang larawan sa pag-edit.
    Hindi kritikal kapag pumalya — lumang file lang ang maiiwan. */
 async function cleanupImages(orgId, proposalId, keep) {
   if (!proposalId) return
@@ -347,7 +350,7 @@ async function cleanupImages(orgId, proposalId, keep) {
   }
 }
 
-/* ---------- GUMAWA / MAG-EDIT / MAG-BURA ---------- */
+/* ---------- GUMAWA / MAG-EDIT ---------- */
 
 function toRow(values) {
   return {
@@ -433,30 +436,6 @@ export async function updateEvent(event, values, { imageFile = null, removeImage
   return data[0]
 }
 
-export async function deleteEvent(event) {
-  /* Kunin muna ang mga certificate file habang umiiral pa ang mga
-     row — mabubura ang mga ito kasama ng event (cascade). Hindi
-     kritikal kapag pumalya: lumang file lang ang maiiwan. */
-  let certificatePaths = []
-  try {
-    certificatePaths = await fetchCertificatePaths(event.id)
-  } catch (err) {
-    console.warn('Hindi makuha ang mga certificate ng event:', err)
-  }
-
-  const { data, error } = await supabase
-    .from('events')
-    .delete()
-    .eq('id', event.id)
-    .select('id')
-
-  if (error) throw error
-  if (!data || data.length === 0) throw new Error('not-allowed')
-
-  await cleanupImages(event.organization_id, event.proposal_id, null)
-  await removeCertificateFiles(certificatePaths)
-}
-
 /* ============================================================
    SINO ANG PWEDENG GUMAWA / MAG-EDIT / MAG-DELETE
 
@@ -477,10 +456,9 @@ export async function deleteEvent(event) {
                HANGGANG 30 minuto bago magsimula ang event.
                Pagkatapos noon, wala nang "I-edit" — tingnan ang
                canEditEvent() at EVENT_EDIT_LOCK.sql.
-     Burahin → Adviser LANG (lahat sa org). Kapag nagawa na ng
-               Officer ang event, hindi na niya ito mabubura —
-               tingnan ang "events_delete_manage" sa
-               EVENT_DELETE_ADVISER_ONLY.sql.
+     Burahin → WALA. Kahit Adviser, hindi na makakapagbura ng
+               event — walang DELETE policy at binawi ang DELETE
+               privilege sa EVENT_NO_DELETE.sql.
    ============================================================ */
 
 /* Ang event na naka-kabit sa proposal (galing sa join sa
@@ -555,15 +533,6 @@ export function editLockKey(event) {
    AT mahigit 30 minuto pa bago magsimula ang event. */
 export function canEditEvent(event, profile, now = nowKey()) {
   return canManageEvent(event, profile) && now < editLockKey(event)
-}
-
-/* Burahin: Adviser ng org na iyon (o ang School Administrator sa
-   acting org niya) */
-export function canDeleteEvent(event, profile) {
-  return Boolean(
-    hasAdviserPowers(profile) &&
-      event.organization_id === profile.organization_id,
-  )
 }
 
 /* ---------- PAG-FORMAT ---------- */

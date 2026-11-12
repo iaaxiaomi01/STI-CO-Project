@@ -12,7 +12,6 @@ import {
   Pencil,
   Plus,
   Search,
-  Trash2,
   Users,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
@@ -24,14 +23,11 @@ import {
   canCreateEventFrom,
   canCreateEvents,
   canJoinEvents,
-  canDeleteEvent,
   canViewAllEvents,
   canEditEvent,
   computeStatus,
   createEventFromProposal,
-  deleteEvent,
   endDateOf,
-  eventErrorMessage,
   eventStatusLabel,
   fetchEvents,
   fetchMyJoinedEventIds,
@@ -88,9 +84,12 @@ import styles from './Events.module.css'
 
    Member  → nakikita ang events ng org niya
    Officer → nakikita lahat; gumagawa (mula sa approved na proposal);
-             nag-e-edit ng SARILI niyang gawa, pero HINDI na ito
-             mabubura kapag nagawa na
-   Adviser → nakikita lahat; nag-e-edit/nagbubura ng LAHAT sa org
+             nag-e-edit ng SARILI niyang gawa
+   Adviser → nakikita lahat; nag-e-edit ng LAHAT sa org
+
+   WALANG DELETE: kahit sino (pati Adviser) ay hindi na
+   makakapagbura ng event. Hinaharang ito ng database
+   (EVENT_NO_DELETE.sql).
 
    I-EDIT: nawawala ang button 30 minuto bago magsimula ang
    event (kusa, dahil sa "now" na nire-refresh bawat 30 segundo).
@@ -159,8 +158,8 @@ import styles from './Events.module.css'
 
    SAO (SAO_EVENTS_READ.sql — canViewAllEvents()):
      Nakikita ang events ng LAHAT ng aktibong organisasyon, sa
-     ticket view. Basa lang: walang Join, Edit, Delete o
-     Certificates (hindi siya kabilang sa anumang org).
+     ticket view. Basa lang: walang Join, Edit o Certificates
+     (hindi siya kabilang sa anumang org).
      Dagdag para sa kanya:
        • pangalan ng org sa bawat ticket
        • filter ayon sa org (katabi ng search) — ang bilang sa
@@ -174,8 +173,7 @@ import styles from './Events.module.css'
      sa mismong ticket (tulad ng sa notification).
 
    Ang RLS sa database ang totoong nagbabantay. Ang
-   canEditEvent() at canDeleteEvent() dito ay para lang itago
-   ang mga button.
+   canEditEvent() dito ay para lang itago ang button.
    ============================================================ */
 
 /* Ongoing muna, tapos Upcoming (pinakamalapit una),
@@ -312,7 +310,6 @@ function Events() {
 
   /* Ang event na ine-edit (bukas ang form) */
   const [editing, setEditing] = useState(null)
-  const [deletingId, setDeletingId] = useState(null)
 
   /* ---------- + CREATE EVENT (Officer) ----------
      null = sarado, o ang listahan ng approved na proposal na
@@ -368,8 +365,8 @@ function Events() {
   /* TICKET VIEW — Member, Officer at Adviser.
      Itsura lang ang iba; pareho ang data at mga aksyon.
      Ang Adviser ay walang Join (canJoinEvents), kaya walang
-     button sa stub niya — nasa ibaba ng ticket ang Certificates,
-     Edit at Delete, tulad ng sa Officer.
+     button sa stub niya — nasa ibaba ng ticket ang Certificates
+     at Edit, tulad ng sa Officer.
      Ang dating card layout ay naiwan para sa ibang role. */
   const ticketView = showMissed || hasAdviserPowers(profile) || viewAllEvents
 
@@ -629,8 +626,8 @@ function Events() {
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [events, viewAllEvents])
 
-  /* Kapag nawala ang napiling org (hal. na-delete ang huling
-     event nito), balik sa "All organizations" */
+  /* Kapag nawala ang napiling org sa listahan, balik sa
+     "All organizations" */
   const activeOrgFilter =
     orgFilter !== 'all' && orgOptions.some((o) => o.id === orgFilter) ? orgFilter : 'all'
 
@@ -675,24 +672,6 @@ function Events() {
     setEvents((list) => list.map((e) => (e.id === updated.id ? updated : e)))
     setEditing(null)
     setNotice('Changes saved.')
-  }
-
-  async function handleDelete(event) {
-    const ok = window.confirm(`Delete the event "${event.title}"? This cannot be undone.`)
-    if (!ok) return
-
-    setNotice('')
-    setDeletingId(event.id)
-    try {
-      await deleteEvent(event)
-      setEvents((list) => list.filter((e) => e.id !== event.id))
-      setNotice('Event deleted.')
-    } catch (err) {
-      console.error('Hindi nabura ang event:', err)
-      setNotice(eventErrorMessage(err))
-    } finally {
-      setDeletingId(null)
-    }
   }
 
   function toggleExpanded(id) {
@@ -836,8 +815,6 @@ function Events() {
             <ul className={styles.list}>
               {visible.map((ev) => {
                 const editable = canEditEvent(ev, profile, now)
-                const deletable = canDeleteEvent(ev, profile)
-                const busy = deletingId === ev.id
                 const isOpen = expanded.has(ev.id)
                 const longText = ev.description.length > 280
                 const joined = joinedIds.has(ev.id)
@@ -1006,8 +983,8 @@ function Events() {
                             </div>
                           )}
 
-                          {/* Officer at Adviser: Certificates / Edit / Delete */}
-                          {(editable || deletable || manageCerts) && (
+                          {/* Officer at Adviser: Certificates / Edit */}
+                          {(editable || manageCerts) && (
                             <div className={`${styles.actions} ${styles.tActions}`}>
                               {manageCerts && (
                                 <button
@@ -1017,7 +994,6 @@ function Events() {
                                     setNotice('')
                                     setCertEvent(ev)
                                   }}
-                                  disabled={busy}
                                 >
                                   <Award size={16} strokeWidth={2.2} aria-hidden="true" />
                                   Certificates
@@ -1031,21 +1007,9 @@ function Events() {
                                     setNotice('')
                                     setEditing(ev)
                                   }}
-                                  disabled={busy}
                                 >
                                   <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
                                   Edit
-                                </button>
-                              )}
-                              {deletable && (
-                                <button
-                                  type="button"
-                                  className={`${styles.linkButton} ${styles.tAction} ${styles.danger}`}
-                                  onClick={() => handleDelete(ev)}
-                                  disabled={busy}
-                                >
-                                  <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
-                                  {busy ? 'Deleting…' : 'Delete'}
                                 </button>
                               )}
                             </div>
@@ -1266,7 +1230,7 @@ function Events() {
                           {wasEdited(ev) && <span className={styles.edited}> · edited</span>}
                         </p>
 
-                        {(editable || deletable || manageCerts) && (
+                        {(editable || manageCerts) && (
                           <div className={styles.actions}>
                             {manageCerts && (
                               <button
@@ -1276,7 +1240,6 @@ function Events() {
                                   setNotice('')
                                   setCertEvent(ev)
                                 }}
-                                disabled={busy}
                               >
                                 Certificates
                               </button>
@@ -1289,19 +1252,8 @@ function Events() {
                                   setNotice('')
                                   setEditing(ev)
                                 }}
-                                disabled={busy}
                               >
                                 Edit
-                              </button>
-                            )}
-                            {deletable && (
-                              <button
-                                type="button"
-                                className={`${styles.linkButton} ${styles.danger}`}
-                                onClick={() => handleDelete(ev)}
-                                disabled={busy}
-                              >
-                                {busy ? 'Deleting…' : 'Delete'}
                               </button>
                             )}
                           </div>

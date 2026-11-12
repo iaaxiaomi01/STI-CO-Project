@@ -27,8 +27,9 @@ import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.j
      Walang org ang SA, kaya ang post niya ay walang
      organization_id. Para lang ito sa LAHAT ng org o sa PILING
      org. Ang picture niya ay nasa announcement-images/school-admin/.
-     Nakikita niya ang lahat ng announcement, at naa-edit/nabubura
-     niya ang kahit alin.
+     Nakikita niya ang lahat ng announcement, pero ang SARILI
+     niyang post lang ang naa-edit/nabubura niya
+     (ANNOUNCEMENT_AUTHOR_ONLY.sql).
    ============================================================ */
 
 const BUCKET = 'announcement-images'
@@ -291,31 +292,28 @@ export async function countRecentAnnouncements(days = 7) {
    KAPAREHO ito ng can_manage_announcement() sa database. Dito,
    para lang itago ang mga button. Ang database pa rin ang
    totoong nagbabantay — kapag binago mo ang isa, baguhin
-   mo rin ang isa.
+   mo rin ang isa (ANNOUNCEMENT_AUTHOR_ONLY.sql).
 
-     School Administrator → LAHAT ng announcement
-     Officer → gawa ng kahit sinong Officer sa org
-     Adviser → sariling gawa + gawa ng mga Officer
+   ANG GUMAWA LANG. Walang ibang makakapag-edit/delete ng post
+   mo — kahit Adviser o School Administrator.
 
-   Officer at Adviser: sa SARILING org lang — kaya ang global post
-   ay ang special org lang ang makakapag-edit/delete.
+     Officer / Adviser    → sariling post lang, at nasa org pa
+                            rin siya na pinag-postan niya
+     School Administrator → sariling post lang (walang org)
+
+   Kapag hindi na Officer/Adviser ang gumawa (hal. naging Member)
+   o lumipat na siya ng org, hindi na niya ito mae-edit/delete.
    ============================================================ */
 export function canManageAnnouncement(announcement, profile) {
   if (!profile?.is_active) return false
-  if (profile.role_id === 8) return true
-  if (!announcement.organization_id) return false
-  if (announcement.organization_id !== profile.organization_id) return false
+  if (!announcement.author_id || announcement.author_id !== profile.id) return false
 
-  if (profile.role_id === 2) {
-    return announcement.author_role_id === 2
-  }
-  if (profile.role_id === 3) {
-    return (
-      announcement.author_id === profile.id ||
-      announcement.author_role_id === 2
-    )
-  }
-  return false
+  /* Nagpapaskil pa rin: Officer, Adviser o School Administrator */
+  if (![2, 3, 8].includes(profile.role_id)) return false
+
+  /* Post ng org → nasa org na iyon ka pa rin.
+     Post ng School Administrator → walang org (pareho ng profile niya). */
+  return (announcement.organization_id ?? null) === (profile.organization_id ?? null)
 }
 
 /* Mga pangalan ng piniling org (walang laman = hindi 'selected') */

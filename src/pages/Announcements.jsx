@@ -37,9 +37,13 @@ import styles from './Announcements.module.css'
 
    Member  → nakikita ang announcements ng org niya
    Officer → nakikita lahat sa org niya, nagpapaskil,
-             nag-e-edit at nagde-delete ng gawa ng Officers
+             nag-e-edit at nagde-delete ng SARILI niyang post lang
    Adviser → nakikita lahat sa org niya, nagpapaskil,
-             nag-e-edit at nagde-delete ng sarili at ng Officers
+             nag-e-edit at nagde-delete ng SARILI niyang post lang
+
+   ANG GUMAWA LANG ang makakapag-edit/delete ng post — kahit
+   ang Adviser o School Administrator ay hindi na makakagalaw
+   ng post ng iba (ANNOUNCEMENT_AUTHOR_ONLY.sql).
 
    EDIT: Title, Type, Message at Picture lang ang nababago.
    Hindi na mababago kung para kanino (sariling org / lahat /
