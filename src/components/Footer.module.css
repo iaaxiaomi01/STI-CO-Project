@@ -52,6 +52,11 @@
   color: #fff;
 }
 
+/* Dilaw na "-CO", gaya ng sa Login at Sidebar */
+.brandAccent {
+  color: var(--sti-yellow);
+}
+
 .brandTitle p {
   margin-top: 6px;
   font-size: 12px;

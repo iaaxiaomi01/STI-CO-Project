@@ -42,7 +42,9 @@ function Footer() {
             <img src={stiLogo} alt="STI College San Pablo Logo" />
 
             <div className={styles.brandTitle}>
-              <h2>STI-CO</h2>
+              <h2>
+                STI<span className={styles.brandAccent}>-CO</span>
+              </h2>
               <p>STI COLLEGE SAN PABLO</p>
               <p>CAMPUS ORGANIZATION</p>
             </div>
