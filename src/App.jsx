@@ -1,6 +1,8 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.js'
 import { getRoleConfig } from './config/roles.js'
+import { isDevLoginAllowed } from './lib/devAuth.js'
 import PublicLayout from './layouts/PublicLayout.jsx'
 import MemberLayout from './layouts/MemberLayout.jsx'
 import Home from './pages/Home.jsx'
@@ -18,6 +20,12 @@ import OrgHealth from './pages/OrgHealth.jsx'
 import AccessDenied from './pages/AccessDenied.jsx'
 import Organizations from './pages/Organizations.jsx'
 import Users from './pages/Users.jsx'
+
+/* DEVELOPER LOGIN (/dev-login) — "npm run dev" + localhost lang.
+   Sa "npm run build", false ang import.meta.env.DEV kaya null
+   ito at hindi isinasama ng Vite ang DevLogin sa production.
+   Tingnan ang lib/devAuth.js at DEV_LOGIN.sql. */
+const DevLogin = import.meta.env.DEV ? lazy(() => import('./pages/DevLogin.jsx')) : null
 
 /* ============================================================
    REHISTRO NG PAGES
@@ -109,6 +117,16 @@ function App() {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          {DevLogin && isDevLoginAllowed() && (
+            <Route
+              path="/dev-login"
+              element={
+                <Suspense fallback={null}>
+                  <DevLogin />
+                </Suspense>
+              }
+            />
+          )}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

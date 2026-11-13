@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
 import { Info, Menu } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
+import { isDevLoginAllowed, isDevSessionUser } from '../lib/devAuth.js'
 import styles from './MemberLayout.module.css'
 
 /* ============================================================
@@ -34,6 +35,15 @@ function MemberLayout() {
        Kapag naging null ang user, awtomatikong babalik ang
        App sa public layout na may navbar. */
     navigate('/', { replace: true })
+  }
+
+  /* DEV badge — kapag naka-login gamit ang developer account
+     (localhost lang). "Switch role": logout → /dev-login. */
+  const devSession = isDevLoginAllowed() && isDevSessionUser(user)
+
+  async function handleDevSwitch() {
+    await supabase.auth.signOut()
+    navigate('/dev-login', { replace: true })
   }
 
   return (
@@ -85,6 +95,16 @@ function MemberLayout() {
           <p className={styles.footerCopy}>&copy; {year} STI-CO. All Rights Reserved.</p>
         </footer>
       </div>
+
+      {devSession && (
+        <div className={styles.devBadge} role="status">
+          <span className={styles.devTag}>DEV</span>
+          <span className={styles.devEmail}>{user.email}</span>
+          <button type="button" className={styles.devSwitch} onClick={handleDevSwitch}>
+            Switch role
+          </button>
+        </div>
+      )}
     </div>
   )
 }

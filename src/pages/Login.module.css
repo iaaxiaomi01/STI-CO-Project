@@ -369,6 +369,24 @@
   color: var(--color-muted);
 }
 
+/* Link papunta sa /dev-login — localhost lang (Login.jsx) */
+.devLink {
+  align-self: center;
+  margin-top: 1.25rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px dashed #b9c2d6;
+  border-radius: 999px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.devLink:hover {
+  border-color: var(--sti-blue);
+  color: var(--sti-blue);
+}
+
 .helpIcon {
   flex-shrink: 0;
   width: 18px;

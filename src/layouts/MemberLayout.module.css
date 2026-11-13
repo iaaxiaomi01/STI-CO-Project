@@ -162,3 +162,58 @@
     border-radius: 14px;
   }
 }
+/* ==========================================================
+   DEV BADGE — developer login lang (localhost)
+   Maliit na tableta sa kanang-ibaba para laging alam na dev
+   account ang gamit, at may mabilis na "Switch role".
+   ========================================================== */
+.devBadge {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: calc(100vw - 28px);
+  padding: 0.4rem 0.45rem 0.4rem 0.5rem;
+  border: 1px solid rgba(255, 210, 0, 0.6);
+  border-radius: 999px;
+  background-color: #111c33;
+  color: #e7ecf7;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+}
+
+.devTag {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background-color: var(--dash-yellow);
+  color: #111c33;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.devEmail {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.devSwitch {
+  flex-shrink: 0;
+  padding: 0.3rem 0.7rem;
+  border: none;
+  border-radius: 999px;
+  background-color: #24365e;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.devSwitch:hover {
+  background-color: #30487a;
+}

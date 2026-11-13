@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
+import { isDevLoginAllowed } from '../lib/devAuth.js'
 import msLogo from '../assets/microsoft-logo.svg'
 import styles from './Login.module.css'
 
@@ -149,6 +151,14 @@ function Login() {
               If you don't have one yet, please contact School Administrator.
             </p>
           </div>
+
+          {/* Developer login — lalabas lang sa "npm run dev" at
+              localhost (lib/devAuth.js). Wala ito sa deployed site. */}
+          {isDevLoginAllowed() && (
+            <Link to="/dev-login" className={styles.devLink}>
+              Developer login (localhost)
+            </Link>
+          )}
         </div>
       </div>
     </section>

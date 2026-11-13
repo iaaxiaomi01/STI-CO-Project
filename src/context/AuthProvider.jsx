@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { roleKeyFromId } from '../config/roles.js'
 import { isPositionNotification, subscribeToNotifications } from '../lib/notifications.js'
+import { isDevLoginAllowed, isDevSessionUser } from '../lib/devAuth.js'
 import { AuthContext } from './AuthContext.js'
 
 /* ============================================================
@@ -69,7 +70,21 @@ function AuthProvider({ children }) {
     }
   }, [])
 
-  const userId = session?.user?.id ?? null
+  /* ---------- bantay: dev account sa labas ng localhost ----------
+     Ang dev accounts (email + password, DEV_LOGIN.sql) ay para sa
+     localhost lang. Kapag may ganitong session sa deployed site
+     (o sa ibang device sa LAN), ituturing itong walang naka-login
+     at ila-logout. Microsoft ('azure') ang lahat ng totoong user,
+     kaya hindi sila tinatamaan nito. */
+  const devSessionBlocked = isDevSessionUser(session?.user) && !isDevLoginAllowed()
+
+  useEffect(() => {
+    if (devSessionBlocked) supabase.auth.signOut()
+  }, [devSessionBlocked])
+
+  const activeSession = devSessionBlocked ? null : session
+
+  const userId = activeSession?.user?.id ?? null
 
   /* ---------- 3: profile galing database ---------- */
   const loadProfile = useCallback(async (id) => {
@@ -132,8 +147,8 @@ function AuthProvider({ children }) {
   const loading = sessionLoading || !profileReady
 
   const value = {
-    session,
-    user: session?.user ?? null,
+    session: activeSession,
+    user: activeSession?.user ?? null,
 
     /* Ang buong row mula sa public.profiles (o null) */
     profile,
