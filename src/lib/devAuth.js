@@ -42,11 +42,10 @@ export function isDevSessionUser(user) {
    Kapag pinalitan mo ang email doon, palitan mo rin dito.
    ------------------------------------------------------------ */
 export const DEV_ACCOUNTS = [
-  { email: 'dev.member@sti-co.local', role: 'Member', note: 'NEXI' },
-  { email: 'dev.officer@sti-co.local', role: 'Officer', note: 'NEXI' },
-  { email: 'dev.adviser@sti-co.local', role: 'Adviser', note: 'NEXI' },
-  { email: 'dev.sao@sti-co.local', role: 'SAO', note: 'Lahat ng org' },
-  { email: 'dev.schoolhead@sti-co.local', role: 'School Head', note: 'Lahat ng org' },
-  { email: 'dev.schooladmin@sti-co.local', role: 'School Administrator', note: 'Walang org' },
-  { email: 'dev.itadmin@sti-co.local', role: 'IT Admin', note: 'Walang org' },
+  { email: 'dev.member@sti-co.local', role: 'Member' },
+  { email: 'dev.officer@sti-co.local', role: 'Officer' },
+  { email: 'dev.adviser@sti-co.local', role: 'Adviser' },
+  { email: 'dev.sao@sti-co.local', role: 'SAO' },
+  { email: 'dev.schoolhead@sti-co.local', role: 'School Head' },
+  { email: 'dev.schooladmin@sti-co.local', role: 'School Administrator' },
 ]

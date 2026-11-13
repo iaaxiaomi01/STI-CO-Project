@@ -1,200 +1,777 @@
 /* ============================================================
    DEVELOPER LOGIN — localhost lang
-   Sadyang iba ang hitsura (madilim, may dilaw na "DEV" badge)
-   para hindi mapagkamalang totoong login page.
+
+   Kapareho ng Login page ang ayos (dalawang panel sa iisang
+   card), para pormal at bagay sa site:
+     Kaliwa → madilim na "Developer Console" panel na may dilaw
+              na badge — dito makikita agad na HINDI ito ang
+              totoong login page
+     Kanan  → ang mismong sign in (puti, malinis)
+
+   Kulay: --sti-blue-deep, --sti-yellow (index.css).
    ============================================================ */
 
 .page {
-  min-height: calc(100vh - 109px);
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 109px); /* 106px header + 3px dilaw na border */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.25rem;
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 210, 0, 0.05) 0 14px,
-      transparent 14px 28px
-    ),
-    #0b1324;
+  padding: 4rem 1.25rem;
+  background-color: #eef1f7;
   font-family: var(--font-ui);
+  overflow: hidden;
 }
 
+/* Grid na background na kumukupas sa gilid */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(6, 53, 140, 0.1), transparent 40%),
+    radial-gradient(circle at 88% 88%, rgba(255, 210, 0, 0.12), transparent 36%);
+}
+
+.backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(6, 53, 140, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 53, 140, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 72%);
+  mask-image: radial-gradient(ellipse at center, #000 25%, transparent 72%);
+}
+
+/* ---------- ANG CARD ---------- */
 .card {
   width: 100%;
-  max-width: 620px;
-  padding: 2.25rem 2.25rem 1.75rem;
-  border: 1px solid rgba(255, 210, 0, 0.35);
-  border-radius: 18px;
-  background-color: #111c33;
-  color: #e7ecf7;
-  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.6);
+  max-width: 980px;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  background-color: #fff;
+  border-radius: 22px;
+  box-shadow:
+    0 1px 2px rgba(3, 27, 75, 0.06),
+    0 24px 60px -12px rgba(3, 27, 75, 0.28);
+  overflow: hidden;
+  animation: cardIn 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-.head {
-  margin-bottom: 1.6rem;
+/* ============================================================
+   KALIWA: DEVELOPER PANEL
+   ============================================================ */
+.sidePanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2.5rem 2.25rem 2.25rem;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(165deg, #0d2350 0%, var(--sti-blue-deep) 55%, #020f2e 100%);
+  color: #fff;
+}
+
+/* Manipis na dilaw na guhit sa kanang gilid */
+.sidePanel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--sti-yellow), var(--sti-gold));
+}
+
+.sideTop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .badge {
-  display: inline-block;
-  margin-bottom: 0.9rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(255, 210, 0, 0.45);
+  border-radius: 999px;
+  background-color: rgba(255, 210, 0, 0.1);
+  color: var(--sti-yellow);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   background-color: var(--sti-yellow);
-  color: #111c33;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 0.72rem;
+  box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.2);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 2.9rem;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.brandAccent {
+  color: var(--sti-yellow);
+}
+
+.sideTitle {
+  margin-top: 0.7rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.sideText {
+  margin-top: 0.55rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+/* Maliit na "spec sheet" ng environment */
+.envList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.envRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.82rem;
+}
+
+.envRow + .envRow {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.envRow dt {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.envRow dd {
+  margin: 0;
+  font-weight: 700;
+  color: #fff;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.sideNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sideNoticeIcon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--sti-yellow);
+}
+
+/* ============================================================
+   KANAN: SIGN IN
+   ============================================================ */
+.formPanel {
+  display: flex;
+  flex-direction: column;
+  padding: 2.75rem 2.75rem 2.25rem;
+  animation: rise 0.6s 0.15s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.head {
+  margin-bottom: 1.75rem;
+}
+
+/* Maliit na label na may dilaw na guhit (kapareho ng Login) */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sti-blue);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 3px;
+  border-radius: 3px;
+  background-color: var(--sti-yellow);
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #fff;
-  margin-bottom: 0.35rem;
+  letter-spacing: -0.03em;
+  color: var(--sti-ink);
+  margin-bottom: 0.4rem;
 }
 
 .subtitle {
-  font-size: 0.92rem;
-  line-height: 1.5;
-  color: #9aa7c2;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--color-muted);
 }
 
+/* ---------- Mga field ---------- */
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.5rem;
 }
 
-.label,
-.sectionLabel {
+.label {
+  margin-bottom: 0.5rem;
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #c3cde2;
+  color: var(--sti-ink);
 }
 
-.sectionLabel {
-  margin-bottom: 0.6rem;
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 0.9rem;
+  color: #8a96ad;
+  pointer-events: none;
 }
 
 .input {
   width: 100%;
-  min-height: 44px;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #2a3a5c;
+  min-height: 48px;
+  padding: 0.65rem 2.9rem 0.65rem 2.6rem;
+  border: 1px solid #d5dbe7;
   border-radius: 10px;
-  background-color: #0b1324;
-  color: #fff;
+  background-color: #fbfcfe;
+  color: var(--sti-ink);
   font: inherit;
   font-size: 0.95rem;
+  transition: border-color var(--transition), box-shadow var(--transition), background-color var(--transition);
+}
+
+.input::placeholder {
+  color: #a3adc0;
+}
+
+.input:hover:not(:disabled) {
+  border-color: #b7c1d4;
 }
 
 .input:focus {
-  outline: 2px solid var(--sti-yellow);
-  outline-offset: 1px;
-  border-color: transparent;
+  outline: none;
+  border-color: var(--sti-blue);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(6, 53, 140, 0.12);
 }
 
-.grid {
+.input:disabled {
+  opacity: 0.65;
+}
+
+/* Show / hide password */
+.reveal {
+  position: absolute;
+  right: 0.4rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 0.6rem;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6d7a94;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.reveal:hover:not(:disabled) {
+  background-color: #eef1f7;
+  color: var(--sti-blue);
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--sti-blue);
+  outline-offset: 1px;
+}
+
+/* ---------- Listahan ng role ---------- */
+.roleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
 }
 
 .roleButton {
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid #2a3a5c;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #e1e6ef;
   border-radius: 12px;
-  background-color: #16233f;
-  color: #fff;
+  background-color: #fff;
+  color: var(--sti-ink);
   text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition),
+    background-color var(--transition);
 }
 
 .roleButton:hover:not(:disabled) {
-  border-color: var(--sti-yellow);
-  background-color: #1b2b4d;
+  border-color: var(--sti-blue);
+  box-shadow: 0 8px 20px -10px rgba(3, 27, 75, 0.35);
   transform: translateY(-1px);
 }
 
-.roleButton:disabled,
-.customButton:disabled {
-  opacity: 0.55;
+.roleButton:focus-visible {
+  outline: 2px solid var(--sti-blue);
+  outline-offset: 2px;
+}
+
+.roleButton:disabled {
   cursor: progress;
+  opacity: 0.55;
+}
+
+/* Ang pinindot: hindi kupas habang nagsa-sign in */
+.roleButton.roleBusy {
+  opacity: 1;
+  border-color: var(--sti-blue);
+  background-color: var(--color-primary-soft);
+}
+
+.roleIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #eef2fb;
+  color: var(--sti-blue);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.roleButton:hover:not(:disabled) .roleIcon,
+.roleBusy .roleIcon {
+  background-color: var(--sti-blue);
+  color: var(--sti-yellow);
+}
+
+.roleText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pangalan, tapos email sa ilalim — pare-pareho sa lahat ng
+   role kahit mahaba ang pangalan (hal. School Administrator) */
+.roleTop {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .roleName {
   font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.3;
 }
 
-.roleNote {
+.roleEmail {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roleDescription {
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #8a96ad;
+}
+
+.roleAction {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  color: #a3adc0;
+  transition: color var(--transition), transform var(--transition);
+}
+
+.roleButton:hover:not(:disabled) .roleAction {
+  color: var(--sti-blue);
+  transform: translateX(2px);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(6, 53, 140, 0.2);
+  border-top-color: var(--sti-blue);
+  border-radius: 50%;
+  animation: spinPlain 0.8s linear infinite;
+}
+
+/* ---------- "or use another account" ---------- */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 1.5rem 0 1rem;
   font-size: 0.75rem;
-  color: #8e9bb8;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #8a96ad;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #e4e9f2;
 }
 
 .customRow {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1.1rem;
+  gap: 0.6rem;
+}
+
+/* Walang reveal button sa email, kaya mas maliit ang padding sa kanan */
+.customRow .input {
+  padding-right: 0.9rem;
 }
 
 .customButton {
   flex-shrink: 0;
-  padding: 0 1.1rem;
+  min-height: 48px;
+  padding: 0 1.4rem;
   border: none;
   border-radius: 10px;
-  background-color: var(--sti-yellow);
-  color: #111c33;
+  background-color: var(--sti-blue);
+  color: #fff;
   font: inherit;
+  font-size: 0.92rem;
   font-weight: 700;
-  cursor: pointer;
+  transition: background-color var(--transition), box-shadow var(--transition);
 }
 
+.customButton:hover:not(:disabled) {
+  background-color: var(--sti-blue-bright);
+  box-shadow: 0 8px 18px -8px rgba(6, 53, 140, 0.55);
+}
+
+.customButton:focus-visible {
+  outline: 2px solid var(--sti-blue);
+  outline-offset: 2px;
+}
+
+.customButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- Error ---------- */
 .error {
-  margin-top: 1rem;
-  padding: 0.75rem 0.9rem;
-  border-left: 3px solid #ff6b6b;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #f4c4c4;
+  border-left: 3px solid #c43232;
   border-radius: 8px;
-  background-color: rgba(255, 107, 107, 0.12);
-  color: #ffc2c2;
-  font-size: 0.86rem;
-  line-height: 1.45;
+  background-color: #fdeaea;
+  color: #a12626;
+  font-size: 0.87rem;
+  line-height: 1.5;
 }
 
+.errorIcon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* ---------- Bumalik ---------- */
 .back {
-  display: inline-block;
-  margin-top: 1.4rem;
-  font-size: 0.85rem;
-  color: #9aa7c2;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.3rem;
+  margin-top: 1.75rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--color-muted);
   text-decoration: none;
+  transition: color var(--transition);
 }
 
 .back:hover {
-  color: #fff;
+  color: var(--sti-blue);
 }
 
-@media (max-width: 560px) {
+/* Para sa screen reader lang */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- "Not available" (hindi localhost) ---------- */
+.blockedCard {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 2rem 2rem;
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 24px 60px -12px rgba(3, 27, 75, 0.28);
+  text-align: center;
+}
+
+.blockedIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 1rem;
+  border-radius: 14px;
+  background-color: #eef2fb;
+  color: var(--sti-blue);
+}
+
+.blockedTitle {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--sti-ink);
+  margin-bottom: 0.35rem;
+}
+
+.blockedCard .back {
+  align-self: center;
+}
+
+/* ==========================================================
+   ANIMATIONS
+   ========================================================== */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes spinPlain {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .formPanel {
+    animation: none;
+  }
+
+  .roleButton,
+  .roleAction {
+    transition: none;
+  }
+}
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+@media (max-width: 1023px) {
+  .page {
+    min-height: calc(100vh - 93px); /* 90px header + 3px border */
+    padding: 3rem 1.25rem;
+  }
+
   .card {
-    padding: 1.75rem 1.25rem 1.5rem;
+    grid-template-columns: 1fr;
+    max-width: 640px;
+  }
+
+  /* Kaliwang panel → banner sa itaas */
+  .sidePanel {
+    gap: 1.5rem;
+    padding: 2rem 2rem 1.75rem;
+  }
+
+  .sidePanel::after {
+    top: auto;
+    left: 0;
+    width: auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--sti-yellow), var(--sti-gold));
+  }
+
+  .badge {
+    margin-bottom: 1.25rem;
+  }
+
+  .brand {
+    font-size: 2.4rem;
+  }
+
+  /* Pahalang ang environment info */
+  .envList {
+    flex-direction: row;
+  }
+
+  .envRow {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .envRow + .envRow {
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .envRow dd {
+    text-align: left;
+  }
+
+  .sideNotice {
+    margin-top: 0;
+  }
+
+  .formPanel {
+    padding: 2.25rem 2rem 2rem;
+  }
+}
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+@media (max-width: 600px) {
+  .page {
+    align-items: flex-start;
+    padding: 1.5rem 1rem 2.5rem;
+  }
+
+  .card {
+    border-radius: 18px;
+  }
+
+  .sidePanel {
+    padding: 1.6rem 1.4rem 1.5rem;
+  }
+
+  .sideText {
+    font-size: 0.85rem;
+  }
+
+  .envList {
+    flex-direction: column;
+  }
+
+  .envRow {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .envRow + .envRow {
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .envRow dd {
+    text-align: right;
+  }
+
+  .formPanel {
+    padding: 1.75rem 1.4rem 1.6rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
   }
 
   .customRow {
     flex-direction: column;
-  }
-
-  .customButton {
-    min-height: 44px;
   }
 }
