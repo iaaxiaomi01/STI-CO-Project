@@ -133,13 +133,62 @@ function usePublicOrganizations() {
   return { organizations, status, retry: () => load() }
 }
 
+/* Pinakamaraming dot na sabay na nakikita. Kapag mas marami ang
+   page, "gumagalaw" ang mga dot kasabay ng swipe (sliding window)
+   imbes na humaba nang lampas sa screen. */
+const MAX_VISIBLE_DOTS = 7
+
 /* ------------------------------------------------------------
    SCROLL STATE ng carousel
 
    Binabantayan ang lapad ng track para malaman kung kailangan
    pa ng arrows/dots, at kung nasaang "page" na tayo.
-   Ang isang page = isang buong lapad ng nakikitang track.
+
+   DALAWANG MODE:
+     - Desktop/tablet (ilang card ang kita) → ang isang page =
+       isang buong lapad ng nakikitang track.
+     - Phone (isang card lang ang kita)     → ang isang page =
+       isang card, dahil naka-snap sa gitna ang bawat card.
+       Dati, lapad ng track ang ginagamit dito kaya hindi tugma
+       ang dots sa cards (hal. 30 cards → 25 dots).
    ------------------------------------------------------------ */
+
+/* Ilang buong card ang kasya sa nakikitang bahagi ng track */
+function cardsPerView(track) {
+  const row = track.firstElementChild
+  const firstCard = row?.firstElementChild
+  if (!firstCard) return 1
+
+  const trackStyle = getComputedStyle(track)
+  const visibleWidth =
+    track.clientWidth -
+    (parseFloat(trackStyle.paddingLeft) || 0) -
+    (parseFloat(trackStyle.paddingRight) || 0)
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0
+  const cardWidth = firstCard.getBoundingClientRect().width
+
+  return Math.max(1, Math.floor((visibleWidth + gap + 1) / (cardWidth + gap)))
+}
+
+/* Ang card na pinakamalapit sa gitna ng track */
+function centeredCardIndex(track) {
+  const cards = track.firstElementChild?.children ?? []
+  const trackRect = track.getBoundingClientRect()
+  const center = trackRect.left + trackRect.width / 2
+
+  let best = 0
+  let bestDistance = Infinity
+  Array.from(cards).forEach((card, index) => {
+    const rect = card.getBoundingClientRect()
+    const distance = Math.abs(rect.left + rect.width / 2 - center)
+    if (distance < bestDistance) {
+      best = index
+      bestDistance = distance
+    }
+  })
+  return best
+}
+
 function useCarousel(itemCount) {
   const trackRef = useRef(null)
   const [state, setState] = useState({
@@ -148,6 +197,7 @@ function useCarousel(itemCount) {
     atEnd: true,
     pageCount: 1,
     activePage: 0,
+    perCard: false,
   })
 
   const measure = useCallback(() => {
@@ -156,15 +206,25 @@ function useCarousel(itemCount) {
 
     const maxScroll = track.scrollWidth - track.clientWidth
     const overflowing = maxScroll > 2
-    const pageCount = overflowing ? Math.ceil(track.scrollWidth / track.clientWidth - 0.05) : 1
-    const progress = overflowing ? track.scrollLeft / maxScroll : 0
+    const perCard = overflowing && cardsPerView(track) === 1
+
+    let pageCount = 1
+    let activePage = 0
+    if (perCard) {
+      pageCount = track.firstElementChild?.children.length ?? 1
+      activePage = centeredCardIndex(track)
+    } else if (overflowing) {
+      pageCount = Math.ceil(track.scrollWidth / track.clientWidth - 0.05)
+      activePage = Math.round((track.scrollLeft / maxScroll) * (pageCount - 1))
+    }
 
     setState({
       overflowing,
       atStart: track.scrollLeft <= 2,
       atEnd: track.scrollLeft >= maxScroll - 2,
       pageCount,
-      activePage: Math.round(progress * (pageCount - 1)),
+      activePage,
+      perCard,
     })
   }, [])
 
@@ -197,11 +257,47 @@ function useCarousel(itemCount) {
     const track = trackRef.current
     if (!track) return
     const maxScroll = track.scrollWidth - track.clientWidth
-    const left = state.pageCount > 1 ? (maxScroll * index) / (state.pageCount - 1) : 0
-    track.scrollTo({ left, behavior: behavior() })
+
+    let left = 0
+    if (state.perCard) {
+      /* Phone: igitna ang mismong card na pinili */
+      const card = track.firstElementChild?.children[index]
+      if (!card) return
+      const trackRect = track.getBoundingClientRect()
+      const cardRect = card.getBoundingClientRect()
+      left =
+        track.scrollLeft +
+        (cardRect.left + cardRect.width / 2) -
+        (trackRect.left + trackRect.width / 2)
+    } else if (state.pageCount > 1) {
+      left = (maxScroll * index) / (state.pageCount - 1)
+    }
+
+    track.scrollTo({ left: Math.min(Math.max(left, 0), maxScroll), behavior: behavior() })
   }
 
   return { trackRef, ...state, scrollByPage, goToPage }
+}
+
+/* ------------------------------------------------------------
+   DOTS — hanggang MAX_VISIBLE_DOTS lang ang kita.
+   Kapag may lampas pa sa kaliwa o kanan, mas maliit ang dot
+   sa dulo bilang senyales na marami pa.
+   ------------------------------------------------------------ */
+function visibleDots(pageCount, activePage) {
+  const count = Math.min(pageCount, MAX_VISIBLE_DOTS)
+  const start = Math.min(
+    Math.max(activePage - Math.floor(count / 2), 0),
+    pageCount - count,
+  )
+  const end = start + count - 1
+
+  return Array.from({ length: count }, (_, offset) => {
+    const index = start + offset
+    const isEdge =
+      (index === start && start > 0) || (index === end && end < pageCount - 1)
+    return { index, isEdge }
+  })
 }
 
 /* ------------------------------------------------------------
@@ -312,16 +408,27 @@ function Organizations() {
       {/* ---------- PAGINATION DOTS ---------- */}
       {showNav && carousel.pageCount > 1 && (
         <div className={styles.pagination}>
-          {Array.from({ length: carousel.pageCount }, (_, index) => (
-            <button
-              type="button"
-              key={index}
-              className={`${styles.dot} ${carousel.activePage === index ? styles.dotActive : ''}`}
-              onClick={() => carousel.goToPage(index)}
-              aria-label={`Go to organization page ${index + 1}`}
-              aria-current={carousel.activePage === index ? 'true' : undefined}
-            />
-          ))}
+          {visibleDots(carousel.pageCount, carousel.activePage).map(({ index, isEdge }) => {
+            const isActive = carousel.activePage === index
+            return (
+              <button
+                type="button"
+                key={index}
+                className={[
+                  styles.dot,
+                  isActive ? styles.dotActive : '',
+                  isEdge && !isActive ? styles.dotEdge : '',
+                ].join(' ')}
+                onClick={() => carousel.goToPage(index)}
+                aria-label={
+                  carousel.perCard
+                    ? `Go to organization ${index + 1} of ${carousel.pageCount}`
+                    : `Go to organization page ${index + 1} of ${carousel.pageCount}`
+                }
+                aria-current={isActive ? 'true' : undefined}
+              />
+            )
+          })}
         </div>
       )}
     </section>
