@@ -7,6 +7,7 @@ import {
   Globe,
   Megaphone,
   Pencil,
+  Plus,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -28,9 +29,9 @@ import {
   wasEdited,
 } from '../lib/announcements.js'
 import PageHeader from '../components/PageHeader.jsx'
-import ActionButton from '../components/ActionButton.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import AnnouncementForm from '../components/AnnouncementForm.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import styles from './Announcements.module.css'
 
 /* ============================================================
@@ -248,6 +249,8 @@ function Announcements() {
      { ...announcement } = ine-edit */
   const [editing, setEditing] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  /* Ang announcement na hinihintay ang "Delete" sa ConfirmDialog */
+  const [confirmingDelete, setConfirmingDelete] = useState(null)
 
   const load = useCallback(async () => {
     try {
@@ -327,21 +330,29 @@ function Announcements() {
     setEditing(null)
   }
 
-  async function handleDelete(announcement) {
-    const ok = window.confirm(
-      `Delete "${announcement.title}"? This cannot be undone.`,
-    )
-    if (!ok) return
+  /* "Delete" → bubuksan muna ang ConfirmDialog (kapalit ng
+     window.confirm() ng browser, na walang sariling disenyo).
+     Doon pa lang talagang buburahin, pagkapindot ng "Delete". */
+  function openDelete(announcement) {
+    setNotice('')
+    setConfirmingDelete(announcement)
+  }
+
+  /* Galing sa ConfirmDialog. Kapag nag-throw, doon lalabas ang
+     error at mananatiling bukas ang dialog. */
+  async function handleDelete() {
+    const announcement = confirmingDelete
+    if (!announcement) return
 
     setDeletingId(announcement.id)
-    setNotice('')
     try {
       await deleteAnnouncement(announcement)
       setAnnouncements((list) => list.filter((a) => a.id !== announcement.id))
+      setConfirmingDelete(null)
       setNotice('Announcement deleted.')
     } catch (err) {
       console.error('Hindi nabura ang announcement:', err)
-      setNotice(
+      throw new Error(
         err?.message === 'not-allowed'
           ? "You don't have permission to delete this announcement."
           : 'Could not delete. Please try again.',
@@ -449,7 +460,7 @@ function Announcements() {
               <button
                 type="button"
                 className={`${styles.actionButton} ${styles.danger}`}
-                onClick={() => handleDelete(a)}
+                onClick={() => openDelete(a)}
                 disabled={busy}
               >
                 <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
@@ -470,14 +481,23 @@ function Announcements() {
         title="Announcements"
         action={
           can.announce && (
-            <ActionButton
+            /* Sariling itsura (.postBtn sa Announcements.module.css) —
+               kahugis ng "Create Event", pero ASUL at DILAW ng STI.
+               Hindi na ang shared na ActionButton, para hindi magbago
+               ang button sa ibang page. */
+            <button
+              type="button"
+              className={styles.postBtn}
               onClick={() => {
                 setNotice('')
                 setEditing('new')
               }}
             >
-              + Post
-            </ActionButton>
+              <span className={styles.postIcon} aria-hidden="true">
+                <Plus size={18} strokeWidth={2.8} />
+              </span>
+              Post
+            </button>
           )
         }
       />
@@ -529,7 +549,7 @@ function Announcements() {
       )}
 
       {/* Pop-up ng pinakabago — hindi kasabay ng form */}
-      {alertOpen && latest && !editing && (
+      {alertOpen && latest && !editing && !confirmingDelete && (
         <LatestAlert announcement={latest} onClose={closeAlert} onView={viewLatest} />
       )}
 
@@ -540,6 +560,20 @@ function Announcements() {
           ownOrgId={ownOrgId}
           onSubmit={handleSubmit}
           onCancel={closeForm}
+        />
+      )}
+
+      {/* "Sigurado ka ba?" bago burahin */}
+      {confirmingDelete && (
+        <ConfirmDialog
+          tone="danger"
+          title="Delete announcement?"
+          item={confirmingDelete.title}
+          message="This will remove it for everyone who can see it. This cannot be undone."
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(null)}
         />
       )}
     </div>

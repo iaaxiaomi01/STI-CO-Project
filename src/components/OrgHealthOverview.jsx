@@ -6,8 +6,9 @@ import styles from './OrgHealthOverview.module.css'
    ORGANIZATION HEALTH — sa Dashboard ng SAO at SCHOOL HEAD
 
    ISANG card na kusang nag-i-slide (carousel), isang org bawat
-   slide. Ang laman lang: bilog na graph ng health score,
-   porsiyento sa gitna, at pangalan ng org.
+   slide. Ang laman lang: GAUGE (kalahating bilog na metro) ng
+   health score, porsiyento sa ilalim nito, at pangalan ng org.
+   Kulay ng gauge at ng guhit sa kaliwa: ayon sa antas.
 
    Data: fetchAllOrgHealth() → org_health_all() sa Supabase.
    Walang bagong SQL — ito rin ang ginagamit ng Org Health page.
@@ -18,9 +19,9 @@ import styles from './OrgHealthOverview.module.css'
        naka-focus ang card.
      - Walang katapusan: may kopya ng unang slide sa dulo; pagdating
        doon, tahimik na bumabalik sa simula (walang "rewind").
-     - Ang bilog ay napupuno pagdating ng slide.
+     - Ang gauge ay napupuno pagdating ng slide.
      - prefers-reduced-motion: lumilipat pa rin, pero walang slide
-       at walang animation ng bilog.
+       at walang animation ng gauge.
    ============================================================ */
 const SLIDE_MS = 4000
 const MOVE_MS = 700
@@ -112,7 +113,7 @@ function OrgHealthOverview() {
                   aria-roledescription="slide"
                   aria-hidden={i % count !== current || i === count}
                 >
-                  <ScoreDonut score={ok ? h.score : null} active={isActive} />
+                  <ScoreGauge score={ok ? h.score : null} active={isActive} />
                   <p className={styles.orgName}>{h.organization_name}</p>
                 </li>
               )
@@ -121,7 +122,7 @@ function OrgHealthOverview() {
         </div>
       ) : (
         <div className={`${styles.slide} ${styles.none}`}>
-          <ScoreDonut score={null} active={false} />
+          <ScoreGauge score={null} active={false} />
           <p className={styles.orgName}>
             {failed
               ? 'Could not load organization health'
@@ -135,32 +136,53 @@ function OrgHealthOverview() {
   )
 }
 
-/* Bilog na graph: puno ayon sa score (0–100), porsiyento sa gitna.
+/* Gauge: kalahating bilog na napupuno ayon sa score (0–100),
+   may maliliit na tick bawat 10%. Porsiyento sa ilalim ng arko.
    Napupuno lang kapag "active" (nakikita) ang slide. */
-function ScoreDonut({ score, active }) {
-  const r = 52
-  const c = 2 * Math.PI * r
+const TICKS = Array.from({ length: 11 }, (_, i) => {
+  const a = Math.PI - (i / 10) * Math.PI // 180° → 0°
+  return {
+    x1: 100 + 92 * Math.cos(a),
+    y1: 104 - 92 * Math.sin(a),
+    x2: 100 + (i % 5 === 0 ? 100 : 97) * Math.cos(a),
+    y2: 104 - (i % 5 === 0 ? 100 : 97) * Math.sin(a),
+  }
+})
+
+function ScoreGauge({ score, active }) {
   const pct = score == null ? 0 : Math.max(0, Math.min(100, Number(score)))
   const shown = active ? pct : 0
+  const arc = 'M 22 104 A 78 78 0 0 1 178 104'
 
   return (
     <div
-      className={styles.donut}
+      className={styles.gauge}
       role="img"
       aria-label={score == null ? 'No health score yet' : `Health score ${formatScore(score)}%`}
     >
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle className={styles.donutTrack} cx="60" cy="60" r={r} />
-        <circle
-          className={styles.donutFill}
-          cx="60"
-          cy="60"
-          r={r}
-          strokeDasharray={`${(shown / 100) * c} ${c}`}
+      <svg viewBox="0 0 200 112" aria-hidden="true">
+        {TICKS.map((t, i) => (
+          <line
+            key={i}
+            className={`${styles.tick} ${i * 10 <= shown && pct > 0 ? styles.tickOn : ''}`}
+            x1={t.x1}
+            y1={t.y1}
+            x2={t.x2}
+            y2={t.y2}
+            /* sumasabay sa pagpuno ng arko */
+            style={{ transitionDelay: `${0.25 + i * 0.08}s` }}
+          />
+        ))}
+        <path className={styles.gaugeTrack} d={arc} pathLength="100" />
+        <path
+          className={styles.gaugeFill}
+          d={arc}
+          pathLength="100"
+          strokeDasharray={`${shown} 100`}
           style={{ opacity: pct > 0 ? 1 : 0 }}
         />
       </svg>
-      <span className={styles.donutValue}>
+      <span className={styles.gaugeValue}>
         {score == null ? '—' : `${formatScore(score)}%`}
       </span>
     </div>

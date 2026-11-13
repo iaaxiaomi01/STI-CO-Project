@@ -1,0 +1,756 @@
+/* ================================================================
+   POSITION DIALOG — itsura para sa Users page (School Administrator)
+   Ginagamit kapag <PositionDialog look="admin" />.
+   Ang Members page ng Adviser ay PositionDialog.module.css pa rin.
+
+   Iba sa Edit user (navy na ulo) at sa Remove (pula, caution tape):
+     ┌──────────────────────────────────────────────┐
+     │ (◉) Set officer position          · · · · ·  │ ← cream na ulo, tuldok
+     ├────────────┬─────────────────────────────────┤
+     │ ┌──▭──┐    │ CHOOSE A POSITION               │
+     │ │ (J) │    │ ┌──────────┐ ┌──────────┐       │
+     │ │ Juan│ ID │ │○ Pres.   │ │✓ VP  ◼◼◼ │ navy  │
+     │ │[VP] │card│ └──────────┘ └──────────┘       │
+     │ └─────┘    │ ┌▨▨▨▨▨▨▨▨▨▨┐ ┌──────────┐       │
+     │  (dilaw)   │ │🔒 Taken  │ │○ Shared  │       │
+     │            │ ⓘ paalala                        │
+     ├────────────┴─────────────────────────────────┤
+     │ Remove position        [Cancel] [Save]       │
+     └──────────────────────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --pa-navy: var(--sti-blue, #06358c);
+  --pa-deep: var(--sti-blue-deep, #031b4b);
+  --pa-bright: var(--sti-blue-bright, #1249a8);
+  --pa-yellow: var(--sti-yellow, #ffd200);
+  --pa-gold: var(--sti-gold, #f7b900);
+  --pa-cream: #fff8db;
+  --pa-sky: #eaf0ff;
+  --pa-line: #e1e6f0;
+  --pa-line-strong: #c3cee3;
+  --pa-ink: #0e1a36;
+  --pa-muted: #5f6b85;
+  --pa-red: #c0362c;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.5);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  animation: fade 0.18s ease-out;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+  border-radius: 22px;
+  background-color: #fff;
+  color: var(--pa-ink);
+  font-family: var(--font-ui, inherit);
+  box-shadow: 0 30px 70px -20px rgba(3, 27, 75, 0.55);
+  animation: zoom 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+/* ---------- ULO: cream na may tuldok-tuldok sa kanan ---------- */
+.head {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 26px 20px;
+  overflow: hidden;
+  border-bottom: 1px solid #f1e6b8;
+  background: linear-gradient(100deg, var(--pa-cream) 0%, #fffdf3 55%, #fff 100%);
+}
+
+.head::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 46%;
+  background-image: radial-gradient(rgba(6, 53, 140, 0.22) 1.4px, transparent 1.6px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(90deg, transparent, #000 70%);
+  pointer-events: none;
+  animation: dots 0.8s ease-out;
+}
+
+/* Navy na bilog, dilaw na icon, may putol-putol na singsing */
+.headIcon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: var(--pa-navy);
+  color: var(--pa-yellow);
+  box-shadow: 0 8px 16px -6px rgba(6, 53, 140, 0.55);
+}
+
+.headIcon::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px dashed var(--pa-gold);
+  border-radius: 50%;
+  animation: orbit 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.headText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--pa-deep);
+}
+
+.subtitle {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  color: #6b5a1c;
+}
+
+/* ---------- KATAWAN: ID card sa kaliwa, mga position sa kanan ---------- */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  column-gap: 22px;
+  align-content: start;
+  padding: 22px 26px 6px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pa-line-strong) transparent;
+}
+
+.body > * {
+  grid-column: 2;
+}
+
+/* ID card ng tao — dilaw, may butas ng lanyard, umuugoy pagbukas */
+.person {
+  position: sticky;
+  top: 0;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 26px 16px 18px;
+  overflow: hidden;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.35) 0 46px, transparent 47px),
+    linear-gradient(160deg, #ffe45c 0%, var(--pa-yellow) 45%, var(--pa-gold) 100%);
+  color: var(--pa-deep);
+  text-align: center;
+  box-shadow: 0 16px 28px -18px rgba(122, 90, 0, 0.8), inset 0 -4px 0 rgba(3, 27, 75, 0.12);
+  transform-origin: 50% 0;
+  animation: swing 0.8s 0.05s cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
+}
+
+/* Butas ng lanyard */
+.person::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 38px;
+  height: 7px;
+  border-radius: 999px;
+  background-color: rgba(3, 27, 75, 0.22);
+  box-shadow: inset 0 1px 2px rgba(3, 27, 75, 0.35);
+  transform: translateX(-50%);
+}
+
+/* Avatar — puti at navy na singsing */
+.person > :first-child {
+  flex-shrink: 0;
+  width: 72px !important;
+  height: 72px !important;
+  font-size: 1.6rem;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--pa-navy);
+}
+
+.personText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.name {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 0 0;
+}
+
+.currentLabel {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(3, 27, 75, 0.62);
+}
+
+.currentBadge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background-color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--pa-navy);
+}
+
+.isOfficer {
+  background-color: var(--pa-deep);
+  color: var(--pa-yellow);
+}
+
+/* ---------- MGA POSITION (tiles) ---------- */
+.options {
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pa-deep);
+}
+
+.legend::before {
+  content: '';
+  width: 18px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pa-navy) 50%, var(--pa-yellow) 50%);
+}
+
+.optionList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.option {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'radio . tag'
+    'text text text';
+  align-items: center;
+  row-gap: 8px;
+  min-height: 92px;
+  padding: 12px 13px 13px;
+  border: 1.5px solid var(--pa-line);
+  border-radius: 14px;
+  background-color: #fff;
+  cursor: pointer;
+  animation: tileIn 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.option:nth-child(1) { animation-delay: 0.12s; }
+.option:nth-child(2) { animation-delay: 0.17s; }
+.option:nth-child(3) { animation-delay: 0.22s; }
+.option:nth-child(4) { animation-delay: 0.27s; }
+.option:nth-child(5) { animation-delay: 0.32s; }
+.option:nth-child(n + 6) { animation-delay: 0.37s; }
+
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.option:hover {
+  border-color: var(--pa-navy);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px -12px rgba(3, 27, 75, 0.5);
+}
+
+.option:has(input:focus-visible) {
+  box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.5);
+}
+
+.radio {
+  grid-area: radio;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--pa-line-strong);
+  border-radius: 7px;
+  background-color: #fff;
+  color: transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.optionText {
+  grid-area: text;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.optionName {
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--pa-ink);
+  overflow-wrap: anywhere;
+}
+
+.optionHolder {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--pa-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Napili: navy na tile, dilaw na check */
+.selected,
+.selected:hover {
+  border-color: var(--pa-deep);
+  background: linear-gradient(140deg, var(--pa-bright), var(--pa-deep));
+  box-shadow: inset 0 -4px 0 var(--pa-yellow), 0 12px 20px -14px rgba(3, 27, 75, 0.8);
+}
+
+.selected .radio {
+  border-color: var(--pa-yellow);
+  background-color: var(--pa-yellow);
+  color: var(--pa-deep);
+}
+
+.selected .radio svg {
+  animation: pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.selected .optionName {
+  color: #fff;
+}
+
+.selected .optionHolder {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Hawak na ng iba: may guhit-guhit, hindi mapipili */
+.taken,
+.taken:hover {
+  border-style: dashed;
+  border-color: var(--pa-line-strong);
+  background: repeating-linear-gradient(-45deg, #f6f7fa 0 8px, #eef0f5 8px 16px);
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.taken .radio {
+  border-color: transparent;
+  background-color: #dfe3eb;
+  color: #7a849a;
+}
+
+.taken .optionName {
+  color: #7a849a;
+}
+
+/* "Current" · "Taken" · "Shared" */
+.tag {
+  grid-area: tag;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background-color: var(--pa-yellow);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pa-deep);
+}
+
+.tagTaken {
+  background-color: #dfe3eb;
+  color: #5f6b85;
+}
+
+.tagMulti {
+  background-color: var(--pa-sky);
+  color: var(--pa-navy);
+}
+
+.options:disabled .option {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+}
+
+/* Wala pang position ang org */
+.none {
+  margin-bottom: 14px;
+  padding: 20px 16px;
+  border: 1.5px dashed var(--pa-line-strong);
+  border-radius: 14px;
+  background-color: #f7f9fd;
+  text-align: center;
+  animation: tileIn 0.3s 0.12s ease-out backwards;
+}
+
+.noneTitle {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--pa-deep);
+}
+
+.noneText {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--pa-muted);
+}
+
+.noneText a {
+  font-weight: 800;
+  color: var(--pa-navy);
+}
+
+/* Paalala — dilaw na bilog na icon */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background-color: #f4f7fe;
+  font-size: 12.8px;
+  line-height: 1.5;
+  color: #4a5470;
+}
+
+.note strong {
+  color: var(--pa-deep);
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  box-sizing: content-box;
+  padding: 3px;
+  border-radius: 50%;
+  background-color: var(--pa-yellow);
+  color: var(--pa-deep);
+}
+
+.error {
+  margin: 0 0 14px;
+  padding: 10px 13px;
+  border-left: 4px solid var(--pa-red);
+  border-radius: 0 12px 12px 0;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 700;
+  animation: shake 0.4s ease;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 26px;
+  border-top: 1px solid var(--pa-line);
+  background-color: #f8faff;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.primary,
+.secondary,
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+    transform 0.18s ease, box-shadow 0.2s ease;
+}
+
+/* Remove position — pulang sulat, may guhit na lumalapad sa ilalim */
+.remove {
+  padding: 0 4px;
+  border: none;
+  border-radius: 0;
+  background: linear-gradient(var(--pa-red), var(--pa-red)) no-repeat left bottom / 0% 2px;
+  color: var(--pa-red);
+  transition: background-size 0.25s ease, color 0.2s ease;
+}
+
+.remove:hover:not(:disabled) {
+  background-size: 100% 2px;
+  color: #8f1d14;
+}
+
+/* Cancel — mapusyaw na asul */
+.secondary {
+  border: none;
+  background-color: var(--pa-sky);
+  color: var(--pa-navy);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #d8e3ff;
+}
+
+/* Save — dilaw na may navy na sulat; nagiging navy kapag tinapat */
+.primary {
+  min-width: 112px;
+  border: none;
+  background: linear-gradient(135deg, #ffe14d, var(--pa-yellow) 50%, var(--pa-gold));
+  color: var(--pa-deep);
+  box-shadow: 0 8px 16px -10px rgba(122, 90, 0, 0.9), inset 0 -3px 0 rgba(3, 27, 75, 0.18);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--pa-deep);
+  color: var(--pa-yellow);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 20px -10px rgba(3, 27, 75, 0.8), inset 0 -3px 0 var(--pa-yellow);
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.primary:disabled {
+  background: #f1f3f7;
+  color: #a3abbd;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.secondary:disabled,
+.remove:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.remove:focus-visible {
+  outline: 3px solid var(--pa-navy);
+  outline-offset: 2px;
+}
+
+/* ---------- ANIMATION ---------- */
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+@keyframes zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes dots {
+  from {
+    opacity: 0;
+    background-position: 14px 0;
+  }
+}
+
+@keyframes orbit {
+  from {
+    opacity: 0;
+    transform: rotate(-120deg);
+  }
+}
+
+@keyframes swing {
+  0% {
+    opacity: 0;
+    transform: rotate(-9deg) translateY(-10px);
+  }
+  45% {
+    opacity: 1;
+    transform: rotate(4deg);
+  }
+  75% {
+    transform: rotate(-1.5deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes tileIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 640px) {
+  .head {
+    padding: 18px 18px 16px;
+  }
+
+  /* Isang hanay lang sa phone */
+  .body {
+    display: block;
+    padding: 16px 18px 4px;
+  }
+
+  /* ID card → pahiga */
+  .person {
+    position: static;
+    grid-row: auto;
+    flex-direction: row;
+    gap: 14px;
+    padding: 14px 16px;
+    text-align: left;
+  }
+
+  .person::before {
+    display: none;
+  }
+
+  .person > :first-child {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .personText,
+  .current {
+    align-items: flex-start;
+  }
+
+  .optionList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .option {
+    min-height: 0;
+  }
+
+  .actions {
+    padding: 12px 18px;
+  }
+
+  .spacer {
+    display: none;
+  }
+
+  .remove {
+    width: 100%;
+    order: 3;
+  }
+
+  .secondary,
+  .primary {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .head::after,
+  .headIcon::after,
+  .person,
+  .option,
+  .none,
+  .selected .radio svg,
+  .error {
+    animation: none;
+  }
+
+  .option,
+  .option:hover {
+    transform: none;
+    transition: none;
+  }
+}

@@ -373,7 +373,6 @@ function LogoField({ org, disabled, onBusyChange, onChanged }) {
       </span>
 
       <div className={styles.logoBody}>
-        <span className={styles.logoLabel}>Logo</span>
         <div className={styles.logoActions}>
           <input
             ref={fileInputRef}
@@ -412,7 +411,7 @@ function LogoField({ org, disabled, onBusyChange, onChanged }) {
             {message}
           </p>
         ) : (
-          <p className={styles.logoHint}>JPG or PNG · up to 10 MB </p>
+          <p className={styles.logoHint}>JPG, PNG or WEBP · up to 10 MB · saved right away</p>
         )}
       </div>
     </div>

@@ -3,7 +3,7 @@
 
    Iba sa Dashboard (bento), Events (ticket) at Announcements
    (alert): may manipis na border ang mga card, at ang bida ay ang
-   Time In → Time Out tracker at ang attendance meter.
+   Time In → Time Out tracker at ang bilang ng attendance.
 
      [ Joined by me | Participants per event ]   ← segmented switch
      [ larawan+petsa | detalye           | bilang ]
@@ -672,7 +672,7 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
-/* Attendance meter: teksto + dalawang bar (In, Out) */
+/* Bilang ng Time In / Time Out (teksto lang) */
 .meter {
   margin-top: 12px;
   max-width: 420px;
@@ -687,36 +687,6 @@
 .attendMeta strong {
   color: var(--dash-ink);
   font-weight: 800;
-}
-
-.bars {
-  display: grid;
-  gap: 5px;
-  margin-top: 8px;
-}
-
-.bar {
-  display: block;
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background-color: #edf0f6;
-}
-
-.barIn,
-.barOut {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  transition: width 0.6s ease;
-}
-
-.barIn {
-  background-color: var(--in);
-}
-
-.barOut {
-  background-color: var(--out);
 }
 
 /* ---------- MGA BUTTON SA IBABA NG CARD ---------- */
@@ -1154,8 +1124,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tabThumb,
-  .barIn,
-  .barOut,
   .chevron {
     transition: none;
   }

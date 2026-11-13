@@ -974,10 +974,10 @@ function Events() {
                             <div className={`${styles.actions} ${styles.tActions}`}>
                               <button
                                 type="button"
-                                className={`${styles.linkButton} ${styles.tAction}`}
+                                className={styles.tDetails}
                                 onClick={() => setDetailsEvent(ev)}
                               >
-                                <Info size={16} strokeWidth={2.2} aria-hidden="true" />
+                                <Info size={16} strokeWidth={2.4} aria-hidden="true" />
                                 View details
                               </button>
                             </div>
@@ -989,27 +989,33 @@ function Events() {
                               {manageCerts && (
                                 <button
                                   type="button"
-                                  className={`${styles.linkButton} ${styles.tAction}`}
+                                  className={styles.tCertBtn}
                                   onClick={() => {
                                     setNotice('')
                                     setCertEvent(ev)
                                   }}
                                 >
-                                  <Award size={16} strokeWidth={2.2} aria-hidden="true" />
+                                  {/* Gintong seal — umiikot ang singsing kapag tinapatan */}
+                                  <span className={styles.certSeal} aria-hidden="true">
+                                    <Award size={15} strokeWidth={2.4} />
+                                  </span>
                                   Certificates
                                 </button>
                               )}
                               {editable && (
                                 <button
                                   type="button"
-                                  className={`${styles.linkButton} ${styles.tAction}`}
+                                  className={styles.tEditBtn}
                                   onClick={() => {
                                     setNotice('')
                                     setEditing(ev)
                                   }}
                                 >
-                                  <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
-                                  Edit
+                                  {/* Lapis na "nagsusulat" + guhit sa ilalim kapag tinapatan */}
+                                  <span className={styles.editIcon} aria-hidden="true">
+                                    <Pencil size={14} strokeWidth={2.4} />
+                                  </span>
+                                  <span className={styles.editText}>Edit</span>
                                 </button>
                               )}
                             </div>

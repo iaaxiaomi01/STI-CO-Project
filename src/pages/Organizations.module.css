@@ -1,0 +1,938 @@
+/* ================================================================
+   ORGANIZATIONS — School Administrator
+
+   Iba sa Users (navy na banner at listahan): dito ay puting panel
+   sa itaas at mga card na may malaking bilog sa gitna — ang logo
+   ng org sa loob ng singsing na hinati ayon sa Members, Officers
+   at Advisers — at ang ibang detalye sa ilalim.
+   ================================================================ */
+.page {
+  --navy: var(--sti-blue, #06358c);
+  --deep: var(--sti-blue-deep, #031b4b);
+  --yellow: var(--sti-yellow, #ffd200);
+  --gold: var(--sti-gold, #f7b900);
+  --ink: #111a33;
+  --ink-soft: #5b6680;
+  --line: #e2e7f0;
+  --hair: #edf0f6;
+  --soft: #f5f7fb;
+
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* ================================================================
+   PANEL SA ITAAS (pamagat + search)
+   ================================================================ */
+.panel {
+  position: relative;
+  padding: 26px 28px 0;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background-color: #fff;
+  box-shadow: 0 14px 30px -26px rgba(3, 27, 75, 0.5);
+  animation: fadeUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding-bottom: 24px;
+}
+
+.title {
+  position: relative;
+  margin: 0;
+  padding-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.6vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--deep);
+}
+
+/* Maikling navy at dilaw na guhit sa ilalim ng pamagat */
+.title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--navy) 0 60%, var(--yellow) 60% 100%);
+  transform-origin: left;
+  animation: grow 0.6s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0 20px;
+  border-top: 1px solid var(--hair);
+}
+
+.search {
+  flex: 1 1 320px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background-color: var(--soft);
+  cursor: text;
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.search:hover {
+  border-color: var(--line);
+}
+
+.search:focus-within {
+  border-color: var(--navy);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(6, 53, 140, 0.1);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: #8892a8;
+  transition: color 0.18s ease;
+}
+
+.search:focus-within .searchIcon {
+  color: var(--navy);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.searchInput::placeholder {
+  color: #8c95aa;
+  font-weight: 500;
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* "8 of 8" */
+.count {
+  padding: 9px 15px;
+  border-radius: 999px;
+  background-color: var(--deep);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.count b {
+  color: var(--yellow);
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================================================
+   STATUS DROPDOWN — pill na may kulay na tuldok
+   ================================================================ */
+.dropdown {
+  position: relative;
+}
+
+.dropButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 176px;
+  min-height: 46px;
+  padding: 0 14px 0 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--deep);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dropButton:hover {
+  border-color: #c3cee3;
+}
+
+.dropButton:focus-visible,
+.dropdownOpen .dropButton {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 4px rgba(6, 53, 140, 0.1);
+}
+
+.dropValue {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.dropChevron {
+  flex-shrink: 0;
+  color: var(--navy);
+  transition: transform 0.22s ease;
+}
+
+.dropdownOpen .dropChevron {
+  transform: rotate(180deg);
+}
+
+/* Tuldok: navy na singsing (lahat) · berde (active) · abo (inactive) */
+.dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot[data-status='all'] {
+  box-shadow: inset 0 0 0 2.5px var(--navy);
+}
+
+.dot[data-status='active'] {
+  background-color: #22a557;
+  box-shadow: 0 0 0 3px rgba(34, 165, 87, 0.16);
+}
+
+.dot[data-status='inactive'] {
+  background-color: #a5adbf;
+  box-shadow: 0 0 0 3px rgba(165, 173, 191, 0.2);
+}
+
+.dropList {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  min-width: 100%;
+  width: 210px;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 22px 40px -18px rgba(3, 27, 75, 0.45), 0 2px 6px rgba(3, 27, 75, 0.06);
+  list-style: none;
+  outline: none;
+  transform-origin: top right;
+  animation: dropIn 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dropOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.dropActive {
+  background-color: var(--soft);
+}
+
+.dropSelected {
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.dropSelected.dropActive,
+.dropSelected {
+  background-color: #eef3ff;
+}
+
+.dropText {
+  flex: 1;
+}
+
+.dropCheck {
+  flex-shrink: 0;
+  color: var(--navy);
+  visibility: hidden;
+}
+
+.dropSelected .dropCheck {
+  visibility: visible;
+  animation: pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ================================================================
+   MENSAHE at LOADING
+   ================================================================ */
+.notice {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  border: 1px solid #f3e0a3;
+  border-left: 4px solid var(--yellow);
+  border-radius: 12px;
+  background-color: #fffaeb;
+  color: var(--deep);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  animation: fadeUp 0.3s ease-out;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 3rem 0;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #dbe2ef;
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ================================================================
+   MGA CARD NG ORG — malaking bilog sa gitna, detalye sa ilalim
+     ┌──────────────────────┐
+     │      ╭──────╮        │
+     │     │  ( S ) │       │  ← logo sa loob ng singsing
+     │      ╰──────╯        │    navy · dilaw · asul = Members ·
+     │   Synergia Nexus     │    Officers · Advisers
+     │      IT · BSIT       │
+     │ (●Active)(Posts to all)
+     │ ──────────────────── │
+     │ ●MEMBERS ●OFFICERS ●ADVISERS
+     │    42       6      1 │
+     │      [ ✎  Edit ]     │
+     └──────────────────────┘
+   ================================================================ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 18px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  --members: #06358c;
+  --officers: #f7b900;
+  --advisers: #3b82f6;
+
+  /* Kulay ng card — pastel na dilaw (bagay sa navy ng STI).
+     Para sa pastel green, ito lang ang palitan:
+       --card-bg: #eaf7ef;  --card-line: #c9e8d4;  --card-hair: #d4eedd;
+       --card-blob: rgba(34, 165, 87, 0.16); */
+  --card-bg: #fff8dc;
+  --card-line: #f1e2a6;
+  --card-hair: #f0e3b4;
+  --card-blob: rgba(255, 210, 0, 0.3);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  padding: 26px 20px 20px;
+  border: 1px solid var(--card-line);
+  border-radius: 22px;
+  background-color: var(--card-bg);
+  text-align: center;
+  box-shadow: 0 12px 26px -22px rgba(122, 90, 0, 0.6);
+  animation: fadeUp 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Isa-isang lumalabas */
+.card:nth-child(2) { animation-delay: 0.05s; }
+.card:nth-child(3) { animation-delay: 0.1s; }
+.card:nth-child(4) { animation-delay: 0.15s; }
+.card:nth-child(5) { animation-delay: 0.2s; }
+.card:nth-child(6) { animation-delay: 0.25s; }
+.card:nth-child(n + 7) { animation-delay: 0.3s; }
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #e6cf73;
+  box-shadow: 0 26px 40px -26px rgba(122, 90, 0, 0.6);
+}
+
+/* Lahat ng laman ay nasa ibabaw ng mga hugis */
+.card > :not(.shapes) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Mga abstract na hugis ----------
+   card::before → malaking malambot na bilog sa kanang ibaba
+   card::after  → tuldok-tuldok sa kaliwang itaas
+   .shapes      → manipis na navy na singsing sa kanang itaas,
+                  may navy na tuldok (::before) at dilaw na
+                  kahong lumulutang (::after) */
+.card::before {
+  content: '';
+  position: absolute;
+  right: -70px;
+  bottom: -80px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background-color: var(--card-blob);
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 64px;
+  height: 52px;
+  background-image: radial-gradient(rgba(3, 27, 75, 0.2) 1.3px, transparent 1.5px);
+  background-size: 11px 11px;
+  transition: transform 0.6s ease;
+}
+
+.shapes {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border: 2px solid rgba(6, 53, 140, 0.22);
+  border-radius: 50%;
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.shapes::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background-color: rgba(6, 53, 140, 0.45);
+}
+
+.shapes::after {
+  content: '';
+  position: absolute;
+  top: 46px;
+  right: 30px;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background-color: var(--yellow);
+  animation: float 4.5s ease-in-out infinite alternate;
+}
+
+/* Kapag tinapat: lumalaki ang bilog, umiikot ang singsing,
+   gumagalaw ang mga tuldok */
+.card:hover::before {
+  transform: scale(1.18) translate(-10px, -10px);
+}
+
+.card:hover::after {
+  transform: translate(6px, 4px);
+}
+
+.card:hover .shapes {
+  transform: rotate(180deg) scale(1.1);
+}
+
+/* ---------- Emblem (singsing + logo) ---------- */
+.emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  /* puting bilog sa likod ng singsing para lumitaw sa kulay ng card */
+  background-color: #fff;
+  box-shadow: 0 10px 22px -16px rgba(122, 90, 0, 0.7);
+}
+
+.ring {
+  position: absolute;
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  transform: rotate(-90deg);
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.track,
+.arc {
+  fill: none;
+  stroke-width: 8;
+}
+
+.track {
+  stroke: #e3e9f4;
+}
+
+.arc {
+  stroke-linecap: butt;
+  animation: draw 0.9s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.members {
+  stroke: var(--members);
+}
+
+.officers {
+  stroke: var(--officers);
+}
+
+.advisers {
+  stroke: var(--advisers);
+}
+
+/* Kapag tinapat: umiikot nang kaunti ang singsing */
+.card:hover .ring {
+  transform: rotate(-60deg);
+}
+
+.logo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 86px;
+  height: 86px;
+  overflow: hidden;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background-color: var(--deep);
+  color: var(--yellow);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px -10px rgba(3, 27, 75, 0.7);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+.card:hover .logo {
+  transform: scale(1.06);
+}
+
+/* ---------- Pangalan ---------- */
+.name {
+  margin: 16px 0 0;
+  font-family: var(--font-display);
+  font-size: 17.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--deep);
+  overflow-wrap: anywhere;
+}
+
+.subline {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Status ---------- */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 18px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badgeOn {
+  background-color: #fff;
+  color: #16683a;
+  box-shadow: inset 0 0 0 1px #cdebd8;
+}
+
+.badgeOn::before,
+.badgeOff::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.badgeOff {
+  background-color: #e6e9ef;
+  color: #6b7285;
+}
+
+.badgeSpecial {
+  background-color: var(--deep);
+  color: var(--yellow);
+}
+
+/* ---------- Bilang (may tuldok na kakulay ng singsing) ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  /* laging nasa ibaba, para pantay ang Edit ng magkakatabing card */
+  margin: auto 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--card-hair);
+}
+
+.stat {
+  min-width: 0;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--card-hair);
+}
+
+.stat dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #8c95aa;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.stat dt::before {
+  content: '';
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.statMembers dt::before {
+  background-color: var(--members);
+}
+
+.statOfficers dt::before {
+  background-color: var(--officers);
+}
+
+.statAdvisers dt::before {
+  background-color: var(--advisers);
+}
+
+.stat dd {
+  margin: 4px 0 0;
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Edit — navy na pill; nagiging dilaw kapag tinapat ---------- */
+.edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 132px;
+  min-height: 42px;
+  margin-top: 18px;
+  padding: 0 20px 0 6px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--deep);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 16px -10px rgba(3, 27, 75, 0.8);
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.18s ease,
+    box-shadow 0.2s ease;
+}
+
+.editIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--yellow);
+  color: var(--deep);
+  transition: background-color 0.2s ease, color 0.2s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.edit:hover {
+  background-color: var(--yellow);
+  color: var(--deep);
+  transform: translateY(-1px);
+  outline: 2px solid var(--deep);
+  outline-offset: -2px;
+  box-shadow: 0 12px 20px -12px rgba(122, 90, 0, 0.8);
+}
+
+.edit:hover .editIcon {
+  background-color: var(--deep);
+  color: var(--yellow);
+  transform: rotate(-16deg);
+}
+
+.edit:active {
+  transform: scale(0.97);
+}
+
+.edit:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+/* ---------- Hindi aktibo ---------- */
+.inactive {
+  --card-bg: #f4f5f8;
+  --card-line: #d9dde6;
+  --card-hair: #e3e6ed;
+  --card-blob: rgba(142, 150, 168, 0.16);
+
+  border-style: dashed;
+}
+
+.inactive .shapes::after {
+  background-color: #c4cad6;
+  animation: none;
+}
+
+.inactive .arc {
+  stroke: #b9c0ce;
+}
+
+.inactive .stat dt::before {
+  background-color: #b9c0ce;
+}
+
+.inactive .logo {
+  background-color: #8e96a8;
+  color: #fff;
+}
+
+.inactive .logo img {
+  filter: grayscale(1);
+  opacity: 0.75;
+}
+
+.inactive .name {
+  color: #5d6580;
+}
+
+.inactive .stat dd {
+  color: #6b7285;
+}
+
+/* ================================================================
+   ANIMATION
+   ================================================================ */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes float {
+  from {
+    transform: translateY(0) rotate(20deg);
+  }
+  to {
+    transform: translateY(-8px) rotate(65deg);
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================================================================
+   PHONE
+   ================================================================ */
+@media (max-width: 640px) {
+  .panel {
+    padding: 20px 16px 0;
+    border-radius: 18px;
+  }
+
+  .panelHead {
+    padding-bottom: 18px;
+  }
+
+  .toolbar {
+    padding: 14px 0 16px;
+  }
+
+  .search {
+    flex-basis: 100%;
+  }
+
+  .controls {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .dropdown {
+    flex: 1;
+  }
+
+  .dropButton {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dropList {
+    left: 0;
+    right: auto;
+    width: 100%;
+    transform-origin: top left;
+  }
+
+  .grid {
+    gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .title::after,
+  .notice,
+  .card,
+  .arc,
+  .shapes::after,
+  .dropList,
+  .dropSelected .dropCheck {
+    animation: none;
+  }
+
+  .card,
+  .card::before,
+  .card::after,
+  .shapes,
+  .ring,
+  .logo,
+  .edit,
+  .editIcon {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:hover::before,
+  .card:hover::after,
+  .card:hover .shapes,
+  .card:hover .logo,
+  .edit:hover,
+  .edit:hover .editIcon {
+    transform: none;
+  }
+
+  .card:hover .ring {
+    transform: rotate(-90deg);
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
+}

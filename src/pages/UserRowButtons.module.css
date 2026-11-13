@@ -1,0 +1,157 @@
+/* ================================================================
+   USERS PAGE — "Set position" at "Remove" sa bawat hilera
+   (School Administrator)
+
+   Magkakaiba ang tatlong button sa hilera para hindi paulit-ulit:
+     Set position → dilaw na chip (parisukat ang kanto); nagiging
+                    navy mula sa ibaba kapag tinapat
+     Edit         → puting pill na may navy na gilid
+                    (components/EditUser.module.css)
+     Remove       → pulang putol-putol na gilid; napupuno ng pula
+                    mula sa kaliwa kapag tinapat, gumagalaw ang basurahan
+   ================================================================ */
+
+/* ---------------------------------------------------------------
+   SET POSITION
+   --------------------------------------------------------------- */
+.position {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px 0 9px;
+  border: none;
+  border-radius: 8px;
+  /* navy na nakatago sa ibaba; aakyat kapag tinapat */
+  background:
+    linear-gradient(var(--sti-blue-deep, #031b4b), var(--sti-blue-deep, #031b4b)) no-repeat
+      left bottom / 100% 0%,
+    linear-gradient(135deg, #ffe14d, var(--sti-yellow, #ffd200) 55%, var(--sti-gold, #f7b900));
+  box-shadow: inset 0 -2px 0 rgba(122, 90, 0, 0.25);
+  color: var(--sti-blue-deep, #031b4b);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-size 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease,
+    transform 0.18s ease, box-shadow 0.2s ease;
+}
+
+.positionIcon,
+.positionArrow {
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+
+.positionArrow {
+  opacity: 0.75;
+}
+
+.position:hover {
+  background-size: 100% 100%, auto;
+  color: var(--sti-yellow, #ffd200);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px -8px rgba(3, 27, 75, 0.6);
+}
+
+.position:hover .positionIcon {
+  transform: rotate(-12deg) scale(1.12);
+}
+
+.position:hover .positionArrow {
+  opacity: 1;
+  transform: translate(2px, -2px);
+}
+
+.position:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.position:focus-visible {
+  outline: 3px solid var(--sti-blue, #06358c);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+   REMOVE
+   --------------------------------------------------------------- */
+.remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px 0 9px;
+  border: 1.5px dashed #e3887d;
+  border-radius: 8px;
+  /* pula na nakatago sa kaliwa; lalapad kapag tinapat */
+  background: linear-gradient(90deg, #c0362c, #a61b1b) no-repeat left center / 0% 100%;
+  background-color: #fff6f5;
+  color: #b42318;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-size 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease,
+    border-color 0.2s ease, transform 0.18s ease;
+}
+
+.removeIcon {
+  flex-shrink: 0;
+  transform-origin: 50% 90%;
+}
+
+.remove:hover {
+  border-style: solid;
+  border-color: #a61b1b;
+  background-size: 100% 100%;
+  color: #fff;
+}
+
+/* Umuuga ang basurahan */
+.remove:hover .removeIcon {
+  animation: wobble 0.5s ease;
+}
+
+.remove:active {
+  transform: scale(0.97);
+}
+
+.remove:focus-visible {
+  outline: 3px solid #f4b4ab;
+  outline-offset: 2px;
+}
+
+@keyframes wobble {
+  25% { transform: rotate(-14deg); }
+  50% { transform: rotate(10deg); }
+  75% { transform: rotate(-6deg); }
+}
+
+/* Phone/tablet — kasing-taas ng ibang button sa card */
+@container (max-width: 860px) {
+  .position,
+  .remove {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .position,
+  .remove,
+  .positionIcon,
+  .positionArrow {
+    transition: none;
+  }
+
+  .remove:hover .removeIcon {
+    animation: none;
+  }
+
+  .position:hover,
+  .position:hover .positionIcon,
+  .position:hover .positionArrow {
+    transform: none;
+  }
+}

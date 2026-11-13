@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Check, Eye, RotateCcw, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   COMMENT_MAX,
@@ -12,7 +13,7 @@ import {
   stageLabel,
 } from '../lib/proposals.js'
 import ReviewTrail from './ReviewTrail.jsx'
-import styles from './ProposalForm.module.css'
+import styles from './ReviewDialog.module.css'
 
 /* ============================================================
    REVIEW DIALOG — para sa Adviser, SAO, School Head at School
@@ -46,15 +47,15 @@ import styles from './ProposalForm.module.css'
    susunod na stage kapag ikaw na ang HULING hinihintay. Kung may
    iba pa, sinasabi ng dialog na hihintayin pa sila.
 
-   Ginagamit nito ang istilo ng ProposalForm para pare-pareho
-   ang itsura ng mga modal.
+   Itsura: ReviewDialog.module.css (sariling CSS — letterhead ng
+   STI). Iba ang kulay ayon sa aksyon: Approve berde, Reject pula,
+   Revision amber, Noted asul. Walang placeholder ang reason.
    ============================================================ */
 
 const TEXT = {
   approved: {
     heading: 'Approve proposal',
     label: 'Reason for approval',
-    placeholder: 'e.g. The objectives are clear and the budget is complete. Go ahead.',
     required: 'A reason for approval is required.',
     button: 'Approve',
     buttonClass: 'success',
@@ -62,7 +63,6 @@ const TEXT = {
   rejected: {
     heading: 'Reject proposal',
     label: 'Reason for rejection',
-    placeholder: 'e.g. This conflicts with midterm exam week. Move it to December.',
     required: 'A reason for rejection is required.',
     button: 'Reject',
     buttonClass: 'danger',
@@ -70,7 +70,6 @@ const TEXT = {
   noted: {
     heading: 'Mark proposal as Noted',
     label: 'Comment',
-    placeholder: 'e.g. Seen. I agree with the reason for rejection.',
     required: 'A comment is required.',
     button: 'Noted',
     buttonClass: 'primary',
@@ -78,11 +77,18 @@ const TEXT = {
   revision: {
     heading: 'Request revision',
     label: 'What needs to be changed',
-    placeholder: 'e.g. Add a detailed budget and the list of participants.',
     required: 'Please describe what needs to be changed.',
     button: 'Request revision',
     buttonClass: 'warning',
   },
+}
+
+/* Icon sa header, ayon sa aksyon */
+const ICONS = {
+  approved: Check,
+  rejected: X,
+  revision: RotateCcw,
+  noted: Eye,
 }
 
 /* ['A', 'B', 'C'] → "A, B and C" */
@@ -157,6 +163,8 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
     }
   }
 
+  const Icon = ICONS[action] ?? X
+
   return (
     <div
       className={styles.backdrop}
@@ -165,97 +173,114 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
       }}
     >
       <form
-        className={styles.modal}
+        className={`${styles.modal} ${styles[action] ?? ''}`}
         onSubmit={handleSubmit}
         role="dialog"
         aria-modal="true"
         aria-labelledby="review-dialog-title"
       >
-        <h2 id="review-dialog-title" className={styles.heading}>
-          {text.heading}
-        </h2>
-
-        <p className={styles.note}>
-          <strong>{proposal.title}</strong>
-          <br />
-          {action === 'revision' ? (
-            <>
-              This will be returned to <strong>{authorName(proposal)}</strong> for editing.
-              It stays on hold while being revised. Once resubmitted, it will come back to{' '}
-              <strong>you ({stageName})</strong> for another review.
-              {proposal.stage === 'sao' &&
-                ' SAO who already approved keep their approval; only you and those who have not acted yet will review it again.'}
-            </>
-          ) : action === 'noted' ? (
-            <>
-              <strong>This was already rejected by {rejectedBy(proposal)}</strong> and can no longer
-              change. &quot;Noted&quot; confirms that you have seen it.{' '}
-              {final ? (
-                'This is where the proposal\'s review ends.'
-              ) : !lastInStage ? (
-                <>
-                  It moves on once <strong>{othersText}</strong> {othersVerb} also marked it.
-                </>
-              ) : (
-                <>
-                  It will still be forwarded to <strong>{stageLabel(nextStage)}</strong> for
-                  their &quot;Noted&quot;.
-                </>
-              )}
-            </>
-          ) : action === 'rejected' ? (
-            <>
-              <strong>The proposal is REJECTED IMMEDIATELY</strong> once you reject it — this is final
-              and no event can be created from it.{' '}
-              {stillPasses.length > 0 && (
-                <>
-                  It will still pass through <strong>{joinNames(stillPasses)}</strong>, but
-                  they can only mark it &quot;Noted&quot;.
-                </>
-              )}
-            </>
-          ) : final ? (
-            <>
-              <strong>This is the final approval.</strong> The Officer will be able to create its
-              event in Events.
-            </>
-          ) : !lastInStage ? (
-            <>
-              Your approval will be recorded. It moves on once <strong>{othersText}</strong>{' '}
-              {othersVerb} also acted.
-            </>
-          ) : (
-            <>
-              This will be forwarded to <strong>{stageLabel(nextStage)}</strong> along with your reason.
-            </>
-          )}
-          <br />
-          The Officer who submitted this will see the reason you write.
-        </p>
-
-        <ReviewTrail proposal={proposal} />
-
-        <label className={styles.field}>
-          <span className={styles.labelRow}>
-            <span className={styles.label}>{text.label}</span>
-            <span className={styles.counter}>
-              {comment.length} / {COMMENT_MAX}
-            </span>
+        {/* ---------- HEADER (letterhead ng STI) ---------- */}
+        <div className={styles.head}>
+          <span className={styles.headIcon} aria-hidden="true">
+            <Icon size={22} strokeWidth={2.6} />
           </span>
-          <textarea
-            ref={commentRef}
-            className={`${styles.input} ${styles.textarea}`}
-            value={comment}
-            maxLength={COMMENT_MAX}
-            onChange={(e) => setComment(e.target.value)}
-            rows={6}
-            placeholder={text.placeholder}
-            required
-          />
-        </label>
+          <div className={styles.headText}>
+            <p className={styles.eyebrow}>Proposal review</p>
+            <h2 id="review-dialog-title" className={styles.heading}>
+              {text.heading}
+            </h2>
+          </div>
+        </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.content}>
+          {/* ---------- WHAT HAPPENS NEXT (kasama ang pangalan ng proposal) ---------- */}
+          <h3 className={styles.sectionTitle}>What happens next</h3>
+          <p className={styles.next}>
+            <strong>{proposal.title}</strong>
+            <br />
+            {action === 'revision' ? (
+              <>
+                This will be returned to <strong>{authorName(proposal)}</strong> for editing.
+                It stays on hold while being revised. Once resubmitted, it will come back to{' '}
+                <strong>you ({stageName})</strong> for another review.
+                {proposal.stage === 'sao' &&
+                  ' SAO who already approved keep their approval; only you and those who have not acted yet will review it again.'}
+              </>
+            ) : action === 'noted' ? (
+              <>
+                <strong>This was already rejected by {rejectedBy(proposal)}</strong> and can no
+                longer change. &quot;Noted&quot; confirms that you have seen it.{' '}
+                {final ? (
+                  'This is where the proposal\'s review ends.'
+                ) : !lastInStage ? (
+                  <>
+                    It moves on once <strong>{othersText}</strong> {othersVerb} also marked it.
+                  </>
+                ) : (
+                  <>
+                    It will still be forwarded to <strong>{stageLabel(nextStage)}</strong> for
+                    their &quot;Noted&quot;.
+                  </>
+                )}
+              </>
+            ) : action === 'rejected' ? (
+              <>
+                <strong>The proposal is REJECTED IMMEDIATELY</strong> once you reject it — this is
+                final and no event can be created from it.{' '}
+                {stillPasses.length > 0 && (
+                  <>
+                    It will still pass through <strong>{joinNames(stillPasses)}</strong>, but they
+                    can only mark it &quot;Noted&quot;.
+                  </>
+                )}
+              </>
+            ) : final ? (
+              <>
+                <strong>This is the final approval.</strong> The Officer will be able to create its
+                event in Events.
+              </>
+            ) : !lastInStage ? (
+              <>
+                Your approval will be recorded. It moves on once <strong>{othersText}</strong>{' '}
+                {othersVerb} also acted.
+              </>
+            ) : (
+              <>
+                This will be forwarded to <strong>{stageLabel(nextStage)}</strong> along with your
+                reason.
+              </>
+            )}
+          </p>
 
+          {/* ---------- REVIEW HISTORY (nakatago kapag wala pa) ---------- */}
+          <div className={styles.history}>
+            <h3 className={styles.sectionTitle}>Review history</h3>
+            <ReviewTrail proposal={proposal} />
+          </div>
+
+          {/* ---------- REASON ---------- */}
+          <label className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.sectionTitle}>{text.label}</span>
+              <span className={styles.counter}>
+                {comment.length} / {COMMENT_MAX}
+              </span>
+            </span>
+            <textarea
+              ref={commentRef}
+              className={styles.textarea}
+              value={comment}
+              maxLength={COMMENT_MAX}
+              onChange={(e) => setComment(e.target.value)}
+              rows={5}
+              required
+            />
+          </label>
+
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
+
+        {/* ---------- MGA BUTTON ---------- */}
         <div className={styles.actions}>
           <button
             type="button"
@@ -266,6 +291,7 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
             Cancel
           </button>
           <button type="submit" className={styles[text.buttonClass]} disabled={saving}>
+            {!saving && <Icon size={16} strokeWidth={2.8} aria-hidden="true" />}
             {saving ? 'Saving…' : text.button}
           </button>
         </div>

@@ -7,6 +7,8 @@
    Kung papalitan mo ang lapad ng sidebar (Sidebar.module.css),
    palitan mo rin dito. */
 .main {
+  display: flex;
+  flex-direction: column;
   margin-left: 280px;
   min-height: 100vh;
 }
@@ -14,10 +16,60 @@
 /* Isang lugar lang ang padding ng lahat ng member pages.
    Kaya hindi na ito inuulit sa bawat page — dito mo lang
    babaguhin kung gusto mong mas maluwag o mas masikip. */
+/* flex: 1 → pinupuno ang taas ng screen, kaya laging nasa
+   pinakaibaba ang footer */
 .content {
-  min-height: 100vh;
+  flex: 1 0 auto;
+  width: 100%;
   padding: 1.5rem 1.5rem 3rem 0.25rem;
   max-width: 1180px;
+}
+
+/* ---------- FOOTER (lahat ng page kapag naka-login) ----------
+   Maliit at tahimik: paalala sa kaliwa, copyright sa kanan */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  max-width: 1180px;
+  padding: 16px 1.5rem 22px 0.25rem;
+  border-top: 1px solid rgba(3, 27, 75, 0.1);
+}
+
+.footerNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  background-color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(3, 27, 75, 0.08);
+  color: var(--dash-navy-deep);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.footerIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.footerCopy {
+  margin: 0;
+  color: #6b7590;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ---------- OVERLAY (tablet/phone lang) ---------- */
@@ -78,6 +130,10 @@
     padding: 1rem 1.5rem 2.5rem;
   }
 
+  .footer {
+    padding: 14px 1.5rem 20px;
+  }
+
   .mobileBar {
     display: flex;
   }
@@ -94,5 +150,15 @@
 @media (max-width: 560px) {
   .content {
     padding: 12px 12px 2rem;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 12px 18px;
+  }
+
+  .footerNotice {
+    border-radius: 14px;
   }
 }

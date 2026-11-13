@@ -14,15 +14,35 @@ import styles from './AddUser.module.css'
      Program, Year level, Role, Organization, Active
      → saveUser() (sa_save_user)
 
-   Ang itsura: malinis at pormal — puting form, tatlong grupo
-   na hinahati lang ng manipis na guhit (account, pangalan at
-   detalye, role at org), at Active sa ibaba.
+   ITSURA (navy + sky blue, dilaw na accent):
+     - abstract na header: mga bilog at guhit na hugis, at
+       manipis na dilaw na arko (CSS lang)
+     - form na may tatlong may-numerong seksyon
+       (Account · Personal details · Role & organization)
+     - Role at Organization: Picker na may dilaw na chevron
    ============================================================ */
+
+/* Pamagat ng bawat seksyon: numero + pangalan */
+function Section({ n, title, children }) {
+  return (
+    <section className={styles.section}>
+      <h3 className={styles.sectionHead}>
+        <span className={styles.sectionNum} aria-hidden="true">
+          {n}
+        </span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  )
+}
 
 export function AddUserButton({ onClick }) {
   return (
     <button type="button" className={styles.addButton} onClick={onClick}>
-      <UserPlus size={18} strokeWidth={2.4} aria-hidden="true" />
+      <span className={styles.addIcon} aria-hidden="true">
+        <UserPlus size={16} strokeWidth={2.5} />
+      </span>
       Add user
     </button>
   )
@@ -111,16 +131,26 @@ function AddUserDialog({ roles, orgs, onSave, onCancel }) {
         aria-labelledby="add-user-title"
         onSubmit={handleSubmit}
       >
+        {/* ---------- ULO: abstract na disenyo ---------- */}
         <header className={styles.head}>
-          <h2 id="add-user-title" className={styles.title}>
-            Add user
-          </h2>
+          <span className={styles.headArt} aria-hidden="true" />
+          <span className={styles.headIcon} aria-hidden="true">
+            <UserPlus size={22} strokeWidth={2.3} />
+          </span>
+          <div className={styles.headText}>
+            <p className={styles.eyebrow}>User registry</p>
+            <h2 id="add-user-title" className={styles.title}>
+              Add user
+            </h2>
+            <p className={styles.subtitle}>
+              They can log in with their Microsoft account right after you add them.
+            </p>
+          </div>
         </header>
 
         <div className={styles.body}>
           <fieldset className={styles.fields} disabled={saving}>
-            {/* Account */}
-            <div className={styles.group}>
+            <Section n="1" title="Account">
               <label className={styles.field}>
                 <span className={styles.label}>Microsoft email</span>
                 <span className={styles.emailBox}>
@@ -137,10 +167,9 @@ function AddUserDialog({ roles, orgs, onSave, onCancel }) {
                 </span>
                 <span className={styles.hint}>They log in with this Microsoft account.</span>
               </label>
-            </div>
+            </Section>
 
-            {/* Pangalan at detalye */}
-            <div className={styles.group}>
+            <Section n="2" title="Personal details">
               <div className={styles.row3}>
                 <label className={styles.field}>
                   <span className={styles.label}>Last name</span>
@@ -212,10 +241,9 @@ function AddUserDialog({ roles, orgs, onSave, onCancel }) {
                   />
                 </label>
               </div>
-            </div>
+            </Section>
 
-            {/* Role at organization */}
-            <div className={styles.group}>
+            <Section n="3" title="Role & organization">
               <div className={styles.row2}>
                 <Picker
                   id="add-user-role"
@@ -245,23 +273,21 @@ function AddUserDialog({ roles, orgs, onSave, onCancel }) {
               )}
 
               <label className={styles.active}>
-                <input
-                  type="checkbox"
-                  className={styles.activeInput}
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
-                <span className={styles.activeBox} aria-hidden="true">
-                  <Check size={14} strokeWidth={3.2} />
-                </span>
                 <span>
                   <span className={styles.activeTitle}>Active</span>
                   <span className={styles.activeText}>
                     Inactive people cannot open the app. Their records and history are kept.
                   </span>
                 </span>
+                <input
+                  type="checkbox"
+                  role="switch"
+                  className={styles.switch}
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                />
               </label>
-            </div>
+            </Section>
 
             {error && (
               <p ref={errorRef} className={styles.error} role="alert">
@@ -276,6 +302,7 @@ function AddUserDialog({ roles, orgs, onSave, onCancel }) {
             Cancel
           </button>
           <button type="submit" className={styles.submit} disabled={saving}>
+            <UserPlus size={17} strokeWidth={2.5} aria-hidden="true" />
             {saving ? 'Saving…' : 'Add user'}
           </button>
         </footer>

@@ -57,6 +57,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import MyQrDialog from '../components/MyQrDialog.jsx'
 import AttendanceScanner from '../components/AttendanceScanner.jsx'
+import AttendanceOverview from '../components/AttendanceOverview.jsx'
 import { exportEventAttendance } from '../lib/attendanceExport.js'
 import styles from './Attendance.module.css'
 
@@ -100,7 +101,7 @@ import styles from './Attendance.module.css'
    ITSURA ("check-in tracker" — UI lang, walang binago sa data):
      - segmented switch para sa dalawang tab
      - bawat sinalihang event: Time In → Time Out na tracker
-     - bawat event (Officer/Adviser): attendance meter at roster
+     - bawat event (Officer/Adviser): bilang ng Time In/Out at roster
    ============================================================ */
 
 const TAB_MINE = 'mine'
@@ -414,6 +415,10 @@ function MyJoinedEvents({ profile }) {
               </li>
             ))}
           </ul>
+
+          {/* Attendance rate mo at kung paano ito nabuo — hiwalay,
+              sa ibaba ng listahan (components/AttendanceOverview.jsx) */}
+          <AttendanceOverview events={list} mine={mine} now={now} />
         </>
       )}
 
@@ -705,10 +710,6 @@ function ParticipantsPerEvent({ profile }) {
                   }[phase] ?? ''
                 : ''
 
-            /* Para sa meter (itsura lang): ilang % ang naka-Time In / Out */
-            const inPct = total > 0 ? Math.min(100, (att.timedIn / total) * 100) : 0
-            const outPct = total > 0 ? Math.min(100, (att.timedOut / total) * 100) : 0
-
             return (
               <li
                 key={ev.id}
@@ -731,14 +732,6 @@ function ParticipantsPerEvent({ profile }) {
                           Time In: <strong>{att.timedIn}</strong> / {total} · Time Out:{' '}
                           <strong>{att.timedOut}</strong>
                         </p>
-                        <div className={styles.bars} aria-hidden="true">
-                          <span className={styles.bar}>
-                            <span className={styles.barIn} style={{ width: `${inPct}%` }} />
-                          </span>
-                          <span className={styles.bar}>
-                            <span className={styles.barOut} style={{ width: `${outPct}%` }} />
-                          </span>
-                        </div>
                       </div>
                     )}
                   </div>

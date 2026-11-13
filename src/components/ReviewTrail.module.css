@@ -8,48 +8,70 @@
   list-style: none;
 }
 
+/* Bawat hakbang: bilog na icon sa kaliwa, laman sa kanan.
+   Walang guhit sa gilid — ang kulay ng icon ang nagsasabi ng aksyon. */
 .step {
-  padding: 0.6rem 0.9rem;
-  border-left: 3px solid var(--color-border, #d9dee8);
-  border-radius: 0 10px 10px 0;
-  background-color: var(--color-surface, #f5f7fb);
+  --tone: #6b7387;
+  --tone-soft: #f4f5f8;
+
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: var(--tone-soft);
+}
+
+.body {
+  min-width: 0;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--tone);
+  color: #fff;
 }
 
 .approved {
-  border-left-color: #1c6b3f;
-  background-color: #f2f9f5;
+  --tone: #1c7a43;
+  --tone-soft: #f1f9f4;
 }
 
 .rejected {
-  border-left-color: #b42318;
-  background-color: #fdf3f2;
+  --tone: #c0362c;
+  --tone-soft: #fdf2f1;
 }
 
 /* Noted: nakita na ng sumunod pagkatapos ng isang Reject */
 .noted {
-  border-left-color: #8a93a6;
-  background-color: #f4f5f8;
-}
-
-.noted .decision {
-  color: #4a5368;
+  --tone: #7c859a;
+  --tone-soft: #f4f5f8;
 }
 
 /* Ipina-revise ng Adviser o SAO */
 .revision {
-  border-left-color: #b25e09;
-  background-color: #fff4e8;
+  --tone: #c26a06;
+  --tone-soft: #fff5e8;
 }
 
+/* Naghihintay pa — dilaw na icon na may asul na orasan */
 .waiting {
-  border-left-style: dashed;
-  border-left-color: #c79a2b;
-  background-color: #fffaf0;
+  --tone: #ffd200;
+  --tone-soft: #fffaeb;
 }
 
-/* Ang pinal na desisyon ng School Head: mas makapal ang guhit */
-.final {
-  border-left-width: 5px;
+.waiting .icon {
+  color: #031b4b;
+}
+
+/* Ang pinal na desisyon: may singsing ang icon */
+.final .icon {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--tone);
 }
 
 .head {
@@ -57,11 +79,12 @@
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  min-height: 34px;
 }
 
 .role {
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-text, #1d2433);
@@ -69,25 +92,14 @@
 
 .decision {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.approved .decision {
-  color: #1c6b3f;
-}
-
-.rejected .decision {
-  color: #a61b1b;
+  color: var(--tone);
 }
 
 .waiting .decision {
   color: #8a5a00;
-}
-
-.revision .decision {
-  color: #9a4f05;
 }
 
 /* "✓ Na-revise at naipasa ulit" */

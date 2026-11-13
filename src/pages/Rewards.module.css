@@ -1,26 +1,32 @@
 /* ================================================================
-   REWARDS — "Gem Vault"
+   REWARDS — "Org Shop" + lumulutang na diamond ng "Gem Vault"
 
-   Para sa mga estudyante: masaya at makulay ang pagkakita sa OG.
-   Kulay ng STI-CO: navy, deep navy, dilaw at gold.
-   Walang card/tile: ang OG ay nasa "night sky" na kurbado ang
-   ilalim, ang shop ay parang shelf, at ang mga listahan ay
-   hinahati lang ng guhit.
+   Simple at walang inuulit. Kulay ng STI: navy, deep navy, dilaw
+   at gold. Ang mga palatandaan ng "tindahan" (konti lang):
+     - manipis na AWNING (dilaw at puti) sa balance bar at counter
+     - nakasabit na PRICE TAG sa picture ng item
+     - claim TICKET na may putol-putol na linya
+     - Purchase History na parang RESIBO
    ================================================================ */
 .page {
   font-family: var(--font-ui);
   color: var(--dash-ink);
 
-  --navy: var(--dash-navy);
-  --deep: var(--dash-navy-deep);
-  --yellow: var(--dash-yellow);
-  --gold: var(--dash-gold);
-  --muted: var(--dash-muted);
-  --hair: rgba(3, 27, 75, 0.12);
-  --tint: #e2e8f5;
-  --green: #1b8a4c;
-  --green-soft: #e1f4e8;
-  --red: #c4231a;
+  --navy: var(--dash-navy, #06358c);
+  --deep: var(--dash-navy-deep, #031b4b);
+  --bright: #1249a8;
+  --yellow: var(--dash-yellow, #ffd200);
+  --gold: var(--dash-gold, #f7b900);
+  --muted: var(--dash-muted, #5f6b85);
+  --ink: #0e1a36;
+  --body: #3a4766;
+  --line: #e1e7f2;
+  --line-strong: #c8d0de;
+  --soft: #f3f6fc;
+  --bg: var(--dash-ground, #eef1f7);
+  --green: #1b7a43;
+  --green-soft: #e3f4e8;
+  --red: #b42318;
   --red-soft: #fde3e0;
 }
 
@@ -31,64 +37,55 @@
 }
 
 /* ================================================================
-   OG MO — "night sky" na may kumikinang na gem
+   AWNING — dilaw at puting guhit na may kulot na dulo
+   (sa balance bar lang)
    ================================================================ */
-.balanceCard {
-  position: relative;
-  isolation: isolate;
+.awning {
+  display: block;
+  height: 30px;
+  background:
+    radial-gradient(circle at 15px 16px, var(--yellow) 12px, transparent 12.5px) 0 0 / 60px 30px repeat-x,
+    radial-gradient(circle at 45px 16px, #fff 12px, transparent 12.5px) 0 0 / 60px 30px repeat-x,
+    repeating-linear-gradient(90deg, var(--yellow) 0 30px, #fff 30px 60px) 0 0 / 100% 16px no-repeat;
+}
+
+/* ================================================================
+   BALANCE BAR — ang TANGING lugar ng OG balance
+   ================================================================ */
+.balanceBar {
+  overflow: hidden;
+  margin-bottom: 22px;
+  border-radius: 22px;
+  /* Asul na may mahinang liwanag sa likod ng diamond */
+  background:
+    radial-gradient(circle at 70px 60%, rgba(255, 210, 0, 0.22), transparent 160px),
+    radial-gradient(circle at 92% -20%, rgba(91, 133, 240, 0.45), transparent 50%),
+    linear-gradient(160deg, #0b44ad 0%, var(--navy) 40%, var(--deep) 100%);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(3, 27, 75, 0.22);
+}
+
+.balanceInner {
   display: flex;
   align-items: center;
-  gap: 30px;
-  padding: 36px 40px 64px;
-  overflow: hidden;
-  /* Kurbado ang ilalim — hindi kahon */
-  border-radius: 36px 36px 50% 50% / 36px 36px 70px 70px;
-  background:
-    radial-gradient(circle at 16% 45%, rgba(255, 210, 0, 0.28), transparent 32%),
-    radial-gradient(circle at 88% -10%, rgba(91, 133, 240, 0.55), transparent 45%),
-    linear-gradient(160deg, #0b44ad 0%, var(--navy) 35%, var(--deep) 80%);
-  color: #fff;
+  gap: 22px;
+  padding: 4px 32px 26px 22px;
 }
 
-/* Mga bituin */
-.sky {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.sky i {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: #fff;
-  opacity: 0.7;
-  animation: twinkle 3s ease-in-out infinite;
-}
-
-.sky i:nth-child(1) { top: 18%; left: 42%; animation-delay: 0s; }
-.sky i:nth-child(2) { top: 30%; left: 78%; animation-delay: 0.6s; width: 3px; height: 3px; }
-.sky i:nth-child(3) { top: 62%; left: 60%; animation-delay: 1.2s; }
-.sky i:nth-child(4) { top: 14%; left: 90%; animation-delay: 1.8s; width: 5px; height: 5px; background-color: var(--yellow); }
-.sky i:nth-child(5) { top: 74%; left: 86%; animation-delay: 0.9s; width: 3px; height: 3px; }
-.sky i:nth-child(6) { top: 46%; left: 30%; animation-delay: 2.2s; width: 3px; height: 3px; background-color: var(--yellow); }
-
-/* Ang gem */
+/* ---------- ANG LUMULUTANG NA DIAMOND ---------- */
 .balanceGem {
   position: relative;
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 128px;
-  height: 128px;
+  width: 104px;
+  height: 104px;
   animation: gemFloat 4s ease-in-out infinite;
 }
 
 .gemGlow {
   position: absolute;
-  inset: 8px;
+  inset: 10px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 210, 0, 0.55), rgba(255, 210, 0, 0) 70%);
   filter: blur(6px);
@@ -97,10 +94,10 @@
 
 .balanceGemSvg {
   position: relative;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.35));
 }
 
-/* Gawing dilaw/gold ang gem dito (asul ito sa ibang lugar) */
+/* Gold ang diamond dito (asul ito sa ibang lugar) */
 .balanceGem path:nth-of-type(1) {
   fill: var(--gold);
 }
@@ -116,287 +113,208 @@
 
 .gemSpark {
   position: absolute;
-  top: 4px;
-  right: 2px;
+  top: 8px;
+  right: 6px;
   color: #fff6c2;
   animation: twinkle 2.4s ease-in-out infinite;
 }
 
 .balanceText {
-  position: relative;
   min-width: 0;
-}
-
-.balanceLabel {
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
 }
 
 /* Malaking gold na numero */
 .balanceValue {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-top: 6px;
   background: linear-gradient(180deg, #fff6c2 0%, var(--yellow) 55%, var(--gold) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   font-family: var(--font-display);
-  font-size: clamp(56px, 8vw, 84px);
+  font-size: 52px;
   font-weight: 800;
-  line-height: 0.95;
-  letter-spacing: -0.04em;
+  line-height: 1;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
 .balanceUnit {
+  margin-left: 10px;
   -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
   color: rgba(255, 255, 255, 0.9);
-  font-size: 24px;
+  font-size: 20px;
   letter-spacing: 0;
 }
 
-.balanceHint {
-  margin-top: 10px;
-  max-width: 44ch;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14.5px;
+.balanceLabel {
+  margin-top: 6px;
+  font-size: 13.5px;
   font-weight: 600;
-  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+  overflow-wrap: anywhere;
 }
 
 /* ================================================================
-   TABS — pill dock (lumulutang sa kurba ng langit)
+   TABS — salungguhit na dilaw
    ================================================================ */
 .tabs {
   display: flex;
-  gap: 8px;
-  margin: 0 0 26px;
-  padding: 6px 2px;
+  gap: 6px;
+  margin-bottom: 22px;
   overflow-x: auto;
+  border-bottom: 2px solid #dbe2ef;
   scrollbar-width: none;
-}
-
-.tabs::-webkit-scrollbar {
-  display: none;
-}
-
-/* Kapag may "langit" sa itaas: pataas nang kaunti, nakapatong sa kurba */
-.balanceCard + .tabs {
-  position: relative;
-  z-index: 1;
-  margin-top: -32px;
-  padding-left: 24px;
-  padding-right: 24px;
 }
 
 .tab {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 18px;
+  margin-bottom: -2px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 999px;
-  background-color: #e6ebf7;
-  color: var(--deep);
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--muted);
   font: inherit;
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(3, 27, 75, 0.1);
   cursor: pointer;
-  transition: background-color var(--transition), transform var(--transition),
-    box-shadow var(--transition);
+  transition: color var(--transition), border-color var(--transition);
 }
 
-.tab:hover:not(.tabActive) {
-  background-color: #d8e0f2;
-  transform: translateY(-1px);
+.tab:hover {
+  color: var(--deep);
 }
 
 .tabActive {
-  background-color: var(--yellow);
+  border-bottom-color: var(--yellow);
   color: var(--deep);
-  box-shadow: 0 8px 22px rgba(247, 185, 0, 0.45);
+  font-weight: 800;
 }
 
 .tab:focus-visible {
-  outline: 3px solid var(--navy);
-  outline-offset: 2px;
+  outline: 3px solid var(--yellow);
+  outline-offset: -3px;
+  border-radius: 8px 8px 0 0;
 }
 
 /* ================================================================
-   MENSAHE AT MALILIIT NA BAHAGI
+   CHIPS — filter (Hand out items)
    ================================================================ */
-.notice {
-  margin-bottom: 22px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  background: linear-gradient(90deg, #fff1a6, #ffe27a);
-  color: var(--deep);
-  font-size: 14.5px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.linkButton {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--deep);
-  font: inherit;
-  font-weight: 800;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.summary {
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 18px;
-  color: var(--muted);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.6;
 }
 
-.summary strong {
-  padding: 0 3px;
-  background: linear-gradient(transparent 58%, rgba(255, 210, 0, 0.7) 58%);
-  color: var(--deep);
-  font-weight: 800;
-}
-
-.hintSmall {
-  color: var(--muted);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.panelError,
-.panelOk {
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 13.5px;
-  font-weight: 700;
-}
-
-.panelError {
-  background-color: var(--red-soft);
-  color: #a61b1b;
-}
-
-.panelOk {
-  background-color: var(--green-soft);
-  color: #17683a;
-}
-
-/* ---------- BADGE ---------- */
-.badge {
+.chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
   border-radius: 999px;
-  background-color: var(--tint);
-  color: #3b4660;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  background-color: #e2e8f4;
+  color: var(--deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
 }
 
-/* "To claim" */
-.badge_pending {
+.chip:hover {
+  background-color: #d5deee;
+}
+
+.chipActive,
+.chipActive:hover {
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.chipCount {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: rgba(3, 27, 75, 0.1);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.chipActive .chipCount {
   background-color: var(--yellow);
   color: var(--deep);
 }
 
-.badge_claimed {
-  background-color: var(--green-soft);
-  color: #17683a;
-}
-
-.badge_cancelled {
-  background-color: #eceef3;
-  color: #6b7387;
-}
-
-.badge_upcoming {
-  background-color: #dfe7fb;
-  color: var(--navy);
-}
-
-.badge_ongoing {
-  background-color: var(--green-soft);
-  color: #17683a;
-}
-
-.badge_completed {
-  background-color: #eceef3;
-  color: #59647c;
-}
-
 /* ================================================================
-   SHOP — parang shelf (walang card)
+   SHELF — mga item card (Shop at Manage shop)
    ================================================================ */
-.itemGrid {
+.shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 38px 26px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 22px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.itemCard {
+.card {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background-color: #fff;
+  transition: box-shadow var(--transition), transform var(--transition);
 }
 
-.itemMedia {
+.card:hover {
+  box-shadow: 0 14px 28px rgba(3, 27, 75, 0.1);
+}
+
+/* Picture */
+.media {
   position: relative;
   aspect-ratio: 4 / 3;
-  transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
-}
-
-.itemCard:hover .itemMedia {
-  transform: translateY(-4px) rotate(-1deg);
-}
-
-.itemImage,
-.itemPlaceholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 26px;
-  box-shadow: 0 14px 30px rgba(3, 27, 75, 0.16);
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+  background-color: #e8eefb;
 }
 
 .itemImage {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  background-color: var(--tint);
 }
 
 .itemPlaceholder {
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Walang picture → asul na tile na may gold na diamond
+   (kapareho ng diamond sa balance bar) */
+.itemPlaceholder {
   background:
-    radial-gradient(circle at 50% 45%, rgba(255, 210, 0, 0.35), transparent 45%),
+    radial-gradient(circle at 50% 48%, rgba(255, 210, 0, 0.32), transparent 42%),
     linear-gradient(150deg, var(--navy), var(--deep));
 }
 
 .itemPlaceholder svg {
-  width: 56px;
-  height: 56px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
 }
 
@@ -408,284 +326,793 @@
   fill: #ffe45c;
 }
 
-/* Price tag — dilaw na pill sa kanto ng larawan */
-.itemPrice {
+.itemPlaceholder path:nth-of-type(3) {
+  fill: #fff;
+  opacity: 0.45;
+}
+
+/* Ubos na / Hidden — lumalabo ang picture */
+.cardSoldOut .itemImage,
+.cardSoldOut .itemPlaceholder,
+.cardHidden .itemImage,
+.cardHidden .itemPlaceholder,
+.cardHidden .cardBody {
+  opacity: 0.5;
+}
+
+/* ---------- PRICE TAG (nakasabit) ---------- */
+.tagHanger {
   position: absolute;
-  left: 14px;
-  bottom: -14px;
-  padding: 7px 13px;
-  border-radius: 999px;
+  top: 0;
+  right: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.tagString {
+  width: 2px;
+  height: 18px;
+  background-color: #b99a2a;
+}
+
+.tag {
+  position: relative;
+  margin-top: -3px;
+  min-width: 58px;
+  padding: 14px 12px 8px;
+  box-sizing: border-box;
   background-color: var(--yellow);
   color: var(--deep);
-  font-size: 15px;
+  text-align: center;
+  transform: rotate(5deg);
+  transform-origin: top center;
+  clip-path: polygon(22% 0, 78% 0, 100% 18%, 100% 100%, 0 100%, 0 18%);
+  filter: drop-shadow(0 4px 6px rgba(3, 27, 75, 0.2));
+}
+
+.tagHole {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background-color: rgba(3, 27, 75, 0.35);
+}
+
+.tagPrice {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 20px;
   font-weight: 800;
-  box-shadow: 0 8px 18px rgba(247, 185, 0, 0.45);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.itemPrice path:nth-of-type(1) {
-  fill: var(--deep);
+.tagUnit {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 
-.itemPrice path:nth-of-type(2) {
-  fill: var(--navy);
+/* ---------- SOLD OUT na tatak ---------- */
+.stamp {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  padding: 5px 14px;
+  border: 2.5px solid #c4231a;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.92);
+  color: #c4231a;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translate(-50%, -50%) rotate(-10deg);
 }
 
-.itemBody {
-  padding-top: 26px;
+/* ---------- HIDDEN (Manage shop) ---------- */
+.hiddenBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: rgba(3, 27, 75, 0.88);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
 }
 
-.itemName {
-  color: var(--deep);
+/* ---------- LAMAN NG CARD ---------- */
+.cardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 16px 20px;
+}
+
+.cardName {
   font-family: var(--font-display);
   font-size: 19px;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--deep);
   overflow-wrap: anywhere;
 }
 
-.itemDesc {
-  margin-top: 6px;
-  color: #3a4766;
+.cardDesc {
   font-size: 14px;
   line-height: 1.5;
+  color: var(--body);
   overflow-wrap: anywhere;
 }
 
-.itemFacts {
-  margin-top: 8px;
-  color: var(--muted);
+.cardFacts {
+  margin-top: 2px;
   font-size: 12.5px;
   font-weight: 700;
+  color: var(--muted);
 }
 
-.itemFooter {
+/* ---------- IBABA NG CARD: isang bagay lang ---------- */
+.cardFoot {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: auto;
-  padding-top: 14px;
+  padding: 0 20px 20px;
 }
 
-/* Gaano ka na kalapit sa presyo */
-.progress {
-  display: block;
-  height: 7px;
-  overflow: hidden;
-  border-radius: 999px;
-  background-color: #dbe2f0;
-}
-
-.progress span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--gold), var(--yellow));
-}
-
+/* Redeem — asul na may dilaw na guhit, umaangat kapag tinapatan */
 .redeemBtn {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 0 14px;
+  width: 100%;
+  padding: 12px 18px;
   border: none;
-  border-radius: 14px;
-  background-color: var(--deep);
+  border-radius: 12px;
+  background-color: var(--navy);
   color: #fff;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   cursor: pointer;
-  transition: background-color var(--transition), transform var(--transition);
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.25), inset 0 -3px 0 var(--yellow);
+  transition: background-color var(--transition), transform var(--transition),
+    box-shadow var(--transition);
 }
 
 .redeemBtn svg {
   color: var(--yellow);
 }
 
-.redeemBtn:hover:not(:disabled) {
-  background-color: var(--navy);
-  transform: translateY(-1px);
+/* Kislap na dumadaan sa button kapag tinapatan */
+.redeemBtn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
 }
 
-.redeemBtn:disabled {
-  border: 1.5px dashed rgba(3, 27, 75, 0.25);
-  background-color: transparent;
-  color: var(--muted);
-  cursor: not-allowed;
+.redeemBtn:hover:not(:disabled)::after {
+  animation: shine 0.8s ease;
+}
+
+.redeemBtn:hover:not(:disabled) {
+  background-color: var(--bright);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(6, 53, 140, 0.32), inset 0 -3px 0 var(--gold);
+}
+
+.redeemBtn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .redeemBtn:focus-visible {
-  outline: 3px solid var(--navy);
+  outline: 3px solid var(--yellow);
   outline-offset: 2px;
 }
 
-/* Kaya mo nang i-redeem → kumikinang ang larawan */
-.itemReady .itemImage,
-.itemReady .itemPlaceholder {
-  box-shadow: 0 0 0 3px var(--yellow), 0 14px 30px rgba(247, 185, 0, 0.3);
-}
-
-/* ---------- MANAGE SHOP (Adviser) ---------- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 26px;
-}
-
-.summaryInline {
-  color: var(--muted);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.summaryInline strong {
-  color: var(--deep);
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 800;
-}
-
-.addBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 46px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 999px;
-  background-color: var(--yellow);
-  color: var(--deep);
-  font: inherit;
-  font-size: 14.5px;
-  font-weight: 800;
-  box-shadow: 0 8px 20px rgba(247, 185, 0, 0.4);
-  cursor: pointer;
-  transition: transform var(--transition), background-color var(--transition);
-}
-
-.addBtn:hover {
-  background-color: #ffdc33;
-  transform: translateY(-1px);
-}
-
-.itemHidden {
-  opacity: 0.55;
-}
-
-.itemHidden .itemImage,
-.itemHidden .itemPlaceholder {
-  filter: grayscale(0.8);
-}
-
-.manageActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  margin-top: 14px;
-}
-
-.textBtn,
-.textDanger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--deep);
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
-  cursor: pointer;
-  background-image: linear-gradient(var(--yellow), var(--yellow));
-  background-repeat: no-repeat;
-  background-position: 0 85%;
-  background-size: 0 3px;
-  transition: background-size 0.25s ease;
-}
-
-.textBtn:hover:not(:disabled) {
-  background-size: 100% 3px;
-}
-
-.textDanger {
-  color: var(--red);
-  background-image: linear-gradient(#f3a29b, #f3a29b);
-}
-
-.textDanger:hover:not(:disabled) {
-  background-size: 100% 3px;
-}
-
-.textBtn:disabled,
-.textDanger:disabled {
-  opacity: 0.5;
+.redeemBtn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.textBtn:focus-visible,
-.textDanger:focus-visible,
-.linkButton:focus-visible,
-.addBtn:focus-visible {
-  outline: 3px solid var(--navy);
-  outline-offset: 2px;
+/* Kulang pa ang OG */
+.progress {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #e6ebf4;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--gold);
+}
+
+.footNote {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Limit reached */
+.footPill {
+  padding: 11px 14px;
+  border-radius: 12px;
+  background-color: #f1f4fa;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------- CLAIM TICKET ---------- */
+.ticket {
+  position: relative;
+  padding: 14px 20px 16px;
+  border-top: 2px dashed #e5c84a;
+  border-radius: 0 0 20px 20px;
+  background-color: #fff8d6;
+}
+
+/* Mga butas sa gilid ng ticket (kulay ng background ng page) */
+.ticket::before,
+.ticket::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: var(--bg);
+}
+
+.ticket::before {
+  left: -12px;
+}
+
+.ticket::after {
+  right: -12px;
+}
+
+.ticketTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ticketCode {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--deep);
+  user-select: all;
+}
+
+.ticketHint {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #6b5a1e;
+}
+
+.cardError {
+  margin: 0 20px 18px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: var(--red-soft);
+  color: #a61b1b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Pulang text button (Cancel) */
+.textDanger {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #c0362c;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.textDanger:hover:not(:disabled) {
+  background-color: var(--red-soft);
+}
+
+.textDanger:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
+}
+
+.textDanger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ================================================================
-   LISTAHAN (My redemptions, Event rewards) — dashed na guhit lang
+   PURCHASE HISTORY — RESIBO
    ================================================================ */
-.list {
-  margin: 0;
+.receiptWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.receipt {
+  --paper: #fff;
+
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  padding: 24px 32px 26px;
+  box-sizing: border-box;
+  background-color: var(--paper);
+  filter: drop-shadow(0 14px 26px rgba(3, 27, 75, 0.12));
+}
+
+/* Kulot na gilid sa itaas at ibaba — parang punit na resibo */
+.receipt::before,
+.receipt::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 9px;
+}
+
+.receipt::before {
+  bottom: 100%;
+  background: radial-gradient(circle at 9px 9px, var(--paper) 8.5px, transparent 9px) 0 0 / 18px 9px repeat-x;
+}
+
+.receipt::after {
+  top: 100%;
+  background: radial-gradient(circle at 9px 0, var(--paper) 8.5px, transparent 9px) 0 0 / 18px 9px repeat-x;
+}
+
+.receiptHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding-bottom: 16px;
+  border-bottom: 2px dashed #d3dae6;
+}
+
+.receiptTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--deep);
+}
+
+.receiptRange {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.receiptRows {
+  margin: 4px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.card {
-  padding: 22px 0;
-  border-bottom: 1.5px dashed rgba(3, 27, 75, 0.18);
+.receiptRow {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 1px dotted #dde3ec;
 }
 
-.card:first-child {
-  padding-top: 4px;
+.receiptDate,
+.receiptAmount {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 13px;
 }
 
-.titleRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
+.receiptDate {
+  color: var(--muted);
 }
 
-.title {
-  color: var(--deep);
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+.receiptDesc {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
-.meta {
-  margin-top: 6px;
+.receiptAmount {
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.plus {
+  color: var(--green);
+}
+
+.minus {
+  color: var(--red);
+}
+
+.receiptTotals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0 0;
+}
+
+.receiptTotals > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.receiptTotals dt {
+  color: var(--body);
+}
+
+.receiptTotals dd {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-weight: 800;
+}
+
+/* ================================================================
+   MANAGE SHOP — Adviser
+   ================================================================ */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.toolbarText {
   color: var(--muted);
   font-size: 14px;
   font-weight: 600;
 }
 
-.outcome {
-  margin-top: 6px;
-  color: var(--muted);
+.toolbarText strong {
+  color: var(--deep);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* "+ Add item" — kahugis ng "Create Event" at "+ Post", pero DILAW
+   ang katawan at ASUL ang bilog (kulay ng OG gems) */
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 22px 7px 7px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffdc33, var(--yellow));
+  color: var(--deep);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(247, 185, 0, 0.42), inset 0 -3px 0 var(--gold);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.addIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--deep);
+  color: var(--yellow);
+  box-shadow: 0 2px 6px rgba(3, 27, 75, 0.3);
+  transition: transform 0.25s ease, background-color var(--transition);
+}
+
+.addBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(247, 185, 0, 0.5), inset 0 -3px 0 #d99e00;
+}
+
+.addBtn:hover .addIcon {
+  background-color: var(--navy);
+  transform: rotate(90deg);
+}
+
+.addBtn:active {
+  transform: translateY(0);
+}
+
+.addBtn:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* Edit · Hide/Show · (trash) — pinagdugtong na grupo */
+.manageActions {
+  display: flex;
+  margin: 0 20px 18px;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+}
+
+.manageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background-color: #fff;
+  color: var(--deep);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.manageBtn + .manageBtn {
+  border-left: 1.5px solid var(--line);
+}
+
+.manageBtn:hover:not(:disabled) {
+  background-color: var(--soft);
+  color: var(--navy);
+}
+
+.manageDanger {
+  flex: 0 0 46px;
+  padding: 10px 0;
+  color: #c0362c;
+}
+
+.manageDanger:hover:not(:disabled) {
+  background-color: var(--red-soft);
+  color: #a61b1b;
+}
+
+.manageBtn:focus-visible {
+  position: relative;
+  outline: 3px solid var(--yellow);
+  outline-offset: -3px;
+}
+
+.manageBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================================================================
+   HAND OUT ITEMS — COUNTER ng tindahan
+   ================================================================ */
+.counter {
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 10px 24px rgba(3, 27, 75, 0.06);
+}
+
+.counterInner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 26px 22px;
+}
+
+.counterLabel {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--deep);
+}
+
+.counterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.counterInput {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: 14px 18px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 14px;
+  background-color: var(--soft);
+  color: var(--deep);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color var(--transition), box-shadow var(--transition),
+    background-color var(--transition);
+}
+
+.counterInput::placeholder {
+  color: #b3bccd;
+  letter-spacing: 0.08em;
+}
+
+.counterInput:focus {
+  outline: none;
+  border-color: var(--navy);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(6, 53, 140, 0.14);
+}
+
+/* Hand out — DILAW na may asul na teksto at icon
+   (iba sa asul na Redeem at sa bilog na "+ Add item") */
+.counterBtn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 160px;
+  min-height: 58px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffdc33, var(--yellow));
+  color: var(--deep);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(247, 185, 0, 0.35), inset 0 -3px 0 var(--gold);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.counterBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(247, 185, 0, 0.45), inset 0 -3px 0 #d99e00;
+}
+
+.counterBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.counterBtn:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* Walang code pa — malinaw na naka-disable, hindi lumalabo */
+.counterBtn:disabled {
+  background: #e2e8f4;
+  color: #8a94a8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.counterHint {
   font-size: 13px;
-  font-weight: 600;
   line-height: 1.5;
+  color: var(--muted);
+}
+
+.claimOk,
+.panelError {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.claimOk {
+  background-color: var(--green-soft);
+  color: #17683a;
+}
+
+.claimOk svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.panelError {
+  background-color: var(--red-soft);
+  color: #a61b1b;
+}
+
+/* Listahan ng mga redemption */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background-color: #fff;
+}
+
+.listRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 18px;
+}
+
+.listRow + .listRow {
+  border-top: 1px solid var(--line);
+}
+
+.listMain {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.listTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--deep);
+}
+
+.listSub,
+.listOutcome {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.listOutcome {
+  font-weight: 600;
 }
 
 .reason {
@@ -694,669 +1121,321 @@
   font-style: italic;
 }
 
-/* ---------- SHOP: claim code sa item card mismo (parang coupon) ---------- */
-.claimBox {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 12px 14px;
-  border: 1.5px dashed rgba(3, 27, 75, 0.3);
-  border-radius: 14px;
-  background-color: rgba(247, 185, 0, 0.08);
-}
-
-.claimBoxHint {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.claimBox .textDanger {
-  margin-top: 2px;
-  font-size: 13px;
-}
-
-.codeSmallLabel {
-  color: var(--muted);
-  font-size: 10.5px;
+.listPrice {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  color: var(--deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.listPrice path:nth-of-type(1) {
+  fill: var(--gold);
+}
+
+.listPrice path:nth-of-type(2) {
+  fill: var(--yellow);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: #eceef3;
+  color: #6b7387;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-.codeSmall {
-  padding: 0 6px;
-  background: linear-gradient(transparent 52%, var(--yellow) 52%);
+.badge_pending {
+  background-color: var(--yellow);
   color: var(--deep);
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+}
+
+.badge_claimed {
+  background-color: var(--green-soft);
+  color: #17683a;
 }
 
 /* ================================================================
-   OG HISTORY — malalaking numero + timeline
+   MEMBERS' OG — talaan (Adviser)
    ================================================================ */
-.statRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 0;
-  margin-bottom: 26px;
-}
-
-.stat {
+.ledger {
   display: flex;
   flex-direction: column;
-  padding: 2px 30px;
-  border-left: 2px solid var(--hair);
+  gap: 16px;
 }
 
-.stat:first-child {
-  padding-left: 0;
-  border-left: none;
-}
-
-.statValue {
-  font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-
-.stat:nth-child(1) .statValue {
-  color: var(--green);
-}
-
-.stat:nth-child(2) .statValue {
-  color: var(--red);
-}
-
-.stat:nth-child(3) .statValue {
-  padding: 0 4px;
-  background: linear-gradient(transparent 60%, var(--yellow) 60%);
-  color: var(--deep);
-}
-
-.statLabel {
-  margin-top: 6px;
+.ledgerSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ledgerSummary strong {
+  color: var(--deep);
+  font-size: 17px;
   font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
-.ledger {
-  position: relative;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Patayong linya ng timeline */
-.ledger::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  bottom: 20px;
-  left: 19px;
-  width: 2px;
-  background-color: var(--hair);
+.ledgerTable {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background-color: #fff;
+  box-shadow: 0 12px 26px rgba(3, 27, 75, 0.07);
 }
 
 .ledgerRow {
   position: relative;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) 90px 110px;
+  gap: 12px;
   align-items: center;
-  gap: 14px;
-  padding: 10px 0;
+  padding: 13px 20px;
 }
 
-.ledgerIcon {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #dfe7fb;
-  color: var(--navy);
-  box-shadow: 0 0 0 4px var(--dash-ground);
+.ledgerRow + .ledgerRow {
+  border-top: 1px solid var(--line);
 }
 
-.kind_event_reward {
-  background-color: var(--yellow);
-  color: var(--deep);
-}
-
-.kind_refund {
-  background-color: var(--green-soft);
-  color: var(--green);
-}
-
-.ledgerText {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.ledgerDesc {
-  color: var(--deep);
-  font-size: 14.5px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.ledgerWhen {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.ledgerRow > :last-child {
-  font-size: 15px;
-}
-
-/* ================================================================
-   FILTER (Event rewards, Hand out items)
-   ================================================================ */
-.filters {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  padding: 2px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.filters::-webkit-scrollbar {
-  display: none;
-}
-
-.filter {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 6px 0 14px;
-  border: 1.5px solid rgba(3, 27, 75, 0.16);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--deep);
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color var(--transition), border-color var(--transition);
-}
-
-.filter:hover {
-  border-color: rgba(3, 27, 75, 0.35);
-}
-
-.filterActive,
-.filterActive:hover {
-  border-color: var(--deep);
-  background-color: var(--deep);
-  color: #fff;
-}
-
-.filterCount {
-  display: grid;
-  place-items: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background-color: var(--tint);
-  color: var(--deep);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.filterActive .filterCount {
-  background-color: var(--yellow);
-}
-
-.filter:focus-visible {
-  outline: 3px solid var(--navy);
-  outline-offset: 2px;
-}
-
-/* ================================================================
-   EVENT REWARDS — Adviser (nagtatakda) at Officer (nagre-release)
-   ================================================================ */
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px 24px;
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
-}
-
-.attendMeta {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.attendMeta strong {
-  color: var(--deep);
-  font-weight: 800;
-}
-
-/* Ang reward ng event — malaking numero na may gem */
-.rewardBox {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.rewardBox > :first-child:not(.rewardNone) {
-  color: var(--deep);
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-}
-
-.rewardNone {
-  padding: 6px 12px;
-  border: 1.5px dashed rgba(3, 27, 75, 0.25);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 12.5px;
-  font-weight: 700;
-}
-
-.released {
-  margin-top: 10px;
-  color: var(--green);
-  font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-/* Adviser: itakda ang reward */
-.rewardForm {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  margin-top: 16px;
-}
-
-.rewardLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.rewardInput {
-  width: 120px;
-  padding: 4px 0;
-  border: none;
-  border-bottom: 3px solid rgba(3, 27, 75, 0.25);
-  border-radius: 0;
-  background: transparent;
-  color: var(--deep);
-  font: inherit;
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  transition: border-color var(--transition);
-}
-
-.rewardInput:focus {
-  outline: none;
-  border-bottom-color: var(--yellow);
-}
-
-.smallPrimary {
-  min-height: 42px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 12px;
-  background-color: var(--deep);
-  color: #fff;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background-color var(--transition), opacity var(--transition);
-}
-
-.smallPrimary:hover:not(:disabled) {
-  background-color: var(--navy);
-}
-
-.smallPrimary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.rewardForm .hintSmall {
-  flex-basis: 100%;
-}
-
-/* Officer: i-release */
-.cardActions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  margin-top: 16px;
-}
-
-.releaseBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 0 24px;
-  border: none;
-  border-radius: 14px;
-  background-color: var(--yellow);
-  color: var(--deep);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  animation: releaseGlow 2.2s ease-in-out infinite;
-  transition: transform var(--transition);
-}
-
-.releaseBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.releaseBtn:disabled {
-  opacity: 0.6;
-  cursor: wait;
-  animation: none;
-}
-
-.smallPrimary:focus-visible,
-.releaseBtn:focus-visible,
-.claimBtn:focus-visible,
-.manualBtn:focus-visible {
-  outline: 3px solid var(--navy);
-  outline-offset: 2px;
-}
-
-/* ================================================================
-   HAND OUT ITEMS — malaking claim code
-   ================================================================ */
-.claimForm {
-  margin-bottom: 20px;
-}
-
-.claimLabel {
-  display: block;
-  color: var(--muted);
+/* Asul na header */
+.ledgerHead {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background: linear-gradient(160deg, var(--navy), var(--deep));
+  color: rgba(255, 255, 255, 0.78);
   font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.claimRow {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 12px 16px;
-  margin: 4px 0 8px;
-}
-
-.claimInput {
-  flex: 1 1 240px;
-  min-width: 0;
-  max-width: 380px;
-  padding: 6px 0;
-  border: none;
-  border-bottom: 3px solid var(--deep);
-  border-radius: 0;
-  background: transparent;
-  color: var(--deep);
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  transition: border-color var(--transition);
-}
-
-.claimInput::placeholder {
-  color: rgba(3, 27, 75, 0.25);
-}
-
-.claimInput:focus {
-  outline: none;
-  border-bottom-color: var(--yellow);
-}
-
-.claimBtn {
-  min-height: 52px;
-  padding: 0 28px;
-  border: none;
-  border-radius: 16px;
-  background-color: var(--deep);
-  color: var(--yellow);
-  font: inherit;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background-color var(--transition), opacity var(--transition);
-}
-
-.claimBtn:hover:not(:disabled) {
-  background-color: var(--navy);
-}
-
-.claimBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.claimOk {
-  margin-bottom: 18px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background-color: var(--green-soft);
-  color: #17683a;
-  font-size: 14.5px;
-  font-weight: 800;
-}
-
-/* ================================================================
-   MGA TAO (Hand out items, Members' OG)
-   ================================================================ */
-.people {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.person {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--hair);
-}
-
-.personMain {
-  display: flex;
-  flex: 1 1 220px;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.name {
-  color: var(--deep);
-  font-size: 15px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.personSub {
-  color: var(--muted);
-  font-size: 12.5px;
-  font-weight: 600;
-}
-
-.personMain .outcome {
-  margin-top: 2px;
-  font-size: 12.5px;
-}
-
-.personActions {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.manualBtn {
-  min-height: 38px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 12px;
-  background-color: var(--yellow);
-  color: var(--deep);
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background-color var(--transition);
-}
-
-.manualBtn:hover:not(:disabled) {
-  background-color: #ffdc33;
-}
-
-.manualBtn:disabled {
-  background-color: #e6e9f0;
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-/* ---------- MEMBERS' OG — leaderboard (ayon sa OG na nagastos) ---------- */
-.num {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--tint);
-  color: var(--deep);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.person > .name {
-  flex: 1 1 160px;
-  min-width: 0;
-}
-
-.role {
-  padding: 3px 9px;
-  border-radius: 999px;
-  background-color: #dfe7fb;
-  color: var(--navy);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-/* "120 OG left" — natitirang OG, maliit lang */
-.left {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-/* Ang OG na nagastos — ito ang batayan ng ranking */
-.spent {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  font-weight: 800;
-}
-
-.spentLabel {
-  color: var(--muted);
-  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.person > :last-child {
-  font-size: 16px;
+/* "OG spent" — ito ang batayan ng ranking, kaya dilaw */
+.ledgerHead > :last-child {
+  color: var(--yellow);
 }
 
-/* Top 3 */
-.rank1 .num {
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- TOP 3 ---------- */
+.row_rank1,
+.row_rank2,
+.row_rank3 {
+  border-left: 4px solid;
+  padding-left: 16px;
+}
+
+.row_rank1 {
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, #fff7d6, #fff 70%);
+}
+
+.row_rank2 {
+  border-left-color: #a9b4c8;
+  background: linear-gradient(90deg, #f1f4f9, #fff 70%);
+}
+
+.row_rank3 {
+  border-left-color: #d1874b;
+  background: linear-gradient(90deg, #fcefe3, #fff 70%);
+}
+
+.rank {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #eef1f6;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.rank1 {
   background: linear-gradient(145deg, #fff1a6, var(--gold));
-  box-shadow: 0 6px 16px rgba(247, 185, 0, 0.5);
+  color: var(--deep);
+  box-shadow: 0 4px 10px rgba(247, 185, 0, 0.4);
 }
 
-.rank2 .num {
+.rank2 {
   background: linear-gradient(145deg, #f4f6fa, #b9c2d3);
-  box-shadow: 0 6px 14px rgba(120, 132, 155, 0.35);
+  color: #3a4766;
 }
 
-.rank3 .num {
+.rank3 {
   background: linear-gradient(145deg, #f6d2b0, #d1874b);
   color: #fff;
-  box-shadow: 0 6px 14px rgba(209, 135, 75, 0.4);
 }
 
-.rank1 .name {
-  font-family: var(--font-display);
-  font-size: 18px;
+.ledgerName {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--deep);
+  overflow-wrap: anywhere;
 }
 
-.rank1 > :last-child {
-  font-size: 19px;
+.ledgerRole {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ledgerLeft {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--body);
+}
+
+.ledgerSpent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--deep);
+}
+
+/* Maliit na bar: gaano kalaki ang nagastos kumpara sa pinakamataas */
+.spentBar {
+  display: block;
+  width: 100%;
+  max-width: 90px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #edf0f6;
+}
+
+.spentBar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), var(--yellow));
+}
+
+/* ================================================================
+   PHONE
+   ================================================================ */
+@media (max-width: 560px) {
+  .balanceInner,
+  .counterInner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .balanceInner {
+    gap: 12px;
+    padding-left: 12px;
+  }
+
+  .balanceGem {
+    width: 78px;
+    height: 78px;
+  }
+
+  .balanceGemSvg {
+    width: 52px;
+    height: 52px;
+  }
+
+  .gemSpark {
+    top: 4px;
+    right: 2px;
+  }
+
+  .balanceValue {
+    font-size: 38px;
+  }
+
+  .balanceUnit {
+    font-size: 16px;
+  }
+
+  /* Kasya ang 3 tab ng Adviser sa lapad ng phone */
+  .tab {
+    flex: 1 0 auto;
+    padding: 12px 8px;
+    font-size: 13.5px;
+  }
+
+  .shelf {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt {
+    padding: 20px 18px 22px;
+  }
+
+  .receiptRow {
+    grid-template-columns: 54px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .counterInput {
+    font-size: 20px;
+  }
+
+  /* Claim row: detalye sa itaas; presyo (kaliwa) at Cancel (kanan) sa ilalim */
+  .listMain {
+    flex-basis: 100%;
+  }
+
+  .listPrice {
+    margin-right: auto;
+  }
+
+  .counterBtn {
+    flex: 1 1 100%;
+  }
+
+  .ledgerRow {
+    grid-template-columns: 32px minmax(0, 1fr) 56px 72px;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .row_rank1,
+  .row_rank2,
+  .row_rank3 {
+    padding-left: 10px;
+  }
+
+  .ledgerHead {
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .addBtn {
+    justify-content: center;
+  }
 }
 
 /* ================================================================
    ANIMATION
    ================================================================ */
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-}
-
 @keyframes gemFloat {
   0%,
   100% {
@@ -1379,165 +1458,39 @@
   }
 }
 
-@keyframes releaseGlow {
+@keyframes twinkle {
   0%,
   100% {
-    box-shadow: 0 6px 16px rgba(247, 185, 0, 0.35);
+    opacity: 0.25;
+    transform: scale(0.8);
   }
   50% {
-    box-shadow: 0 6px 26px rgba(247, 185, 0, 0.75);
+    opacity: 1;
+    transform: scale(1.15);
   }
 }
 
-/* ================================================================
-   TABLET
-   ================================================================ */
-@media (max-width: 760px) {
-  .balanceCard {
-    gap: 20px;
-    padding: 30px 26px 58px;
+@keyframes shine {
+  from {
+    left: -60%;
   }
-
-  .balanceGem {
-    width: 104px;
-    height: 104px;
-  }
-
-  .balanceGemSvg {
-    width: 76px;
-    height: 76px;
-  }
-
-  .itemGrid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 32px 18px;
-  }
-
-  .row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .rewardBox {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 10px;
-  }
-}
-
-/* ================================================================
-   PHONE
-   ================================================================ */
-@media (max-width: 520px) {
-  .balanceCard {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
-    padding: 26px 20px 56px;
-    border-radius: 28px 28px 50% 50% / 28px 28px 50px 50px;
-  }
-
-  .balanceValue {
-    justify-content: center;
-    font-size: 58px;
-  }
-
-  .balanceHint {
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 13.5px;
-  }
-
-  .balanceCard + .tabs {
-    margin-top: -28px;
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .tab {
-    min-height: 42px;
-    padding: 0 14px;
-    font-size: 13px;
-  }
-
-  /* Shop: dalawa bawat hanay */
-  .itemGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 30px 14px;
-  }
-
-  .itemImage,
-  .itemPlaceholder {
-    border-radius: 20px;
-  }
-
-  .itemPrice {
-    left: 8px;
-    bottom: -12px;
-    padding: 5px 10px;
-    font-size: 13px;
-  }
-
-  .itemName {
-    font-size: 16px;
-  }
-
-  .itemDesc {
-    font-size: 13px;
-  }
-
-  .redeemBtn {
-    min-height: 42px;
-    padding: 0 8px;
-    font-size: 12.5px;
-  }
-
-  /* OG history */
-  .stat {
-    padding: 2px 16px;
-  }
-
-  .statValue {
-    font-size: 30px;
-  }
-
-  .title {
-    font-size: 18px;
-  }
-
-  .claimInput {
-    font-size: 24px;
-  }
-
-  .claimBtn {
-    flex: 1 1 100%;
-  }
-
-  .personActions {
-    width: 100%;
-  }
-
-  .manualBtn {
-    flex: 1;
+  to {
+    left: 130%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sky i,
   .balanceGem,
   .gemGlow,
   .gemSpark,
-  .releaseBtn {
+  .redeemBtn:hover:not(:disabled)::after {
     animation: none;
   }
 
-  .itemMedia,
-  .tab,
-  .redeemBtn {
-    transition: none;
-  }
-
-  .itemCard:hover .itemMedia {
+  .redeemBtn:hover:not(:disabled),
+  .addBtn:hover,
+  .addBtn:hover .addIcon,
+  .counterBtn:hover:not(:disabled) {
     transform: none;
   }
 }

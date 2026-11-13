@@ -3,6 +3,8 @@ import { QRCodeSVG } from 'qrcode.react'
 import {
   MODE_IN,
   MODE_OUT,
+  PHASE_BEFORE,
+  PHASE_ONGOING,
   QR_REFRESH_SECONDS,
   attendanceErrorMessage,
   attendancePhase,
@@ -13,7 +15,7 @@ import {
   qrValueFor,
 } from '../lib/attendance.js'
 import { nowKey } from '../lib/events.js'
-import styles from './AttendanceDialog.module.css'
+import styles from './MyQrDialog.module.css'
 
 /* ============================================================
    MY QR — para sa Member at Officer na nag-Join
@@ -37,6 +39,96 @@ import styles from './AttendanceDialog.module.css'
    ============================================================ */
 
 const MODE_LABEL = { [MODE_IN]: 'Time In', [MODE_OUT]: 'Time Out' }
+
+/* Badge sa header: TIME IN (dilaw) / TIME OUT (puti) / sarado */
+const MODE_BADGE = { [MODE_IN]: 'badgeIn', [MODE_OUT]: 'badgeOut' }
+const CLOSED_LABEL = {
+  [PHASE_BEFORE]: 'Not open yet',
+  [PHASE_ONGOING]: 'Event in progress',
+}
+
+/* ---------- Maliliit na icon (inline, walang dependency) ---------- */
+function Icon({ children, size = 16 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  )
+}
+
+const TicketIcon = () => (
+  <Icon size={14}>
+    <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z" />
+    <path d="M13 6v12" strokeDasharray="2 2.5" />
+  </Icon>
+)
+const CloseIcon = () => (
+  <Icon size={16}>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </Icon>
+)
+const ClockIcon = () => (
+  <Icon size={13}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Icon>
+)
+const InIcon = () => (
+  <Icon>
+    <path d="M10 17l5-5-5-5M15 12H3M15 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+  </Icon>
+)
+const OutIcon = () => (
+  <Icon>
+    <path d="M14 7l-5 5 5 5M9 12h12M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+  </Icon>
+)
+const CheckIcon = () => (
+  <Icon>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+)
+const ShieldIcon = () => (
+  <Icon size={15}>
+    <path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" />
+    <path d="M9 12l2 2 4-4" />
+  </Icon>
+)
+const AlertIcon = () => (
+  <Icon>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 8v4.5M12 16h.01" />
+  </Icon>
+)
+const SpinnerIcon = () => (
+  <svg className={styles.spinner} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.18" strokeWidth="3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+)
+
+/* Isang cell: Time In o Time Out */
+function StatusCell({ label, value, done, icon }) {
+  return (
+    <div className={`${styles.statusCell} ${done ? styles.statusDone : ''}`}>
+      <span className={styles.statusIcon}>{done ? <CheckIcon /> : icon}</span>
+      <span className={styles.statusText}>
+        <span className={styles.statusLabel}>{label}</span>
+        <span className={styles.statusValue}>{value}</span>
+      </span>
+    </div>
+  )
+}
 const PHASE_CHECK_MS = 5000
 function MyQrDialog({ event, profileId, onClose }) {
   const [token, setToken] = useState(null)
@@ -151,6 +243,10 @@ function MyQrDialog({ event, profileId, onClose }) {
   const timeIn = mine?.time_in ? formatClock(mine.time_in) : '—'
   const timeOut = mine?.time_out ? formatClock(mine.time_out) : '—'
 
+  const badgeClass = mode ? styles[MODE_BADGE[mode]] : ''
+  const badgeText = mode ? `${MODE_LABEL[mode]} open` : CLOSED_LABEL[phase] ?? 'Attendance closed'
+  const progress = (secondsLeft / QR_REFRESH_SECONDS) * 100
+
   return (
     <div
       className={styles.backdrop}
@@ -159,53 +255,92 @@ function MyQrDialog({ event, profileId, onClose }) {
       }}
     >
       <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="my-qr-title">
-        <div className={styles.header}>
-          <div>
-            <h2 id="my-qr-title" className={styles.heading}>
-              Your QR{mode ? ` · ${MODE_LABEL[mode]}` : ''}
-            </h2>
-            <p className={styles.sub}>{event.title}</p>
+        {/* ---------- ITAAS: asul na header + QR card ---------- */}
+        <div className={styles.top}>
+          <div className={styles.topRow}>
+            <span className={styles.eyebrow}>
+              <TicketIcon />
+              Attendance Pass
+            </span>
+            <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
+              <CloseIcon />
+            </button>
           </div>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
 
-        <div className={styles.qrBox}>
-          {token ? (
-            <QRCodeSVG value={qrValueFor(token)} size={260} level="M" marginSize={2} />
-          ) : (
-            <div className={styles.qrPlaceholder}>{error || 'Getting your QR…'}</div>
-          )}
-        </div>
+          <h2 id="my-qr-title" className={styles.heading}>
+            {event.title}
+          </h2>
 
-        {token && (
-          <>
-            <div className={styles.timer} aria-hidden="true">
-              <div
-                className={styles.timerBar}
-                style={{ width: `${(secondsLeft / QR_REFRESH_SECONDS) * 100}%` }}
-              />
+          <span className={`${styles.badge} ${badgeClass}`}>
+            <span className={styles.badgeDot} />
+            {badgeText}
+          </span>
+
+          <div className={styles.qrCard}>
+            <div className={styles.qrFrame}>
+              {token ? (
+                /* key = token → bawat bagong QR ay may maikling fade-in */
+                <QRCodeSVG
+                  key={token}
+                  className={styles.qrCode}
+                  value={qrValueFor(token)}
+                  size={260}
+                  level="M"
+                  marginSize={1}
+                  fgColor="#031b4b"
+                  title={`Your ${mode ? MODE_LABEL[mode] : 'attendance'} QR code`}
+                />
+              ) : (
+                <div className={styles.qrPlaceholder} role="status">
+                  {error ? <AlertIcon /> : <SpinnerIcon />}
+                  <span>{error || 'Getting your QR…'}</span>
+                </div>
+              )}
             </div>
-            <p className={styles.timerText}>QR refreshes in {secondsLeft}s</p>
-          </>
-        )}
 
-        <div className={styles.myStatus}>
-          <div className={`${styles.statusCell} ${mine?.time_in ? styles.statusCellDone : ''}`}>
-            <span className={styles.statusLabel}>Time In</span>
-            <span className={styles.statusValue}>{timeIn}</span>
-          </div>
-          <div className={`${styles.statusCell} ${mine?.time_out ? styles.statusCellDone : ''}`}>
-            <span className={styles.statusLabel}>Time Out</span>
-            <span className={styles.statusValue}>{timeOut}</span>
+            {token && (
+              <div className={styles.timer}>
+                <div className={styles.timerTrack} aria-hidden="true">
+                  <div
+                    className={`${styles.timerBar} ${secondsLeft <= 5 ? styles.timerBarLow : ''}`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className={styles.timerText}>
+                  <ClockIcon />
+                  {secondsLeft}s
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        <p className={styles.help}>
-          Show this to an Officer or Adviser at the entrance and exit. Don't screenshot it — it
-          stops working after a few seconds.
-        </p>
+        {/* ---------- PERFORATION ---------- */}
+        <div className={styles.perforation} aria-hidden="true">
+          <span className={styles.notchLeft} />
+          <span className={styles.notchRight} />
+        </div>
+
+        {/* ---------- IBABA: Time In / Time Out + paalala ---------- */}
+        <div className={styles.bottom}>
+          <div className={styles.status}>
+            <StatusCell label="Time In" value={timeIn} done={Boolean(mine?.time_in)} icon={<InIcon />} />
+            <StatusCell
+              label="Time Out"
+              value={timeOut}
+              done={Boolean(mine?.time_out)}
+              icon={<OutIcon />}
+            />
+          </div>
+
+          <p className={styles.help}>
+            <ShieldIcon />
+            <span>
+              Show this to an Officer or Adviser at the entrance and exit. Screenshots won&apos;t
+              work — the code refreshes every {QR_REFRESH_SECONDS} seconds.
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -1,9 +1,19 @@
 /* ================================================================
-   ORGANIZATION HEALTH (Dashboard ng School Head)
+   ORGANIZATION HEALTH (Dashboard ng SAO at School Head)
 
-   Isang puting card na kusang nag-i-slide. Bawat slide: bilog na
-   graph (kulay ayon sa antas), porsiyento sa gitna, at pangalan
-   ng org. Kapareho ng kulay ng Org Health page.
+   Isang puting card na kusang nag-i-slide. Bawat slide:
+     - GAUGE — kalahating bilog na metro na may tick bawat 10%,
+       porsiyento sa ilalim ng arko
+     - pangalan ng org
+   Kulay ayon sa antas (kapareho ng Org Health page): guhit sa
+   kaliwang gilid, kulay ng arko at ng mga tick, at mahinang
+   kulay sa likod ng gauge.
+
+     ┃ ┌─────────────┐
+     ┃ │  ╭─────╮    │   Synergia Nexus
+     ┃ │ ╱  ···  ╲   │
+     ┃ │   72.5%     │
+     ┃ └─────────────┘
    ================================================================ */
 .card {
   --c-healthy: #2fbf71;
@@ -13,8 +23,12 @@
 
   position: relative;
   overflow: hidden;
+  /* Pinupuno ang puwesto sa grid ng Dashboard (katabi ng proposals) */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   border: 1px solid #e3e8f1;
-  border-radius: 16px;
+  border-radius: var(--dash-radius, 16px);
   background-color: #fff;
   box-shadow: 0 1px 2px rgba(3, 27, 75, 0.04);
   font-family: var(--font-ui);
@@ -40,10 +54,17 @@
 
 /* ---------- CAROUSEL ---------- */
 .viewport {
+  flex: 1;
+  display: flex;
+  min-width: 0;
   overflow: hidden;
 }
 
+/* min-width: 0 — para kasinglapad ng card ang track (hindi
+   lumaki ayon sa laman), kaya tama ang lapad ng bawat slide */
 .track {
+  flex: 1;
+  min-width: 0;
   display: flex;
   margin: 0;
   padding: 0;
@@ -54,66 +75,149 @@
   transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* Isang slide = buong lapad ng card */
+/* Kapag walang data (Loading…, walang org): pinupuno rin ang card */
+.card > .slide {
+  flex: 1;
+}
+
+/* Isang slide = buong lapad ng card.
+   Background: puti sa kaliwa → mahinang kulay ng antas sa kanan */
 .slide {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   flex: 0 0 100%;
   min-width: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 36px;
-  padding: 36px 40px;
+  gap: 34px;
+  padding: 26px 40px 26px 34px;
+  background: linear-gradient(
+    100deg,
+    #fff 35%,
+    color-mix(in srgb, var(--tone) 9%, #fff) 100%
+  );
+}
+
+/* Abstract na palamuti sa kanan (kulay ng antas):
+   dalawang bilog na guhit, malabong bilog, at tuldok-tuldok */
+.slide::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -70px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 62px, color-mix(in srgb, var(--tone) 22%, transparent) 62px 64px, transparent 64px 104px, color-mix(in srgb, var(--tone) 14%, transparent) 104px 106px, transparent 106px),
+    radial-gradient(circle, color-mix(in srgb, var(--tone) 12%, transparent) 0 150px, transparent 150px);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Tuldok-tuldok sa kanang itaas */
+.orgName::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 18px;
+  right: 230px;
+  width: 120px;
+  height: 64px;
+  background-image: radial-gradient(color-mix(in srgb, var(--tone) 45%, transparent) 1.4px, transparent 1.8px);
+  background-size: 12px 12px;
+  pointer-events: none;
+}
+
+/* Kulay na guhit sa kaliwang gilid — ayon sa antas */
+.slide::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 0;
+  width: 5px;
+  border-radius: 0 6px 6px 0;
+  background-color: var(--tone);
 }
 
 .orgName {
   min-width: 0;
   max-width: 520px;
+  padding-bottom: 14px;
   font-family: var(--font-display);
   font-size: 30px;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.025em;
   overflow-wrap: anywhere;
+  background-image: linear-gradient(var(--tone), var(--tone));
+  background-size: 48px 4px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
 }
 
-/* ---------- BILOG NA GRAPH ---------- */
-.donut {
+/* ---------- GAUGE ---------- */
+.gauge {
   position: relative;
-  flex-shrink: 0;
-  width: 150px;
-  height: 150px;
+  display: grid;
+  justify-items: center;
+  padding: 20px 20px 16px;
+  border-radius: 18px;
+  /* mahinang kulay ng antas sa likod */
+  background: radial-gradient(
+    120% 90% at 50% 100%,
+    color-mix(in srgb, var(--tone) 16%, #fff) 0%,
+    color-mix(in srgb, var(--tone) 5%, #fff) 70%
+  );
 }
 
-.donut svg {
+.gauge svg {
+  display: block;
   width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
+  max-width: 210px;
+  height: auto;
+  overflow: visible;
 }
 
-.donutTrack,
-.donutFill {
+.gaugeTrack,
+.gaugeFill {
   fill: none;
-  stroke-width: 11;
-}
-
-.donutTrack {
-  stroke: #edf0f6;
-}
-
-.donutFill {
-  stroke: var(--tone);
+  stroke-width: 14;
   stroke-linecap: round;
+}
+
+.gaugeTrack {
+  stroke: rgba(14, 26, 54, 0.08);
+}
+
+.gaugeFill {
+  stroke: var(--tone);
   transition: stroke-dasharray 1s cubic-bezier(0.33, 1, 0.68, 1) 0.25s;
 }
 
-.donutValue {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+/* Maliliit na tick sa labas ng arko */
+.tick {
+  stroke: rgba(14, 26, 54, 0.18);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke 0.25s ease;
+}
+
+.tickOn {
+  stroke: var(--tone);
+}
+
+/* Porsiyento — nakaupo sa loob ng arko, sa ibaba */
+.gaugeValue {
+  margin-top: -40px;
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: -0.03em;
   color: var(--dash-ink);
 }
@@ -121,30 +225,65 @@
 /* ---------- PHONE ---------- */
 @media (max-width: 560px) {
   .slide {
-    flex-direction: column;
-    gap: 18px;
-    padding: 28px 22px 30px;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 16px;
+    padding: 22px 22px 26px;
     text-align: center;
   }
 
-  .donut {
-    width: 132px;
-    height: 132px;
+  /* Guhit sa itaas sa halip na sa kaliwa */
+  .slide::before {
+    top: 0;
+    bottom: auto;
+    left: 50%;
+    width: 64px;
+    height: 5px;
+    border-radius: 0 0 6px 6px;
+    transform: translateX(-50%);
   }
 
-  .donutValue {
-    font-size: 26px;
+  .gauge {
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .gaugeValue {
+    font-size: 28px;
   }
 
   .orgName {
     font-size: 22px;
+    background-position: center bottom;
+  }
+
+  /* Pababa ang kulay sa phone; maliit na palamuti sa ibaba */
+  .slide {
+    background: linear-gradient(
+      180deg,
+      #fff 40%,
+      color-mix(in srgb, var(--tone) 9%, #fff) 100%
+    );
+  }
+
+  /* Maliit na palamuti sa kanang ibabang sulok — malayo sa pangalan */
+  .slide::after {
+    top: auto;
+    right: -185px;
+    bottom: -195px;
+    transform: none;
+  }
+
+  .orgName::before {
+    display: none;
   }
 }
 
-/* Walang slide at walang animation ng bilog; lumilipat pa rin */
+/* Walang slide at walang animation ng gauge; lumilipat pa rin */
 @media (prefers-reduced-motion: reduce) {
   .track.moving,
-  .donutFill {
+  .gaugeFill,
+  .tick {
     transition: none;
   }
 }

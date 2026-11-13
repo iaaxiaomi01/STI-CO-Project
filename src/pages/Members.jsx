@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, ChevronDown, Search } from 'lucide-react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { ArrowUpRight, Building2, Check, ChevronDown, Search } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
 import { ROLE_KEYS, getRoleConfig } from '../config/roles.js'
 import { fullNameOf } from '../lib/profile.js'
 import { fetchPositions, setOfficerPosition } from '../lib/officerPositions.js'
-import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Avatar from '../components/Avatar.jsx'
 import PositionDialog from '../components/PositionDialog.jsx'
@@ -30,12 +29,13 @@ import styles from './Members.module.css'
    can.assignPositions (Adviser lang) ay may "Set position"
    button sa bawat Member/Officer — tingnan ang PositionDialog.
 
-   ITSURA ("editorial roster" — UI lang, walang binago sa data):
-     walang card/box; bukas na listahan na may manipis na guhit.
-     Dilaw ang accent: switch ng "Officers only", highlight ng
-     position, singsing ng avatar ng officer.
-     Sa tablet/phone: bawat row ay nagiging patong-patong, at ang
-     bawat detalye ay may maliit na label (data-label sa <td>).
+   ITSURA ("directory" — UI lang, walang binago sa data):
+     mapusyaw na asul na ulo na may search at mga filter; ang
+     listahan ay naka-grupo ayon sa unang letra ng apelyido (A, B,
+     C…) na parang phone directory. Kapag "Officers only", iisang
+     listahan lang (ayon sa position) at walang letra.
+     Sa tablet/phone: bawat tao ay nagiging card, at ang bawat
+     detalye ay may maliit na label (data-label sa <td>).
    ============================================================ */
 
 const MEMBER_COLUMNS = `
@@ -189,6 +189,25 @@ function Members() {
     (m) => m.organizations?.name !== members[0]?.organizations?.name,
   )
 
+  /* ITSURA LANG: hinahati ang filtered ayon sa unang letra ng
+     apelyido (A, B, C…). Hindi nagbabago ang laman o ang
+     pagkakasunod-sunod. Kapag "Officers only", iisang grupo lang
+     (para manatili ang ayos ayon sa position). */
+  const groups = useMemo(() => {
+    if (officersOnly) return [{ key: 'all', letter: null, items: filtered }]
+    const map = new Map()
+    filtered.forEach((m) => {
+      const first = (m.last_name ?? '').trim().charAt(0).toUpperCase()
+      const letter = /[A-Z]/.test(first) ? first : '#'
+      if (!map.has(letter)) map.set(letter, [])
+      map.get(letter).push(m)
+    })
+    return [...map.entries()].map(([letter, items]) => ({ key: letter, letter, items }))
+  }, [filtered, officersOnly])
+
+  /* Bilang ng column (para sa letra na sakop ang buong hilera) */
+  const columnCount = 5 + (showOrg ? 1 : 0) + (can.assignPositions ? 1 : 0)
+
   async function handleSavePosition(positionId) {
     const member = editing
     await setOfficerPosition(member.id, positionId)
@@ -202,7 +221,63 @@ function Members() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title="Members" />
+      {/* ---------- ULO: pamagat, search at mga filter ---------- */}
+      <section className={styles.hero}>
+        <span className={styles.heroArt} aria-hidden="true" />
+        <h1 className={styles.title}>Members</h1>
+
+        {!loading && !error && members.length > 0 && (
+          <div className={styles.toolbar}>
+            <label className={styles.searchField}>
+              <Search className={styles.searchIcon} size={19} strokeWidth={2.4} aria-hidden="true" />
+              <input
+                type="search"
+                className={styles.search}
+                placeholder="Search by name, student ID, program, or position…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+
+            <div className={styles.controls}>
+              {showOrgFilter && (
+                <OrgDropdown
+                  value={orgFilter}
+                  onChange={setOrgFilter}
+                  options={[
+                    { value: '', label: 'All organizations' },
+                    ...orgOptions.list.map((org) => ({
+                      value: org.id,
+                      label: `${org.name} (${org.count})`,
+                    })),
+                    ...(orgOptions.noOrgCount > 0
+                      ? [{ value: NO_ORG, label: `No organization (${orgOptions.noOrgCount})` }]
+                      : []),
+                  ]}
+                />
+              )}
+
+              {/* "Officers only" — checkbox pa rin, itsurang switch */}
+              {showOfficersFilter && (
+                <label className={`${styles.filter} ${officersOnly ? styles.filterOn : ''}`}>
+                  <input
+                    type="checkbox"
+                    className={styles.switchInput}
+                    checked={officersOnly}
+                    onChange={(e) => setOfficersOnly(e.target.checked)}
+                  />
+                  <span className={styles.switch} aria-hidden="true" />
+                  Officers only
+                </label>
+              )}
+
+              <span className={styles.count}>
+                <b>{filtered.length}</b> of {members.length}
+              </span>
+            </div>
+          </div>
+        )}
+      </section>
 
       {notice && (
         <p className={styles.notice} role="status">
@@ -210,7 +285,12 @@ function Members() {
         </p>
       )}
 
-      {loading && <p className={styles.status}>Loading members…</p>}
+      {loading && (
+        <p className={styles.status}>
+          <span className={styles.spinner} aria-hidden="true" />
+          Loading members…
+        </p>
+      )}
 
       {!loading && error && (
         <EmptyState
@@ -229,92 +309,48 @@ function Members() {
       )}
 
       {!loading && !error && members.length > 0 && (
-        <>
-          <div className={styles.toolbar}>
-            {/* ---------- SEARCH (underline lang) ---------- */}
-            <label className={styles.searchField}>
-              <Search className={styles.searchIcon} size={20} strokeWidth={2.2} aria-hidden="true" />
-              <input
-                type="search"
-                className={styles.search}
-                placeholder="Search by name, student ID, program, or position…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </label>
+        <div className={styles.tableWrap}>
+          <table
+            className={[
+              styles.table,
+              showOrg ? styles.withOrg : '',
+              can.assignPositions ? styles.withAction : '',
+            ].join(' ')}
+          >
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Student ID</th>
+                <th>Program</th>
+                <th>Year</th>
+                <th>Role</th>
+                {showOrg && <th>Organization</th>}
+                {can.assignPositions && (
+                  <th>
+                    <span className={styles.srOnly}>Actions</span>
+                  </th>
+                )}
+              </tr>
+            </thead>
 
-            <div className={styles.controls}>
-              {showOrgFilter && (
-                <span className={styles.selectField}>
-                  <select
-                    className={styles.orgSelect}
-                    aria-label="Filter by organization"
-                    value={orgFilter}
-                    onChange={(e) => setOrgFilter(e.target.value)}
-                  >
-                    <option value="">All organizations</option>
-                    {orgOptions.list.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name} ({org.count})
-                      </option>
-                    ))}
-                    {orgOptions.noOrgCount > 0 && (
-                      <option value={NO_ORG}>No organization ({orgOptions.noOrgCount})</option>
-                    )}
-                  </select>
-                  <ChevronDown
-                    className={styles.selectIcon}
-                    size={18}
-                    strokeWidth={2.4}
-                    aria-hidden="true"
-                  />
-                </span>
-              )}
-
-              {/* "Officers only" — checkbox pa rin, itsurang switch */}
-              {showOfficersFilter && (
-                <label className={styles.filter}>
-                  <input
-                    type="checkbox"
-                    className={styles.switchInput}
-                    checked={officersOnly}
-                    onChange={(e) => setOfficersOnly(e.target.checked)}
-                  />
-                  <span className={styles.switch} aria-hidden="true" />
-                  Officers only
-                </label>
-              )}
-
-              <span className={styles.count}>
-                <b>{filtered.length}</b> of {members.length}
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Student ID</th>
-                  <th>Program</th>
-                  <th>Year</th>
-                  <th>Role</th>
-                  {showOrg && <th>Organization</th>}
-                  {can.assignPositions && (
-                    <th>
-                      <span className={styles.srOnly}>Actions</span>
+            {groups.map((group) => (
+              <tbody key={group.key} className={styles.group}>
+                {/* Letra ng grupo (A, B, C…) */}
+                {group.letter && (
+                  <tr className={styles.letterRow}>
+                    <th colSpan={columnCount} scope="rowgroup">
+                      <span className={styles.letter}>{group.letter}</span>
                     </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((m) => {
+                  </tr>
+                )}
+
+                {group.items.map((m) => {
                   const hasPosition = Boolean(m.officer_positions?.name)
                   return (
                     <tr
                       key={m.id}
                       className={[
+                        styles.row,
                         m.is_active ? '' : styles.inactive,
                         hasPosition || m.role_id === 2 ? styles.officerRow : '',
                       ].join(' ')}
@@ -332,13 +368,13 @@ function Members() {
                           </div>
                         </div>
                       </td>
-                      <td className={styles.detail} data-label="Student ID">
+                      <td className={`${styles.detail} ${styles.idCell}`} data-label="Student ID">
                         {m.student_id || '—'}
                       </td>
-                      <td className={styles.detail} data-label="Program">
+                      <td className={`${styles.detail} ${styles.programCell}`} data-label="Program">
                         {m.program || '—'}
                       </td>
-                      <td className={styles.detail} data-label="Year">
+                      <td className={`${styles.detail} ${styles.yearCell}`} data-label="Year">
                         {m.year_level || '—'}
                       </td>
                       {/* May position = Officer, kaya ang position na
@@ -349,7 +385,9 @@ function Members() {
                             {m.officer_positions.name}
                           </span>
                         ) : (
-                          <span className={styles.roleText}>{m.roles?.name ?? '—'}</span>
+                          <span className={styles.roleText} data-role={m.role_id}>
+                            {m.roles?.name ?? '—'}
+                          </span>
                         )}
                       </td>
                       {showOrg && (
@@ -378,9 +416,9 @@ function Members() {
                   )
                 })}
               </tbody>
-            </table>
-          </div>
-        </>
+            ))}
+          </table>
+        </div>
       )}
 
       {editing && (
@@ -392,6 +430,164 @@ function Members() {
           onSave={handleSavePosition}
           onCancel={() => setEditing(null)}
         />
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------
+   Organization filter (SAO, School Head, School Administrator)
+
+   Dati ay <select> ng browser. Ngayon ay sariling listahan para
+   madisenyuhan — pareho ang pagpipilian at ang setOrgFilter.
+     Pindot / Enter / Space / ↓ ↑  → bukas
+     ↓ ↑ Home End                  → lipat
+     Enter / Space                 → pili
+     Esc / pindot sa labas / Tab   → sara
+   ------------------------------------------------------------ */
+function OrgDropdown({ value, onChange, options }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const rootRef = useRef(null)
+  const buttonRef = useRef(null)
+  const listRef = useRef(null)
+  const uid = useId()
+  const listId = `${uid}-list`
+
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  )
+  const selected = options[selectedIndex]
+
+  function openList() {
+    setActive(selectedIndex)
+    setOpen(true)
+  }
+
+  function close(focusButton = true) {
+    setOpen(false)
+    if (focusButton) buttonRef.current?.focus()
+  }
+
+  function choose(i) {
+    const o = options[i]
+    if (!o) return
+    if (o.value !== value) onChange(o.value)
+    close()
+  }
+
+  useEffect(() => {
+    if (open) listRef.current?.focus()
+  }, [open])
+
+  useEffect(() => {
+    if (open) document.getElementById(`${uid}-${active}`)?.scrollIntoView({ block: 'nearest' })
+  }, [open, active, uid])
+
+  /* Isara kapag pumindot sa labas */
+  useEffect(() => {
+    if (!open) return
+    function onDown(e) {
+      if (!rootRef.current?.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  function onButtonKey(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
+      e.preventDefault()
+      openList()
+    }
+  }
+
+  function onListKey(e) {
+    const last = options.length - 1
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setActive((i) => Math.min(last, i + 1))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setActive((i) => Math.max(0, i - 1))
+        break
+      case 'Home':
+        e.preventDefault()
+        setActive(0)
+        break
+      case 'End':
+        e.preventDefault()
+        setActive(last)
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        choose(active)
+        break
+      case 'Escape':
+        e.preventDefault()
+        close()
+        break
+      case 'Tab':
+        close(false)
+        break
+      default:
+    }
+  }
+
+  return (
+    <div ref={rootRef} className={`${styles.dropdown} ${open ? styles.dropdownOpen : ''}`}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className={styles.dropButton}
+        aria-label={`Filter by organization: ${selected?.label ?? ''}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        onClick={() => (open ? close() : openList())}
+        onKeyDown={onButtonKey}
+      >
+        <Building2 className={styles.dropIcon} size={17} strokeWidth={2.3} aria-hidden="true" />
+        <span className={styles.dropValue}>{selected?.label}</span>
+        <ChevronDown className={styles.dropChevron} size={16} strokeWidth={2.6} aria-hidden="true" />
+      </button>
+
+      {open && (
+        <ul
+          ref={listRef}
+          id={listId}
+          className={styles.dropList}
+          role="listbox"
+          aria-label="Filter by organization"
+          aria-activedescendant={`${uid}-${active}`}
+          tabIndex={-1}
+          onKeyDown={onListKey}
+        >
+          {options.map((o, i) => {
+            const isSelected = o.value === value
+            return (
+              <li
+                key={o.value || '__all__'}
+                id={`${uid}-${i}`}
+                role="option"
+                aria-selected={isSelected}
+                className={[
+                  styles.dropOption,
+                  isSelected ? styles.dropSelected : '',
+                  i === active ? styles.dropActive : '',
+                ].join(' ')}
+                onMouseEnter={() => setActive(i)}
+                onClick={() => choose(i)}
+              >
+                <span className={styles.dropText}>{o.label}</span>
+                <Check className={styles.dropCheck} size={15} strokeWidth={3} aria-hidden="true" />
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )

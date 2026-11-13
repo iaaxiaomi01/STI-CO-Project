@@ -16,6 +16,8 @@
      │▓ [✓] PROPOSAL REVIEW              ▓▓│ ← asul na header
      │▓     Approve proposal               │
      ├══════════════════════════════════════┤ ← dilaw na guhit
+     │  Sports Fest 2026                    │ ← pangalan ng proposal
+     │  - - - - - - - - - - - - - - - - - - │
      │  WHAT HAPPENS NEXT …                 │
      │  REVIEW HISTORY …                    │
      │  REASON FOR APPROVAL                 │
@@ -192,6 +194,19 @@
   padding: 22px 24px 8px;
   scrollbar-width: thin;
   scrollbar-color: var(--rd-line-strong) transparent;
+}
+
+/* Ang proposal na sinusuri — parang pamagat ng dokumento */
+.subject {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--rd-line-strong);
+  font-family: var(--font-display, inherit);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--rd-deep);
+  overflow-wrap: anywhere;
 }
 
 /* Pamagat ng bawat bahagi */

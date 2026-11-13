@@ -39,9 +39,15 @@
   letter-spacing: 0.08em;
 }
 
+/* "Hello, …!" — kapareho ng pamagat ng ibang page */
 .title {
-  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.6vw, 2.3rem);
   font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--sti-blue-deep, #031b4b);
 }
 
 /* ---------- STAT TILES ---------- */
@@ -432,6 +438,36 @@
   grid-row: 1;
 }
 
+/* ---------- SAO ----------
+   Itaas : pagbati (mag-isa, buong lapad)
+   Ibaba : proposals awaiting your action | Organization Health
+   (Ang Event Calendar ay nasa labas ng grid, sa pinakaibaba) */
+.bento.bentoSao {
+  grid-template-rows: minmax(208px, auto) minmax(232px, auto);
+}
+
+.bentoSao .hero {
+  grid-column: 1 / 13;
+}
+
+.saoProposals {
+  grid-column: 1 / 5;
+  grid-row: 2;
+}
+
+/* Lalagyan ng OrgHealthOverview — pinupuno ang buong puwesto */
+.saoHealth {
+  grid-column: 5 / 13;
+  grid-row: 2;
+  display: flex;
+  min-width: 0;
+}
+
+.saoHealth > * {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ---------- SCHOOL ADMINISTRATOR (3 stat) ----------
    Itaas : pagbati | pending proposals
    Ibaba : active organizations | active members */
@@ -685,6 +721,22 @@
     min-height: 160px;
   }
 
+  /* SAO */
+  .bento.bentoSao {
+    grid-template-rows: auto;
+  }
+
+  .bentoSao .hero,
+  .saoProposals,
+  .saoHealth {
+    grid-column: 1 / 7;
+    grid-row: auto;
+  }
+
+  .saoProposals {
+    min-height: 160px;
+  }
+
   .saOrgs {
     grid-column: 1 / 4;
     grid-row: auto;
@@ -785,7 +837,10 @@
   .bentoStaff .hero,
   .bentoSchoolAdmin .hero,
   .sProposals,
-  .saProposals {
+  .saProposals,
+  .bentoSao .hero,
+  .saoProposals,
+  .saoHealth {
     grid-column: 1 / 3;
   }
 
@@ -799,6 +854,7 @@
 
   .sProposals,
   .saProposals,
+  .saoProposals,
   .saOrgs,
   .saMembersTile {
     min-height: 156px;

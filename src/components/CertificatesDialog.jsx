@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Award, Check, Clock, Download, FileCheck, Hourglass, Search, Upload } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   CERT_ACCEPT,
@@ -14,7 +15,6 @@ import {
 import { PHASE_OUT, attendancePhase, attendanceWindows, formatClock } from '../lib/attendance.js'
 import { formatTime, nowKey } from '../lib/events.js'
 import { formatFileSize } from '../lib/proposalFiles.js'
-import base from './ProposalForm.module.css'
 import styles from './CertificatesDialog.module.css'
 
 /* ============================================================
@@ -33,6 +33,15 @@ import styles from './CertificatesDialog.module.css'
 
 /* Lalabas lang ang search kapag mahaba na ang listahan */
 const SEARCH_FROM = 8
+
+/* Para sa itsura lang: "Ian Albert Aranza" → "IA" */
+function initialsOf(name) {
+  const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  const first = parts[0][0] ?? ''
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : ''
+  return `${first}${last}`.toUpperCase()
+}
 
 function CertificatesDialog({ event, onClose }) {
   const { profile } = useAuth()
@@ -198,190 +207,229 @@ function CertificatesDialog({ event, onClose }) {
 
   return (
     <div
-      className={base.backdrop}
+      className={styles.backdrop}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !busy) onClose()
       }}
     >
       <div
-        className={`${base.modal} ${styles.modal}`}
+        className={styles.modal}
         role="dialog"
         aria-modal="true"
         aria-labelledby="certificates-title"
       >
-        <h2 id="certificates-title" className={base.heading}>
-          Certificates
-        </h2>
-        <p className={base.note}>
-          <strong>{event.title}</strong>
-        </p>
+        {/* ---------- HEADER (krema, parang papel ng certificate) ---------- */}
+        <div className={styles.head}>
+          <span className={styles.seal} aria-hidden="true">
+            <Award size={22} strokeWidth={2.2} />
+          </span>
+          <div className={styles.headText}>
+            <h2 id="certificates-title" className={styles.eyebrow}>
+              Certificates
+            </h2>
+            <p className={styles.heading}>{event.title}</p>
+          </div>
+        </div>
 
-        {timeOutOpen && (
-          <p className={styles.pending}>
-            Time Out is still open until {formatTime(outCloses)}, so more people may still be added to
-            the list.
-          </p>
-        )}
+        <div className={styles.body}>
+          {timeOutOpen && (
+            <p className={styles.pending}>
+              <Clock size={15} strokeWidth={2.4} aria-hidden="true" />
+              <span>
+                Time Out is still open until {formatTime(outCloses)}, so more people may still be
+                added to the list.
+              </span>
+            </p>
+          )}
 
-        {loading && <p className={styles.muted}>Loading the list…</p>}
-        {loadError && <p className={base.error}>{loadError}</p>}
+          {loading && <p className={styles.muted}>Loading the list…</p>}
+          {loadError && <p className={styles.loadError}>{loadError}</p>}
 
-        {!loading && !loadError && (
-          <>
-            {completers.length === 0 ? (
-              <p className={styles.muted}>
-                No one has completed this event
-              </p>
-            ) : (
-              <>
-                <div className={styles.summary}>
-                  <span>
-                    <strong>{withCert}</strong> of {completers.length} have a certificate
-                  </span>
-                  {withCert < completers.length && (
-                    <span className={styles.summaryLeft}>
-                      {completers.length - withCert} still without
-                    </span>
+          {!loading && !loadError && (
+            <>
+              {completers.length === 0 ? (
+                <p className={styles.muted}>No one has completed this event</p>
+              ) : (
+                <>
+                  {/* ---------- BUOD ---------- */}
+                  <div className={styles.summary}>
+                    <div className={styles.stat}>
+                      <span className={styles.statIcon} aria-hidden="true">
+                        <Check size={17} strokeWidth={2.8} />
+                      </span>
+                      <span className={styles.statText}>
+                        <span className={styles.statValue}>
+                          {withCert}
+                          <small>of {completers.length}</small>
+                        </span>
+                        <span className={styles.statLabel}>have a certificate</span>
+                      </span>
+                    </div>
+                    {withCert < completers.length && (
+                      <div className={`${styles.stat} ${styles.statPending}`}>
+                        <span className={styles.statIcon} aria-hidden="true">
+                          <Hourglass size={16} strokeWidth={2.4} />
+                        </span>
+                        <span className={styles.statText}>
+                          <span className={styles.statValue}>
+                            {completers.length - withCert}
+                          </span>
+                          <span className={styles.statLabel}>still without</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {completers.length >= SEARCH_FROM && (
+                    <div className={styles.searchWrap}>
+                      <Search size={16} strokeWidth={2.4} aria-hidden="true" />
+                      <input
+                        type="search"
+                        className={styles.search}
+                        placeholder="Search by name…"
+                        aria-label="Search by name"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
                   )}
-                </div>
 
-                {completers.length >= SEARCH_FROM && (
-                  <input
-                    type="search"
-                    className={`${base.input} ${styles.search}`}
-                    placeholder="Search by name…"
-                    aria-label="Search by name"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                )}
+                  {error && (
+                    <p className={styles.error} role="alert">
+                      {error}
+                    </p>
+                  )}
+                  {notice && (
+                    <p className={styles.notice} role="status">
+                      {notice}
+                    </p>
+                  )}
 
-                {error && (
-                  <p className={base.error} role="alert">
-                    {error}
-                  </p>
-                )}
-                {notice && (
-                  <p className={styles.notice} role="status">
-                    {notice}
-                  </p>
-                )}
+                  {/* ---------- LISTAHAN ---------- */}
+                  {visible.length === 0 ? (
+                    <p className={styles.muted}>No matches for &ldquo;{search.trim()}&rdquo;.</p>
+                  ) : (
+                    <ol className={styles.list}>
+                      {visible.map((row) => {
+                        const { name, role } = completerLabel(row)
+                        const cert = certs[row.profile_id]
+                        const isSelf = !canUploadCertificateFor(row.profile_id, profile)
+                        const rowBusy = busy?.profileId === row.profile_id
+                        const uploading = rowBusy && busy.action === 'upload'
+                        const anyBusy = Boolean(busy)
 
-                {visible.length === 0 ? (
-                  <p className={styles.muted}>No matches for &ldquo;{search.trim()}&rdquo;.</p>
-                ) : (
-                  <ol className={styles.list}>
-                    {visible.map((row) => {
-                      const { name, role } = completerLabel(row)
-                      const cert = certs[row.profile_id]
-                      const isSelf = !canUploadCertificateFor(row.profile_id, profile)
-                      const rowBusy = busy?.profileId === row.profile_id
-                      const uploading = rowBusy && busy.action === 'upload'
-                      const anyBusy = Boolean(busy)
-
-                      return (
-                        <li
-                          key={row.profile_id}
-                          className={`${styles.row} ${
-                            dragOver === row.profile_id ? styles.rowDrag : ''
-                          }`}
-                          {...dropProps(row, !isSelf && !anyBusy)}
-                        >
-                          <div className={styles.person}>
-                            <span className={styles.name}>{name}</span>
-                            <span className={styles.role}>{role}</span>
-                            <span className={styles.times}>
-                              In {formatClock(row.time_in)} · Out {formatClock(row.time_out)}
-                            </span>
-                          </div>
-
-                          {cert ? (
-                            <div className={styles.fileBox}>
-                              <span className={styles.fileIcon} aria-hidden="true">
-                                ✓
+                        return (
+                          <li
+                            key={row.profile_id}
+                            className={`${styles.row} ${
+                              dragOver === row.profile_id ? styles.rowDrag : ''
+                            }`}
+                            {...dropProps(row, !isSelf && !anyBusy)}
+                          >
+                            <div className={styles.person}>
+                              <span className={styles.initials} aria-hidden="true">
+                                {initialsOf(name)}
                               </span>
-                              <span className={styles.fileInfo}>
-                                <span className={styles.fileName} title={cert.file_name}>
-                                  {cert.file_name}
+                              <span className={styles.personText}>
+                                <span className={styles.nameRow}>
+                                  <span className={styles.name}>{name}</span>
+                                  <span className={styles.role}>{role}</span>
                                 </span>
-                                <span className={styles.fileMeta}>
-                                  {formatFileSize(cert.file_size)}
-                                  {cert.uploaded_by_name && ` · by ${cert.uploaded_by_name}`}
+                                <span className={styles.times}>
+                                  In {formatClock(row.time_in)} · Out {formatClock(row.time_out)}
                                 </span>
-                              </span>
-                              <span className={styles.fileActions}>
-                                <button
-                                  type="button"
-                                  className={styles.action}
-                                  onClick={() => handleDownload(row)}
-                                  disabled={anyBusy}
-                                >
-                                  {rowBusy && busy.action === 'download' ? 'Opening…' : 'Download'}
-                                </button>
-                                {!isSelf && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      className={styles.action}
-                                      onClick={() => pickFileFor(row)}
-                                      disabled={anyBusy}
-                                    >
-                                      {uploading ? 'Uploading…' : 'Replace'}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={`${styles.action} ${styles.remove}`}
-                                      onClick={() => handleDelete(row)}
-                                      disabled={anyBusy}
-                                    >
-                                      {rowBusy && busy.action === 'delete' ? 'Removing…' : 'Remove'}
-                                    </button>
-                                  </>
+                                {cert && (
+                                  <span className={styles.fileLine} title={cert.file_name}>
+                                    <FileCheck size={13} strokeWidth={2.4} aria-hidden="true" />
+                                    <span className={styles.fileName}>{cert.file_name}</span>
+                                    <span className={styles.fileMeta}>
+                                      {formatFileSize(cert.file_size)}
+                                      {cert.uploaded_by_name && ` · by ${cert.uploaded_by_name}`}
+                                    </span>
+                                  </span>
                                 )}
                               </span>
                             </div>
-                          ) : isSelf ? (
-                            <p className={styles.selfNote}>
-                              This is you — another Officer or the Adviser will upload
-                              your certificate.
-                            </p>
-                          ) : (
-                            <button
-                              type="button"
-                              className={styles.drop}
-                              onClick={() => pickFileFor(row)}
-                              disabled={anyBusy}
-                            >
-                              {uploading ? (
-                                'Uploading…'
-                              ) : (
-                                <>
-                                  <span aria-hidden="true">⤒</span> Upload or drop the
-                                  certificate here
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ol>
-                )}
-              </>
-            )}
-          </>
-        )}
 
-        <input
-          ref={fileInput}
-          type="file"
-          accept={CERT_ACCEPT}
-          className={base.hiddenInput}
-          onChange={onFilePicked}
-        />
+                            {cert ? (
+                              <div className={styles.fileBox}>
+                                <span className={styles.fileActions}>
+                                  <button
+                                    type="button"
+                                    className={`${styles.action} ${styles.download}`}
+                                    onClick={() => handleDownload(row)}
+                                    disabled={anyBusy}
+                                  >
+                                    <Download size={12} strokeWidth={2.6} aria-hidden="true" />
+                                    {rowBusy && busy.action === 'download' ? 'Opening…' : 'Download'}
+                                  </button>
+                                  {!isSelf && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        className={styles.action}
+                                        onClick={() => pickFileFor(row)}
+                                        disabled={anyBusy}
+                                      >
+                                        {uploading ? 'Uploading…' : 'Replace'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={`${styles.action} ${styles.remove}`}
+                                        onClick={() => handleDelete(row)}
+                                        disabled={anyBusy}
+                                      >
+                                        {rowBusy && busy.action === 'delete' ? 'Removing…' : 'Remove'}
+                                      </button>
+                                    </>
+                                  )}
+                                </span>
+                              </div>
+                            ) : isSelf ? (
+                              <p className={styles.selfNote}>
+                                This is you — another Officer or the Adviser will upload your
+                                certificate.
+                              </p>
+                            ) : (
+                              <button
+                                type="button"
+                                className={styles.drop}
+                                onClick={() => pickFileFor(row)}
+                                disabled={anyBusy}
+                                title="Upload or drop the certificate here"
+                              >
+                                {uploading ? (
+                                  'Uploading…'
+                                ) : (
+                                  <>
+                                    <Upload size={14} strokeWidth={2.6} aria-hidden="true" />
+                                    Upload
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  )}
+                </>
+              )}
+            </>
+          )}
 
-        <div className={base.actions}>
-          <button type="button" className={base.secondary} onClick={onClose} disabled={Boolean(busy)}>
+          <input
+            ref={fileInput}
+            type="file"
+            accept={CERT_ACCEPT}
+            className={styles.hiddenInput}
+            onChange={onFilePicked}
+          />
+        </div>
+
+        {/* ---------- FOOTER ---------- */}
+        <div className={styles.actions}>
+          <button type="button" className={styles.close} onClick={onClose} disabled={Boolean(busy)}>
             Close
           </button>
         </div>

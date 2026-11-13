@@ -401,14 +401,24 @@ function Dashboard() {
             </div>
 
             {roleConfig.dashboard.stats.map((stat) => renderBentoTile(stat, bento))}
+
+            {/* SAO: Organization Health ay NASA LOOB ng grid, katabi ng
+                "Proposals awaiting your action" (healthInGrid sa
+                BENTO_LAYOUTS; tingnan ang .saoHealth) */}
+            {bento.healthInGrid && seesAllOrgHealth(profile) && (
+              <div className={styles.saoHealth}>
+                <OrgHealthOverview />
+              </div>
+            )}
           </div>
         </div>
 
         {roleConfig.calendar && <DashboardCalendar eyebrow="Event Calendar" />}
 
-        {/* SAO at School Head: buod ng Organization Health bawat org
-            (components/OrgHealthOverview.jsx) — seesAllOrgHealth() */}
-        {seesAllOrgHealth(profile) && <OrgHealthOverview />}
+        {/* School Head: buod ng Organization Health bawat org, sa
+            ilalim ng calendar (components/OrgHealthOverview.jsx) —
+            seesAllOrgHealth(). Ang SAO ay nasa grid na (sa itaas). */}
+        {!bento.healthInGrid && seesAllOrgHealth(profile) && <OrgHealthOverview />}
 
         {/* Inalis na ang "Sections" cards (Officer, Adviser) — nasa
             sidebar na ang lahat ng link na iyon. */}
@@ -573,7 +583,9 @@ const BENTO_TILES = {
 /* PUWESTO ng bawat stat tile sa grid, bawat role (key → class).
    Ang mismong grid-column/grid-row ay nasa Dashboard.module.css.
 
-     gridClass — dagdag na class sa .bento (ibang taas ng row)
+     gridClass   — dagdag na class sa .bento (ibang taas ng row)
+     healthInGrid — ilagay ang Organization Health SA LOOB ng grid
+                    (SAO lang)
      identity  — ipakita ang avatar at "Role · Org" sa pagbati
                  (dating nasa welcome card ng Officer/Adviser)
 
@@ -582,7 +594,10 @@ const BENTO_TILES = {
             Gems, org attendance, at sariling attendance sa ibaba
    Adviser: pagbati + proposals + members sa kaliwa;
             org attendance na matangkad sa kanan
-   SAO, School Head: pagbati + proposals na magkatabi
+   SAO: pagbati na mag-isa sa itaas; sa ilalim, proposals at
+        Organization Health na magkatabi; calendar sa pinakaibaba
+   School Head: pagbati + proposals na magkatabi; calendar, saka
+        Organization Health sa ilalim
    School Administrator: pagbati + pending proposals sa itaas;
             active organizations at active members sa ibaba */
 const BENTO_LAYOUTS = {
@@ -615,10 +630,11 @@ const BENTO_LAYOUTS = {
     },
   },
   [ROLE_KEYS.SAO]: {
-    gridClass: styles.bentoStaff,
+    gridClass: styles.bentoSao,
     identity: true,
+    healthInGrid: true,
     tiles: {
-      pendingProposals: styles.sProposals,
+      pendingProposals: styles.saoProposals,
     },
   },
   [ROLE_KEYS.SCHOOL_HEAD]: {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CalendarCheck, CalendarDays, Clock, ImagePlus, Info, Lock, Pencil, Sparkles } from 'lucide-react'
 import {
   DESCRIPTION_MAX,
   LOCATION_MAX,
@@ -16,8 +17,10 @@ import {
   toTimeInput,
 } from '../lib/events.js'
 import { ACCEPTED_TYPES, ImageError, checkImageFile } from '../lib/image.js'
-import base from './ProposalForm.module.css'
-import styles from './EventForm.module.css'
+/* Sariling disenyo ng Event form (asul ng STI). Hindi na ginagamit
+   ang ProposalForm.module.css at EventForm.module.css dito — shared
+   pa ang mga iyon ng ibang form (hal. ShopItemForm). */
+import styles from './EventFormUI.module.css'
 
 /* ============================================================
    EVENT FORM — modal para sa GUMAWA at MAG-EDIT ng event
@@ -314,242 +317,309 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
     }
   }
 
+  /* Label ng badge sa Schedule & venue card */
+  const lockLabel = waitingForPick
+    ? 'Choose a proposal first'
+    : scheduleLocked
+      ? 'From proposal'
+      : null
+
   return (
     <div
-      className={base.backdrop}
+      className={styles.backdrop}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !saving) onCancel()
       }}
     >
       <form
-        className={`${base.modal} ${styles.modal}`}
+        className={styles.modal}
         onSubmit={handleSubmit}
         role="dialog"
         aria-modal="true"
         aria-labelledby="event-form-title"
       >
-        <h2 id="event-form-title" className={base.heading}>
-          {isEdit ? 'Edit event' : 'Create event'}
-        </h2>
-
-        {/* ---------- APPROVED PROPOSAL (pagpipilian) ---------- */}
-        {picking && (
-          <label className={base.field}>
-            <span className={base.label}>Approved proposal</span>
-            <select
-              ref={pickRef}
-              className={base.input}
-              value={pickedId}
-              onChange={handlePickProposal}
-              disabled={saving || noChoicesLeft}
-              required
-            >
-              <option value="" disabled>
-                {noChoicesLeft ? 'No proposals available' : 'Choose a proposal…'}
-              </option>
-              {choices.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {choiceLabel(p)}
-                </option>
-              ))}
-            </select>
-            <span className={base.hint}>
-              {noChoicesLeft
-                ? 'Your remaining approved proposals have reached their proposed date and time, so events can no longer be created for them.'
-                : 'Only your organization’s fully approved proposals that you submitted, that don’t have an event yet, and whose proposed date and time haven’t arrived yet are listed. The dates, times and venue come from the proposal.'}
-            </span>
-          </label>
-        )}
-
-        {/* Lumang paraan: iisang proposal lang, walang pagpipilian */}
-        {!picking && proposal && (
-          <p className={base.note}>
-            From approved proposal: <strong>{proposal.title}</strong>
-          </p>
-        )}
-
-        {/* ---------- TITLE ---------- */}
-        <label className={base.field}>
-          <span className={base.label}>Title</span>
-          <input
-            ref={titleRef}
-            className={base.input}
-            value={title}
-            maxLength={TITLE_MAX}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </label>
-
-        {/* ---------- DESCRIPTION ---------- */}
-        <label className={base.field}>
-          <span className={base.labelRow}>
-            <span className={base.label}>Description</span>
-            <span className={base.counter}>
-              {description.length} / {DESCRIPTION_MAX}
-            </span>
+        {/* ---------- HEADER (nakadikit sa itaas habang nag-i-scroll) ---------- */}
+        <div className={styles.head}>
+          <span className={styles.headIcon} aria-hidden="true">
+            {isEdit ? (
+              <Pencil size={21} strokeWidth={2.3} />
+            ) : (
+              <CalendarCheck size={22} strokeWidth={2.2} />
+            )}
           </span>
-          <textarea
-            className={`${base.input} ${base.textarea}`}
-            value={description}
-            maxLength={DESCRIPTION_MAX}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={6}
-            required
-          />
-        </label>
-
-        {/* ---------- START DATE · END DATE ---------- */}
-        <div className={base.grid2}>
-          <label className={base.field}>
-            <span className={base.label}>Start Date</span>
-            <input
-              type="date"
-              className={`${base.input}${lockedClass}`}
-              value={eventDate}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              disabled={fieldsLocked}
-              required
-            />
-          </label>
-
-          <label className={base.field}>
-            <span className={base.label}>End Date</span>
-            <input
-              type="date"
-              className={`${base.input}${lockedClass}`}
-              value={endDate}
-              min={eventDate || undefined}
-              onChange={(e) => setEndDate(e.target.value)}
-              disabled={fieldsLocked}
-              required
-            />
-          </label>
+          <h2 id="event-form-title" className={styles.heading}>
+            {isEdit ? 'Edit event' : 'Create event'}
+          </h2>
         </div>
 
-        {/* ---------- START TIME · END TIME ---------- */}
-        <div className={base.grid2}>
-          <label className={base.field}>
-            <span className={base.label}>Start Time</span>
-            <input
-              type="time"
-              className={`${base.input}${lockedClass}`}
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              disabled={fieldsLocked}
-              required
-            />
-          </label>
-
-          <label className={base.field}>
-            <span className={base.label}>End Time</span>
-            <input
-              type="time"
-              className={`${base.input}${lockedClass}`}
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              disabled={fieldsLocked}
-              required
-            />
-          </label>
-        </div>
-
-        {scheduleValid && (
-          <p className={styles.autoStatus}>
-            Status: <strong>{eventStatusLabel(previewStatus)}</strong>
-            <span> · updates automatically based on date and time</span>
-          </p>
-        )}
-
-        {/* ---------- LOCATION ---------- */}
-        <label className={base.field}>
-          <span className={base.label}>Location</span>
-          <input
-            className={`${base.input}${lockedClass}`}
-            value={location}
-            maxLength={LOCATION_MAX}
-            onChange={(e) => setLocation(e.target.value)}
-            disabled={fieldsLocked}
-            required
-          />
-        </label>
-
-        {/* ---------- OG REWARD (basa lang) ----------
-            Galing sa proposal at NAKA-LOCK. Hindi ito kasama sa
-            ise-save ng form — ang database na ang kumokopya nito
-            sa event (events_copy_og_reward). */}
-        {activeProposal && (
-          <label className={base.field}>
-            <span className={base.label}>OG reward per attendee</span>
-            <input
-              className={`${base.input} ${styles.locked}`}
-              value={Number(activeProposal.og_reward) || 0}
-              disabled
-              readOnly
-            />
-            <span className={base.hint}>
-              From the proposal. Given automatically to Members and Officers with both Time
-              In and Time Out, once attendance closes. 0 means no reward.
-            </span>
-          </label>
-        )}
-
-        {/* ---------- PICTURE (optional) ---------- */}
-        <div className={base.field}>
-          <span className={base.label}>
-            Picture <span className={styles.optional}>(optional)</span>
-          </span>
-
-          {preview ? (
-            <div className={styles.preview}>
-              <img src={preview} alt="Event picture preview" />
-              <div className={styles.previewActions}>
-                <button
-                  type="button"
-                  className={base.secondary}
-                  onClick={() => fileRef.current?.click()}
-                  disabled={saving}
-                >
-                  Change
-                </button>
-                <button
-                  type="button"
-                  className={styles.removeButton}
-                  onClick={handleRemoveImage}
-                  disabled={saving}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className={styles.dropzone}
-              onClick={() => fileRef.current?.click()}
-              disabled={saving}
-            >
-              <span className={styles.dropIcon} aria-hidden="true">＋</span>
-              <span>Choose a picture</span>
-              <span className={base.hint}>JPG, PNG or WEBP · up to 10 MB</span>
-            </button>
+        <div className={styles.body}>
+          {/* ---------- PAALALA ---------- */}
+          {picking && (
+            <p className={styles.note}>
+              <Info size={16} strokeWidth={2.4} className={styles.noteIcon} aria-hidden="true" />
+              <span>
+                Select an <strong>approved proposal</strong> to create an event. 
+                Its date, time, and venue are automatically applied and cannot be changed.
+              </span>
+            </p>
           )}
 
-          <input
-            ref={fileRef}
-            type="file"
-            accept={ACCEPTED_TYPES.join(',')}
-            onChange={handlePickImage}
-            hidden
-          />
+          {/* Lumang paraan: iisang proposal lang, walang pagpipilian */}
+          {!picking && proposal && (
+            <p className={styles.note}>
+              <Info size={16} strokeWidth={2.4} className={styles.noteIcon} aria-hidden="true" />
+              <span>
+                From approved proposal: <strong>{proposal.title}</strong>
+              </span>
+            </p>
+          )}
+
+          {/* ---------- APPROVED PROPOSAL (pagpipilian) ---------- */}
+          {picking && (
+            <label className={styles.field}>
+              <span className={styles.label}>Approved proposal</span>
+              <select
+                ref={pickRef}
+                className={`${styles.input} ${styles.select}`}
+                value={pickedId}
+                onChange={handlePickProposal}
+                disabled={saving || noChoicesLeft}
+                required
+              >
+                <option value="" disabled>
+                  {noChoicesLeft ? 'No proposals available' : 'Choose a proposal…'}
+                </option>
+                {choices.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {choiceLabel(p)}
+                  </option>
+                ))}
+              </select>
+              {noChoicesLeft && (
+                <span className={styles.hint}>
+                  Your remaining approved proposals have reached their proposed date and time, so
+                  events can no longer be created for them.
+                </span>
+              )}
+            </label>
+          )}
+
+          {/* ---------- TITLE ---------- */}
+          <label className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.label}>Title</span>
+              <span className={styles.counter}>
+                {title.length} / {TITLE_MAX}
+              </span>
+            </span>
+            <input
+              ref={titleRef}
+              className={styles.input}
+              value={title}
+              maxLength={TITLE_MAX}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </label>
+
+          {/* ---------- DESCRIPTION ---------- */}
+          <label className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.label}>Description</span>
+              <span className={styles.counter}>
+                {description.length} / {DESCRIPTION_MAX}
+              </span>
+            </span>
+            <textarea
+              className={`${styles.input} ${styles.textarea}`}
+              value={description}
+              maxLength={DESCRIPTION_MAX}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={6}
+              required
+            />
+          </label>
+
+          {/* ---------- SCHEDULE & VENUE ---------- */}
+          <div className={styles.scheduleCard}>
+            <div className={styles.cardHead}>
+              <span className={styles.cardTitle}>
+                <CalendarDays size={15} strokeWidth={2.4} aria-hidden="true" />
+                Schedule &amp; venue
+              </span>
+              {lockLabel && (
+                <span className={styles.lockBadge}>
+                  <Lock size={12} strokeWidth={2.6} aria-hidden="true" />
+                  {lockLabel}
+                </span>
+              )}
+            </div>
+
+            {/* START DATE · END DATE */}
+            <div className={styles.grid2}>
+              <label className={styles.field}>
+                <span className={styles.label}>Start Date</span>
+                <input
+                  type="date"
+                  className={`${styles.input}${lockedClass}`}
+                  value={eventDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  disabled={fieldsLocked}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>End Date</span>
+                <input
+                  type="date"
+                  className={`${styles.input}${lockedClass}`}
+                  value={endDate}
+                  min={eventDate || undefined}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  disabled={fieldsLocked}
+                  required
+                />
+              </label>
+            </div>
+
+            {/* START TIME · END TIME */}
+            <div className={styles.grid2}>
+              <label className={styles.field}>
+                <span className={styles.label}>Start Time</span>
+                <input
+                  type="time"
+                  className={`${styles.input}${lockedClass}`}
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  disabled={fieldsLocked}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>End Time</span>
+                <input
+                  type="time"
+                  className={`${styles.input}${lockedClass}`}
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  disabled={fieldsLocked}
+                  required
+                />
+              </label>
+            </div>
+
+            {/* LOCATION */}
+            <label className={styles.field}>
+              <span className={styles.label}>Location</span>
+              <input
+                className={`${styles.input}${lockedClass}`}
+                value={location}
+                maxLength={LOCATION_MAX}
+                onChange={(e) => setLocation(e.target.value)}
+                disabled={fieldsLocked}
+                required
+              />
+            </label>
+
+            {/* Silip ng magiging status */}
+            {scheduleValid && (
+              <p className={styles.statusPreview}>
+                <Clock size={15} strokeWidth={2.4} aria-hidden="true" />
+                <span>
+                  Status: <strong>{eventStatusLabel(previewStatus)}</strong>
+                  <span> · updates automatically based on date and time</span>
+                </span>
+              </p>
+            )}
+          </div>
+
+          {/* ---------- OG REWARD (basa lang) ----------
+              Galing sa proposal at NAKA-LOCK. Hindi ito kasama sa
+              ise-save ng form — ang database na ang kumokopya nito
+              sa event (events_copy_og_reward). */}
+          {activeProposal && (
+            <div className={styles.reward}>
+              <span className={styles.rewardIcon} aria-hidden="true">
+                <Sparkles size={18} strokeWidth={2.3} />
+              </span>
+              <div className={styles.rewardInfo}>
+                <div className={styles.rewardTop}>
+                  <span className={styles.rewardLabel}>OG reward per attendee</span>
+                  <span className={styles.rewardValue}>
+                    {Number(activeProposal.og_reward) || 0}
+                    <small>OG</small>
+                  </span>
+                </div>
+                <span className={styles.hint}>
+                  From the proposal. Given automatically to Members and Officers with both Time
+                  In and Time Out, once attendance closes. 0 means no reward.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* ---------- PICTURE (optional) ---------- */}
+          <div className={styles.field}>
+            <span className={styles.label}>
+              Picture <span className={styles.optional}>(optional)</span>
+            </span>
+
+            {preview ? (
+              <div className={styles.preview}>
+                <img src={preview} alt="Event picture preview" />
+                <div className={styles.previewActions}>
+                  <button
+                    type="button"
+                    className={styles.smallButton}
+                    onClick={() => fileRef.current?.click()}
+                    disabled={saving}
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.smallButton} ${styles.removeButton}`}
+                    onClick={handleRemoveImage}
+                    disabled={saving}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={styles.uploadButton}
+                onClick={() => fileRef.current?.click()}
+                disabled={saving}
+              >
+                <span className={styles.uploadIcon} aria-hidden="true">
+                  <ImagePlus size={18} strokeWidth={2.4} />
+                </span>
+                <span>Choose a picture</span>
+                <span className={styles.hint}>JPG, PNG or WEBP · up to 10 MB</span>
+              </button>
+            )}
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept={ACCEPTED_TYPES.join(',')}
+              onChange={handlePickImage}
+              hidden
+            />
+          </div>
+
+          {error && <p className={styles.error}>{error}</p>}
         </div>
 
-        {error && <p className={base.error}>{error}</p>}
-
-        <div className={base.actions}>
+        {/* ---------- MGA BUTTON (nakadikit sa ibaba habang nag-i-scroll) ---------- */}
+        <div className={styles.actions}>
           <button
             type="button"
-            className={base.secondary}
+            className={styles.secondary}
             onClick={onCancel}
             disabled={saving}
           >
@@ -557,7 +627,7 @@ function EventForm({ initial = null, proposal = null, proposalChoices = null, on
           </button>
           <button
             type="submit"
-            className={base.primary}
+            className={styles.primary}
             disabled={saving || noChoicesLeft}
           >
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create Event'}

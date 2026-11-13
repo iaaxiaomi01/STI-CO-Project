@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
-import { Menu } from 'lucide-react'
+import { Info, Menu } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
 import styles from './MemberLayout.module.css'
 
 /* ============================================================
    MEMBER LAYOUT — ang hitsura ng site kapag NAKA-LOGIN.
-   Sidebar sa kaliwa, walang navbar, walang footer.
+   Sidebar sa kaliwa, walang navbar. Sa ibaba ng bawat page ay
+   may maliit na footer na may paalala na capstone project ang
+   website at para lang sa semester na ito — pareho sa lahat ng
+   role. Dito lang palitan ang sinasabi nito.
 
    Ang <Outlet /> ay ang "butas" kung saan lalabas ang page.
    Ito ang nagpapalit depende sa URL habang nananatili ang
@@ -19,6 +22,8 @@ function MemberLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
+  // Taon sa footer — automatic na nag-a-update
+  const year = new Date().getFullYear()
 
   async function handleLogout() {
     setMenuOpen(false)
@@ -68,6 +73,17 @@ function MemberLayout() {
         <main className={styles.content}>
           <Outlet />
         </main>
+
+        {/* Footer ng lahat ng page kapag naka-login */}
+        <footer className={styles.footer}>
+          <p className={styles.footerNotice}>
+            <span className={styles.footerIcon} aria-hidden="true">
+              <Info size={14} strokeWidth={2.6} />
+            </span>
+            This website is in use for S.Y. 2026–2027 only.
+          </p>
+          <p className={styles.footerCopy}>&copy; {year} STI-CO. All Rights Reserved.</p>
+        </footer>
       </div>
     </div>
   )

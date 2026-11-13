@@ -1,133 +1,452 @@
-/* Mas malapad nang kaunti sa karaniwang dialog dahil may
-   file box ang bawat tao */
+/* ================================================================
+   CERTIFICATES DIALOG — "certificate registry" (Officer at Adviser)
+
+   Formal na talaan ng certificate. Bagong kombinasyon ng kulay:
+     KREMA + GINTO  → header (parang papel ng certificate), drop zone
+     ASUL           → title, initials, Download
+     BERDE          → may certificate na ("Issued")
+     AMBER          → wala pa ("Pending")
+
+     ┌──────────────────────────────────────┐
+     │░ [🏅] CERTIFICATES                  ░│ ← krema
+     │░      Intramurals 2026              ░│
+     ╞══════════════════════════════════════╡ ← doble na gintong guhit
+     │  [ 12 Issued ]  [ 28 Pending ]       │
+     │  [ search… ]                         │
+     │  ┌──────────────────────────────────┐ │
+     │  │(IA) Ian Albert Aranza [↓ Replace]│ │ ← may certificate
+     │  │     ✓ cert.pdf · 242 KB          │ │
+     │  │(JD) Juan Dela Cruz     [⤒ Upload]│ │ ← wala pa
+     │  │(MS) Maria Santos       ikaw ito… │ │
+     │  └──────────────────────────────────┘ │
+     ├──────────────────────────────────────┤
+     │                              [Close] │
+     └──────────────────────────────────────┘
+
+   Sariling CSS — hindi na gumagamit ng ProposalForm.module.css.
+   ================================================================ */
+
+.backdrop {
+  --ce-navy: var(--sti-blue, #06358c);
+  --ce-deep: var(--sti-blue-deep, #031b4b);
+  --ce-bright: var(--sti-blue-bright, #1249a8);
+  --ce-gold: #b8892b;
+  --ce-gold-bright: var(--sti-gold, #f7b900);
+  --ce-gold-soft: #fbf3dc;
+  --ce-gold-line: #e7d3a0;
+  --ce-cream: #fbf8f0;
+  --ce-green: #0f7a4a;
+  --ce-green-soft: #e9f6ef;
+  --ce-green-line: #bfe3cf;
+  --ce-amber: #b45f06;
+  --ce-amber-soft: #fff4e5;
+  --ce-amber-line: #f3d6ad;
+  --ce-red: #c0362c;
+  --ce-line: #e4e7ee;
+  --ce-soft: #f7f8fb;
+  --ce-ink: #0e1a36;
+  --ce-muted: #5f6b85;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.18s ease-out;
+}
+
 .modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   max-width: 680px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 28px 70px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.1);
+  color: var(--ce-ink);
+  font-family: var(--font-ui, inherit);
+  animation: modalIn 0.22s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- HEADER (krema, parang papel ng certificate) ---------- */
+.head {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 26px 20px;
+  background:
+    linear-gradient(135deg, rgba(184, 137, 43, 0.08) 0 25%, transparent 25%) 0 0 / 22px 22px,
+    var(--ce-cream);
+  /* Doble na gintong guhit sa ilalim */
+  border-bottom: 2px solid var(--ce-gold);
+  box-shadow: 0 4px 0 -2px #fff, 0 5px 0 -2px var(--ce-gold-line);
+}
+
+/* Selyo — asul na parisukat na may gintong icon */
+.seal {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(150deg, var(--ce-navy), var(--ce-deep));
+  color: var(--ce-gold-bright);
+  box-shadow: 0 6px 14px rgba(6, 53, 140, 0.28), inset 0 0 0 2px rgba(247, 185, 0, 0.35);
+}
+
+.headText {
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ce-gold);
+}
+
+.heading {
+  margin-top: 3px;
+  font-family: var(--font-display, inherit);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--ce-deep);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- LAMAN ---------- */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px 26px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9d3e6 transparent;
+}
+
+/* Bukas pa ang Time Out */
+.pending {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid var(--ce-amber-line);
+  border-left: 4px solid var(--ce-amber);
+  border-radius: 10px;
+  background-color: var(--ce-amber-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b3d05;
+}
+
+.pending svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--ce-amber);
 }
 
 .muted {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
+  padding: 22px 16px;
+  border: 1px dashed var(--ce-line);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--ce-muted);
+  text-align: center;
 }
 
-/* "Bukas pa ang Time Out…" */
-.pending {
-  margin: -0.5rem 0 1rem;
-  padding: 0.6rem 0.85rem;
+.loadError {
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--ce-red);
   border-radius: 10px;
-  background-color: #fff7e0;
-  color: #7a5200;
-  font-size: 0.85rem;
-}
-
-.notice {
-  margin-bottom: 1rem;
-  padding: 0.7rem 0.9rem;
-  border-radius: 10px;
-  background-color: #e8f6ee;
-  color: #1c6b3f;
-  font-size: 0.9rem;
-}
-
-/* "3 sa 10 ang may certificate na" */
-.summary {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-}
-
-.summaryLeft {
-  font-size: 0.82rem;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #b42318;
+}
+
+/* Buod: Issued / Pending */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  border: 1px solid var(--ce-green-line);
+  border-radius: 12px;
+  background-color: var(--ce-green-soft);
+}
+
+.statIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background-color: var(--ce-green);
+  color: #fff;
+}
+
+.statText {
+  display: grid;
+  min-width: 0;
+}
+
+.statValue {
+  font-family: var(--font-display, inherit);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ce-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.statValue small {
+  margin-left: 3px;
+  font-family: var(--font-ui, inherit);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ce-muted);
+}
+
+.statLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ce-muted);
+}
+
+.statPending {
+  border-color: var(--ce-amber-line);
+  background-color: var(--ce-amber-soft);
+}
+
+.statPending .statIcon {
+  background-color: var(--ce-amber);
+}
+
+.statPending .statValue {
+  color: var(--ce-amber);
+}
+
+/* Search */
+.searchWrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.searchWrap svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  color: var(--ce-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .search {
-  margin-bottom: 0.85rem;
+  width: 100%;
+  padding: 11px 14px 11px 38px;
+  border: 1px solid var(--ce-line);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--ce-ink);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-/* ---------- LISTAHAN ---------- */
+.search:focus {
+  outline: none;
+  border-color: var(--ce-navy);
+  box-shadow: 0 0 0 3px rgba(6, 53, 140, 0.12);
+}
+
+/* Mensahe ng aksyon */
+.error {
+  margin-bottom: 12px;
+  padding: 10px 13px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--ce-red);
+  border-radius: 10px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.notice {
+  margin-bottom: 12px;
+  padding: 10px 13px;
+  border: 1px solid var(--ce-green-line);
+  border-left: 4px solid var(--ce-green);
+  border-radius: 10px;
+  background-color: var(--ce-green-soft);
+  color: #0b5c38;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- LISTAHAN (siksik — kaya kahit marami) ----------
+   Isang listahan na may manipis na guhit sa pagitan. Bawat tao
+   ay isang hanay: initials · pangalan/role/oras · kalagayan. */
 .list {
-  margin: 0 0 1.25rem;
+  margin: 0 0 10px;
   padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--ce-line);
+  border-radius: 14px;
+  background-color: #fff;
   list-style: none;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  max-height: 55vh;
-  overflow-y: auto;
 }
 
 .row {
   display: grid;
-  gap: 0.55rem;
-  padding: 0.8rem 0.9rem;
-  transition: background-color var(--transition);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 11px 14px;
+  transition: background-color var(--transition), box-shadow var(--transition);
 }
 
 .row + .row {
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--ce-line);
+}
+
+.row:hover {
+  background-color: #fbfcfe;
 }
 
 /* May file na dina-drag papunta rito */
-.rowDrag {
-  background-color: var(--color-primary-soft);
-  outline: 2px dashed var(--color-primary);
-  outline-offset: -4px;
+.rowDrag,
+.rowDrag:hover {
+  background-color: var(--ce-gold-soft);
+  box-shadow: inset 4px 0 0 var(--ce-gold);
 }
 
 .person {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 11px;
+  min-width: 0;
+}
+
+/* Initials — maliit na asul na parisukat, gintong letra */
+.initials {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background-color: var(--ce-navy);
+  color: var(--ce-gold-bright);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.personText {
+  display: grid;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
 }
 
 .name {
-  font-size: 0.93rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ce-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .role {
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background-color: var(--color-surface);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--color-muted);
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 5px;
+  background-color: #eef1f6;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ce-muted);
 }
 
 .times {
-  margin-left: auto;
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  font-size: 12px;
+  color: var(--ce-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---------- WALA PANG CERTIFICATE: ang drop box ---------- */
+/* ---------- KALAGAYAN (kanan) ---------- */
+
+/* Wala pang certificate: maliit na "Upload" button */
 .drop {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  width: 100%;
-  padding: 0.75rem;
-  border: 1.5px dashed var(--color-border);
-  border-radius: 10px;
-  background-color: var(--color-surface);
-  color: var(--color-primary);
+  gap: 6px;
+  padding: 7px 13px;
+  border: 1.5px dashed var(--ce-gold);
+  border-radius: 9px;
+  background-color: var(--ce-cream);
+  color: #7a5a13;
   font: inherit;
-  font-size: 0.87rem;
-  font-weight: 600;
-  transition: border-color var(--transition), background-color var(--transition);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
 }
 
 .drop:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
+  border-style: solid;
+  background-color: var(--ce-gold-soft);
+}
+
+.drop:focus-visible {
+  outline: 2px solid var(--ce-navy);
+  outline-offset: 2px;
 }
 
 .drop:disabled {
@@ -135,96 +454,211 @@
   cursor: not-allowed;
 }
 
-.selfNote {
-  padding: 0.65rem 0.8rem;
-  border-radius: 10px;
-  background-color: var(--color-surface);
-  font-size: 0.83rem;
-  color: var(--color-muted);
-}
-
-/* ---------- MAY CERTIFICATE NA ---------- */
-.fileBox {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #c7ead6;
-  border-radius: 10px;
-  background-color: #f3fbf6;
-}
-
-.fileIcon {
+.drop svg {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 999px;
-  background-color: #1c6b3f;
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
+  color: var(--ce-gold);
 }
 
-.fileInfo {
-  flex: 1;
-  min-width: 10rem;
+/* Sariling certificate ng Officer */
+.selfNote {
+  max-width: 230px;
+  font-size: 11.5px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ce-muted);
+  text-align: right;
+}
+
+/* May certificate na: berdeng linya ng file sa ilalim ng pangalan */
+.fileLine {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--ce-green);
+}
+
+.fileLine svg {
+  flex-shrink: 0;
 }
 
 .fileName {
-  font-size: 0.88rem;
-  font-weight: 600;
   overflow: hidden;
+  min-width: 0;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fileMeta {
-  font-size: 0.76rem;
-  color: var(--color-muted);
+  flex-shrink: 0;
+  color: var(--ce-muted);
+  white-space: nowrap;
+}
+
+/* Mga aksyon sa kanan */
+.fileBox {
+  display: flex;
+  align-items: center;
 }
 
 .fileActions {
   display: flex;
-  gap: 0.15rem;
-  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .action {
-  padding: 0.35rem 0.6rem;
-  border: none;
-  border-radius: 8px;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.83rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border: 1px solid var(--ce-line);
+  border-radius: 7px;
+  background-color: #fff;
+  color: var(--ce-deep);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
 }
 
 .action:hover:not(:disabled) {
-  background-color: var(--color-primary-soft);
+  border-color: var(--ce-navy);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--ce-navy);
+  outline-offset: 2px;
 }
 
 .action:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
+/* Download — asul */
+.download {
+  border-color: var(--ce-navy);
+  background-color: var(--ce-navy);
+  color: #fff;
+}
+
+.download:hover:not(:disabled) {
+  background-color: var(--ce-bright);
+}
+
 .remove {
-  color: #b42318;
+  color: var(--ce-red);
 }
 
 .remove:hover:not(:disabled) {
-  background-color: #fdecec;
+  border-color: var(--ce-red);
+  background-color: #fdecea;
 }
 
-@media (max-width: 480px) {
-  .times {
-    margin-left: 0;
+.hiddenInput {
+  display: none;
+}
+
+/* ---------- FOOTER ---------- */
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 26px;
+  border-top: 1px solid var(--ce-line);
+  background-color: var(--ce-cream);
+}
+
+.close {
+  min-width: 120px;
+  padding: 11px 22px;
+  border: 1px solid var(--ce-deep);
+  border-radius: 10px;
+  background-color: var(--ce-navy);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.close:hover:not(:disabled) {
+  background-color: var(--ce-bright);
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--ce-gold-bright);
+  outline-offset: 2px;
+}
+
+.close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .head {
+    padding: 18px 18px 16px;
+  }
+
+  .heading {
+    font-size: 19px;
+  }
+
+  .body {
+    padding: 18px 18px 8px;
+  }
+
+  /* Kalagayan sa ilalim ng pangalan */
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .row > :last-child {
+    margin-left: 45px;
+  }
+
+  .selfNote {
+    max-width: none;
+    text-align: left;
+  }
+
+  .row > .drop {
+    justify-self: start;
+  }
+
+  .fileMeta {
+    display: none;
+  }
+
+  .actions {
+    padding: 12px 18px;
+  }
+
+  .close {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
   }
 }

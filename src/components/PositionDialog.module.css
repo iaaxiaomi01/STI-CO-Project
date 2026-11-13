@@ -1,125 +1,596 @@
-/* Position dialog — mas makitid kaysa sa ibang form */
-.modal {
-  max-width: 480px;
-}
+/* ================================================================
+   POSITION DIALOG — "Set officer position"
+   (Members page ng Adviser · Users page ng School Administrator)
 
-.person {
+   Kapamilya ng Event at Announcement form: puting modal, asul na
+   teksto, at asul at dilaw ng STI. Propesyonal — ang tanging
+   palamuti ay ang guhit sa itaas at ang asul na card ng tao.
+
+     ┌──────────────────────────────────────┐ ← asul ▬▬▬▬▬▬ dilaw ▬▬
+     │ [👤] Set officer position            │
+     │      Choose the role this member…    │
+     ├──────────────────────────────────────┤
+     │ ┌ asul na card ───────────────────┐  │
+     │ │ (◯) Juan D. Cruz                │  │
+     │ │     CURRENTLY [ Member ]        │  │
+     │ └─────────────────────────────────┘  │
+     │  CHOOSE A POSITION                   │
+     │  (✓) President             Current   │
+     │  ( ) Vice President                  │
+     │  (🔒) Secretary  Held by …   Taken   │
+     │  ⓘ paalala                           │
+     ├──────────────────────────────────────┤
+     │ Remove position      [Cancel] [Save] │
+     └──────────────────────────────────────┘
+
+   Ang PositionDialog.jsx lang ang gumagamit ng file na ito.
+   ================================================================ */
+
+.backdrop {
+  --pd-navy: var(--sti-blue, #06358c);
+  --pd-deep: var(--sti-blue-deep, #031b4b);
+  --pd-bright: var(--sti-blue-bright, #1249a8);
+  --pd-yellow: var(--sti-yellow, #ffd200);
+  --pd-gold: var(--sti-gold, #f7b900);
+  --pd-sky: #eef3ff;
+  --pd-sky-line: #c9d8fb;
+  --pd-line: #e2e8f2;
+  --pd-line-strong: #c9d3e6;
+  --pd-soft: #f8faff;
+  --pd-ink: #0e1a36;
+  --pd-muted: #5f6b85;
+  --pd-red: #c0362c;
+  --pd-ring: 0 0 0 4px rgba(30, 79, 216, 0.18);
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 24px;
+  background-color: #fff;
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.12);
+  color: var(--pd-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: thin;
+  scrollbar-color: var(--pd-line-strong) transparent;
+  animation: modalIn 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.head,
+.body,
+.actions {
+  flex-shrink: 0;
+}
+
+/* ---------- HEADER ---------- */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 26px 18px;
+  border-bottom: 1px solid var(--pd-line);
+  background-color: #fff;
+}
+
+/* Asul at dilaw na guhit sa pinakaitaas */
+.head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--pd-navy) 0 72%, var(--pd-yellow) 72% 100%);
+}
+
+.headIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background-color: var(--pd-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.3), inset 0 -3px 0 var(--pd-yellow);
+}
+
+.headText {
+  min-width: 0;
+}
+
+.heading {
+  font-family: var(--font-display, inherit);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--pd-deep);
+}
+
+.subtitle {
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--pd-muted);
+}
+
+/* ---------- LAMAN ---------- */
+.body {
+  padding: 20px 26px 4px;
+}
+
+/* Card ng tao — asul, may mapusyaw na bilog sa kanang itaas
+   at manipis na dilaw na guhit sa kaliwa */
+.person {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  overflow: hidden;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.07) 0 78px, transparent 79px),
+    linear-gradient(135deg, var(--pd-navy), var(--pd-deep));
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(3, 27, 75, 0.22), inset 4px 0 0 var(--pd-yellow);
+}
+
+/* Puting singsing sa paligid ng avatar para lumitaw sa asul */
+.person > :first-child {
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9);
+}
+
+.personText {
+  min-width: 0;
 }
 
 .name {
-  font-weight: 700;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .current {
-  font-size: 0.85rem;
-  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
 }
 
-.none {
-  margin-bottom: 1rem;
-  padding: 0.8rem 1rem;
-  border-radius: 10px;
-  background-color: var(--color-surface);
-  font-size: 0.9rem;
+.currentLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.none a {
-  color: var(--color-primary);
-  font-weight: 600;
+.currentBadge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.14);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
 }
 
-/* ---------- Mga pagpipilian ---------- */
+/* Officer na → dilaw */
+.isOfficer {
+  background-color: var(--pd-yellow);
+  color: var(--pd-deep);
+}
+
+/* ---------- MGA POSITION ---------- */
 .options {
-  display: grid;
-  gap: 0.4rem;
-  max-height: 320px;
-  overflow-y: auto;
-  margin: 0 0 1rem;
+  min-width: 0;
+  margin: 0 0 16px;
   padding: 0;
   border: none;
 }
 
 .legend {
-  margin-bottom: 0.45rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pd-deep);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .option {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--pd-line);
+  border-radius: 12px;
+  background-color: #fff;
   cursor: pointer;
-  transition: background-color var(--transition), border-color var(--transition);
+  transition: border-color var(--transition), background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+/* Nakatagong radio — ang hilera mismo ang pinipindot */
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .option:hover {
-  background-color: var(--color-surface);
+  border-color: var(--pd-line-strong);
 }
 
-.option input {
-  margin-top: 0.2rem;
-  accent-color: var(--color-primary);
+.option:has(input:focus-visible) {
+  box-shadow: var(--pd-ring);
 }
 
-.selected {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
-}
-
-.selected:hover {
-  background-color: var(--color-primary-soft);
-}
-
-.taken {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.taken:hover {
-  background-color: transparent;
+/* Bilog na radio */
+.radio {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--pd-line-strong);
+  border-radius: 50%;
+  background-color: #fff;
+  color: transparent;
+  transition: background-color var(--transition), border-color var(--transition);
 }
 
 .optionText {
-  display: grid;
-  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .optionName {
-  font-weight: 600;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--pd-ink);
 }
 
 .optionHolder {
-  font-size: 0.8rem;
-  color: var(--color-muted);
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--pd-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hint {
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: var(--color-muted);
+/* Napili: asul na border, puno ang bilog (dilaw na check) */
+.selected {
+  border-color: var(--pd-navy);
+  background-color: var(--pd-sky);
 }
 
-/* "Remove position" sa kaliwa, malayo sa Save */
+.selected .radio {
+  border-color: var(--pd-navy);
+  background-color: var(--pd-navy);
+  color: var(--pd-yellow);
+}
+
+.selected .optionName {
+  color: var(--pd-deep);
+}
+
+/* Hawak na ng iba */
+.taken {
+  border-style: dashed;
+  background-color: var(--pd-soft);
+  cursor: not-allowed;
+}
+
+.taken:hover {
+  border-color: var(--pd-line);
+}
+
+.taken .radio {
+  border-color: var(--pd-line);
+  background-color: #eef1f6;
+  color: #8a94a8;
+}
+
+.taken .optionName {
+  color: #7a849a;
+}
+
+/* "Current" · "Taken" · "Shared" */
+.tag {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background-color: var(--pd-yellow);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--pd-deep);
+}
+
+.tagTaken {
+  background-color: #eef1f6;
+  color: #6b7590;
+}
+
+.tagMulti {
+  border: 1px solid var(--pd-sky-line);
+  background-color: #fff;
+  color: var(--pd-navy);
+}
+
+.options:disabled .option {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Walang position pa ang org */
+.none {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1.5px dashed var(--pd-line-strong);
+  border-radius: 14px;
+  background-color: var(--pd-soft);
+  text-align: center;
+}
+
+.noneTitle {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--pd-deep);
+}
+
+.noneText {
+  margin-top: 4px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--pd-muted);
+}
+
+.noneText a {
+  font-weight: 700;
+  color: var(--pd-navy);
+}
+
+/* Paalala */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--pd-sky-line);
+  border-left: 4px solid var(--pd-navy);
+  border-radius: 12px;
+  background-color: var(--pd-sky);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4a5470;
+}
+
+.note strong {
+  color: var(--pd-deep);
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--pd-navy);
+}
+
+.error {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--pd-red);
+  border-radius: 12px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- MGA BUTTON ---------- */
 .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding: 16px 26px;
+  border-top: 1px solid var(--pd-line);
+  background-color: #fff;
+  box-shadow: 0 -12px 24px -18px rgba(3, 27, 75, 0.3);
 }
 
+/* Itinutulak ang Cancel at Save sa kanan */
+.spacer {
+  flex: 1;
+}
+
+.primary,
+.secondary,
 .remove {
-  margin-right: auto;
-  color: #b42318;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.secondary {
+  border: 1.5px solid var(--pd-line);
+  background-color: #fff;
+  color: var(--pd-deep);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--pd-navy);
+}
+
+/* Save — asul na may dilaw na guhit sa ilalim */
+.primary {
+  min-width: 108px;
+  border: none;
+  background-color: var(--pd-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.3), inset 0 -3px 0 var(--pd-yellow);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--pd-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(6, 53, 140, 0.38), inset 0 -3px 0 var(--pd-gold);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Remove position — pulang teksto, walang kahon hangga't hindi tinatapatan */
+.remove {
+  padding-left: 12px;
+  padding-right: 14px;
+  border: 1.5px solid transparent;
+  background: none;
+  color: var(--pd-red);
 }
 
 .remove:hover:not(:disabled) {
-  background-color: #fdecec;
+  border-color: #f0c6c0;
+  background-color: #fdecea;
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.remove:focus-visible {
+  outline: 3px solid var(--pd-yellow);
+  outline-offset: 2px;
+}
+
+.primary:disabled,
+.secondary:disabled,
+.remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 20px;
+  }
+
+  .head {
+    padding: 22px 18px 14px;
+  }
+
+  .headIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .heading {
+    font-size: 19px;
+  }
+
+  .body {
+    padding: 18px 18px 4px;
+  }
+
+  .actions {
+    padding: 14px 18px;
+  }
+
+  /* Remove sa sariling hilera; Cancel at Save magkatabi */
+  .remove {
+    width: 100%;
+    order: 3;
+  }
+
+  .spacer {
+    display: none;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .primary:hover:not(:disabled) {
+    transform: none;
+  }
 }

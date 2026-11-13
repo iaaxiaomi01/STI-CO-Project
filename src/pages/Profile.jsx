@@ -17,13 +17,12 @@ import {
   GraduationCap,
   Hash,
   Layers,
-  Mail,
   Shield,
   Trash2,
-  User,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Avatar from '../components/Avatar.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import styles from './Profile.module.css'
 
 /* TOTOONG DATA — galing sa DALAWANG pinagmulan:
@@ -39,24 +38,38 @@ import styles from './Profile.module.css'
    Pagkatapos mag-upload, tinatawag ang refreshProfile() para
    sabay-sabay magbago ang larawan dito, sa Sidebar at sa
    Dashboard. */
-/* ITSURA ("Portrait" — UI lang, walang binago sa data o aksyon):
-   simpleng avatar na may manipis na dilaw na border (walang
-   animation), malaking pangalan, at bawat detalye ay nasa sariling
-   off-white na box na may icon. */
+/* ITSURA ("Floating card" — UI lang, walang binago sa data o aksyon):
+   makulay na navy na backdrop na may dilaw na tuldok-tuldok, at sa
+   gitna ay puting card na nakalutang. Nakausli sa itaas ng card ang
+   avatar na may dilaw na singsing.
+     Itaas ng card — avatar na may camera button sa gilid (parang sa
+                     Facebook), pangalan, email, Role at Position
+                     (bilang chips), hint at Remove
+     Ibaba ng card — ang iba pang detalye; may sariling kulay ang
+                     icon ng bawat isa
+   Isang beses lang lumalabas ang bawat detalye (wala nang ulit). */
 
-/* Icon ng bawat detalye (label → icon) */
+/* Icon at kulay ng bawat detalye sa listahan (label → icon/kulay) */
 const DETAIL_ICONS = {
-  'Full name': User,
   'Student ID': Hash,
-  Email: Mail,
   Program: GraduationCap,
   'Year level': Layers,
   Organization: Building2,
-  Role: Shield,
-  Position: Award,
   'Last sign-in': Clock,
   'Member since': CalendarDays,
 }
+
+const DETAIL_TONES = {
+  'Student ID': 'toneNavy',
+  Program: 'toneBlue',
+  'Year level': 'toneViolet',
+  Organization: 'toneAmber',
+  'Last sign-in': 'tonePink',
+  'Member since': 'toneGreen',
+}
+
+/* Nasa itaas na ng card ang mga ito — hindi na inuulit sa listahan */
+const SHOWN_ON_TOP = new Set(['Full name', 'Email', 'Role', 'Position'])
 
 function Profile() {
   const { user, profile, role, refreshProfile } = useAuth()
@@ -65,6 +78,8 @@ function Profile() {
   const fileInputRef = useRef(null)
   const [busy, setBusy] = useState(null) // null | 'upload' | 'remove'
   const [avatarError, setAvatarError] = useState('')
+  /* true habang bukas ang "Remove your profile picture?" na dialog */
+  const [confirmingRemove, setConfirmingRemove] = useState(false)
 
   const fullName = displayNameOf(profile, user)
 
@@ -91,9 +106,11 @@ function Profile() {
     }
   }
 
+  /* Tinatawag ng ConfirmDialog pagkapindot ng "Remove"
+     (kapalit ng window.confirm() ng browser). Sarado ang dialog
+     pagkatapos; kapag pumalya, sa ilalim ng pangalan ang error. */
   async function handleRemove() {
     if (!profile) return
-    if (!window.confirm('Remove your profile picture?')) return
 
     setAvatarError('')
     setBusy('remove')
@@ -126,12 +143,16 @@ function Profile() {
   const isSchoolHead = profile?.role_id === 6
   const isSchoolAdmin = profile?.role_id === 8
 
+  const email = profile?.email ?? user?.email ?? '—'
+  const roleName = profile?.roles?.name ?? roleConfig.label
+  const positionName = profile?.officer_positions?.name || ''
+
   const DETAILS = [
     { label: 'Full name', value: fullName },
     ...(isAdviser || isSao || isSchoolHead || isSchoolAdmin
       ? []
       : [{ label: 'Student ID', value: profile?.student_id || '—' }]),
-    { label: 'Email', value: profile?.email ?? user?.email ?? '—' },
+    { label: 'Email', value: email },
     /* Program: Member, Officer at Adviser */
     ...(isSao || isSchoolHead || isSchoolAdmin
       ? []
@@ -143,101 +164,141 @@ function Profile() {
     ...(isSao || isSchoolHead || isSchoolAdmin
       ? []
       : [{ label: 'Organization', value: organization }]),
-    { label: 'Role', value: profile?.roles?.name ?? roleConfig.label },
+    { label: 'Role', value: roleName },
     /* Officer position (President, VP, atbp.) — ang Adviser ang nagbibigay */
-    ...(profile?.officer_positions?.name
-      ? [{ label: 'Position', value: profile.officer_positions.name }]
-      : []),
+    ...(positionName ? [{ label: 'Position', value: positionName }] : []),
     { label: 'Last sign-in', value: lastSignIn },
     { label: 'Member since', value: memberSince },
   ]
+
+  /* Ang listahan sa ibaba ng card: lahat maliban sa nasa itaas na */
+  const LIST = DETAILS.filter((item) => !SHOWN_ON_TOP.has(item.label))
 
   return (
     <div className={styles.page}>
       <PageHeader title="Profile" />
 
-      {/* ---------- PORTRAIT: avatar + pangalan ---------- */}
-      <section className={styles.identity}>
-        <div className={styles.avatarStage}>
-          <div className={styles.avatarWrap}>
-            <Avatar src={profile?.avatar_url} name={fullName} size="lg" />
-            {busy && <span className={styles.avatarBusy} aria-hidden="true" />}
-          </div>
-        </div>
+      <div className={styles.stage}>
+        <section className={styles.card}>
+          {/* ---------- ITAAS: avatar (may camera), pangalan, chips ---------- */}
+          <div className={styles.top}>
+            <div className={styles.avatarWrap}>
+              <Avatar src={profile?.avatar_url} name={fullName} size="lg" />
+              {busy && <span className={styles.avatarBusy} aria-hidden="true" />}
 
-        <div className={styles.identityText}>
-          <p className={styles.name}>{fullName}</p>
-          <p className={styles.email}>{profile?.email ?? user?.email}</p>
+              {/* Camera button sa gilid ng larawan (parang sa Facebook) —
+                  pindutin para pumili ng bagong larawan */}
+              {profile && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={ACCEPTED_TYPES.join(',')}
+                    onChange={handleFileChange}
+                    hidden
+                  />
+                  <button
+                    type="button"
+                    className={styles.cameraButton}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={Boolean(busy)}
+                    title={profile.avatar_url ? 'Change picture' : 'Upload picture'}
+                    aria-label={profile.avatar_url ? 'Change picture' : 'Upload picture'}
+                  >
+                    <Camera size={18} strokeWidth={2.4} aria-hidden="true" />
+                  </button>
+                </>
+              )}
+            </div>
 
-          {profile && (
-            <div className={styles.avatarActions}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED_TYPES.join(',')}
-                onChange={handleFileChange}
-                hidden
-              />
-              <button
-                type="button"
-                className={styles.avatarButton}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={Boolean(busy)}
-              >
-                <Camera size={17} strokeWidth={2.3} aria-hidden="true" />
-                {busy === 'upload'
-                  ? 'Uploading…'
-                  : profile.avatar_url
-                    ? 'Change picture'
-                    : 'Upload picture'}
-              </button>
+            <p className={styles.name}>{fullName}</p>
+            <p className={styles.email}>{email}</p>
 
-              {profile.avatar_url && (
+            <div className={styles.chips}>
+              <span className={styles.chipRole} title="Role">
+                <Shield size={15} strokeWidth={2.4} aria-hidden="true" />
+                <span className={styles.srOnly}>Role: </span>
+                {roleName}
+              </span>
+              {positionName && (
+                <span className={styles.chipPosition} title="Position">
+                  <Award size={15} strokeWidth={2.4} aria-hidden="true" />
+                  <span className={styles.srOnly}>Position: </span>
+                  {positionName}
+                </span>
+              )}
+            </div>
+
+            {/* Hint (o status habang nag-a-upload/nag-aalis) + Remove */}
+            <div className={styles.avatarMeta}>
+              {avatarError ? (
+                <p className={styles.avatarError} role="alert">
+                  {avatarError}
+                </p>
+              ) : (
+                <p className={styles.avatarHint} aria-live="polite">
+                  {busy === 'upload'
+                    ? 'Uploading…'
+                    : busy === 'remove'
+                      ? 'Removing…'
+                      : 'JPG, PNG or WEBP · up to 10 MB'}
+                </p>
+              )}
+
+              {profile?.avatar_url && (
                 <button
                   type="button"
-                  className={`${styles.avatarButton} ${styles.avatarRemove}`}
-                  onClick={handleRemove}
+                  className={styles.avatarRemove}
+                  onClick={() => setConfirmingRemove(true)}
                   disabled={Boolean(busy)}
                 >
-                  <Trash2 size={16} strokeWidth={2.3} aria-hidden="true" />
-                  {busy === 'remove' ? 'Removing…' : 'Remove'}
+                  <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
+                  Remove
                 </button>
               )}
             </div>
-          )}
+          </div>
 
-          {avatarError ? (
-            <p className={styles.avatarError} role="alert">
-              {avatarError}
-            </p>
-          ) : (
-            <p className={styles.avatarHint}>JPG, PNG or WEBP · up to 10 MB</p>
-          )}
-        </div>
-      </section>
+          {/* ---------- IBABA: mga detalye ---------- */}
+          <dl className={styles.details}>
+            {LIST.map((item) => {
+              const Icon = DETAIL_ICONS[item.label]
+              const tone = styles[DETAIL_TONES[item.label]] ?? ''
+              return (
+                <div key={item.label} className={`${styles.detailRow} ${tone}`}>
+                  <dt className={styles.detailLabel}>
+                    <span className={styles.detailIcon} aria-hidden="true">
+                      {Icon && <Icon size={19} strokeWidth={2.2} />}
+                    </span>
+                    {item.label}
+                  </dt>
+                  <dd
+                    className={`${styles.detailValue} ${
+                      item.label === 'Student ID' ? styles.mono : ''
+                    }`}
+                  >
+                    {item.value}
+                  </dd>
+                </div>
+              )
+            })}
+          </dl>
+        </section>
+      </div>
 
-      {/* ---------- MGA DETALYE ---------- */}
-      <dl className={styles.details}>
-        {DETAILS.map((item) => {
-          const Icon = DETAIL_ICONS[item.label]
-          return (
-            <div
-              key={item.label}
-              className={`${styles.detailRow} ${
-                item.label === 'Position' ? styles.detailPosition : ''
-              }`}
-            >
-              <dt className={styles.detailLabel}>
-                <span className={styles.detailIcon} aria-hidden="true">
-                  {Icon && <Icon size={18} strokeWidth={2.2} />}
-                </span>
-                {item.label}
-              </dt>
-              <dd className={styles.detailValue}>{item.value}</dd>
-            </div>
-          )
-        })}
-      </dl>
+      {confirmingRemove && (
+        <ConfirmDialog
+          tone="danger"
+          title='Remove your profile picture?'
+          confirmLabel="Remove"
+          busyLabel="Removing…"
+          onConfirm={async () => {
+            await handleRemove()
+            setConfirmingRemove(false)
+          }}
+          onCancel={() => setConfirmingRemove(false)}
+        />
+      )}
     </div>
   )
 }

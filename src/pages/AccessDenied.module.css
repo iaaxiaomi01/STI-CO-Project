@@ -1,0 +1,286 @@
+/* ============================================================
+   ACCESS DENIED — "No access"
+
+   Kapareho ng Login ang background (tuldok-tuldok at malabong
+   ilaw) at mga kulay (--sti-blue, --sti-yellow), para bagay sa
+   Header at Footer. Pormal at simple: iisang card sa gitna.
+
+     ┌──────────────────────────────┐
+     │▓▓▓▓▓▓▓ STI-CO ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│ ← navy na banda + dilaw na guhit
+     │            ( 🔒 )            │
+     │          No access           │
+     │   Your email is not on …     │
+     │ ┌ Signed in as juan@… ─────┐ │
+     │ [        Try again         ] │ ← kapag may error sa database
+     │ [         Log out          ] │
+     └──────────────────────────────┘
+   ============================================================ */
+
+.page {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 109px); /* 106px header + 3px dilaw na border */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.25rem;
+  background-color: #eef1f7;
+  overflow: hidden;
+  font-family: var(--font-ui);
+}
+
+/* Tuldok-tuldok at malabong ilaw (kapareho ng Login) */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18% 20%, rgba(6, 53, 140, 0.12), transparent 42%),
+    radial-gradient(circle at 85% 85%, rgba(255, 210, 0, 0.14), transparent 38%);
+}
+
+.backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(6, 53, 140, 0.16) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+
+/* ---------- ANG CARD ---------- */
+.card {
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  border-radius: 22px;
+  background-color: #fff;
+  box-shadow:
+    0 1px 2px rgba(3, 27, 75, 0.06),
+    0 24px 60px -12px rgba(3, 27, 75, 0.28);
+  text-align: center;
+  animation: cardIn 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Navy na banda sa itaas, may dilaw na guhit sa ilalim */
+.band {
+  position: relative;
+  padding: 1.6rem 1.5rem 1.5rem;
+  background: linear-gradient(160deg, var(--sti-blue-bright) 0%, var(--sti-blue) 45%, var(--sti-blue-deep) 100%);
+}
+
+.band::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--sti-yellow), var(--sti-gold));
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.brandAccent {
+  color: var(--sti-yellow);
+}
+
+/* ---------- LAMAN ---------- */
+.body {
+  padding: 0 2.5rem 2.5rem;
+}
+
+/* Bilog na may kandado — nakapatong sa gilid ng banda */
+.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-top: -32px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background-color: #fff4c2;
+  color: var(--sti-blue-deep);
+  box-shadow: 0 10px 22px -12px rgba(3, 27, 75, 0.55);
+  position: relative;
+  animation: pop 0.5s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.cardHead {
+  margin-top: 1.1rem;
+  animation: rise 0.6s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--sti-ink);
+}
+
+.subtitle {
+  margin: 0.6rem auto 0;
+  max-width: 34ch;
+  color: #5c6a86;
+  font-size: 0.97rem;
+  line-height: 1.6;
+}
+
+/* "Signed in as …" */
+.helpText {
+  margin: 1.5rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e4e9f2;
+  border-radius: 12px;
+  background-color: #f5f7fb;
+  color: #5c6a86;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  animation: rise 0.6s 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.helpText strong {
+  color: var(--sti-ink);
+  font-weight: 700;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  animation: rise 0.6s 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.primary,
+.secondary {
+  width: 100%;
+  min-height: 50px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-family: var(--font-ui);
+  font-size: 0.97rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+/* Try again — navy */
+.primary {
+  border: none;
+  background-color: var(--sti-blue);
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(6, 53, 140, 0.7);
+}
+
+.primary:hover {
+  background-color: var(--sti-blue-deep);
+  transform: translateY(-1px);
+}
+
+/* Log out — puting may navy na gilid */
+.secondary {
+  border: 1.5px solid var(--sti-blue);
+  background-color: #fff;
+  color: var(--sti-blue);
+}
+
+.secondary:hover {
+  background-color: #eef3ff;
+  transform: translateY(-1px);
+}
+
+/* Kapag Log out lang ang button (walang error sa database),
+   ito na ang pangunahing button — navy */
+.secondary:only-child {
+  border-color: transparent;
+  background-color: var(--sti-blue);
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(6, 53, 140, 0.7);
+}
+
+.secondary:only-child:hover {
+  background-color: var(--sti-blue-deep);
+}
+
+.primary:active,
+.secondary:active {
+  transform: translateY(0);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--sti-yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- ANIMATION ---------- */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .icon,
+  .cardHead,
+  .helpText,
+  .actions {
+    animation: none;
+  }
+
+  .primary,
+  .secondary {
+    transition: none;
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 720px) {
+  .page {
+    min-height: calc(100vh - 84px);
+    padding: 2.5rem 1rem;
+  }
+
+  .body {
+    padding: 0 1.5rem 2rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+}

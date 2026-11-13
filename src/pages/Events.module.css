@@ -770,6 +770,253 @@
   flex-shrink: 0;
 }
 
+/* "View details" ng SAO — simpleng dilaw na button,
+   bahagyang umaangat kapag tinapatan */
+.ticketPage .tDetails {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.ticketPage .tDetails svg {
+  flex-shrink: 0;
+}
+
+.ticketPage .tDetails:hover {
+  background-color: #ffdc33;
+  box-shadow: 0 6px 14px rgba(227, 187, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.ticketPage .tDetails:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.ticketPage .tDetails:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+/* "Certificates" ng Officer at Adviser — "gold seal" button,
+   kapareho ng krema + ginto ng CertificatesDialog:
+     - gintong seal na may putol-putol na singsing (parang tatak)
+     - hover: umiikot ang singsing, dumadaan ang kinang ng foil
+     - pindot: lumiliit saglit ang seal, parang itinatatak */
+.ticketPage .tCertBtn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 15px 0 6px;
+  border: 1px solid #e7d3a0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fffaf0 0%, #fbf3dc 100%);
+  box-shadow: inset 0 0 0 2px #fffdf7;
+  color: #6b4f12;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition),
+    transform var(--transition);
+}
+
+/* Kinang ng foil — nakatago sa kaliwa, dumadaan kapag tinapatan */
+.ticketPage .tCertBtn::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(247, 200, 70, 0.35) 30%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(247, 200, 70, 0.35) 70%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  transition: left 0.7s ease;
+}
+
+.ticketPage .certSeal {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe28a 0%, #e0ad2a 55%, #b8892b 100%);
+  color: #4a3508;
+  box-shadow: 0 2px 6px rgba(184, 137, 43, 0.45);
+  transition: transform 0.15s ease;
+}
+
+/* Putol-putol na singsing sa paligid ng seal */
+.ticketPage .certSeal::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1.5px dashed #c99a33;
+  border-radius: 50%;
+}
+
+.ticketPage .tCertBtn:hover:not(:disabled) {
+  border-color: #c99a33;
+  box-shadow: inset 0 0 0 2px #fffdf7, 0 6px 16px rgba(184, 137, 43, 0.28);
+  transform: translateY(-1px);
+}
+
+.ticketPage .tCertBtn:hover:not(:disabled)::after {
+  left: 130%;
+}
+
+.ticketPage .tCertBtn:hover:not(:disabled) .certSeal::before {
+  animation: sealSpin 5s linear infinite;
+}
+
+@keyframes sealSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Parang itinatatak */
+.ticketPage .tCertBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ticketPage .tCertBtn:active:not(:disabled) .certSeal {
+  transform: scale(0.86);
+}
+
+.ticketPage .tCertBtn:focus-visible {
+  outline: 3px solid #c99a33;
+  outline-offset: 2px;
+}
+
+.ticketPage .tCertBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* "Edit" ng Officer at Adviser — asul, kapares ng gintong
+   Certificates pero iba ang galaw:
+     - hover: gumagalaw ang lapis na parang nagsusulat, at
+       iginuguhit ang guhit sa ilalim ng "Edit"
+     - pindot: bahagyang lumulubog */
+.ticketPage .tEditBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 16px 0 6px;
+  border: 1px solid #c9d8fb;
+  border-radius: 12px;
+  background-color: #eef3ff;
+  color: var(--dash-navy);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    box-shadow var(--transition), transform var(--transition);
+}
+
+.ticketPage .editIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: var(--dash-navy);
+  color: #fff;
+  transition: background-color var(--transition);
+}
+
+.ticketPage .editIcon svg {
+  transform-origin: 20% 80%; /* umiikot mula sa dulo ng lapis */
+}
+
+.ticketPage .editText {
+  position: relative;
+}
+
+/* Ang guhit na iginuguhit sa ilalim */
+.ticketPage .editText::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: var(--dash-navy);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s ease;
+}
+
+.ticketPage .tEditBtn:hover:not(:disabled) {
+  border-color: #9db6ee;
+  background-color: #e4ecff;
+  box-shadow: 0 6px 14px rgba(6, 53, 140, 0.14);
+  transform: translateY(-1px);
+}
+
+.ticketPage .tEditBtn:hover:not(:disabled) .editIcon {
+  background-color: var(--dash-navy-deep);
+}
+
+.ticketPage .tEditBtn:hover:not(:disabled) .editIcon svg {
+  animation: pencilWrite 0.9s ease-in-out infinite;
+}
+
+.ticketPage .tEditBtn:hover:not(:disabled) .editText::after {
+  transform: scaleX(1);
+}
+
+@keyframes pencilWrite {
+  0%, 100% { transform: rotate(0deg) translate(0, 0); }
+  25% { transform: rotate(-14deg) translate(-1px, 1px); }
+  50% { transform: rotate(-4deg) translate(1px, 0); }
+  75% { transform: rotate(-12deg) translate(2px, 1px); }
+}
+
+.ticketPage .tEditBtn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.ticketPage .tEditBtn:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+.ticketPage .tEditBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .ticketNote {
   padding: 9px 12px;
   border-radius: 12px;
@@ -1105,6 +1352,29 @@
     min-height: 44px;
   }
 
+  /* Certificates: buong lapad, kasama ng Edit */
+  .ticketPage .tCertBtn {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  /* Edit: buong lapad, kasama ng Certificates */
+  .ticketPage .tEditBtn {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  /* View details: buong lapad */
+  .ticketPage .tDetails {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+  }
+
   .ticket {
     flex-direction: column;
     min-height: 0;
@@ -1214,6 +1484,49 @@
 @media (prefers-reduced-motion: reduce) {
   .liveDot,
   .ticket.cardHighlight {
+    animation: none;
+  }
+
+  .ticketPage .tDetails {
+    transition: none;
+  }
+
+  .ticketPage .tDetails:hover {
+    transform: none;
+  }
+
+  .ticketPage .tCertBtn,
+  .ticketPage .tCertBtn::after,
+  .ticketPage .certSeal {
+    transition: none;
+  }
+
+  .ticketPage .tCertBtn:hover:not(:disabled),
+  .ticketPage .tCertBtn:active:not(:disabled) .certSeal {
+    transform: none;
+  }
+
+  .ticketPage .tCertBtn:hover:not(:disabled) .certSeal::before {
+    animation: none;
+  }
+
+  /* Walang dumadaang kinang */
+  .ticketPage .tCertBtn::after {
+    display: none;
+  }
+
+  .ticketPage .tEditBtn,
+  .ticketPage .editIcon,
+  .ticketPage .editText::after {
+    transition: none;
+  }
+
+  .ticketPage .tEditBtn:hover:not(:disabled),
+  .ticketPage .tEditBtn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .ticketPage .tEditBtn:hover:not(:disabled) .editIcon svg {
     animation: none;
   }
 

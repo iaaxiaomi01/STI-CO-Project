@@ -18,6 +18,7 @@ import {
   setAllowMultiple,
 } from '../lib/officerPositions.js'
 import Avatar from './Avatar.jsx'
+import ConfirmDialog from './ConfirmDialog.jsx'
 import styles from './OfficerPositions.module.css'
 
 /* ============================================================
@@ -66,6 +67,9 @@ function OfficerPositions({ orgId, embedded = false, className = '' }) {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editMultiple, setEditMultiple] = useState(false)
+
+  /* Ang position na hinihintay ang "Delete" sa ConfirmDialog */
+  const [confirmingDelete, setConfirmingDelete] = useState(null)
 
   const load = useCallback(async () => {
     try {
@@ -179,17 +183,50 @@ function OfficerPositions({ orgId, embedded = false, className = '' }) {
     if (ok) setEditingId(null)
   }
 
-  function handleDelete(position) {
-    if (!window.confirm(`Delete the position "${position.name}"?`)) return
-    run(
-      position.id,
-      async () => {
-        await deletePosition(position.id)
-        setPositions((list) => list.filter((p) => p.id !== position.id))
-      },
-      `"${position.name}" deleted.`,
-    )
+  /* "Delete" → bubuksan muna ang ConfirmDialog (kapalit ng
+     window.confirm() ng browser), katulad ng delete sa Announcements
+     at Rewards. Doon pa lang talagang buburahin, pagkapindot ng
+     "Delete". */
+  function openDelete(position) {
+    clearMessages()
+    setConfirmingDelete(position)
   }
+
+  /* Galing sa ConfirmDialog. Kapag nag-throw, doon lalabas ang
+     error at mananatiling bukas ang dialog. */
+  async function handleDelete() {
+    const position = confirmingDelete
+    if (!position) return
+
+    clearMessages()
+    setBusy(position.id)
+    try {
+      await deletePosition(position.id)
+      setPositions((list) => list.filter((p) => p.id !== position.id))
+      setConfirmingDelete(null)
+      setNotice(`"${position.name}" deleted.`)
+    } catch (err) {
+      console.error('Hindi nabura ang officer position:', err)
+      throw new Error(positionErrorMessage(err))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  /* Habang bukas ang ConfirmDialog, ang Esc ay para lang dito —
+     hindi isasara ang Edit dialog ng Organizations (School
+     Administrator) na nasa likod. Nauuna ang listener na ito
+     (capture) kaya napipigilan ang iba. */
+  useEffect(() => {
+    if (!confirmingDelete) return
+    function onKey(e) {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      if (busy !== confirmingDelete.id) setConfirmingDelete(null)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [confirmingDelete, busy])
 
   /* ---------- laman ---------- */
 
@@ -347,7 +384,7 @@ function OfficerPositions({ orgId, embedded = false, className = '' }) {
                       <button
                         type="button"
                         className={`${styles.smallButton} ${styles.danger}`}
-                        onClick={() => handleDelete(position)}
+                        onClick={() => openDelete(position)}
                         disabled={disabled || people.length > 0}
                         title={
                           people.length > 0
@@ -399,6 +436,20 @@ function OfficerPositions({ orgId, embedded = false, className = '' }) {
             </p>
           )}
         </>
+      )}
+
+      {/* "Sigurado ka ba?" bago burahin ang position */}
+      {confirmingDelete && (
+        <ConfirmDialog
+          tone="danger"
+          title="Delete position?"
+          item={confirmingDelete.name}
+          message="This position will be removed from the organization. This cannot be undone."
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(null)}
+        />
       )}
     </section>
   )

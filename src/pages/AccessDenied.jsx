@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
-import styles from './Login.module.css'
+import { Lock } from 'lucide-react'
+import styles from './AccessDenied.module.css'
 
 /* ============================================================
    ACCESS DENIED
@@ -12,6 +13,11 @@ import styles from './Login.module.css'
 
    Hindi siya makakapasok sa member pages hangga't hindi
    siya naidadagdag ng SAO sa student_records (o sa Supabase Table Editor).
+
+   ITSURA (AccessDenied.module.css — UI lang, pareho ang laman):
+     iisang card sa gitna, kapareho ng background ng Login;
+     navy na banda sa itaas na may "STI-CO", tapos ang mensahe,
+     ang email na naka-login, at ang mga button.
    ============================================================ */
 function AccessDenied() {
   const { user, profile, profileError, refreshProfile } = useAuth()
@@ -34,32 +40,44 @@ function AccessDenied() {
 
   return (
     <section className={styles.page}>
-      <div className={styles.card}>
-        <p className={styles.brand}>
-          STI<span className={styles.brandAccent}>-CO</span>
-        </p>
+      {/* Palamuti lang sa background — kapareho ng Login */}
+      <div className={styles.backdrop} aria-hidden="true" />
 
-        <div className={styles.cardHead}>
-          <h1 className={styles.title}>No access</h1>
-          <p className={styles.subtitle}>{message}</p>
+      <div className={styles.card}>
+        {/* Navy na banda sa itaas */}
+        <div className={styles.band}>
+          <p className={styles.brand}>
+            STI<span className={styles.brandAccent}>-CO</span>
+          </p>
         </div>
 
-        {user?.email && (
-          <p className={styles.helpText}>
-            Signed in as <strong>{user.email}</strong>
-          </p>
-        )}
+        <div className={styles.body}>
+          <span className={styles.icon} aria-hidden="true">
+            <Lock size={24} strokeWidth={2.2} />
+          </span>
 
-        <div style={{ display: 'grid', gap: '0.75rem', marginTop: '1.5rem' }}>
-          {profileError && (
-            <button type="button" className={styles.msButton} onClick={refreshProfile}>
-              <span className={styles.msButtonText}>Try again</span>
-            </button>
+          <div className={styles.cardHead}>
+            <h1 className={styles.title}>No access</h1>
+            <p className={styles.subtitle}>{message}</p>
+          </div>
+
+          {user?.email && (
+            <p className={styles.helpText}>
+              Signed in as <strong>{user.email}</strong>
+            </p>
           )}
 
-          <button type="button" className={styles.msButton} onClick={handleLogout}>
-            <span className={styles.msButtonText}>Log out</span>
-          </button>
+          <div className={styles.actions}>
+            {profileError && (
+              <button type="button" className={styles.primary} onClick={refreshProfile}>
+                Try again
+              </button>
+            )}
+
+            <button type="button" className={styles.secondary} onClick={handleLogout}>
+              Log out
+            </button>
+          </div>
         </div>
       </div>
     </section>

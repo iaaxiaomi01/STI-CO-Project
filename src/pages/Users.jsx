@@ -1,28 +1,37 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUpRight, ChevronDown, Pencil, Search, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  Activity,
+  ArrowUpRight,
+  Award,
+  Building2,
+  Check,
+  ChevronDown,
+  Lock,
+  Search,
+  ShieldCheck,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import { isSchoolAdmin } from '../config/roles.js'
 import { fullNameOf } from '../lib/profile.js'
 import { fetchPositions, setOfficerPosition } from '../lib/officerPositions.js'
 import {
   adminErrorMessage,
-  assignableRoles,
   fetchAllOrganizations,
   fetchProfileExtras,
   fetchRoles,
   fetchUsers,
   removeUser,
-  roleNeedsOrg,
   saveUser,
 } from '../lib/schoolAdmin.js'
-import PageHeader from '../components/PageHeader.jsx'
-import ActionButton from '../components/ActionButton.jsx'
+import AddUserDialog, { AddUserButton } from '../components/AddUser.jsx'
+import EditUserDialog, { EditUserButton } from '../components/EditUser.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Avatar from '../components/Avatar.jsx'
 import PositionDialog from '../components/PositionDialog.jsx'
-import base from '../components/ProposalForm.module.css'
-import list from './Members.module.css'
-import styles from './Admin.module.css'
+import ui from './Users.module.css'
+import rowBtn from './UserRowButtons.module.css'
 import remove from './RemoveUserDialog.module.css'
 
 /* ============================================================
@@ -313,35 +322,41 @@ function Users() {
   const visible = filtered.slice(0, shown)
 
   return (
-    <div className={list.page}>
-      <PageHeader
-        title="Users"
-        subtitle={
-          canManage
-            ? 'Everyone who can log in: add people, see who has logged in, set officer positions, change roles or organizations, deactivate or remove them.'
-            : 'Everyone who can log in: see their role, organization, program and whether they have logged in. View only.'
-        }
-        action={
-          canManage && (
-            <ActionButton
+    <div className={ui.page}>
+      {/* ---------- ULO (navy na banner) ---------- */}
+      <header className={ui.hero}>
+        <span className={ui.heroPattern} aria-hidden="true" />
+        <div className={ui.heroText}>
+          <h1 className={ui.title}>Users</h1>
+        </div>
+
+        {canManage && (
+          <div className={ui.heroAction}>
+            <AddUserButton
               onClick={() => {
                 setNotice('')
                 setEditing('new')
               }}
-            >
-              + Add user
-            </ActionButton>
-          )
-        }
-      />
+            />
+          </div>
+        )}
+      </header>
 
       {notice && (
-        <p className={list.notice} role="status">
+        <p className={ui.notice} role="status">
+          <span className={ui.noticeIcon} aria-hidden="true">
+            <Check size={14} strokeWidth={3} />
+          </span>
           {notice}
         </p>
       )}
 
-      {loading && <p className={list.status}>Loading users…</p>}
+      {loading && (
+        <p className={ui.loading}>
+          <span className={ui.spinner} aria-hidden="true" />
+          Loading users…
+        </p>
+      )}
 
       {!loading && error && (
         <EmptyState icon="!" title="Could not load the list" message={adminErrorMessage(error)} />
@@ -349,48 +364,63 @@ function Users() {
 
       {!loading && !error && (
         <>
-          <div className={list.toolbar}>
-            <label className={list.searchField}>
-              <Search className={list.searchIcon} size={20} strokeWidth={2.2} aria-hidden="true" />
+          {/* ---------- SEARCH at FILTER ---------- */}
+          <div className={ui.toolbar}>
+            <label className={ui.search}>
+              <span className={ui.searchIcon} aria-hidden="true">
+                <Search size={18} strokeWidth={2.4} />
+              </span>
               <input
                 type="search"
-                className={list.search}
+                className={ui.searchInput}
                 placeholder="Search by name, email, student ID, program or position…"
                 value={search}
                 onChange={(e) => withReset(setSearch)(e.target.value)}
               />
             </label>
 
-            <div className={list.controls}>
-              <FilterSelect label="Filter by organization" value={orgFilter} onChange={withReset(setOrgFilter)}>
-                <option value="">All organizations</option>
-                {orgs.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                    {o.is_active ? '' : ' (inactive)'}
-                  </option>
-                ))}
-                <option value={NO_ORG}>No organization</option>
-              </FilterSelect>
+            <div className={ui.controls}>
+              <FilterDropdown
+                icon={Building2}
+                label="Filter by organization"
+                value={orgFilter}
+                onChange={withReset(setOrgFilter)}
+                options={[
+                  { value: '', label: 'All organizations' },
+                  ...orgs.map((o) => ({
+                    value: o.id,
+                    label: `${o.name}${o.is_active ? '' : ' (inactive)'}`,
+                  })),
+                  { value: NO_ORG, label: 'No organization' },
+                ]}
+              />
 
-              <FilterSelect label="Filter by role" value={roleFilter} onChange={withReset(setRoleFilter)}>
-                <option value="">All roles</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={String(r.id)}>
-                    {r.name}
-                  </option>
-                ))}
-              </FilterSelect>
+              <FilterDropdown
+                icon={ShieldCheck}
+                label="Filter by role"
+                value={roleFilter}
+                onChange={withReset(setRoleFilter)}
+                options={[
+                  { value: '', label: 'All roles' },
+                  ...roles.map((r) => ({ value: String(r.id), label: r.name })),
+                ]}
+              />
 
-              <FilterSelect label="Filter by status" value={statusFilter} onChange={withReset(setStatusFilter)}>
-                <option value={STATUS_ALL}>All statuses</option>
-                <option value={STATUS_LOGGED_IN}>Logged in ({statusCounts.loggedIn})</option>
-                <option value={STATUS_NO_LOGIN}>Not logged in yet ({statusCounts.noLogin})</option>
-                <option value={STATUS_ACTIVE}>Active ({statusCounts.active})</option>
-                <option value={STATUS_INACTIVE}>Inactive ({statusCounts.inactive})</option>
-              </FilterSelect>
+              <FilterDropdown
+                icon={Activity}
+                label="Filter by status"
+                value={statusFilter}
+                onChange={withReset(setStatusFilter)}
+                options={[
+                  { value: STATUS_ALL, label: 'All statuses' },
+                  { value: STATUS_LOGGED_IN, label: `Logged in (${statusCounts.loggedIn})` },
+                  { value: STATUS_NO_LOGIN, label: `Not logged in yet (${statusCounts.noLogin})` },
+                  { value: STATUS_ACTIVE, label: `Active (${statusCounts.active})` },
+                  { value: STATUS_INACTIVE, label: `Inactive (${statusCounts.inactive})` },
+                ]}
+              />
 
-              <span className={list.count}>
+              <span className={ui.count}>
                 <b>{filtered.length}</b> of {users.length}
               </span>
             </div>
@@ -400,9 +430,12 @@ function Users() {
             <EmptyState icon="▲" title="No match" message="Try a different search or filter." />
           ) : (
             <>
-              <div className={list.tableWrap}>
-                <table className={`${list.table} ${styles.usersTable}`}>
-                  <thead>
+              {/* Bawat tao ay isang hilera na may dalawang palapag:
+                    itaas  — pangalan · role · status · mga button
+                    ibaba  — Student ID · Program · Year · Organization */}
+              <div className={ui.listCard}>
+                <table className={`${ui.table} ${canManage ? ui.manage : ''}`}>
+                  <thead className={ui.srOnly}>
                     <tr>
                       <th>Name</th>
                       <th>Role</th>
@@ -412,11 +445,7 @@ function Users() {
                       <th>Year</th>
                       <th>Organization</th>
                       {/* SAO at School Head: walang Actions column (basa lang) */}
-                      {canManage && (
-                        <th>
-                          <span className={list.srOnly}>Actions</span>
-                        </th>
-                      )}
+                      {canManage && <th>Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -426,90 +455,87 @@ function Users() {
                         <tr
                           key={u.record_id}
                           className={[
-                            u.is_active ? '' : list.inactive,
-                            isOfficer ? list.officerRow : '',
+                            ui.row,
+                            u.is_active ? '' : ui.inactive,
+                            isOfficer ? ui.officerRow : '',
                           ].join(' ')}
                         >
-                          <td className={list.nameCell}>
+                          <td className={ui.nameCell}>
                             {/* Profile picture + pangalan. Kapag walang larawan
                                 (o hindi pa naka-login), unang letra ang lalabas. */}
-                            <div className={list.person}>
-                              <span className={list.avatarRing}>
+                            <div className={ui.person}>
+                              <span className={ui.avatarRing}>
                                 <Avatar src={u.avatar_url} name={fullNameOf(u)} size="sm" />
                               </span>
-                              <div className={list.personText}>
-                                <span className={list.name}>{fullNameOf(u)}</span>
-                                <span className={list.email}>{u.email}</span>
+                              <div className={ui.personText}>
+                                <span className={ui.name}>{fullNameOf(u)}</span>
+                                <span className={ui.email}>{u.email}</span>
                               </div>
                             </div>
                           </td>
-                          <td className={list.roleCell}>
+                          <td className={ui.roleCell}>
                             {u.position_name ? (
-                              <span className={list.position} title="Officer">
+                              <span className={ui.position} title="Officer">
                                 {u.position_name}
                               </span>
                             ) : (
-                              <span className={list.roleText}>{roleName.get(u.role_id) ?? '—'}</span>
+                              <span className={ui.role} data-role={u.role_id}>
+                                {roleName.get(u.role_id) ?? '—'}
+                              </span>
                             )}
                             {u.profile_id && u.profile_id === profile?.id && (
-                              <div className={styles.badges}>
-                                <span className={`${styles.badge} ${styles.badgeSpecial}`}>You</span>
-                              </div>
+                              <span className={ui.you}>You</span>
                             )}
                           </td>
-                          <td className={list.detail} data-label="Status">
+                          <td className={ui.statusCell}>
                             <LoginStatus user={u} />
                           </td>
-                          <td className={list.detail} data-label="Student ID">
+                          <td className={`${ui.detail} ${ui.idCell}`} data-label="Student ID">
                             {u.student_id || '—'}
                           </td>
-                          <td className={`${list.detail} ${styles.wrapCell}`} data-label="Program">
+                          <td className={`${ui.detail} ${ui.programCell}`} data-label="Program">
                             {u.program || '—'}
                           </td>
-                          <td className={list.detail} data-label="Year">
+                          <td className={`${ui.detail} ${ui.yearCell}`} data-label="Year">
                             {u.year_level || '—'}
                           </td>
-                          <td className={`${list.detail} ${list.orgCell}`} data-label="Organization">
+                          <td className={`${ui.detail} ${ui.orgCell}`} data-label="Organization">
                             {u.organization_id ? (orgName.get(u.organization_id) ?? '—') : '—'}
                           </td>
                           {canManage && (
-                            <td className={list.actionCell}>
-                              <span className={styles.rowActions}>
+                            <td className={ui.actionCell}>
+                              <span className={ui.rowActions}>
                                 {u.extras_loaded && canSetPosition(u) && (
                                   <button
                                     type="button"
-                                    className={list.rowButton}
+                                    className={rowBtn.position}
                                     onClick={() => {
                                       setNotice('')
                                       setPositionFor(toMember(u))
                                     }}
                                   >
+                                    <Award className={rowBtn.positionIcon} size={15} strokeWidth={2.4} aria-hidden="true" />
                                     Set position
-                                    <ArrowUpRight size={16} strokeWidth={2.4} aria-hidden="true" />
+                                    <ArrowUpRight className={rowBtn.positionArrow} size={15} strokeWidth={2.6} aria-hidden="true" />
                                   </button>
                                 )}
-                                <button
-                                  type="button"
-                                  className={list.rowButton}
+                                <EditUserButton
                                   onClick={() => {
                                     setNotice('')
                                     setEditing(u)
                                   }}
-                                >
-                                  Edit
-                                  <Pencil size={14} strokeWidth={2.4} aria-hidden="true" />
-                                </button>
+                                />
                                 {!isSelf(u) && (
                                   <button
                                     type="button"
-                                    className={`${list.rowButton} ${remove.rowButton}`}
+                                    className={rowBtn.remove}
                                     onClick={() => {
                                       setNotice('')
                                       setRemoving(u)
                                     }}
                                   >
+                                    <Trash2 className={rowBtn.removeIcon} size={15} strokeWidth={2.4} aria-hidden="true" />
                                     Remove
-                                    <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
                                   </button>
                                 )}
                               </span>
@@ -523,10 +549,10 @@ function Users() {
               </div>
 
               {filtered.length > shown && (
-                <div className={styles.more}>
+                <div className={ui.more}>
                   <button
                     type="button"
-                    className={list.rowButton}
+                    className={ui.moreButton}
                     onClick={() => setShown((n) => n + PAGE_SIZE)}
                   >
                     Show {Math.min(PAGE_SIZE, filtered.length - shown)} more
@@ -540,10 +566,19 @@ function Users() {
 
       {/* Mga dialog — School Administrator lang (hindi mabubuksan ng
           SAO at School Head) */}
-      {canManage && editing && (
-        <UserDialog
-          user={editing === 'new' ? null : editing}
-          isSelf={editing !== 'new' && editing.profile_id === profile?.id}
+      {canManage && editing === 'new' && (
+        <AddUserDialog
+          roles={roles}
+          orgs={orgs}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+
+      {canManage && editing && editing !== 'new' && (
+        <EditUserDialog
+          user={editing}
+          isSelf={editing.profile_id === profile?.id}
           roles={roles}
           orgs={orgs}
           onSave={handleSave}
@@ -571,6 +606,7 @@ function Users() {
           positions={positions.filter((p) => p.organization_id === positionFor.organization_id)}
           holdersByPosition={holdersByPosition}
           canManagePositions
+          look="admin"
           onSave={handleSavePosition}
           onCancel={() => setPositionFor(null)}
         />
@@ -592,39 +628,188 @@ function LoginStatus({ user }) {
   let meta = null
 
   if (!user.is_active) {
-    badge = <span className={`${styles.badge} ${styles.badgeOff}`}>Inactive</span>
+    badge = <span className={`${ui.status} ${ui.statusOff}`}>Inactive</span>
     if (lastLogin) meta = `Last login ${lastLogin}`
     else if (!user.has_account) meta = 'Never logged in'
   } else if (user.has_account) {
-    badge = <span className={styles.badge}>Logged in</span>
+    badge = <span className={`${ui.status} ${ui.statusOn}`}>Logged in</span>
     if (lastLogin) meta = `Last login ${lastLogin}`
   } else {
-    badge = <span className={`${styles.badge} ${styles.badgeWait}`}>Not logged in yet</span>
+    badge = <span className={`${ui.status} ${ui.statusWait}`}>Not logged in yet</span>
     const added = formatWhen(user.created_at)
     if (added) meta = `Added ${added}`
   }
 
   return (
     <>
-      <div className={styles.badges}>{badge}</div>
-      {meta && <span className={styles.statusMeta}>{meta}</span>}
+      {badge}
+      {meta && <span className={ui.statusMeta}>{meta}</span>}
     </>
   )
 }
 
-function FilterSelect({ label, value, onChange, children }) {
+/* ------------------------------------------------------------
+   Dropdown ng filter (Organization, Role, Status)
+
+   Dati ay <select> ng browser: hindi bumubukas kapag sa icon o
+   chevron pinindot, at hindi madisenyuhan ang listahan. Ngayon ay
+   sariling listahan na — pareho ang pagpipilian at ang onChange.
+     Pindot / Enter / Space / ↓ ↑  → bukas
+     ↓ ↑ Home End                  → lipat
+     Enter / Space                 → pili
+     Esc / pindot sa labas / Tab   → sara
+   ------------------------------------------------------------ */
+function FilterDropdown({ icon: Icon, label, value, onChange, options }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const rootRef = useRef(null)
+  const buttonRef = useRef(null)
+  const listRef = useRef(null)
+  const uid = useId()
+  const listId = `${uid}-list`
+
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  )
+  const selected = options[selectedIndex]
+
+  function openList() {
+    setActive(selectedIndex)
+    setOpen(true)
+  }
+
+  function close(focusButton = true) {
+    setOpen(false)
+    if (focusButton) buttonRef.current?.focus()
+  }
+
+  function choose(i) {
+    const o = options[i]
+    if (!o) return
+    if (o.value !== value) onChange(o.value)
+    close()
+  }
+
+  /* Sa listahan ang focus pagbukas, para gumana ang arrow keys */
+  useEffect(() => {
+    if (open) listRef.current?.focus()
+  }, [open])
+
+  /* Laging kita ang naka-highlight kapag mahaba ang listahan */
+  useEffect(() => {
+    if (open) document.getElementById(`${uid}-${active}`)?.scrollIntoView({ block: 'nearest' })
+  }, [open, active, uid])
+
+  /* Isara kapag pumindot sa labas */
+  useEffect(() => {
+    if (!open) return
+    function onDown(e) {
+      if (!rootRef.current?.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  function onButtonKey(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
+      e.preventDefault()
+      openList()
+    }
+  }
+
+  function onListKey(e) {
+    const last = options.length - 1
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setActive((i) => Math.min(last, i + 1))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setActive((i) => Math.max(0, i - 1))
+        break
+      case 'Home':
+        e.preventDefault()
+        setActive(0)
+        break
+      case 'End':
+        e.preventDefault()
+        setActive(last)
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        choose(active)
+        break
+      case 'Escape':
+        e.preventDefault()
+        close()
+        break
+      case 'Tab':
+        close(false)
+        break
+      default:
+    }
+  }
+
   return (
-    <span className={list.selectField}>
-      <select
-        className={list.orgSelect}
-        aria-label={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+    <div ref={rootRef} className={`${ui.dropdown} ${open ? ui.dropdownOpen : ''}`}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className={ui.dropButton}
+        aria-label={`${label}: ${selected?.label ?? ''}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        onClick={() => (open ? close() : openList())}
+        onKeyDown={onButtonKey}
       >
-        {children}
-      </select>
-      <ChevronDown className={list.selectIcon} size={18} strokeWidth={2.4} aria-hidden="true" />
-    </span>
+        <span className={ui.dropIcon} aria-hidden="true">
+          <Icon size={16} strokeWidth={2.4} />
+        </span>
+        <span className={ui.dropValue}>{selected?.label}</span>
+        <ChevronDown className={ui.dropChevron} size={16} strokeWidth={2.6} aria-hidden="true" />
+      </button>
+
+      {open && (
+        <ul
+          ref={listRef}
+          id={listId}
+          className={ui.dropList}
+          role="listbox"
+          aria-label={label}
+          aria-activedescendant={`${uid}-${active}`}
+          tabIndex={-1}
+          onKeyDown={onListKey}
+        >
+          {options.map((o, i) => {
+            const isSelected = o.value === value
+            return (
+              <li
+                key={o.value || '__all__'}
+                id={`${uid}-${i}`}
+                role="option"
+                aria-selected={isSelected}
+                className={[
+                  ui.dropOption,
+                  isSelected ? ui.dropSelected : '',
+                  i === active ? ui.dropActive : '',
+                ].join(' ')}
+                onMouseEnter={() => setActive(i)}
+                onClick={() => choose(i)}
+              >
+                <span className={ui.dropText}>{o.label}</span>
+                <span className={ui.dropCheck} aria-hidden="true">
+                  <Check size={12} strokeWidth={3.4} />
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -668,360 +853,127 @@ function RemoveUserDialog({ user, roleLabel, orgLabel, onConfirm, onDeactivateIn
 
   return (
     <div
-      className={base.backdrop}
+      className={remove.backdrop}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !removingNow) onCancel()
       }}
     >
       <form
-        className={`${base.modal} ${remove.modal}`}
+        className={remove.modal}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="remove-user-title"
         aria-describedby="remove-user-warning"
         onSubmit={handleSubmit}
       >
-        <h2 id="remove-user-title" className={base.heading}>
-          Remove {fullNameOf(user)}?
-        </h2>
+        {/* Dilaw at navy na "caution tape" sa itaas */}
+        <span className={remove.tape} aria-hidden="true" />
 
-        <div className={remove.person}>
-          <span className={remove.personName}>{fullNameOf(user)}</span>
-          <span className={remove.personMeta}>
-            {[roleLabel, orgLabel, user.email].filter(Boolean).join(' · ')}
+        <div className={remove.top}>
+          <span className={remove.bigIcon} aria-hidden="true">
+            <Trash2 size={26} strokeWidth={2.2} />
           </span>
+          <h2 id="remove-user-title" className={remove.heading}>
+            Remove {fullNameOf(user)}?
+          </h2>
         </div>
 
-        <div id="remove-user-warning" className={remove.warning}>
-          <p className={remove.warningTitle}>This cannot be undone.</p>
-          <ul className={remove.warningList}>
-            <li>They can no longer log in.</li>
-            {user.has_account ? (
+        <div className={remove.body}>
+          <div className={remove.person}>
+            <Avatar src={user.avatar_url} name={fullNameOf(user)} size="md" />
+            <div className={remove.personText}>
+              <span className={remove.personName}>{fullNameOf(user)}</span>
+              <span className={remove.personMeta}>
+                {[roleLabel, orgLabel, user.email].filter(Boolean).join(' · ')}
+              </span>
+            </div>
+          </div>
+
+          <div id="remove-user-warning" className={remove.warning}>
+            <p className={remove.warningTitle}>This cannot be undone.</p>
+            <ul className={remove.warningList}>
               <li>
-                Their account is deleted, with their event attendance, certificates, Organization
-                Gems, redemptions and notifications.
+                <X className={remove.warningIcon} size={12} strokeWidth={3.2} aria-hidden="true" />
+                <span>They can no longer log in.</span>
               </li>
-            ) : (
-              <li>They have not logged in yet, so only their record is deleted.</li>
-            )}
-            {user.has_account && (
-              <li>
-                Proposals, announcements and events they made are kept, but are no longer linked
-                to an account.
-              </li>
-            )}
-          </ul>
-        </div>
-
-        {user.has_account && (
-          <p className={remove.alternative}>
-            Only want to stop them from logging in and keep their history?{' '}
-            <button
-              type="button"
-              className={remove.linkButton}
-              onClick={onDeactivateInstead}
-              disabled={removingNow}
-            >
-              Deactivate instead
-            </button>
-          </p>
-        )}
-
-        <label className={base.field}>
-          <span className={base.label}>
-            Type <strong className={remove.email}>{email}</strong> to confirm
-          </span>
-          <input
-            ref={inputRef}
-            className={base.input}
-            value={typed}
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(e) => setTyped(e.target.value)}
-            disabled={removingNow}
-          />
-        </label>
-
-        {error && <p className={base.error}>{error}</p>}
-
-        <div className={base.actions}>
-          <button type="button" className={base.secondary} onClick={onCancel} disabled={removingNow}>
-            Cancel
-          </button>
-          <button type="submit" className={base.danger} disabled={!matches || removingNow}>
-            {removingNow ? 'Removing…' : 'Remove permanently'}
-          </button>
-        </div>
-      </form>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------
-   Form ng user (bago o ine-edit)
-   ------------------------------------------------------------ */
-function UserDialog({ user, isSelf, roles, orgs, onSave, onCancel }) {
-  const [email, setEmail] = useState(user?.email ?? '')
-  const [lastName, setLastName] = useState(user?.last_name ?? '')
-  const [firstName, setFirstName] = useState(user?.first_name ?? '')
-  const [middleName, setMiddleName] = useState(user?.middle_name ?? '')
-  const [studentId, setStudentId] = useState(user?.student_id ?? '')
-  const [program, setProgram] = useState(user?.program ?? '')
-  const [yearLevel, setYearLevel] = useState(user?.year_level ?? '')
-  const [roleId, setRoleId] = useState(String(user?.role_id ?? 1))
-  const [organizationId, setOrganizationId] = useState(user?.organization_id ?? '')
-  const [isActive, setIsActive] = useState(user?.is_active ?? true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const firstRef = useRef(null)
-
-  useEffect(() => {
-    firstRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === 'Escape' && !saving) onCancel()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [saving, onCancel])
-
-  const needsOrg = roleNeedsOrg(roleId)
-  const lockedEmail = Boolean(user?.has_account)
-
-  /* Walang IT Administrator sa pagpipilian — maliban kung IT Admin
-     na ang ine-edit, para hindi mabago ang role niya pagka-Save */
-  const roleChoices = assignableRoles(roles, user?.role_id ?? null)
-
-  /* Aktibong org lang ang pagpipilian — pero ipakita pa rin ang
-     kasalukuyan kahit na-deactivate na ito */
-  const orgChoices = orgs.filter((o) => o.is_active || o.id === user?.organization_id)
-
-  const roleChanged = user && Number(roleId) !== user.role_id
-  const wasOfficerWithPosition = user?.position_name && roleChanged
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    if (needsOrg && !organizationId) {
-      setError('Choose an organization for this role.')
-      return
-    }
-    if (user?.is_active && !isActive && user.has_account) {
-      const ok = window.confirm(
-        `Deactivate ${fullNameOf(user)}? They will no longer be able to open the app until you activate them again.`,
-      )
-      if (!ok) return
-    }
-    setSaving(true)
-    try {
-      await onSave({
-        email,
-        lastName,
-        firstName,
-        middleName,
-        studentId,
-        program,
-        yearLevel,
-        roleId,
-        organizationId: needsOrg ? organizationId : null,
-        isActive,
-      })
-    } catch (err) {
-      console.error('Hindi na-save ang user:', err)
-      setError(adminErrorMessage(err))
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div
-      className={base.backdrop}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !saving) onCancel()
-      }}
-    >
-      <form
-        className={`${base.modal} ${styles.modal}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="user-dialog-title"
-        onSubmit={handleSubmit}
-      >
-        <h2 id="user-dialog-title" className={base.heading}>
-          {user ? `Edit ${fullNameOf(user)}` : 'Add user'}
-        </h2>
-
-        <fieldset disabled={saving} style={{ border: 0, padding: 0, margin: 0 }}>
-          <label className={base.field}>
-            <span className={base.label}>Microsoft email</span>
-            <input
-              ref={firstRef}
-              type="email"
-              className={`${base.input} ${lockedEmail ? styles.readonly : ''}`}
-              value={email}
-              readOnly={lockedEmail}
-              placeholder="lastname.123456@sanpablo.sti.edu.ph"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <p className={styles.fieldHint}>
-              {lockedEmail
-                ? 'This person has already logged in, so the email can no longer be changed.'
-                : 'They log in with this Microsoft account.'}
-            </p>
-          </label>
-
-          <div className={styles.grid3}>
-            <label className={base.field}>
-              <span className={base.label}>Last name</span>
-              <input
-                className={base.input}
-                value={lastName}
-                maxLength={100}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-              />
-            </label>
-            <label className={base.field}>
-              <span className={base.label}>First name</span>
-              <input
-                className={base.input}
-                value={firstName}
-                maxLength={100}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-              />
-            </label>
-            <label className={base.field}>
-              <span className={base.label}>
-                Middle name <span className={base.optional}>(optional)</span>
-              </span>
-              <input
-                className={base.input}
-                value={middleName}
-                maxLength={100}
-                onChange={(e) => setMiddleName(e.target.value)}
-              />
-            </label>
+              {user.has_account ? (
+                <li>
+                  <X className={remove.warningIcon} size={12} strokeWidth={3.2} aria-hidden="true" />
+                  <span>
+                    Their account is deleted, with their event attendance, certificates,
+                    Organization Gems, redemptions and notifications.
+                  </span>
+                </li>
+              ) : (
+                <li>
+                  <X className={remove.warningIcon} size={12} strokeWidth={3.2} aria-hidden="true" />
+                  <span>They have not logged in yet, so only their record is deleted.</span>
+                </li>
+              )}
+              {user.has_account && (
+                <li>
+                  <X className={remove.warningIcon} size={12} strokeWidth={3.2} aria-hidden="true" />
+                  <span>
+                    Proposals, announcements and events they made are kept, but are no longer
+                    linked to an account.
+                  </span>
+                </li>
+              )}
+            </ul>
           </div>
 
-          <div className={styles.grid3}>
-            <label className={base.field}>
-              <span className={base.label}>
-                Student ID <span className={base.optional}>(optional)</span>
-              </span>
-              <input
-                className={base.input}
-                value={studentId}
-                maxLength={50}
-                onChange={(e) => setStudentId(e.target.value)}
-              />
-            </label>
-            <label className={base.field}>
-              <span className={base.label}>
-                Program <span className={base.optional}>(optional)</span>
-              </span>
-              <input
-                className={base.input}
-                value={program}
-                maxLength={100}
-                placeholder="BS in Information Technology"
-                onChange={(e) => setProgram(e.target.value)}
-              />
-            </label>
-            <label className={base.field}>
-              <span className={base.label}>
-                Year level <span className={base.optional}>(optional)</span>
-              </span>
-              <input
-                className={base.input}
-                value={yearLevel}
-                maxLength={30}
-                placeholder="1Y1"
-                onChange={(e) => setYearLevel(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className={styles.grid2}>
-            <label className={base.field}>
-              <span className={base.label}>Role</span>
-              <select
-                className={`${base.input} ${styles.select} ${isSelf ? styles.readonly : ''}`}
-                value={roleId}
-                disabled={isSelf}
-                onChange={(e) => setRoleId(e.target.value)}
+          {user.has_account && (
+            <p className={remove.alternative}>
+              <span>Only want to stop them from logging in and keep their history?</span>
+              <button
+                type="button"
+                className={remove.linkButton}
+                onClick={onDeactivateInstead}
+                disabled={removingNow}
               >
-                {roleChoices.map((r) => (
-                  <option key={r.id} value={String(r.id)}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className={base.field}>
-              <span className={base.label}>Organization</span>
-              <select
-                className={`${base.input} ${styles.select} ${needsOrg ? '' : styles.readonly}`}
-                value={needsOrg ? organizationId : ''}
-                disabled={!needsOrg}
-                onChange={(e) => setOrganizationId(e.target.value)}
-                required={needsOrg}
-              >
-                <option value="">{needsOrg ? 'Choose an organization' : 'None (staff role)'}</option>
-                {orgChoices.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                    {o.is_active ? '' : ' (inactive)'}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {isSelf && (
-            <p className={styles.fieldHint}>You cannot change your own role or deactivate your own account.</p>
-          )}
-          {wasOfficerWithPosition && (
-            <p className={styles.fieldHint}>
-              Changing the role removes their officer position ({user.position_name}).
-            </p>
-          )}
-          {Number(roleId) === 2 && (!user || user.role_id !== 2) && (
-            <p className={styles.fieldHint}>
-              They will be an Officer with no position. To give a position, use “Set position” on
-              their row in this list
-              {user?.has_account ? '.' : ' — it appears once they have logged in.'}
+                Deactivate instead
+              </button>
             </p>
           )}
 
-          <label className={styles.check} style={{ marginTop: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={isActive}
-              disabled={isSelf}
-              onChange={(e) => setIsActive(e.target.checked)}
-            />
-            <span>
-              <span className={styles.checkTitle}>Active</span>
-              <span className={styles.checkText}>
-                Inactive people cannot open the app. Their records and history are kept.
+          <label className={remove.field}>
+            <span className={remove.label}>
+              Type <strong className={remove.email}>{email}</strong> to confirm
+            </span>
+            <span className={`${remove.control} ${matches ? remove.controlOk : ''}`}>
+              <span className={remove.controlIcon} aria-hidden="true">
+                {matches ? (
+                  <Check key="ok" size={15} strokeWidth={3} />
+                ) : (
+                  <Lock key="lock" size={15} strokeWidth={2.4} />
+                )}
               </span>
+              <input
+                ref={inputRef}
+                className={remove.input}
+                value={typed}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(e) => setTyped(e.target.value)}
+                disabled={removingNow}
+              />
             </span>
           </label>
-        </fieldset>
 
-        {error && <p className={base.error}>{error}</p>}
+          {error && <p className={remove.error}>{error}</p>}
+        </div>
 
-        <div className={base.actions}>
-          <button type="button" className={base.secondary} onClick={onCancel} disabled={saving}>
+        <div className={remove.actions}>
+          <button type="button" className={remove.cancel} onClick={onCancel} disabled={removingNow}>
             Cancel
           </button>
-          <button type="submit" className={base.primary} disabled={saving}>
-            {saving ? 'Saving…' : user ? 'Save' : 'Add user'}
+          <button
+            type="submit"
+            className={`${remove.confirm} ${matches ? remove.armed : ''}`}
+            disabled={!matches || removingNow}
+          >
+            <Trash2 size={16} strokeWidth={2.4} aria-hidden="true" />
+            {removingNow ? 'Removing…' : 'Remove permanently'}
           </button>
         </div>
       </form>

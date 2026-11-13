@@ -1,37 +1,114 @@
+/* ================================================================
+   EMPTY STATE — kapag wala pang laman ang isang seksyon
+   (hal. "No announcements yet"). Iisang style para sa LAHAT ng
+   page na gumagamit ng <EmptyState />.
+
+   Itsura (simple, hindi OA):
+     - puting card, pinong tuldok-tuldok sa itaas na naglalaho
+     - icon: navy na kahon, dilaw na simbolo, mahinang singsing
+     - title: kaparehong font ng pamagat ng page, navy,
+       maikling dilaw na guhit sa ilalim
+     - message: abo, maluwag ang linya
+   ================================================================ */
 .empty {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 4rem 1.75rem;
+  padding: 3.5rem 1.75rem;
 
   background-color: #fff;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid var(--color-border, #e4e9f2);
+  border-radius: var(--radius, 14px);
+  animation: emptyIn 0.35s ease-out;
+}
+
+/* Pinong tuldok-tuldok sa itaas (naglalaho pababa) */
+.empty::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 160px;
+  background-image: radial-gradient(rgba(6, 53, 140, 0.12) 1.2px, transparent 1.6px);
+  background-size: 16px 16px;
+  -webkit-mask-image: radial-gradient(ellipse 55% 100% at 50% 0%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 55% 100% at 50% 0%, #000 0%, transparent 75%);
+  pointer-events: none;
 }
 
 .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 58px;
-  margin-bottom: 1.15rem;
-  border-radius: 50%;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: 1.3rem;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1.5rem;
+  border-radius: 18px;
+  background-color: var(--dash-navy, #06358c);
+  color: var(--dash-yellow, #ffd200);
+  font-size: 1.45rem;
+  line-height: 1;
+  /* mahinang asul na singsing sa paligid */
+  box-shadow:
+    0 0 0 7px var(--color-primary-soft, #eaf0fe),
+    0 12px 24px rgba(6, 53, 140, 0.18);
 }
 
 .title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin-bottom: 0.45rem;
+  position: relative;
+  margin: 0;
+  padding-bottom: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--dash-navy-deep, #031b4b);
+}
+
+/* Maikling dilaw na guhit sa ilalim ng title */
+.title::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: var(--dash-yellow, #ffd200);
+  transform: translateX(-50%);
 }
 
 .message {
-  font-size: 0.96rem;
-  color: var(--color-muted);
-  max-width: 44ch;
+  margin-top: 0.85rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-muted, #5c6a86);
+  max-width: 46ch;
+}
+
+@keyframes emptyIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 560px) {
+  .empty {
+    padding: 2.75rem 1.25rem;
+  }
+
+  .title {
+    font-size: 1.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty {
+    animation: none;
+  }
 }

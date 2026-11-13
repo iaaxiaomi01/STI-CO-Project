@@ -1,5 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  Bell,
+  Building2,
+  Check,
+  Globe,
+  ImagePlus,
+  Info,
+  ListChecks,
+  Megaphone,
+  Pencil,
+  Send,
+  Siren,
+  Users,
+} from 'lucide-react'
+import {
   ANNOUNCEMENT_TYPES,
   AUDIENCES,
   MESSAGE_MAX,
@@ -11,6 +25,20 @@ import {
 } from '../lib/announcements.js'
 import { ACCEPTED_TYPES, ImageError, checkImageFile } from '../lib/image.js'
 import styles from './AnnouncementForm.module.css'
+
+/* Icon ng bawat Type — kapareho ng TYPE_ICONS sa pages/Announcements.jsx */
+const TYPE_ICONS = {
+  meeting: Users,
+  reminder: Bell,
+  urgent: Siren,
+}
+
+/* Icon ng bawat "Post to" (AUDIENCES) */
+const AUDIENCE_ICONS = {
+  own: Building2,
+  all: Globe,
+  selected: ListChecks,
+}
 
 /* ============================================================
    ANNOUNCEMENT FORM — modal para sa GUMAWA at MAG-EDIT
@@ -164,6 +192,11 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
     }
   }
 
+  /* Subtitle sa ilalim ng heading */
+  const subtitle = isEdit
+    ? 'Your changes will be shown to the same audience.'
+    : 'Share news and updates with your members.'
+
   return (
     <div
       className={styles.backdrop}
@@ -178,169 +211,230 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
         aria-modal="true"
         aria-labelledby="announcement-form-title"
       >
-        <h2 id="announcement-form-title" className={styles.heading}>
-          {isEdit ? 'Edit announcement' : 'New announcement'}
-        </h2>
-
-        <label className={styles.field}>
-          <span className={styles.label}>Title</span>
-          <input
-            ref={titleRef}
-            className={styles.input}
-            value={title}
-            maxLength={TITLE_MAX}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </label>
-
-        {canChoose && (
-          <label className={styles.field}>
-            <span className={styles.label}>Post to</span>
-            <select
-              className={styles.input}
-              value={postTo}
-              onChange={(e) => setPostTo(e.target.value)}
-            >
-              {audienceOptions.map((a) => (
-                <option key={a.value} value={a.value}>
-                  {a.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        {canChoose && postTo === 'selected' && (
-          <fieldset className={styles.field}>
-            <legend className={styles.labelRow}>
-              <span className={styles.label}>Organizations</span>
-              <span className={styles.counter}>{orgIds.length} selected</span>
-            </legend>
-            {orgLoadError && (
-              <p className={styles.error}>Could not load organizations.</p>
-            )}
-            {!orgLoadError && orgOptions === null && (
-              <p className={styles.counter}>Loading organizations…</p>
-            )}
-            {orgOptions && (
-              <div className={styles.orgList}>
-                {orgOptions.map((o) => (
-                  <label key={o.id} className={styles.orgOption}>
-                    <input
-                      type="checkbox"
-                      checked={orgIds.includes(o.id)}
-                      onChange={() => toggleOrg(o.id)}
-                    />
-                    <span>{o.name}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-            {!noOwnOrg && (
-              <p className={styles.counter}>
-                Your organization will also see this.
-              </p>
-            )}
-          </fieldset>
-        )}
-
-        {isEdit && audienceOf(initial) === 'all' && (
-          <p className={styles.hint}>
-            This announcement is visible to all organizations.
-          </p>
-        )}
-
-        {isEdit && audienceOf(initial) === 'selected' && (
-          <p className={styles.hint}>
-            Visible to: {selectedOrgsLabel(initial)}
-          </p>
-        )}
-
-        <label className={styles.field}>
-          <span className={styles.label}>Type</span>
-          <select
-            className={styles.input}
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
-            {ANNOUNCEMENT_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.labelRow}>
-            <span className={styles.label}>Message</span>
-            <span className={styles.counter}>
-              {message.length} / {MESSAGE_MAX}
-            </span>
+        {/* ---------- HEADER (nakadikit sa itaas habang nag-i-scroll) ---------- */}
+        <div className={styles.head}>
+          <span className={styles.headIcon} aria-hidden="true">
+            {isEdit ? <Pencil size={21} strokeWidth={2.3} /> : <Megaphone size={22} strokeWidth={2.2} />}
           </span>
-          <textarea
-            className={`${styles.input} ${styles.textarea}`}
-            value={message}
-            maxLength={MESSAGE_MAX}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={7}
-            required
-          />
-        </label>
-
-        {/* ---------- PICTURE (optional) ---------- */}
-        <div className={styles.field}>
-          <span className={styles.label}>
-            Picture <span className={styles.optional}>(optional)</span>
-          </span>
-
-          {preview ? (
-            <div className={styles.preview}>
-              <img src={preview} alt="Announcement picture preview" />
-              <div className={styles.previewActions}>
-                <button
-                  type="button"
-                  className={styles.secondary}
-                  onClick={() => fileRef.current?.click()}
-                  disabled={saving}
-                >
-                  Change
-                </button>
-                <button
-                  type="button"
-                  className={styles.removeButton}
-                  onClick={handleRemoveImage}
-                  disabled={saving}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className={styles.dropzone}
-              onClick={() => fileRef.current?.click()}
-              disabled={saving}
-            >
-              <span className={styles.dropIcon} aria-hidden="true">＋</span>
-              <span>Choose a picture</span>
-              <span className={styles.fileHint}>JPG, PNG or WEBP · up to 10 MB</span>
-            </button>
-          )}
-
-          <input
-            ref={fileRef}
-            type="file"
-            accept={ACCEPTED_TYPES.join(',')}
-            onChange={handlePickImage}
-            hidden
-          />
+          <div className={styles.headText}>
+            <h2 id="announcement-form-title" className={styles.heading}>
+              {isEdit ? 'Edit announcement' : 'New announcement'}
+            </h2>
+            <p className={styles.subtitle}>{subtitle}</p>
+          </div>
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.body}>
+          {/* ---------- TITLE ---------- */}
+          <label className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.label}>Title</span>
+              <span className={styles.counter}>
+                {title.length} / {TITLE_MAX}
+              </span>
+            </span>
+            <input
+              ref={titleRef}
+              className={styles.input}
+              value={title}
+              maxLength={TITLE_MAX}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. General Assembly this Friday"
+              required
+            />
+          </label>
 
+          {/* ---------- TYPE (mga card na pinipindot) ---------- */}
+          <fieldset className={styles.field}>
+            <legend className={styles.label}>Type</legend>
+            <div className={styles.typeGrid}>
+              {ANNOUNCEMENT_TYPES.map((t) => {
+                const Icon = TYPE_ICONS[t.value] ?? Megaphone
+                return (
+                  <label
+                    key={t.value}
+                    className={`${styles.typeOption} ${styles[`type_${t.value}`] ?? ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="announcement-type"
+                      value={t.value}
+                      checked={type === t.value}
+                      onChange={() => setType(t.value)}
+                      disabled={saving}
+                    />
+                    <span className={styles.typeIcon} aria-hidden="true">
+                      <Icon size={17} strokeWidth={2.3} />
+                    </span>
+                    <span className={styles.typeLabel}>{t.label}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </fieldset>
+
+          {/* ---------- POST TO (bagong post lang, kung may pagpipilian) ---------- */}
+          {canChoose && (
+            <fieldset className={styles.audienceCard}>
+              <legend className={styles.cardTitle}>
+                <Send size={14} strokeWidth={2.5} aria-hidden="true" />
+                Post to
+              </legend>
+
+              <div className={styles.audienceGrid}>
+                {audienceOptions.map((a) => {
+                  const Icon = AUDIENCE_ICONS[a.value] ?? Globe
+                  return (
+                    <label key={a.value} className={styles.audienceOption}>
+                      <input
+                        type="radio"
+                        name="announcement-audience"
+                        value={a.value}
+                        checked={postTo === a.value}
+                        onChange={() => setPostTo(a.value)}
+                        disabled={saving}
+                      />
+                      <Icon size={16} strokeWidth={2.3} aria-hidden="true" />
+                      <span>{a.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+
+              {postTo === 'selected' && (
+                <div className={styles.orgBlock}>
+                  <div className={styles.labelRow}>
+                    <span className={styles.subLabel}>Organizations</span>
+                    <span className={styles.counter}>{orgIds.length} selected</span>
+                  </div>
+
+                  {orgLoadError && (
+                    <p className={styles.error}>Could not load organizations.</p>
+                  )}
+                  {!orgLoadError && orgOptions === null && (
+                    <p className={styles.hint}>Loading organizations…</p>
+                  )}
+                  {orgOptions && (
+                    <div className={styles.orgList}>
+                      {orgOptions.map((o) => (
+                        <label key={o.id} className={styles.orgOption}>
+                          <input
+                            type="checkbox"
+                            checked={orgIds.includes(o.id)}
+                            onChange={() => toggleOrg(o.id)}
+                            disabled={saving}
+                          />
+                          <span className={styles.orgCheck} aria-hidden="true">
+                            <Check size={12} strokeWidth={3.2} />
+                          </span>
+                          <span className={styles.orgName}>{o.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {!noOwnOrg && (
+                    <p className={styles.hint}>Your organization will also see this.</p>
+                  )}
+                </div>
+              )}
+            </fieldset>
+          )}
+
+          {/* Edit: hindi na mababago kung para kanino */}
+          {isEdit && audienceOf(initial) !== 'own' && (
+            <p className={styles.note}>
+              <Info size={16} strokeWidth={2.4} className={styles.noteIcon} aria-hidden="true" />
+              <span>
+                {audienceOf(initial) === 'all' ? (
+                  <>
+                    Visible to <strong>all organizations</strong>.
+                  </>
+                ) : (
+                  <>
+                    Visible to: <strong>{selectedOrgsLabel(initial)}</strong>
+                  </>
+                )}
+              </span>
+            </p>
+          )}
+
+          {/* ---------- MESSAGE ---------- */}
+          <label className={styles.field}>
+            <span className={styles.labelRow}>
+              <span className={styles.label}>Message</span>
+              <span className={styles.counter}>
+                {message.length} / {MESSAGE_MAX}
+              </span>
+            </span>
+            <textarea
+              className={`${styles.input} ${styles.textarea}`}
+              value={message}
+              maxLength={MESSAGE_MAX}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write the details of your announcement…"
+              rows={7}
+              required
+            />
+          </label>
+
+          {/* ---------- PICTURE (optional) ---------- */}
+          <div className={styles.field}>
+            <span className={styles.label}>
+              Picture <span className={styles.optional}>(optional)</span>
+            </span>
+
+            {preview ? (
+              <div className={styles.preview}>
+                <img src={preview} alt="Announcement picture preview" />
+                <div className={styles.previewActions}>
+                  <button
+                    type="button"
+                    className={styles.smallButton}
+                    onClick={() => fileRef.current?.click()}
+                    disabled={saving}
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.smallButton} ${styles.removeButton}`}
+                    onClick={handleRemoveImage}
+                    disabled={saving}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={styles.uploadButton}
+                onClick={() => fileRef.current?.click()}
+                disabled={saving}
+              >
+                <span className={styles.uploadIcon} aria-hidden="true">
+                  <ImagePlus size={18} strokeWidth={2.3} />
+                </span>
+                <span className={styles.uploadText}>
+                  <strong>Choose a picture</strong>
+                  <span>JPG, PNG or WEBP · up to 10 MB</span>
+                </span>
+              </button>
+            )}
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept={ACCEPTED_TYPES.join(',')}
+              onChange={handlePickImage}
+              hidden
+            />
+          </div>
+
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
+
+        {/* ---------- MGA BUTTON (nakadikit sa ibaba) ---------- */}
         <div className={styles.actions}>
           <button
             type="button"
@@ -351,6 +445,7 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
             Cancel
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
+            {!saving && !isEdit && <Send size={16} strokeWidth={2.4} aria-hidden="true" />}
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post'}
           </button>
         </div>

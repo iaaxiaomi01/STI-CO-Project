@@ -1,0 +1,1105 @@
+/* ================================================================
+   USERS — School Administrator, SAO at School Head
+
+   Pareho ang laman ng page; itsura lang ang bago:
+     ┌──────────────────────────────────────────────────────┐
+     │▓ Users                                  [+ Add user] ▓│ ← navy na banner
+     └──┬────────────────────────────────────────────────┬──┘
+        │ [🔍 Search…] [🏢 ▾] [🛡 ▾] [〽 ▾]   12 of 40     │ ← lumulutang
+        └────────────────────────────────────────────────┘
+     ┌ puting card ─────────────────────────────────────────┐
+     │ (J) Juan D. Cruz     [Officer]  ● Logged in   [Edit] │ ← itaas
+     │     juan@…                      Last login …  [Rem.] │
+     │     ┌ STUDENT ID ┬ PROGRAM ┬ YEAR ┬ ORGANIZATION ┐   │ ← ibaba
+     │     └────────────┴─────────┴──────┴──────────────┘   │
+     └──────────────────────────────────────────────────────┘
+
+   Bawat hilera ay grid na 12 column (+ column ng mga button
+   kapag School Administrator), kaya walang nagpapatong-patong.
+   Sariling file ng Users page lang ito.
+   ================================================================ */
+.page {
+  --navy: var(--sti-blue, #06358c);
+  --deep: var(--sti-blue-deep, #031b4b);
+  --yellow: var(--sti-yellow, #ffd200);
+  --gold: var(--sti-gold, #f7b900);
+  --ink: #111a33;
+  --ink-soft: #5b6680;
+  --line: #e3e8f1;
+  --hair: #edf0f6;
+  --strip: #f6f8fc;
+
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* ================================================================
+   ULO (banner)
+   ================================================================ */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px 24px;
+  overflow: hidden;
+  padding: 30px 32px 66px;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(91, 133, 240, 0.35) 0%, transparent 55%),
+    linear-gradient(120deg, var(--deep) 0%, var(--navy) 62%, #0b47b5 100%);
+  color: #fff;
+  box-shadow: 0 24px 40px -30px rgba(3, 27, 75, 0.9);
+  animation: heroIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Pinong grid na kumukupas pakaliwa */
+.heroPattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: linear-gradient(100deg, transparent 35%, #000 90%);
+}
+
+/* Dilaw na guhit sa ilalim */
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 22%;
+  height: 5px;
+  background-color: var(--yellow);
+  transform-origin: left;
+  animation: grow 0.7s 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.heroText {
+  position: relative;
+  min-width: 0;
+  max-width: 64ch;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: #fff;
+}
+
+.heroAction {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   MENSAHE at LOADING
+   ================================================================ */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 11px 16px 11px 12px;
+  border: 1px solid #cfdcf6;
+  border-left: 4px solid var(--navy);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--deep);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  box-shadow: 0 10px 22px -18px rgba(3, 27, 75, 0.6);
+  animation: slideDown 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.noticeIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 3rem 0;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #dbe2ef;
+  border-top-color: var(--navy);
+  border-right-color: var(--yellow);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ================================================================
+   TOOLBAR (lumulutang sa ilalim ng banner)
+   ================================================================ */
+.toolbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -40px 18px 22px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background-color: #fff;
+  box-shadow: 0 18px 34px -22px rgba(3, 27, 75, 0.55);
+  animation: rise 0.45s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* Kapag may mensahe sa pagitan, hindi na lulutang */
+.notice + .toolbar {
+  margin-top: 16px;
+}
+
+/* ---------- Search ---------- */
+.search {
+  flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 14px 0 7px;
+  border: 1.5px solid var(--line);
+  border-radius: 13px;
+  background-color: var(--strip);
+  cursor: text;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.search:hover {
+  border-color: #cbd5e8;
+}
+
+.search:focus-within {
+  border-color: var(--navy);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.35);
+}
+
+.searchIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background-color: var(--deep);
+  color: var(--yellow);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.search:focus-within .searchIcon {
+  transform: rotate(-10deg) scale(1.06);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.searchInput::placeholder {
+  color: #8c95aa;
+  font-weight: 500;
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+/* ---------- Mga filter (dropdown) at bilang ---------- */
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Dropdown ng filter — ang buong kahon ay pindutan */
+.dropdown {
+  position: relative;
+  min-width: 0;
+}
+
+.dropButton {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 190px;
+  max-width: 260px;
+  min-height: 48px;
+  padding: 0 12px 0 7px;
+  border: 1.5px solid var(--line);
+  border-radius: 13px;
+  background-color: #fff;
+  color: var(--deep);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.dropButton:hover {
+  border-color: var(--gold);
+  background-color: #fffdf5;
+}
+
+.dropButton:focus-visible,
+.dropdownOpen .dropButton {
+  outline: none;
+  border-color: var(--navy);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.35);
+}
+
+.dropIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background-color: #fff6cf;
+  color: #7a5a00;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.dropButton:hover .dropIcon,
+.dropdownOpen .dropIcon {
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.dropValue {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropChevron {
+  flex-shrink: 0;
+  color: var(--navy);
+  transition: transform 0.22s ease;
+}
+
+.dropdownOpen .dropChevron {
+  transform: rotate(180deg);
+}
+
+/* ---------- Listahan ---------- */
+.dropList {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(340px, 86vw);
+  max-height: 320px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 22px 40px -18px rgba(3, 27, 75, 0.45), 0 2px 6px rgba(3, 27, 75, 0.06);
+  list-style: none;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: #c9d3e6 transparent;
+  transform-origin: top left;
+  animation: dropIn 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dropOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 9px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Naka-highlight (mouse o arrow keys) */
+.dropActive {
+  background-color: var(--strip);
+  box-shadow: inset 3px 0 0 var(--navy);
+}
+
+/* Ang napili: mapusyaw na dilaw at may check */
+.dropSelected {
+  background-color: #fff7d6;
+  color: var(--deep);
+  font-weight: 800;
+}
+
+.dropSelected.dropActive {
+  background-color: #ffefb0;
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.dropText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dropCheck {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--deep);
+  color: var(--yellow);
+  visibility: hidden;
+}
+
+.dropSelected .dropCheck {
+  visibility: visible;
+  animation: checkPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* "12 of 40" */
+.count {
+  padding: 0 8px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.count b {
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================================================
+   LISTAHAN — bawat tao ay hilera na may dalawang palapag
+   ================================================================ */
+.listCard {
+  container-type: inline-size;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 16px 34px -28px rgba(3, 27, 75, 0.55);
+}
+
+.table,
+.table tbody {
+  display: block;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table td {
+  display: block;
+  min-width: 0;
+  padding: 0;
+}
+
+/* ---------- Hilera (PHONE muna; mas malapad sa ibaba) ---------- */
+.row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: center;
+  padding: 16px 16px 18px;
+  border-bottom: 1px solid var(--hair);
+  background-color: #fff;
+  animation: rowIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+/* Isa-isang lumalabas ang unang mga hilera */
+.row:nth-child(2) { animation-delay: 0.03s; }
+.row:nth-child(3) { animation-delay: 0.06s; }
+.row:nth-child(4) { animation-delay: 0.09s; }
+.row:nth-child(5) { animation-delay: 0.12s; }
+.row:nth-child(6) { animation-delay: 0.15s; }
+.row:nth-child(7) { animation-delay: 0.18s; }
+.row:nth-child(n + 8) { animation-delay: 0.21s; }
+
+.row:hover {
+  background-color: #f8faff;
+  box-shadow: inset 4px 0 0 var(--navy);
+}
+
+/* Phone: pangalan → role at status → detalye → mga button */
+.nameCell {
+  grid-column: 1 / -1;
+}
+
+.roleCell {
+  grid-column: 1 / 7;
+  margin-top: 12px;
+  align-self: start;
+}
+
+.statusCell {
+  grid-column: 7 / -1;
+  margin-top: 12px;
+  align-self: start;
+}
+
+.detail {
+  margin-top: 0;
+  padding: 10px 12px !important;
+  background-color: var(--strip);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Maliit na label sa itaas ng bawat detalye */
+.detail::before {
+  content: attr(data-label);
+  display: block;
+  margin-bottom: 3px;
+  color: #8c95aa;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Phone: ID | Year, tapos Program, tapos Organization */
+.idCell {
+  grid-column: 1 / 8;
+  grid-row: 3;
+  margin-top: 14px;
+  border-radius: 12px 0 0 0;
+}
+
+.yearCell {
+  grid-column: 8 / -1;
+  grid-row: 3;
+  margin-top: 14px;
+  border-left: 1px solid var(--line);
+  border-radius: 0 12px 0 0;
+}
+
+.programCell {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  border-top: 1px solid var(--line);
+}
+
+.orgCell {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 12px 12px;
+}
+
+.actionCell {
+  grid-column: 1 / -1;
+  grid-row: 6;
+  margin-top: 14px;
+}
+
+/* Student ID — monospace para madaling basahin ang numero */
+.idCell {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.idCell::before {
+  font-family: var(--font-ui);
+}
+
+/* ---------- Pangalan ---------- */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.avatarRing {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 50%;
+  background-color: #e3e9f5;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.avatarRing > * {
+  background-color: var(--deep);
+  color: var(--yellow);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.row:hover .avatarRing {
+  transform: scale(1.06);
+}
+
+/* Officer: dilaw na singsing */
+.officerRow .avatarRing {
+  background: conic-gradient(from 200deg, var(--yellow), var(--gold), var(--yellow));
+}
+
+.officerRow .avatarRing > * {
+  background-color: var(--yellow);
+  color: var(--deep);
+}
+
+.personText {
+  min-width: 0;
+}
+
+.name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--deep);
+  overflow-wrap: anywhere;
+}
+
+.email {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Role ---------- */
+.roleCell {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  /* puwang bago ang Status para hindi magdikit */
+  padding-right: 14px !important;
+}
+
+.position,
+.role {
+  display: inline-block;
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+/* May officer position → dilaw */
+.position {
+  background: linear-gradient(135deg, #ffe14d, var(--yellow) 60%, var(--gold));
+  color: var(--deep);
+  box-shadow: inset 0 -2px 0 rgba(122, 90, 0, 0.22);
+}
+
+/* Default (SAO, School Head, School Admin, IT Admin) — navy na gilid */
+.role {
+  border: 1.5px solid #bccbeb;
+  background-color: #fff;
+  color: var(--navy);
+}
+
+/* Member */
+.role[data-role='1'] {
+  border-color: transparent;
+  background-color: #eef1f7;
+  color: #3b4664;
+}
+
+/* Officer (wala pang position) */
+.role[data-role='2'] {
+  border-color: #f1d77a;
+  background-color: #fff7d6;
+  color: #6b4e00;
+}
+
+/* Adviser */
+.role[data-role='3'] {
+  border-color: var(--navy);
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.you {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background-color: var(--deep);
+  color: var(--yellow);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Status ---------- */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Kulay na tuldok sa unahan */
+.status::before {
+  content: '';
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.statusOn {
+  color: #16683a;
+}
+
+.statusOn::before {
+  background-color: #22a557;
+  box-shadow: 0 0 0 3px rgba(34, 165, 87, 0.18);
+}
+
+.statusWait {
+  color: #7a5a00;
+}
+
+.statusWait::before {
+  box-shadow: inset 0 0 0 2.5px var(--gold), 0 0 0 3px rgba(247, 185, 0, 0.16);
+}
+
+.statusOff {
+  color: #6b7285;
+}
+
+.statusOff::before {
+  background-color: #a5adbf;
+}
+
+.statusMeta {
+  display: block;
+  margin-top: 4px;
+  padding-left: 17px;
+  color: #7a8399;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ---------- Hindi aktibo ---------- */
+.inactive {
+  background-color: #fbfbfd;
+}
+
+.inactive > td:not(.actionCell) {
+  opacity: 0.55;
+}
+
+.inactive .avatarRing {
+  filter: grayscale(1);
+}
+
+.inactive .name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(17, 26, 51, 0.35);
+}
+
+/* ---------- Mga button ---------- */
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Show more ---------- */
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 22px 0 8px;
+}
+
+.moreButton {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1.5px solid var(--navy);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--navy);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.18s ease;
+}
+
+.moreButton:hover {
+  background-color: var(--navy);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.moreButton:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ================================================================
+   TABLET (≥ 600px na card)
+     itaas:  pangalan ············· role
+             status
+     ibaba:  ID | Program | Year | Organization  (isang hanay)
+             mga button
+   ================================================================ */
+@container (min-width: 600px) {
+  .row {
+    padding: 18px 22px 20px;
+  }
+
+  .nameCell {
+    grid-column: 1 / 9;
+    grid-row: 1;
+  }
+
+  .roleCell {
+    grid-column: 9 / -1;
+    grid-row: 1;
+    padding: 0 0 0 14px !important;
+    align-items: flex-end;
+    margin-top: 0;
+    align-self: center;
+    text-align: right;
+  }
+
+  .statusCell {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 12px;
+  }
+
+  .idCell,
+  .programCell,
+  .yearCell,
+  .orgCell {
+    grid-row: 3;
+    align-self: stretch;
+    margin-top: 14px;
+    border-top: none;
+  }
+
+  .idCell {
+    grid-column: 1 / 4;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .programCell {
+    grid-column: 4 / 8;
+    border-left: 1px solid var(--line);
+  }
+
+  .yearCell {
+    grid-column: 8 / 10;
+    border-radius: 0;
+  }
+
+  .orgCell {
+    grid-column: 10 / -1;
+    border-left: 1px solid var(--line);
+    border-radius: 0 12px 12px 0;
+  }
+
+  .actionCell {
+    grid-row: 4;
+  }
+}
+
+/* ================================================================
+   DESKTOP — SAO at School Head (walang button), mula 900px
+     itaas:  pangalan ·········· role ········ status
+     ibaba:     ID | Program | Year | Organization
+   ================================================================ */
+@container (min-width: 900px) {
+  .table:not(.manage) .nameCell {
+    grid-column: 1 / 6;
+  }
+
+  .table:not(.manage) .roleCell {
+    padding: 0 14px 0 12px !important;
+    grid-column: 6 / 8;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .table:not(.manage) .statusCell {
+    grid-column: 8 / -1;
+    grid-row: 1;
+    margin-top: 0;
+    align-self: center;
+  }
+
+  .table:not(.manage) .idCell {
+    margin-left: 55px;
+  }
+
+  .table:not(.manage) .yearCell {
+    grid-column: 8 / 9;
+  }
+
+  .table:not(.manage) .orgCell {
+    grid-column: 9 / -1;
+  }
+
+  .table:not(.manage) .idCell,
+  .table:not(.manage) .programCell,
+  .table:not(.manage) .yearCell,
+  .table:not(.manage) .orgCell {
+    grid-row: 2;
+  }
+}
+
+/* ================================================================
+   DESKTOP — School Administrator (may mga button), mula 1000px
+     12 column + 200px para sa mga button sa kanan
+   ================================================================ */
+@container (min-width: 1000px) {
+  .manage .row {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) 200px;
+  }
+
+  .manage .nameCell {
+    grid-column: 1 / 6;
+  }
+
+  .manage .roleCell {
+    padding: 0 14px 0 12px !important;
+    grid-column: 6 / 8;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .manage .statusCell {
+    grid-column: 8 / 13;
+    grid-row: 1;
+    margin-top: 0;
+    align-self: center;
+  }
+
+  .manage .idCell,
+  .manage .programCell,
+  .manage .yearCell,
+  .manage .orgCell {
+    grid-row: 2;
+  }
+
+  .manage .idCell {
+    margin-left: 55px;
+  }
+
+  .manage .yearCell {
+    grid-column: 8 / 9;
+  }
+
+  .manage .orgCell {
+    grid-column: 9 / 13;
+  }
+
+  /* Mga button sa kanan, sakop ang dalawang palapag */
+  .manage .actionCell {
+    grid-column: 13 / 14;
+    grid-row: 1 / 3;
+    margin: 0 0 0 16px;
+    align-self: center;
+  }
+
+  .manage .rowActions {
+    justify-content: flex-end;
+  }
+}
+
+/* ================================================================
+   ANIMATION
+   ================================================================ */
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes checkPop {
+  from {
+    transform: scale(0.4);
+  }
+}
+
+/* ================================================================
+   PHONE — banner at toolbar
+   ================================================================ */
+@media (max-width: 640px) {
+  .hero {
+    padding: 22px 20px 60px;
+    border-radius: 20px;
+  }
+
+  .toolbar {
+    margin: -38px 10px 18px;
+    padding: 10px;
+  }
+
+  .controls {
+    flex: 1 1 100%;
+  }
+
+  .dropdown {
+    flex: 1 1 100%;
+  }
+
+  .dropButton {
+    max-width: none;
+  }
+
+  .dropList {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .hero::after,
+  .notice,
+  .toolbar,
+  .row {
+    animation: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
+
+  .dropList,
+  .dropSelected .dropCheck {
+    animation: none;
+  }
+
+  .dropButton,
+  .dropChevron,
+  .searchIcon,
+  .avatarRing,
+  .moreButton {
+    transition: none;
+  }
+
+  .row:hover .avatarRing {
+    transform: none;
+  }
+}

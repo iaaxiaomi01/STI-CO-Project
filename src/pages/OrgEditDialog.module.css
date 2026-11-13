@@ -1,108 +1,901 @@
 /* ================================================================
-   EDIT DIALOG NG ORG (Organizations page — School Administrator)
+   EDIT ORGANIZATION — dialog ng "Edit" (Organizations page)
+   Ginagamit ng components/EditOrganization.jsx lamang.
 
-   Dito na napunta ang dating Org Profile ng SA:
-     Details tab           → logo + detalye ng org
-     Officer positions tab → components/OfficerPositions (embedded)
-
-   Ang mismong form ay gumagamit pa rin ng ProposalForm.module.css
-   at Admin.module.css; ito ay dagdag lang.
+   Disenyo: "profile sheet" na may dalawang panig
+     Kaliwa  — navy na "cover" na may pinong guhit-guhit; ang logo
+               ay nakapatong sa gilid nito. Sa ilalim: pangalan,
+               status, logo buttons, at mga tab na patayo.
+     Kanan   — puting papel. Ang mga field ay "kahon na may label
+               sa loob"; ang Active at Post to all ay dalawang card
+               na may icon.
+   Ang itsura ng Officer positions sa loob ng dialog na ito ay nasa
+   dulo ng file (.positions) — hindi nito binabago ang Org Profile.
    ================================================================ */
-
-/* Mas malapad kapag Edit — kasya ang listahan ng positions */
-.wide {
-  max-width: 720px;
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.5);
+  animation: fade 0.16s ease-out;
 }
 
-/* ---------- TABS ---------- */
-.tabs {
+.dialog {
+  --ink: #141c33;
+  --ink-soft: #5d6883;
+  --line: #dbe1ec;
+  --line-strong: #c3cde0;
+  --hair: #e9edf4;
+  --navy: var(--dash-navy-deep);
+  --navy-mid: var(--dash-navy);
+  --yellow: var(--dash-yellow);
+  --green: #16683a;
+  --special: #1a3d9c;
+  --side: #f2f5fa;
+
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  width: 100%;
+  max-width: 920px;
+  height: min(700px, calc(100vh - 2rem));
+  overflow: hidden;
+  border-radius: 18px;
+  background-color: #fff;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: 0 30px 60px -24px rgba(3, 27, 75, 0.55);
+  animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ================================================================
+   KALIWA
+   ================================================================ */
+.side {
+  position: relative;
   display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 22px 22px;
+  overflow-y: auto;
+  border-right: 1px solid var(--hair);
+  background-color: var(--side);
+}
+
+/* Navy na cover sa itaas, may pinong pahilis na guhit at dilaw
+   na linya sa ilalim */
+.side::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 96px;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 12px),
+    linear-gradient(160deg, var(--navy-mid), var(--navy) 70%);
+  box-shadow: inset 0 -3px 0 var(--yellow);
+}
+
+/* Inaayos ang pagkakasunod: logo → pangalan → status → logo
+   buttons → tabs (magkasama sa iisang bahagi ang logo at buttons
+   sa code) */
+.logoField {
+  display: contents;
+}
+
+.logo {
+  order: 1;
+}
+
+.title {
+  order: 2;
+}
+
+.badges {
+  order: 3;
+}
+
+.logoBody {
+  order: 4;
+}
+
+.tabs {
+  order: 5;
+}
+
+/* ---------- Logo ---------- */
+.logo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  margin-top: 40px;
+  overflow: visible;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 210, 0, 0.22), transparent 55%),
+    var(--navy);
+  box-shadow: 0 0 0 5px #fff, 0 12px 24px -10px rgba(3, 27, 75, 0.5);
+  color: var(--yellow);
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+/* Umiikot na gilid habang nag-a-upload o nagbubura */
+.logoBusy::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 3px solid rgba(255, 210, 0, 0.3);
+  border-top-color: var(--yellow);
+  border-radius: 30px;
+  animation: spin 0.9s linear infinite;
+}
+
+/* ---------- Pangalan at status ---------- */
+.title {
+  margin-top: 18px;
+}
+
+.titleVerb {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.titleName {
+  display: block;
+  margin-top: 3px;
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.badgeOn {
+  background-color: #e3f5ea;
+  color: var(--green);
+}
+
+.badgeOff {
+  background-color: #e8ebf1;
+  color: #66708a;
+}
+
+.badgeSpecial {
+  background-color: #e6edff;
+  color: var(--special);
+}
+
+/* ---------- Logo buttons ---------- */
+.logoBody {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #dfe4ee;
+}
+
+.logoActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.logoButton,
+.logoRemove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    color var(--transition);
+}
+
+.logoButton {
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background-color: #fff;
+  color: var(--navy);
+}
+
+.logoButton:hover:not(:disabled) {
+  border-color: var(--navy);
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.logoRemove {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: #b42318;
+}
+
+.logoRemove:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.logoButton:disabled,
+.logoRemove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.logoHint,
+.logoError,
+.logoMessage {
+  margin-top: 8px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.logoHint {
+  color: var(--ink-soft);
+}
+
+.logoError {
+  color: #a61b1b;
+  font-weight: 700;
+}
+
+.logoMessage {
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* ---------- Mga tab (patayo) ---------- */
+.tabs {
+  display: grid;
   gap: 4px;
-  margin: -0.35rem 0 1.25rem;
-  padding: 4px;
-  border-radius: 999px;
-  background-color: var(--color-surface);
+  margin-top: auto;
+  padding-top: 22px;
 }
 
 .tab {
-  flex: 1;
-  min-height: 38px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
   padding: 0 14px;
   border: none;
-  border-radius: 999px;
+  border-radius: 10px;
   background: none;
-  color: var(--color-muted);
+  color: var(--ink-soft);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
+  text-align: left;
   cursor: pointer;
   transition: background-color var(--transition), color var(--transition);
 }
 
 .tab:hover:not(:disabled):not(.tabActive) {
-  color: var(--color-text);
+  background-color: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
 }
 
 .tabActive {
   background-color: #fff;
-  color: var(--dash-navy-deep, var(--color-text));
-  box-shadow: 0 1px 4px rgba(3, 27, 75, 0.14);
+  color: var(--navy);
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(3, 27, 75, 0.1);
+}
+
+/* Dilaw na guhit sa kaliwa ng aktibong tab */
+.tabActive::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--yellow);
 }
 
 .tab:disabled {
   cursor: not-allowed;
 }
 
-.tab:focus-visible {
-  outline: 3px solid var(--color-primary);
+.tab:focus-visible,
+.logoButton:focus-visible,
+.logoRemove:focus-visible {
+  outline: 3px solid var(--yellow);
   outline-offset: 2px;
 }
 
-/* ---------- LOGO ---------- */
-.logoField {
+/* ================================================================
+   KANAN
+   ================================================================ */
+.main,
+.form {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.1rem;
-  padding: 0.9rem;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
-.logoPreview {
+.main {
+  height: 100%;
+}
+
+.form {
+  flex: 1;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 30px 32px 10px;
+  overflow-y: auto;
+}
+
+.fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* ---------- Kahon na may label sa loob ---------- */
+.box {
+  display: block;
+  margin-bottom: 14px;
+  padding: 9px 14px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: #fff;
+  cursor: text;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.box:hover {
+  border-color: var(--line-strong);
+}
+
+/* Naka-focus: navy na gilid at dilaw na guhit sa loob, sa kaliwa */
+.box:focus-within {
+  border-color: var(--navy);
+  box-shadow: inset 3px 0 0 var(--yellow), 0 0 0 3px rgba(3, 27, 75, 0.07);
+}
+
+.boxLabel {
+  display: block;
+  margin-bottom: 2px;
+  color: #6a7591;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.box:focus-within .boxLabel {
+  color: var(--navy);
+}
+
+.boxLabelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.optional {
+  color: #98a1b5;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.counter {
+  color: #98a1b5;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.boxInput {
+  display: block;
+  width: 100%;
+  padding: 3px 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.boxInput::placeholder {
+  color: #a6aec0;
+  font-weight: 500;
+}
+
+.nameInput {
+  font-family: var(--font-display);
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.textarea {
+  min-height: 112px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+.fields:disabled .box {
+  background-color: #f7f8fb;
+}
+
+/* ---------- Active · Post to all (dalawang card) ---------- */
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.option {
   position: relative;
+  display: block;
+  padding: 14px 16px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.option:hover:not(:has(.optionInput:disabled)) {
+  border-color: var(--line-strong);
+}
+
+/* Totoong checkbox, nakatago lang */
+.optionInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.optionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.optionIcon {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 76px;
-  height: 76px;
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 30% 25%, rgba(255, 210, 0, 0.28), transparent 55%),
-    var(--dash-navy-deep);
-  color: var(--dash-yellow);
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background-color: #eef2f9;
+  color: var(--navy);
+  transition: background-color var(--transition), color var(--transition);
 }
 
-.logoPreview img {
-  width: 100%;
-  height: 100%;
-  border-radius: 18px;
-  object-fit: cover;
+.optionTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.optionMark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background-color: #fff;
+  color: transparent;
+  transition: background-color var(--transition), border-color var(--transition),
+    color var(--transition);
+}
+
+.optionText {
+  display: block;
+  margin-top: 9px;
+  color: var(--ink-soft);
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+/* Naka-check: Active → berde */
+.optionActive:has(.optionInput:checked) {
+  border-color: var(--green);
+  background-color: #f4faf6;
+}
+
+.optionActive:has(.optionInput:checked) .optionIcon,
+.optionActive:has(.optionInput:checked) .optionMark {
+  border-color: var(--green);
+  background-color: var(--green);
+  color: #fff;
+}
+
+/* Naka-check: Post to all → asul */
+.optionSpecial:has(.optionInput:checked) {
+  border-color: var(--special);
+  background-color: #f5f8ff;
+}
+
+.optionSpecial:has(.optionInput:checked) .optionIcon,
+.optionSpecial:has(.optionInput:checked) .optionMark {
+  border-color: var(--special);
+  background-color: var(--special);
+  color: #fff;
+}
+
+.option:has(.optionInput:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.option:has(.optionInput:focus-visible) {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- Error ---------- */
+.error {
+  margin: 16px 0 6px;
+  padding: 10px 14px;
+  border-left: 3px solid #b42318;
+  border-radius: 0 8px 8px 0;
+  background-color: #fdeeec;
+  color: #8f1d14;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+/* ---------- Paa ---------- */
+.foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 32px;
+  border-top: 1px solid var(--hair);
+  background-color: #fafbfd;
+}
+
+.cancel,
+.save {
+  min-height: 42px;
+  padding: 0 22px;
+  border-radius: 9px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    color var(--transition);
+}
+
+.cancel {
+  border: 1px solid var(--line);
+  background-color: #fff;
+  color: var(--ink);
+}
+
+.cancel:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background-color: #f3f5f9;
+}
+
+/* Save — dilaw na may navy na teksto */
+.save {
+  min-width: 110px;
+  border: none;
+  background-color: var(--yellow);
+  color: var(--navy);
+}
+
+.save:hover:not(:disabled) {
+  background-color: #ffdc33;
+}
+
+.cancel:disabled,
+.save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel:focus-visible,
+.save:focus-visible {
+  outline: 3px solid var(--navy-mid);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   OFFICER POSITIONS — itsura sa loob ng dialog na ito lang
+   (components/OfficerPositions.jsx, embedded). Ang Org Profile ng
+   Adviser ay hindi apektado.
+   Listahang parang talaan: hinahati ng guhit, hindi magkahiwalay
+   na card.
+   ================================================================ */
+section.positions {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+/* Paliwanag sa itaas + bilang (hal. "5 / 30") */
+.positions > div:first-child {
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--yellow);
+  border-radius: 0 10px 10px 0;
+  background-color: #f6f8fc;
+}
+
+.positions > div:first-child p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.positions > div:first-child > span {
+  padding: 4px 10px;
+  border: 1.5px solid var(--navy);
+  border-radius: 6px;
+  background: none;
+  color: var(--navy);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mensahe (added, deleted, error) */
+.positions > p[role='status'],
+.positions > p[role='alert'] {
+  border-left: 3px solid currentColor;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.84rem;
+}
+
+/* Wala pang position */
+.positions > div:not(:first-child) {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background-color: #fafbfd;
+}
+
+.positions > div:not(:first-child) button {
+  border-radius: 8px;
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.positions > div:not(:first-child) button:hover:not(:disabled) {
+  background-color: var(--navy-mid);
+}
+
+/* ---------- Listahan ---------- */
+.positions ol {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background-color: #fff;
 }
 
-/* Umiikot habang nag-a-upload */
-.spinner {
-  position: absolute;
-  inset: -4px;
-  border: 3px solid rgba(255, 210, 0, 0.3);
-  border-top-color: var(--dash-yellow);
-  border-radius: 21px;
-  animation: spin 0.9s linear infinite;
+.positions ol > li {
+  gap: 14px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 0;
+  background-color: #fff;
+}
+
+.positions ol > li + li {
+  border-top: 1px solid var(--hair);
+}
+
+.positions ol > li:hover {
+  background-color: #fbfcfe;
+}
+
+/* Numero: bilog na may gilid; ginto ang pinakamataas */
+.positions ol > li > span:first-child {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid #cdd6e7;
+  border-radius: 50%;
+  background-color: #fff;
+  font-size: 13px;
+}
+
+.positions ol > li:first-child > span:first-child {
+  border-color: var(--yellow);
+  background-color: var(--yellow);
+}
+
+.positions ol > li p:first-child {
+  font-size: 0.95rem;
+}
+
+/* "Multiple" */
+.positions ol > li p:first-child > span {
+  padding: 2px 7px;
+  border: 1px solid #e6c766;
+  border-radius: 5px;
+  background: none;
+  color: #8a6400;
+  font-size: 10px;
+}
+
+/* Mga may hawak */
+.positions ol > li ul > li {
+  background-color: #f1f4fa;
+  font-size: 12.5px;
+}
+
+/* Edit · Delete */
+.positions ol > li > div:last-child button {
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #fff;
+  color: var(--navy);
+  font-size: 12.5px;
+}
+
+.positions ol > li > div:last-child button:hover:not(:disabled) {
+  border-color: var(--navy);
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.positions ol > li > div:last-child button + button {
+  color: #b42318;
+}
+
+.positions ol > li > div:last-child button + button:hover:not(:disabled) {
+  border-color: #b42318;
+  background-color: #b42318;
+  color: #fff;
+}
+
+/* Position na ine-edit: light yellow */
+.positions ol > li:has(form) {
+  background-color: #fffbea;
+  box-shadow: inset 3px 0 0 var(--yellow);
+}
+
+/* ---------- Mga field at button ng Officer positions ---------- */
+.positions input:not([type='checkbox']) {
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+.positions input:not([type='checkbox']):focus {
+  border-color: var(--navy);
+  box-shadow: inset 3px 0 0 var(--yellow), 0 0 0 3px rgba(3, 27, 75, 0.07);
+}
+
+.positions label {
+  font-size: 0.84rem;
+}
+
+.positions form button[type='submit'] {
+  min-height: 40px;
+  border-radius: 8px;
+  background-color: var(--navy);
+  color: #fff;
+}
+
+.positions form button[type='submit']:hover:not(:disabled) {
+  background-color: var(--navy-mid);
+}
+
+.positions form button[type='button'] {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+/* Bagong position — malambot na kahon, walang putol-putol na guhit */
+.positions > form {
+  margin-top: 16px;
+  padding: 14px;
+  border: 0;
+  border-radius: 12px;
+  background-color: #f6f8fc;
+}
+
+/* ================================================================
+   ANIMATION
+   ================================================================ */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
 @keyframes spin {
@@ -111,108 +904,129 @@
   }
 }
 
-.logoBody {
-  min-width: 0;
-}
-
-.logoActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-}
-
-.logoButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 999px;
-  background-color: var(--dash-yellow);
-  color: var(--dash-navy-deep);
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background-color var(--transition);
-}
-
-.logoButton:hover:not(:disabled) {
-  background-color: #ffdc33;
-}
-
-.logoRemove {
-  padding: 0 4px;
-  background: none;
-  color: #b42318;
-}
-
-.logoRemove:hover:not(:disabled) {
-  background: none;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.logoButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.logoButton:focus-visible {
-  outline: 3px solid var(--dash-navy);
-  outline-offset: 2px;
-}
-
-.hint,
-.error,
-.message {
-  margin-top: 0.4rem;
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.hint {
-  color: var(--color-muted);
-}
-
-.error {
-  color: #a61b1b;
-  font-weight: 700;
-}
-
-.message {
-  color: #17683a;
-  font-weight: 700;
-}
-
-/* ---------- OFFICER POSITIONS sa loob ng dialog ----------
-   "section." para manalo sa .section ng OfficerPositions.module.css */
-section.positions {
-  margin-top: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
-}
-
-.footer {
-  margin-top: 1.25rem;
-}
-
-@media (max-width: 480px) {
-  .logoField {
+/* ================================================================
+   TABLET / PHONE — ang kaliwa ay nagiging ulo sa itaas
+   ================================================================ */
+@media (max-width: 760px) {
+  .dialog {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    height: calc(100vh - 2rem);
+  }
+
+  .side {
+    display: grid;
+    flex-shrink: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'logo title'
+      'logo badges'
+      'body body'
+      'tabs tabs';
+    column-gap: 14px;
+    padding: 0 18px 0;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--hair);
+  }
+
+  .side::before {
+    height: 56px;
+  }
+
+  .logo {
+    grid-area: logo;
+    width: 72px;
+    height: 72px;
+    margin-top: 22px;
+    border-radius: 18px;
+    font-size: 24px;
+  }
+
+  .logo img {
+    border-radius: 18px;
+  }
+
+  .title {
+    grid-area: title;
+    align-self: end;
+    margin-top: 64px;
+  }
+
+  .titleName {
+    font-size: 1.1rem;
+  }
+
+  .badges {
+    grid-area: badges;
+    align-self: start;
+    margin-top: 6px;
+  }
+
+  .logoBody {
+    grid-area: body;
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+
+  .tabs {
+    grid-area: tabs;
+    display: flex;
+    gap: 4px;
+    margin-top: 12px;
+    padding: 0 0 10px;
+  }
+
+  .tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .tabActive::before {
+    top: auto;
+    bottom: 0;
+    left: 14px;
+    right: 14px;
+    width: auto;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .scroll {
+    padding: 20px 18px 8px;
+  }
+
+  .pair,
+  .options {
+    grid-template-columns: 1fr;
+  }
+
+  .foot {
+    padding: 12px 18px;
+  }
+
+  .cancel,
+  .save {
+    flex: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
+  .backdrop,
+  .dialog {
     animation: none;
   }
 
-  .tab {
+  .logoBusy::after {
+    animation: none;
+  }
+
+  .tab,
+  .box,
+  .option,
+  .optionIcon,
+  .optionMark {
     transition: none;
   }
 }

@@ -1,4 +1,56 @@
+/* ================================================================
+   ANNOUNCEMENT FORM — sariling disenyo (Post / Edit announcement)
+
+   Kapamilya ng Event at Proposal form (iisang hugis ng modal,
+   header, fields at mga button), pero ASUL AT DILAW ng STI —
+   katugma ng "+ Post" button sa Announcements page.
+
+   Pormal: puti ang background, asul ang teksto at border.
+   Palamuti (konti lang):
+     - asul at dilaw na guhit sa pinakaitaas
+     - manipis na "broadcast" na mga arko sa kanan ng header
+
+     ┌──────────────────────────────────────┐ ← asul ▬▬▬▬▬▬ dilaw ▬▬
+     │ [📣] New announcement          ))))  │ ← header (sticky)
+     │      Share news and updates…         │
+     ├──────────────────────────────────────┤
+     │  TITLE                               │
+     │  TYPE  [Meeting] [Reminder] [Urgent] │
+     │  ┌ Post to ───────────────────────┐  │
+     │  │ [My org] [All orgs] [Selected] │  │
+     │  └────────────────────────────────┘  │
+     │  MESSAGE · PICTURE                   │
+     ├──────────────────────────────────────┤
+     │                    [Cancel] [➤ Post] │ ← mga button (sticky)
+     └──────────────────────────────────────┘
+
+   Ang AnnouncementForm.jsx lang ang gumagamit ng file na ito.
+   ================================================================ */
+
 .backdrop {
+  --af-navy: var(--sti-blue, #06358c);
+  --af-deep: var(--sti-blue-deep, #031b4b);
+  --af-bright: var(--sti-blue-bright, #1249a8);
+  --af-yellow: var(--sti-yellow, #ffd200);
+  --af-gold: var(--sti-gold, #f7b900);
+  --af-sky: #eef3ff;
+  --af-sky-line: #c9d8fb;
+  --af-line: #e2e8f2;
+  --af-line-strong: #c9d3e6;
+  --af-soft: #f8faff;
+  --af-ink: #0e1a36;
+  --af-muted: #5f6b85;
+  --af-red: #c0362c;
+  --af-ring: 0 0 0 4px rgba(30, 79, 216, 0.18);
+
+  /* Kulay ng bawat Type — kapareho ng Announcements page */
+  --af-meeting: #1b7a43;
+  --af-meeting-soft: #e3f4e8;
+  --af-reminder: #8a5a00;
+  --af-reminder-soft: #fff4c2;
+  --af-urgent: #c4231a;
+  --af-urgent-soft: #fdeceb;
+
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -6,113 +58,708 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background-color: rgba(22, 32, 58, 0.45);
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
 }
 
 .modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  max-width: 560px;
+  max-width: 640px;
   max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding: 1.75rem;
+  overscroll-behavior: contain;
+  border-radius: 24px;
   background-color: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.12);
+  color: var(--af-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: thin;
+  scrollbar-color: var(--af-line-strong) transparent;
+  animation: modalIn 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Hindi dapat lumiit kapag mas mahaba ang form kaysa sa screen */
+.head,
+.body,
+.actions {
+  flex-shrink: 0;
+}
+
+/* ---------- HEADER ---------- */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 28px 18px;
+  border-bottom: 1px solid var(--af-line);
+  background-color: #fff;
+  overflow: hidden;
+}
+
+/* Asul at dilaw na guhit sa pinakaitaas */
+.head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--af-navy) 0 72%,
+    var(--af-yellow) 72% 100%
+  );
+}
+
+/* Mga arko ng "broadcast" sa kanan — palamuti lang, mapusyaw */
+.head::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -70px;
+  width: 200px;
+  height: 200px;
+  transform: translateY(-46%);
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle,
+    transparent 0 22px,
+    rgba(6, 53, 140, 0.1) 22px 24px
+  );
+  -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 70%);
+  mask-image: linear-gradient(90deg, transparent 10%, #000 70%);
+  pointer-events: none;
+}
+
+.headIcon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--af-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.3), inset 0 -3px 0 var(--af-yellow);
+}
+
+.headText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
 }
 
 .heading {
-  font-size: 1.25rem;
-  margin-bottom: 1.25rem;
+  font-family: var(--font-display, inherit);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--af-deep);
 }
 
+.subtitle {
+  margin-top: 4px;
+  font-size: 13.5px;
+  color: var(--af-muted);
+}
+
+/* ---------- LAMAN ---------- */
+.body {
+  padding: 22px 28px 6px;
+}
+
+/* ---------- FIELDS ---------- */
 .field {
   display: block;
-  margin-bottom: 1rem;
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
 }
 
 .labelRow {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.labelRow .label {
+  margin-bottom: 0;
 }
 
 .label {
   display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.85rem;
+  margin-bottom: 7px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--af-deep);
+}
+
+/* "(optional)" sa tabi ng Picture */
+.optional {
   font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--af-muted);
 }
 
 .counter {
-  font-size: 0.78rem;
-  color: var(--color-muted);
+  padding: 2px 9px;
+  border-radius: 999px;
+  background-color: #f1f4fa;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--af-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .input {
   width: 100%;
-  padding: 0.7rem 0.95rem;
-  font: inherit;
-  font-size: 0.95rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--af-line);
+  border-radius: 12px;
   background-color: #fff;
-  color: var(--color-text);
+  color: var(--af-ink);
+  font: inherit;
+  font-size: 14.5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #a0a9bc;
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--af-line-strong);
 }
 
 .input:focus {
-  outline: 2px solid var(--color-primary-soft);
-  border-color: var(--color-primary);
+  outline: none;
+  border-color: var(--af-navy);
+  box-shadow: var(--af-ring);
+}
+
+.input:disabled {
+  background-color: var(--af-soft);
+  cursor: not-allowed;
 }
 
 .textarea {
+  min-height: 170px;
+  line-height: 1.6;
   resize: vertical;
-  min-height: 140px;
-  line-height: 1.55;
 }
 
-.error {
-  margin-bottom: 1rem;
-  padding: 0.7rem 0.9rem;
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--af-muted);
+}
+
+/* Nakatagong radio/checkbox — ang card mismo ang pinipindot */
+.typeOption input,
+.audienceOption input,
+.orgOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- TYPE ---------- */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.typeOption {
+  --tone: var(--af-navy);
+  --tone-soft: var(--af-sky);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--af-line);
+  border-radius: 12px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.type_meeting {
+  --tone: var(--af-meeting);
+  --tone-soft: var(--af-meeting-soft);
+}
+
+.type_reminder {
+  --tone: var(--af-reminder);
+  --tone-soft: var(--af-reminder-soft);
+}
+
+.type_urgent {
+  --tone: var(--af-urgent);
+  --tone-soft: var(--af-urgent-soft);
+}
+
+.typeOption:hover {
+  border-color: var(--af-line-strong);
+}
+
+.typeIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background-color: var(--tone-soft);
+  color: var(--tone);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.typeLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--af-ink);
+}
+
+/* Napili: kulay ng type ang border, puno ang icon */
+.typeOption:has(input:checked) {
+  border-color: var(--tone);
+  background-color: var(--tone-soft);
+}
+
+.typeOption:has(input:checked) .typeIcon {
+  background-color: var(--tone);
+  color: #fff;
+}
+
+.typeOption:has(input:checked) .typeLabel {
+  color: var(--tone);
+}
+
+.typeOption:has(input:focus-visible) {
+  box-shadow: var(--af-ring);
+}
+
+/* ---------- POST TO ---------- */
+.audienceCard {
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 14px 16px 16px;
+  border: 1.5px solid var(--af-line);
+  border-radius: 16px;
+  background-color: var(--af-soft);
+}
+
+/* Ang legend ay nasa loob ng card (float) */
+.cardTitle {
+  float: left;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--af-navy);
+}
+
+.cardTitle + * {
+  clear: both;
+}
+
+.audienceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.audienceOption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--af-line);
+  border-radius: 11px;
+  background-color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--af-deep);
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition),
+    color var(--transition), box-shadow var(--transition);
+}
+
+.audienceOption svg {
+  flex-shrink: 0;
+  color: var(--af-navy);
+}
+
+.audienceOption:hover {
+  border-color: var(--af-line-strong);
+}
+
+/* Napili: asul na may dilaw na icon at guhit sa ilalim */
+.audienceOption:has(input:checked) {
+  border-color: var(--af-navy);
+  background-color: var(--af-navy);
+  color: #fff;
+  box-shadow: inset 0 -3px 0 var(--af-yellow);
+}
+
+.audienceOption:has(input:checked) svg {
+  color: var(--af-yellow);
+}
+
+.audienceOption:has(input:focus-visible) {
+  outline: 3px solid var(--af-yellow);
+  outline-offset: 2px;
+}
+
+/* Mga piniling org */
+.orgBlock {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--af-line-strong);
+}
+
+.subLabel {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--af-deep);
+}
+
+.orgList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.orgOption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1.5px solid var(--af-line);
   border-radius: 10px;
-  background-color: #fdecec;
-  color: #a61b1b;
-  font-size: 0.9rem;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
 }
 
-.actions {
+.orgOption:hover {
+  border-color: var(--af-line-strong);
+}
+
+.orgCheck {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--af-line-strong);
+  border-radius: 5px;
+  background-color: #fff;
+  color: transparent;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.orgName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--af-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orgOption:has(input:checked) {
+  border-color: var(--af-sky-line);
+  background-color: var(--af-sky);
+}
+
+.orgOption:has(input:checked) .orgCheck {
+  border-color: var(--af-navy);
+  background-color: var(--af-navy);
+  color: var(--af-yellow);
+}
+
+.orgOption:has(input:focus-visible) {
+  box-shadow: var(--af-ring);
+}
+
+/* Paalala sa Edit — kung kanino nakikita */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--af-sky-line);
+  border-left: 4px solid var(--af-navy);
+  border-radius: 12px;
+  background-color: var(--af-sky);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #4a5470;
+}
+
+.note strong {
+  color: var(--af-deep);
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--af-navy);
+}
+
+/* ---------- PICTURE ---------- */
+.uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 2px dashed var(--af-line-strong);
+  border-radius: 14px;
+  background-color: #fff;
+  color: var(--af-navy);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--af-navy);
+  background-color: var(--af-sky);
+}
+
+.uploadButton:focus-visible {
+  outline: none;
+  border-color: var(--af-navy);
+  box-shadow: var(--af-ring);
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--af-yellow);
+  color: var(--af-deep);
+}
+
+.uploadText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.uploadText strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.uploadText span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--af-muted);
+}
+
+.preview {
+  overflow: hidden;
+  border: 1.5px solid var(--af-line);
+  border-radius: 14px;
+}
+
+.preview img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  background-color: var(--af-soft);
+}
+
+.previewActions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.6rem;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--af-line);
+  background-color: #fff;
+}
+
+.smallButton {
+  padding: 7px 14px;
+  border: 1.5px solid var(--af-line);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--af-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.smallButton:hover:not(:disabled) {
+  border-color: var(--af-navy);
+}
+
+.removeButton {
+  border-color: #f0c6c0;
+  color: var(--af-red);
+}
+
+.removeButton:hover:not(:disabled) {
+  border-color: var(--af-red);
+  background-color: #fdecea;
+}
+
+.smallButton:focus-visible {
+  outline: 3px solid var(--af-navy);
+  outline-offset: 2px;
+}
+
+.smallButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- ERROR ---------- */
+.error {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--af-red);
+  border-radius: 12px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
   flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding: 16px 28px;
+  border-top: 1px solid var(--af-line);
+  background-color: #fff;
+  box-shadow: 0 -12px 24px -18px rgba(3, 27, 75, 0.3);
 }
 
 .primary,
 .secondary {
-  padding: 0.65rem 1.25rem;
-  border-radius: 999px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.primary {
-  border: none;
-  background-color: var(--color-primary);
-  color: #fff;
-}
-
-.primary:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+    transform var(--transition), box-shadow var(--transition);
 }
 
 .secondary {
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--af-line);
   background-color: #fff;
-  color: var(--color-text);
+  color: var(--af-deep);
 }
 
 .secondary:hover:not(:disabled) {
-  background-color: var(--color-surface);
+  border-color: var(--af-navy);
+}
+
+/* Post — asul na may dilaw na guhit sa ilalim (katugma ng "+ Post") */
+.primary {
+  min-width: 132px;
+  border: none;
+  background-color: var(--af-navy);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(6, 53, 140, 0.3), inset 0 -3px 0 var(--af-yellow);
+}
+
+.primary svg {
+  color: var(--af-yellow);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--af-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(6, 53, 140, 0.38), inset 0 -3px 0 var(--af-gold);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--af-yellow);
+  outline-offset: 2px;
 }
 
 .primary:disabled,
@@ -121,131 +768,71 @@
   cursor: not-allowed;
 }
 
-/* "Visible to all organizations" — tingnan ang audience prop */
-.hint {
-  margin-bottom: 1rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 10px;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  font-size: 0.87rem;
+/* ---------- PHONE ---------- */
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 20px;
+  }
+
+  .head {
+    padding: 22px 18px 14px;
+  }
+
+  .head::after {
+    right: -110px;
+  }
+
+  .headIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .body {
+    padding: 18px 18px 4px;
+  }
+
+  .typeGrid {
+    gap: 6px;
+  }
+
+  .typeOption {
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
+  .typeLabel {
+    font-size: 13px;
+  }
+
+  .actions {
+    padding: 14px 18px;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1;
+  }
 }
 
-/* "Selected organizations" — listahan ng checkbox */
-fieldset.field {
-  border: none;
-  padding: 0;
-  min-width: 0;
-}
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
 
-fieldset.field legend {
-  width: 100%;
-  padding: 0;
-}
-
-.orgList {
-  display: grid;
-  gap: 0.15rem;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 0.4rem;
-  padding: 0.4rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-}
-
-.orgOption {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.92rem;
-  cursor: pointer;
-}
-
-.orgOption:hover {
-  background-color: var(--color-surface);
-}
-
-/* ---------- PICTURE (optional) — kapareho ng sa EventForm ---------- */
-.optional {
-  font-weight: 400;
-  color: var(--color-muted);
-}
-
-.dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  width: 100%;
-  padding: 1.4rem 1rem;
-  border: 1.5px dashed var(--color-border);
-  border-radius: 12px;
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color var(--transition), background-color var(--transition);
-}
-
-.dropzone:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
-}
-
-.dropIcon {
-  font-size: 1.4rem;
-  line-height: 1;
-  color: var(--color-primary);
-}
-
-.fileHint {
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: var(--color-muted);
-}
-
-.preview {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* contain: hindi napuputol ang poster o pahabang larawan */
-.preview img {
-  display: block;
-  width: 100%;
-  max-height: 280px;
-  object-fit: contain;
-  background-color: var(--color-surface);
-}
-
-.previewActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  padding: 0.6rem;
-  background-color: #fff;
-}
-
-.previewActions button {
-  padding: 0.45rem 1rem;
-  font-size: 0.85rem;
-}
-
-.removeButton {
-  border: 1px solid #e3b4ae;
-  border-radius: 999px;
-  background-color: #fff;
-  color: #b42318;
-  font-weight: 600;
-  transition: background-color var(--transition);
-}
-
-.removeButton:hover:not(:disabled) {
-  background-color: #fdecec;
+  .primary:hover:not(:disabled) {
+    transform: none;
+  }
 }

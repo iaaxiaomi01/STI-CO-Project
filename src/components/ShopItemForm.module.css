@@ -1,65 +1,868 @@
-/* Dagdag sa ProposalForm.module.css at EventForm.module.css */
+/* ================================================================
+   SHOP ITEM FORM — Add / Edit item (Rewards shop, Adviser)
+
+   SARILING disenyo — sadyang iba sa Event, Announcement at
+   Position form. Pormal na "catalog" ang dating:
+     - dalawang hanay: live na preview sa kaliwa, mga field sa kanan
+     - header na may maliit na "REWARDS SHOP" (eyebrow) at X button,
+       walang kulay na guhit at walang icon box
+     - mas parisukat na gilid at manipis na linya
+     - switch imbes na checkbox
+
+     ┌──────────────────────────────────────────────────────┐
+     │ ▪ REWARDS SHOP                                   [X] │
+     │ Add item                                             │
+     │ Members can redeem this using…                       │
+     ├────────────────────┬─────────────────────────────────┤
+     │ SHOP PREVIEW       │ ITEM NAME                       │
+     │ ┌────────────────┐ │ DESCRIPTION                     │
+     │ │   (picture)    │ │ PRICE   [◆ ______ OG]           │
+     │ │ [◆ 50 OG]      │ │ AVAILABILITY [Stock] [Limit]    │
+     │ │ Org T-shirt    │ │ Show in the shop        (●──)   │
+     │ └────────────────┘ │                                 │
+     │ [Upload picture]   │                                 │
+     ├────────────────────┴─────────────────────────────────┤
+     │                                  [Cancel] [Add item] │
+     └──────────────────────────────────────────────────────┘
+
+   Ang ShopItemForm.jsx lang ang gumagamit ng file na ito.
+   ================================================================ */
+
+.backdrop {
+  --si-navy: var(--sti-blue, #06358c);
+  --si-deep: var(--sti-blue-deep, #031b4b);
+  --si-bright: var(--sti-blue-bright, #1249a8);
+  --si-yellow: var(--sti-yellow, #ffd200);
+  --si-gold: var(--sti-gold, #f7b900);
+  --si-paper: #f5f7fb;
+  /* Mapusyaw na asul na background (puti pa rin ang input at card) */
+  --si-bg: #f6f9ff;
+  --si-bg-side: #ebf1fc;
+  --si-bg-head: #e9f0fd;
+  --si-line: #e1e6ef;
+  --si-line-strong: #c8d0de;
+  --si-ink: #0e1a36;
+  --si-muted: #5f6b85;
+  --si-red: #c0362c;
+  --si-ring: 0 0 0 3px rgba(6, 53, 140, 0.16);
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
 
 .modal {
-  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 860px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 18px;
+  background-color: var(--si-bg);
+  box-shadow: 0 30px 80px rgba(3, 27, 75, 0.35), 0 4px 12px rgba(3, 27, 75, 0.12);
+  color: var(--si-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: thin;
+  scrollbar-color: var(--si-line-strong) transparent;
+  animation: modalIn 0.22s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.head,
+.layout,
+.actions {
+  flex-shrink: 0;
+}
+
+/* ---------- HEADER ---------- */
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--si-line);
+  background: linear-gradient(180deg, var(--si-bg-head), var(--si-bg));
+}
+
+.headText {
+  min-width: 0;
+}
+
+/* "▪ REWARDS SHOP" — maliit na dilaw na parisukat sa unahan */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--si-navy);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background-color: var(--si-yellow);
+  box-shadow: 0 0 0 2px rgba(247, 185, 0, 0.25);
+}
+
+.heading {
+  margin-top: 6px;
+  font-family: var(--font-display, inherit);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--si-deep);
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--si-muted);
+}
+
+.close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--si-line);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--si-muted);
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition),
+    background-color var(--transition);
+}
+
+.close:hover:not(:disabled) {
+  border-color: var(--si-line-strong);
+  background-color: var(--si-paper);
+  color: var(--si-deep);
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--si-ring);
+  border-color: var(--si-navy);
+}
+
+/* ---------- DALAWANG HANAY ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+}
+
+/* Kaliwa — mapusyaw na "papel" */
+.side {
+  padding: 22px 24px 24px;
+  border-right: 1px solid var(--si-line);
+  background-color: var(--si-bg-side);
+}
+
+.sideLabel {
+  margin-bottom: 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--si-muted);
+}
+
+/* Preview card — kahugis ng item card sa Rewards shop */
+.card {
+  overflow: hidden;
+  border: 1px solid var(--si-line);
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 10px 24px rgba(3, 27, 75, 0.08);
+  transition: opacity var(--transition);
+}
+
+/* Naka-hide: lumalabo ang item, pero malinaw ang "Hidden" badge */
+.cardHidden .cardImage,
+.cardHidden .cardPlaceholder,
+.cardHidden .cardPrice,
+.cardHidden .cardBody {
+  opacity: 0.5;
+}
+
+.cardMedia {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background-color: var(--si-paper);
+}
+
+.cardImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardPlaceholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 210, 0, 0.3), transparent 45%),
+    linear-gradient(150deg, var(--si-navy), var(--si-deep));
+}
+
+.cardPlaceholder svg {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+
+.cardPlaceholder path:nth-of-type(1) {
+  fill: var(--si-gold);
+}
+
+.cardPlaceholder path:nth-of-type(2) {
+  fill: #ffe45c;
+}
+
+/* "◆ 50 OG" — dilaw na pill sa ibaba ng picture */
+.cardPrice {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background-color: var(--si-yellow);
+  color: var(--si-deep);
+  font-size: 13.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 6px 14px rgba(3, 27, 75, 0.2);
+}
+
+.cardPrice path:nth-of-type(1) {
+  fill: var(--si-deep);
+}
+
+.cardPrice path:nth-of-type(2) {
+  fill: var(--si-navy);
+}
+
+.cardBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background-color: rgba(3, 27, 75, 0.85);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.cardBody {
+  padding: 14px 16px 16px;
+}
+
+.cardName {
+  font-family: var(--font-display, inherit);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--si-deep);
+  overflow-wrap: anywhere;
+}
+
+/* Wala pang pangalan → mapusyaw na placeholder */
+.cardEmpty {
+  color: #aab3c5;
+}
+
+.cardDesc {
+  display: -webkit-box;
+  margin-top: 5px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #3a4766;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.cardFacts {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--si-muted);
+}
+
+/* Picture */
+.picture {
+  margin-top: 16px;
+}
+
+.uploadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px dashed var(--si-line-strong);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--si-navy);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--si-navy);
+  background-color: #eef3ff;
+}
+
+.pictureActions {
+  display: flex;
+  gap: 8px;
+}
+
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--si-line-strong);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--si-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.ghostButton:hover:not(:disabled) {
+  border-color: var(--si-navy);
+}
+
+.ghostDanger {
+  flex: 0 0 auto;
+  color: var(--si-red);
+}
+
+.ghostDanger:hover:not(:disabled) {
+  border-color: var(--si-red);
+  background-color: #fdecea;
+}
+
+.uploadButton:focus-visible,
+.ghostButton:focus-visible {
+  outline: none;
+  border-color: var(--si-navy);
+  box-shadow: var(--si-ring);
+}
+
+.uploadButton:disabled,
+.ghostButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pictureHint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--si-muted);
+  text-align: center;
+}
+
+/* Kanan — mga field */
+.main {
+  min-width: 0;
+  padding: 22px 28px 8px;
+}
+
+/* ---------- FIELDS ---------- */
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.labelRow .label {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 7px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--si-deep);
+}
+
+.optional {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--si-muted);
+}
+
+.counter {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--si-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--si-line-strong);
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--si-ink);
+  font: inherit;
+  font-size: 14.5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: #a0a9bc;
+}
+
+.input:hover:not(:disabled) {
+  border-color: #aeb8cb;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--si-navy);
+  box-shadow: var(--si-ring);
 }
 
 .textarea {
-  resize: vertical;
-  min-height: 80px;
+  min-height: 92px;
   line-height: 1.55;
+  resize: vertical;
 }
 
-.grid3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0 0.75rem;
+.hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--si-muted);
 }
 
-.grid3 > label {
-  margin-bottom: 0.4rem;
-}
-
-.fieldHint {
-  margin: 0 0 1rem;
-  font-size: 0.78rem;
-  color: var(--color-muted);
-}
-
-/* Parisukat na preview, gaya ng sa shop */
-.preview img {
-  aspect-ratio: 1 / 1;
-  max-height: 220px;
-  width: auto;
-  margin: 0 auto;
-}
-
-.check {
+/* Price — [◆ | 50 | OG] */
+.affix {
   display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  margin-bottom: 1.25rem;
-  font-size: 0.9rem;
-  cursor: pointer;
+  align-items: stretch;
+  max-width: 240px;
+  border: 1px solid var(--si-line-strong);
+  border-radius: 10px;
+  background-color: #fff;
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.check input {
-  margin-top: 0.3rem;
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--color-primary);
+.affix:hover {
+  border-color: #aeb8cb;
 }
 
-.check strong {
+.affix:focus-within {
+  border-color: var(--si-navy);
+  box-shadow: var(--si-ring);
+}
+
+.prefix,
+.suffix {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding: 0 12px;
+  background-color: var(--si-paper);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--si-navy);
+}
+
+.prefix {
+  border-right: 1px solid var(--si-line);
+}
+
+.prefix path:nth-of-type(1) {
+  fill: var(--si-gold);
+}
+
+.prefix path:nth-of-type(2) {
+  fill: var(--si-yellow);
+}
+
+.suffix {
+  border-left: 1px solid var(--si-line);
+  letter-spacing: 0.04em;
+}
+
+.affixInput,
+.affixInput:hover:not(:disabled),
+.affixInput:focus {
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Availability — Stock · Limit per member */
+.group {
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
+}
+
+.groupGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.subField {
   display: block;
 }
 
-@media (max-width: 520px) {
-  .grid3 {
-    grid-template-columns: 1fr 1fr;
+.subLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3a4766;
+}
+
+/* ---------- SWITCH: Show in the shop ---------- */
+.switchRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--si-line);
+  border-radius: 12px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.switchText {
+  flex: 1;
+  min-width: 0;
+}
+
+.switchTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--si-deep);
+}
+
+.switchTitle svg {
+  color: var(--si-navy);
+}
+
+.switchRow .hint {
+  margin-top: 3px;
+}
+
+/* Nakatagong checkbox — ang .switch ang nakikita */
+.switchInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background-color: #cfd6e3;
+  transition: background-color var(--transition);
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(3, 27, 75, 0.25);
+  transition: transform 0.2s ease;
+}
+
+/* Naka-on: asul, at dilaw ang bilog */
+.switchInput:checked + .switch {
+  background-color: var(--si-navy);
+}
+
+.switchInput:checked + .switch::after {
+  transform: translateX(18px);
+  background-color: var(--si-yellow);
+}
+
+.switchInput:focus-visible + .switch {
+  box-shadow: var(--si-ring);
+}
+
+.switchInput:disabled + .switch {
+  opacity: 0.6;
+}
+
+/* ---------- ERROR ---------- */
+.error {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #f6c8c2;
+  border-left: 4px solid var(--si-red);
+  border-radius: 10px;
+  background-color: #fdeeec;
+  color: #a61b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding: 16px 28px;
+  border-top: 1px solid var(--si-line);
+  background-color: #fff;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 -12px 24px -18px rgba(3, 27, 75, 0.3);
+}
+
+/* Sariling kulay ng Rewards (iba sa ibang form), pero pareho ang
+   hugis at animation: bahagyang umaangat kapag tinapatan ng mouse.
+     Add item → DILAW na may asul na teksto, gem, at gold na guhit
+     Cancel   → MAPUSYAW NA ASUL, walang border */
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition),
+    transform var(--transition), box-shadow var(--transition);
+}
+
+/* Cancel — mapusyaw na asul */
+.secondary {
+  background-color: #e6edfb;
+  color: var(--si-navy);
+  box-shadow: inset 0 -2px 0 #cfdaf3;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #d8e3f8;
+  color: var(--si-deep);
+  transform: translateY(-1px);
+}
+
+.secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Add item / Save changes — dilaw na may gem */
+.primary {
+  min-width: 140px;
+  background: linear-gradient(180deg, #ffdc33, var(--si-yellow));
+  color: var(--si-deep);
+  box-shadow: 0 8px 18px rgba(247, 185, 0, 0.4), inset 0 -3px 0 var(--si-gold);
+}
+
+.primary path:nth-of-type(1) {
+  fill: var(--si-deep);
+}
+
+.primary path:nth-of-type(2) {
+  fill: var(--si-navy);
+}
+
+.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(247, 185, 0, 0.48), inset 0 -3px 0 #d99e00;
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--si-navy);
+  outline-offset: 2px;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- TABLET / PHONE: isang hanay ---------- */
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
   }
 
-  .grid3 > :first-child {
-    grid-column: 1 / -1;
+  /* Mga field muna, preview sa ilalim */
+  .side {
+    order: 2;
+    border-right: none;
+    border-top: 1px solid var(--si-line);
+  }
+
+  /* Mas maliit na preview para hindi masyadong mahaba */
+  .card,
+  .picture {
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .picture {
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 16px;
+  }
+
+  .head {
+    padding: 20px 18px 16px;
+  }
+
+  .heading {
+    font-size: 22px;
+  }
+
+  .side {
+    padding: 18px;
+  }
+
+  .main {
+    padding: 18px 18px 6px;
+  }
+
+  .affix {
+    max-width: none;
+  }
+
+  .groupGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .actions {
+    padding: 12px 18px;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal {
+    animation: none;
+  }
+
+  .switch::after {
+    transition: none;
+  }
+
+  .primary:hover:not(:disabled),
+  .secondary:hover:not(:disabled) {
+    transform: none;
   }
 }

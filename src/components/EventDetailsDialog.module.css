@@ -1,16 +1,246 @@
-/* ============================================================
-   EVENT DETAILS DIALOG — kumpletong detalye (SAO)
-   Kapareho ng itsura ng ticket sa Events page.
-   ============================================================ */
+/* ================================================================
+   EVENT DETAILS DIALOG — "event ticket" (SAO at School Head)
 
-/* div.modal: mas mataas kaysa sa .modal ng ProposalForm.module.css */
-div.modal {
+   Kapamilya ng ticket sa Events page at ng Attendance Pass:
+     - ULO: larawan ng event (o asul na banda kung wala), status
+       at pangalan ng org
+     - title, tapos ang STUB ng petsa — pareho ng kulay ng stub
+       sa ticket (Upcoming dilaw · Ongoing asul · Completed abo ·
+       Missed kupas) — katabi ng Date / Time / Location
+     - punit na linya (perforation)
+     - OG reward at bilang ng sumali, description, at kung
+       sino ang gumawa / kailan binago
+
+     ┌──────────────────────────────────────┐
+     │▓▓▓▓▓▓▓▓ larawan / asul ▓▓▓▓▓▓▓▓▓ [×] │
+     │▓ (● UPCOMING) (🏢 SYNERGIA NEXUS)    ▓│
+     │  EVENT DETAILS                        │
+     │  Intramurals 2026                     │
+     │  ┌──────┐  📅 Date   Saturday, …      │
+     │  │  07  │  🕐 Time   8:00 AM – 5 PM   │
+     │  │NOV 26│  📍 Location  Gym           │
+     │  └──────┘                             │
+     ◖ - - - - - - - - - - - - - - - - - - ◗
+     │  [◆ OG reward 50] [👥 Participants 40]│
+     │  DESCRIPTION …                        │
+     │  👤 Created by …   ✎ Last edited …    │
+     └──────────────────────────────────────┘
+   ================================================================ */
+
+.backdrop {
+  --ed-ink: var(--dash-ink, #0e1a36);
+  --ed-muted: var(--dash-muted, #5a6782);
+  --ed-navy: var(--dash-navy, #06358c);
+  --ed-deep: var(--dash-navy-deep, #031b4b);
+  --ed-yellow: var(--dash-yellow, #ffd200);
+  --ed-ground: var(--dash-ground, #eef1f7);
+  --ed-line: #e2e8f2;
+  --ed-soft: #f6f8fc;
+  --ed-scrim: rgba(3, 27, 75, 0.62);
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--ed-scrim);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal {
+  /* Kulay ng stub — pinapalitan ng status sa ibaba */
+  --stub-bg: var(--ed-ground);
+  --stub-ink: #3b4660;
+  --stub-day: var(--ed-ink);
+  --pill-bg: #fff;
+  --pill-ink: var(--ed-deep);
+
   position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   max-width: 620px;
-  padding: 0;
-  border-radius: var(--dash-radius);
-  font-family: var(--font-ui);
-  color: var(--dash-ink);
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 26px;
+  background-color: #fff;
+  box-shadow: 0 34px 80px rgba(3, 27, 75, 0.45), 0 4px 12px rgba(3, 27, 75, 0.14);
+  color: var(--ed-ink);
+  font-family: var(--font-ui, inherit);
+  scrollbar-width: thin;
+  animation: ticketIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ticketIn {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- KULAY AYON SA STATUS (pareho sa ticket) ---------- */
+.upcoming {
+  --stub-bg: var(--ed-yellow);
+  --stub-ink: var(--ed-deep);
+  --stub-day: var(--ed-deep);
+  --pill-bg: var(--ed-yellow);
+  --pill-ink: var(--ed-deep);
+}
+
+.ongoing {
+  --stub-bg: var(--ed-navy);
+  --stub-ink: #fff;
+  --stub-day: var(--ed-yellow);
+  --pill-bg: var(--ed-yellow);
+  --pill-ink: var(--ed-deep);
+}
+
+.completed {
+  --stub-bg: var(--ed-ground);
+  --stub-ink: #3b4660;
+  --stub-day: var(--ed-ink);
+  --pill-bg: #fff;
+  --pill-ink: #3b4660;
+}
+
+.missed {
+  --stub-bg: #f3f5f9;
+  --stub-ink: var(--ed-muted);
+  --stub-day: var(--ed-muted);
+  --pill-bg: #e3e7ef;
+  --pill-ink: #3b4660;
+}
+
+.missed .heroImg {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+/* ---------- ULO ---------- */
+.hero {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--ed-deep);
+}
+
+/* May larawan: 16:9, may dilim sa ibaba para mabasa ang status */
+.heroPoster {
+  aspect-ratio: 16 / 9;
+  max-height: 300px;
+  width: 100%;
+}
+
+.heroImg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroPoster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(3, 27, 75, 0) 45%, rgba(3, 27, 75, 0.78) 100%);
+}
+
+/* Walang larawan: asul na banda na may dilaw na guhit
+   (kapareho ng Attendance Pass) */
+.heroPlain {
+  min-height: 118px;
+  background:
+    radial-gradient(280px 180px at 100% 0%, rgba(91, 133, 240, 0.5), transparent 70%),
+    linear-gradient(165deg, var(--ed-navy) 0%, var(--ed-deep) 100%);
+}
+
+.heroPlain::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -70px;
+  right: 120px;
+  width: 22px;
+  height: 170px;
+  background: linear-gradient(var(--ed-yellow), #f7b900);
+  box-shadow: 34px 0 0 rgba(255, 255, 255, 0.08);
+  transform: rotate(32deg);
+  opacity: 0.9;
+}
+
+.heroBar {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background-color: var(--pill-bg);
+  color: var(--pill-ink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(3, 27, 75, 0.2);
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: livePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  50% { opacity: 0.35; }
+}
+
+.org {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.org svg {
+  flex-shrink: 0;
 }
 
 /* ---------- Isara ---------- */
@@ -21,183 +251,289 @@ div.modal {
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 50%;
   background-color: #fff;
-  color: var(--dash-navy-deep);
-  box-shadow: 0 4px 14px rgba(3, 27, 75, 0.18);
+  color: var(--ed-deep);
+  box-shadow: 0 4px 14px rgba(3, 27, 75, 0.25);
+  cursor: pointer;
   transition: background-color var(--transition), color var(--transition);
 }
 
 .close:hover {
-  background-color: var(--dash-navy-deep);
-  color: #fff;
+  background-color: var(--ed-yellow);
 }
 
 .close:focus-visible {
-  outline: 3px solid var(--dash-navy);
+  outline: 3px solid var(--ed-yellow);
   outline-offset: 2px;
 }
 
-/* ---------- Larawan ---------- */
-.poster {
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: var(--dash-radius) var(--dash-radius) 0 0;
-  background-color: var(--dash-navy);
+/* ---------- TITLE + TICKET ---------- */
+.body {
+  flex-shrink: 0;
+  padding: 22px 26px 0;
 }
 
-.poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-navy);
 }
 
-/* ---------- Ulo ---------- */
-.head {
+.title {
+  margin-top: 6px;
+  font-family: var(--font-display, inherit);
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  color: var(--ed-ink);
+  overflow-wrap: anywhere;
+}
+
+.missed .title {
+  color: var(--ed-muted);
+}
+
+.ticket {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* Stub ng petsa — pareho ng kulay ng stub sa ticket */
+.stub {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 10px;
+  border-radius: 18px;
+  background-color: var(--stub-bg);
+  color: var(--stub-ink);
+  text-align: center;
+}
+
+.stubDay {
+  font-family: var(--font-display, inherit);
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+  color: var(--stub-day);
+}
+
+.stubMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.stubMonth {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.stubWeekday {
+  font-size: 12.5px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* Date / Time / Location */
+.facts {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.fact:nth-child(odd) {
+  background-color: var(--ed-soft);
+}
+
+.fact dt {
+  display: inline-flex;
+  align-items: center;
+  align-self: start;
   gap: 8px;
-  padding: 26px 26px 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ed-muted);
 }
 
-/* Walang larawan → may puwang para sa X sa kanan */
-.head:first-of-type {
-  padding-right: 70px;
+.fact dt svg {
+  flex-shrink: 0;
+  color: var(--ed-navy);
 }
 
-.poster + .head {
-  padding-right: 26px;
+.fact dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
-.status {
-  padding: 5px 11px;
-  border-radius: 999px;
+/* ---------- PERFORATION ---------- */
+.perforation {
+  position: relative;
+  flex-shrink: 0;
+  height: 28px;
+  margin-top: 14px;
+}
+
+.perforation::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  border-top: 2px dashed var(--ed-line);
+}
+
+.notchLeft,
+.notchRight {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--ed-scrim);
+  transform: translateY(-50%);
+}
+
+.notchLeft {
+  left: -13px;
+}
+
+.notchRight {
+  right: -13px;
+}
+
+/* ---------- IBABA ---------- */
+.bottom {
+  flex-shrink: 0;
+  padding: 4px 26px 24px;
+}
+
+/* OG reward + Participants */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.stat {
+  display: grid;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--ed-line);
+  border-radius: 16px;
+  background-color: var(--ed-soft);
+}
+
+.stat dt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--ed-muted);
 }
 
-/* Kapareho ng kulay ng badge sa Dashboard calendar */
-.upcoming {
-  background-color: #e6edfc;
-  color: #1740ad;
-}
-
-.ongoing {
-  background-color: #e3f4e8;
-  color: #1b6e33;
-}
-
-.completed {
-  background-color: #eef0f4;
-  color: #3b4660;
-}
-
-.org {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #3a4766;
-  overflow-wrap: anywhere;
-}
-
-.org svg {
-  flex-shrink: 0;
-}
-
-div.modal .title {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  overflow-wrap: anywhere;
-}
-
-/* ---------- Detalye ---------- */
-.facts {
+.statIcon {
   display: grid;
-  gap: 2px;
-  margin: 20px 26px 0;
-  padding: 6px;
-  border-radius: 20px;
-  background-color: #f3f5fa;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background-color: var(--ed-navy);
+  color: var(--ed-yellow);
 }
 
-.facts > div {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-}
-
-.facts > div:nth-child(odd) {
-  background-color: #fff;
-}
-
-.facts dt {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--dash-muted);
-}
-
-.facts dt svg {
-  flex-shrink: 0;
-}
-
-.facts dd {
+.stat dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
+  font-family: var(--font-display, inherit);
+  font-size: 17px;
+  font-weight: 800;
 }
 
-.og {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.og small,
-.when {
-  display: block;
+.stat small {
+  flex-basis: 100%;
+  font-family: var(--font-ui, inherit);
   font-size: 12px;
   font-weight: 600;
-  color: var(--dash-muted);
+  color: var(--ed-muted);
+}
+
+.statNum {
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat dd .statNum + small {
+  flex-basis: auto;
+}
+
+/* May OG reward: dilaw na tile */
+.statOg {
+  border-color: #f1dd8f;
+  background-color: #fff8db;
+}
+
+.statOg .statIcon {
+  background-color: var(--ed-yellow);
+  color: var(--ed-deep);
 }
 
 .muted {
-  color: var(--dash-muted);
+  color: var(--ed-muted);
 }
 
-/* ---------- Description ---------- */
+/* Description */
 .about {
-  padding: 22px 26px 26px;
+  margin-top: 20px;
 }
 
 .about h3 {
-  margin-bottom: 6px;
-  font-size: 12px;
+  margin-bottom: 8px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--dash-muted);
+  color: var(--ed-muted);
 }
 
 .about p {
+  padding-left: 14px;
+  border-left: 3px solid var(--ed-yellow);
   font-size: 15px;
   line-height: 1.65;
   color: #3a4766;
@@ -205,39 +541,109 @@ div.modal .title {
   overflow-wrap: anywhere;
 }
 
-/* ---------- Phone ---------- */
+/* Gumawa / binago */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--ed-line);
+}
+
+.meta dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ed-muted);
+}
+
+.meta dd {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.when {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ed-muted);
+}
+
+/* ---------- PHONE ---------- */
 @media (max-width: 520px) {
-  .head {
-    padding: 20px 20px 0;
+  .backdrop {
+    padding: 0.5rem;
   }
 
-  .head:first-of-type {
-    padding-right: 64px;
+  .modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 22px;
   }
 
-  .poster + .head {
-    padding-right: 20px;
+  .heroBar {
+    left: 18px;
+    right: 18px;
+    bottom: 14px;
   }
 
-  div.modal .title {
+  .body {
+    padding: 18px 18px 0;
+  }
+
+  .title {
     font-size: 23px;
   }
 
-  .facts {
-    margin: 16px 20px 0;
-  }
-
-  .facts > div {
+  /* Stub sa itaas, pahiga */
+  .ticket {
     grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
   }
 
-  .about {
-    padding: 18px 20px 22px;
+  .stub {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .stubDay {
+    font-size: 40px;
+  }
+
+  .stubMeta {
+    align-items: flex-start;
+    margin-top: 0;
+  }
+
+  .fact {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .bottom {
+    padding: 4px 18px 20px;
+  }
+
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .liveDot {
+    animation: none;
+  }
+
   .close {
     transition: none;
   }

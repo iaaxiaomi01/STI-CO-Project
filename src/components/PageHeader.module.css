@@ -11,9 +11,17 @@
   min-width: 0;
 }
 
+/* Kapareho ng pamagat ng Organizations, Users at Members:
+   Bricolage Grotesque (--font-display), siksik na letra,
+   madilim na navy */
 .title {
-  font-size: clamp(1.45rem, 3vw, 1.95rem);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.6vw, 2.3rem);
   font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--sti-blue-deep, #031b4b);
 }
 
 .subtitle {
