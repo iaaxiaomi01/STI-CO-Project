@@ -1,0 +1,215 @@
+/* ============================================================
+   TOUR — spotlight at card
+
+   Mas mataas ang z-index kaysa sa sidebar (60) at sa madilim
+   na takip nito sa phone, para nasa ibabaw ang tour.
+   Kulay: kapareho ng sidebar (navy) at ng active na menu (dilaw).
+   ============================================================ */
+
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  font-family: var(--font-ui);
+}
+
+/* Transparent na harang — hindi ma-click ang page habang may tour */
+.blocker {
+  position: fixed;
+  inset: 0;
+}
+
+/* Kapag walang itinuturo (Welcome / Tapos): dilim lang */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(3, 27, 75, 0.62);
+  animation: fadeIn 0.2s ease;
+}
+
+/* Ang "butas" sa dilim: malaking anino sa labas ng kahon */
+.spotlight {
+  position: fixed;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 3px var(--dash-yellow),
+    0 0 0 9999px rgba(3, 27, 75, 0.62);
+  pointer-events: none;
+  transition:
+    top 0.25s ease,
+    left 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+}
+
+/* ---------- CARD ---------- */
+.card {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  padding: 20px 20px 18px;
+  border-radius: 22px;
+  background-color: #fff;
+  color: var(--dash-ink);
+  box-shadow: 0 24px 60px rgba(3, 27, 75, 0.35);
+  transition: opacity 0.15s ease;
+}
+
+.cardAnimated {
+  transition:
+    top 0.25s ease,
+    left 0.25s ease,
+    opacity 0.15s ease;
+}
+
+.cardHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.counter {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--color-primary-soft);
+  color: var(--dash-navy);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--dash-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.skip:hover {
+  background-color: var(--dash-soft);
+  color: var(--dash-ink);
+}
+
+.title {
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.body {
+  color: var(--dash-muted);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.progress {
+  flex: 1;
+  max-width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--color-border);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--dash-navy);
+  transition: width 0.25s ease;
+}
+
+.buttons {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.back,
+.next {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.back {
+  border: 1px solid var(--color-border);
+  background-color: #fff;
+  color: var(--dash-ink);
+}
+
+.back:hover {
+  background-color: var(--dash-soft);
+}
+
+.next {
+  border: none;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.next:hover {
+  background-color: var(--dash-gold);
+}
+
+.next:focus-visible,
+.back:focus-visible,
+.skip:focus-visible {
+  outline: 3px solid var(--dash-navy);
+  outline-offset: 2px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Para sa mga ayaw ng animation */
+@media (prefers-reduced-motion: reduce) {
+  .spotlight,
+  .card,
+  .cardAnimated,
+  .progressFill {
+    transition: none;
+  }
+
+  .backdrop {
+    animation: none;
+  }
+}

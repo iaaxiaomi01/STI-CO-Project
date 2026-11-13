@@ -203,7 +203,7 @@ function DashboardCalendar({ eyebrow } = {}) {
   }
 
   return (
-    <div className={styles.calendar}>
+    <div className={styles.calendar} data-tour="calendar">
       {/* ---------- HEADER: buwan + navigation ---------- */}
       <div className={styles.header}>
         <div>

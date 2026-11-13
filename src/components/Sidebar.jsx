@@ -8,6 +8,7 @@ import {
   FileText,
   Gem,
   HeartPulse,
+  HelpCircle,
   Landmark,
   LayoutDashboard,
   LogOut,
@@ -50,7 +51,7 @@ const NAV_ICONS = {
   '/users': UserCog,
 }
 
-function Sidebar({ open, onClose, user, onLogout }) {
+function Sidebar({ open, onClose, user, onLogout, onStartTour }) {
   const { role, profile } = useAuth()
   const roleConfig = getRoleConfig(role)
 
@@ -68,15 +69,32 @@ function Sidebar({ open, onClose, user, onLogout }) {
           STI<span className={styles.brandAccent}>-CO</span>
         </p>
 
-        {/* Close button — sa mobile lang lalabas */}
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label="Close menu"
-        >
-          <X size={20} strokeWidth={2.4} aria-hidden="true" />
-        </button>
+        <div className={styles.topActions}>
+          {/* Walkthrough ng site — components/Tour.jsx at
+              config/tourSteps.js. Lahat ng role ay mayroon nito. */}
+          {onStartTour && (
+            <button
+              type="button"
+              className={styles.helpBtn}
+              onClick={onStartTour}
+              aria-label="Take the tour"
+              title="Take the tour"
+              data-tour="help"
+            >
+              <HelpCircle size={20} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          )}
+
+          {/* Close button — sa mobile lang lalabas */}
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Close menu"
+          >
+            <X size={20} strokeWidth={2.4} aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       <nav className={styles.nav}>
@@ -90,6 +108,7 @@ function Sidebar({ open, onClose, user, onLogout }) {
             <NavLink
               key={item.to}
               to={item.to}
+              data-tour={`nav:${item.to}`}
               onClick={onClose}
               className={({ isActive }) =>
                 `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
@@ -105,7 +124,7 @@ function Sidebar({ open, onClose, user, onLogout }) {
       </nav>
 
       {/* Naka-push sa ilalim ng sidebar — tingnan ang margin-top:auto */}
-      <div className={styles.bottom}>
+      <div className={styles.bottom} data-tour="account">
         <div className={styles.userBox}>
           <Avatar
             src={profile?.avatar_url}

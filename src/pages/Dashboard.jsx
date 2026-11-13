@@ -371,7 +371,7 @@ function Dashboard() {
 
               {/* Bell sa kanang itaas (notifications: true sa config) */}
               {roleConfig.notifications && (
-                <div className={styles.heroBell}>
+                <div className={styles.heroBell} data-tour="notifications">
                   <NotificationBell variant="onDark" />
                 </div>
               )}
@@ -516,7 +516,7 @@ function Dashboard() {
         {/* Bell sa kanang itaas — Member, Officer, Adviser, SAO at
             School Head (notifications: true sa config/roles.js) */}
         {roleConfig.notifications && (
-          <div className={styles.welcomeActions}>
+          <div className={styles.welcomeActions} data-tour="notifications">
             <NotificationBell />
           </div>
         )}

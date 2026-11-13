@@ -56,6 +56,31 @@
   color: var(--dash-yellow);
 }
 
+/* ? (tour) at ✕ (phone lang) sa kanan ng brand */
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ? — pinapanood ulit ang walkthrough */
+.helpBtn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #c9d4ef;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.helpBtn:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: var(--dash-yellow);
+}
+
 .closeBtn {
   display: none; /* sa tablet/phone lang lalabas */
   place-items: center;

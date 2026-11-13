@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from '../context/AuthContext.js'
 import { Info, Menu } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
+import Tour from '../components/Tour.jsx'
+import { buildTourSteps } from '../config/tourSteps.js'
+import { hasSeenTour, markTourSeen } from '../lib/tour.js'
 import { isDevLoginAllowed, isDevSessionUser } from '../lib/devAuth.js'
 import styles from './MemberLayout.module.css'
 
@@ -21,10 +24,57 @@ import styles from './MemberLayout.module.css'
 function MemberLayout() {
   // Bukas ba ang sidebar sa mobile?
   const [menuOpen, setMenuOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, role, profile } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   // Taon sa footer — automatic na nag-a-update
   const year = new Date().getFullYear()
+
+  /* ---------- WALKTHROUGH (TOUR) ----------
+     Kusang lumalabas sa UNANG pagbukas ng bawat user + role
+     (tanda sa localStorage — lib/tour.js). Mapapanood ulit
+     gamit ang ? na button sa ilalim ng sidebar.
+     Ang laman ng tour: config/tourSteps.js */
+  const [tourOpen, setTourOpen] = useState(false)
+  const tourSteps = useMemo(() => buildTourSteps(role, profile), [role, profile])
+
+  const startTour = useCallback(() => {
+    setMenuOpen(false)
+    /* Sa Dashboard nagsisimula — nandoon ang bell at calendar */
+    if (location.pathname !== '/dashboard') navigate('/dashboard')
+    setTourOpen(true)
+  }, [location.pathname, navigate])
+
+  const closeTour = useCallback(() => {
+    if (user) markTourSeen(user.id, role)
+    setTourOpen(false)
+    setMenuOpen(false)
+  }, [user, role])
+
+  /* Sa phone/tablet, nakatago ang sidebar. Bubuksan ito ng tour
+     kapag nasa sidebar ang itinuturo, at isasara kapag wala. */
+  const handleTourStep = useCallback((step) => {
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      setMenuOpen(Boolean(step.sidebar))
+    }
+  }, [])
+
+  const startTourRef = useRef(startTour)
+  startTourRef.current = startTour
+  const autoStartedFor = useRef(null)
+
+  useEffect(() => {
+    if (!user) return undefined
+    const key = `${user.id}:${role}`
+    if (autoStartedFor.current === key || hasSeenTour(user.id, role)) return undefined
+
+    /* Sandaling hintay para lumabas muna ang Dashboard */
+    const timer = window.setTimeout(() => {
+      autoStartedFor.current = key
+      startTourRef.current()
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [user, role])
 
   async function handleLogout() {
     setMenuOpen(false)
@@ -53,6 +103,7 @@ function MemberLayout() {
         onClose={() => setMenuOpen(false)}
         user={user}
         onLogout={handleLogout}
+        onStartTour={startTour}
       />
 
       {/* Madilim na takip sa likod ng sidebar sa mobile.
@@ -95,6 +146,10 @@ function MemberLayout() {
           <p className={styles.footerCopy}>&copy; {year} STI-CO. All Rights Reserved.</p>
         </footer>
       </div>
+
+      {tourOpen && (
+        <Tour steps={tourSteps} onClose={closeTour} onStepChange={handleTourStep} />
+      )}
 
       {devSession && (
         <div className={styles.devBadge} role="status">
