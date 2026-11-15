@@ -1,5 +1,4 @@
 import {
-  authorName,
   awaitsNoted,
   decisionLabel,
   finalStage,
@@ -11,18 +10,16 @@ import {
   reviewSteps,
   stageLabel,
 } from '../lib/proposals.js'
-import { Check, Clock, Eye, RotateCcw, X } from 'lucide-react'
+import { Check, Clock, Eye, X } from 'lucide-react'
 import styles from './ReviewTrail.module.css'
 
 /* ============================================================
    REVIEW TRAIL — ang daan ng proposal: Adviser → SAO → School Head
                   (→ School Administrator kapag may budget)
 
-   Ipinapakita ang bawat aksyong nagawa na (Approved, Rejected,
-   Noted o Ipina-revise, sino, kailan, at ang dahilan). Kapag
-   naghihintay pa, may huling linya na nagsasabi kung kanino ito
-   nakatoka ngayon — kasama ang Officer kapag ibinalik ito para
-   i-revise.
+   Ipinapakita ang bawat aksyong nagawa na (Approved, Rejected o
+   Noted, sino, kailan, at ang dahilan). Kapag naghihintay pa, may
+   huling linya na nagsasabi kung kanino ito nakatoka ngayon.
 
    Ang hakbang na NAGPASYA ang may "Pinal": ang unang nag-Reject,
    o ang huling Approve ng School Head. Ang mga sumunod sa isang
@@ -40,8 +37,7 @@ import styles from './ReviewTrail.module.css'
      <ReviewTrail proposal={p} variant="letter" /> → para sa sulat
 
    SA CARD: may bilog na ICON bawat hakbang (✓ Approved, ✕ Rejected,
-   ↺ Revision, mata = Noted, orasan = naghihintay). Walang guhit
-   sa gilid.
+   mata = Noted, orasan = naghihintay). Walang guhit sa gilid.
 
    SA SULAT: pormal na table na "Review History" (Office, Action,
    Name, Date) — itim na teksto lang, walang kulay.
@@ -51,7 +47,6 @@ const DECISION_CLASS = {
   approved: styles.approved,
   rejected: styles.rejected,
   noted: styles.noted,
-  revision: styles.revision,
 }
 
 /* Icon ng bawat hakbang (card lang — wala sa sulat) */
@@ -59,7 +54,6 @@ const DECISION_ICON = {
   approved: Check,
   rejected: X,
   noted: Eye,
-  revision: RotateCcw,
 }
 
 /* Bilog na icon sa kaliwa ng bawat hakbang */
@@ -75,7 +69,6 @@ const DECISION_VERB = {
   approved: 'Approved',
   rejected: 'Rejected',
   noted: 'Noted',
-  revision: 'Revision requested',
 }
 
 function stepLabel(step) {
@@ -85,11 +78,10 @@ function stepLabel(step) {
 
 function ReviewTrail({ proposal, variant = 'card' }) {
   const steps = reviewSteps(proposal)
-  const inRevision = proposal.status === 'pending' && proposal.stage === 'revision'
   const noted = awaitsNoted(proposal)
-  const waiting = inRevision ? 'Officer' : stageLabel(proposal.stage)
-  const progress = inRevision ? null : reviewProgress(proposal)
-  const pending = inRevision ? null : (progress?.pending ?? pendingReviewers(proposal))
+  const waiting = stageLabel(proposal.stage)
+  const progress = reviewProgress(proposal)
+  const pending = progress?.pending ?? pendingReviewers(proposal)
   const names = pending?.map((r) => r.name).filter(Boolean).join(', ')
 
   const isLetter = variant === 'letter'
@@ -107,18 +99,14 @@ function ReviewTrail({ proposal, variant = 'card' }) {
           }.`
         : names
           ? `Waiting for: ${names}.`
-          : inRevision
-            ? `Waiting for ${authorName(proposal)} to revise. It will go back to ${stageLabel(
-                proposal.revision_from,
-              )} afterwards.`
-            : proposal.stage === finalStage(proposal)
-              ? `Waiting for the ${waiting}'s final decision.`
-              : proposal.stage === 'school_head' && hasBudget(proposal)
-                ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
-                : `Waiting for action from ${waiting}.`
+          : proposal.stage === finalStage(proposal)
+            ? `Waiting for the ${waiting}'s final decision.`
+            : proposal.stage === 'school_head' && hasBudget(proposal)
+              ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
+              : `Waiting for action from ${waiting}.`
 
   const waitingStatus = waiting
-    ? `${inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}${
+    ? `${noted ? 'For Noted' : 'Pending'}${
         progress && progress.total > 1 ? ` (${progress.done} of ${progress.total})` : ''
       }`
     : ''
@@ -145,20 +133,13 @@ function ReviewTrail({ proposal, variant = 'card' }) {
                 <td data-label="Name">{step.name || '—'}</td>
                 <td data-label="Date">{step.at ? formatDateTime(step.at) : '—'}</td>
               </tr>
-              {(step.comment || step.resubmittedAt) && (
+              {step.comment && (
                 <tr className={styles.remarksRow}>
                   <td aria-hidden="true" className={styles.remarksSpacer} />
                   <td colSpan={3}>
-                    {step.comment && (
-                      <p className={styles.remarks}>
-                        <span className={styles.remarksLabel}>Remarks:</span> {step.comment}
-                      </p>
-                    )}
-                    {step.resubmittedAt && (
-                      <p className={styles.remarks}>
-                        Revised and resubmitted on {formatDateTime(step.resubmittedAt)}.
-                      </p>
-                    )}
+                    <p className={styles.remarks}>
+                      <span className={styles.remarksLabel}>Remarks:</span> {step.comment}
+                    </p>
                   </td>
                 </tr>
               )}
@@ -201,23 +182,18 @@ function ReviewTrail({ proposal, variant = 'card' }) {
               {step.at && ` · ${formatDateTime(step.at)}`}
             </p>
             {step.comment && <p className={styles.comment}>{step.comment}</p>}
-            {step.resubmittedAt && (
-              <p className={styles.resubmitted}>
-                ✓ Revised and resubmitted · {formatDateTime(step.resubmittedAt)}
-              </p>
-            )}
           </div>
         </li>
       ))}
 
       {waiting && (
         <li className={`${styles.step} ${styles.waiting}`}>
-          <StepIcon icon={inRevision ? RotateCcw : Clock} />
+          <StepIcon icon={Clock} />
           <div className={styles.body}>
             <p className={styles.head}>
               <span className={styles.role}>{waiting}</span>
               <span className={styles.decision}>
-                {inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}
+                {noted ? 'For Noted' : 'Pending'}
                 {progress && progress.total > 1 && ` · ${progress.done} of ${progress.total}`}
               </span>
             </p>

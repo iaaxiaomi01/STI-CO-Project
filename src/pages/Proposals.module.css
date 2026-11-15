@@ -205,11 +205,6 @@
   color: var(--deep);
 }
 
-.tone_revision .railDot {
-  background-color: var(--orange);
-  color: #fff;
-}
-
 .tone_approved .railDot {
   background-color: var(--deep);
   color: var(--yellow);
@@ -220,7 +215,7 @@
   color: #fff;
 }
 
-/* Ikaw ang may hawak ngayon (aaksyon o magre-revise) — kumikislap */
+/* Ikaw ang may hawak ngayon (ikaw ang aaksyon) — kumikislap */
 .yourTurn .railDot::after {
   content: '';
   position: absolute;
@@ -258,11 +253,6 @@
 .status_pending {
   background-color: #fff1b8;
   color: #6b5100;
-}
-
-.status_revision {
-  background-color: #ffe1c7;
-  color: #9a3f00;
 }
 
 .status_approved {
@@ -477,11 +467,6 @@
   color: #fff;
 }
 
-.st_revision .stationDot {
-  background-color: var(--orange);
-  color: #fff;
-}
-
 /* Narito ngayon ang proposal */
 .st_current .stationDot {
   background-color: var(--yellow);
@@ -584,12 +569,6 @@
   overflow-wrap: anywhere;
 }
 
-.infoResubmitted {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #1c6b3f;
-}
-
 /* Kulay ng pill ayon sa desisyon */
 .info_approved .infoStatus,
 .info_submitted .infoStatus {
@@ -609,15 +588,6 @@
 .info_noted .infoStatus {
   background-color: #eceef3;
   color: #4a5368;
-}
-
-.info_revision .infoStatus {
-  background-color: #ffeedd;
-  color: #a6510a;
-}
-
-.info_revision .infoComment {
-  border-left-color: var(--orange);
 }
 
 /* Naghihintay pa (narito ngayon) — dilaw */
@@ -682,7 +652,6 @@
 .openButton,
 .approveButton,
 .rejectButton,
-.reviseButton,
 .notedButton,
 .eventButton,
 .eventLink,
@@ -727,15 +696,6 @@
 
 .approveButton:hover:not(:disabled) {
   background-color: var(--navy);
-}
-
-.reviseButton {
-  border-color: rgba(238, 122, 20, 0.55);
-  color: #a64600;
-}
-
-.reviseButton:hover:not(:disabled) {
-  background-color: #ffe1c7;
 }
 
 .rejectButton {
@@ -799,7 +759,6 @@
 .openButton:focus-visible,
 .approveButton:focus-visible,
 .rejectButton:focus-visible,
-.reviseButton:focus-visible,
 .notedButton:focus-visible,
 .eventButton:focus-visible,
 .eventLink:focus-visible,

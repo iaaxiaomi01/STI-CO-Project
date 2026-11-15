@@ -95,11 +95,11 @@ const PAGE_GUIDE = {
   '/proposals': {
     default: 'Activity proposals and their review status.',
     [R.OFFICER]:
-      'Press Create Proposal to submit a formal letter for an activity, with at least one attached file. It goes to your Adviser, then the SAO, then the School Head — and the School Administrator if it has a budget. If a reviewer asks for changes, press Revise, update it and send it again.',
+      'Press Create Proposal to submit a formal letter for an activity, with at least one attached file. It goes to your Adviser, then the SAO, then the School Head — and the School Administrator if it has a budget.',
     [R.ADVISER]:
-      'Proposals from your officers come to you first. Open each one, then Approve, Reject or Revise — a comment is always required. Approved proposals move on to the SAO.',
+      'Proposals from your officers come to you first. Open each one, then Approve or Reject — a comment is always required. Approved proposals move on to the SAO.',
     [R.SAO]:
-      'Proposals from every organization reach you after the Adviser. Approve, Reject or send them back with Revise, always with a comment. They then continue to the School Head.',
+      'Proposals from every organization reach you after the Adviser. Approve or Reject, always with a comment. They then continue to the School Head.',
     [R.SCHOOL_HEAD]:
       'Proposals reach you after the SAO. Approve or Reject with a comment. Your decision is final for proposals without a budget; budget proposals continue to the School Administrator.',
     [R.SCHOOL_ADMIN]:

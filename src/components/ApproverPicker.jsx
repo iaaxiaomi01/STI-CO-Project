@@ -7,8 +7,8 @@ import styles from './ApproverPicker.module.css'
    (PROPOSAL_APPROVER_PICKER.sql)
 
    Bawat stage ng review, pipili ang Officer kung SINO ang approver:
-     Adviser                → ISA lang (dropdown)
-     SAO, School Head, SA   → ISA O HIGIT PA (checkbox list)
+     Adviser, SA (may budget) → ISA lang (dropdown)
+     SAO, School Head         → ISA O HIGIT PA (checkbox list)
    Kapag marami ang napili sa isang stage, LAHAT sila ay dapat
    umaksyon bago lumipat sa susunod na stage.
 
@@ -17,8 +17,6 @@ import styles from './ApproverPicker.module.css'
        options={{ adviser: [{ id, name }], ... }}    ← null habang kinukuha
        value={{ adviser: ['id'], sao: ['id', 'id'], ... }}
        onChange={(stage, ids) => ...}
-       lockedStages={['adviser', 'sao']}             ← sa pag-revise
-       revisionFrom="sao"
        disabled={saving}
        error=""                                       ← kapag hindi makuha ang listahan
      />
@@ -30,8 +28,6 @@ function ApproverPicker({
   options,
   value,
   onChange,
-  lockedStages = [],
-  revisionFrom = null,
   disabled = false,
   error = '',
 }) {
@@ -55,8 +51,6 @@ function ApproverPicker({
           failed={Boolean(error)}
           selected={value[stage] ?? []}
           onChange={(ids) => onChange(stage, ids)}
-          locked={lockedStages.includes(stage)}
-          askedForRevision={revisionFrom === stage}
           disabled={disabled}
         />
       ))}
@@ -73,14 +67,12 @@ function StageRow({
   failed,
   selected,
   onChange,
-  locked,
-  askedForRevision,
   disabled,
 }) {
   const label = stageLabel(stage)
   const many = allowsManyApprovers(stage)
   const empty = !loading && choices.length === 0
-  const inactive = disabled || loading || locked || empty
+  const inactive = disabled || loading || empty
 
   function toggle(id, checked) {
     onChange(checked ? [...selected, id] : selected.filter((x) => x !== id))
@@ -141,13 +133,7 @@ function StageRow({
         </select>
       )}
 
-      {locked ? (
-        <span className={styles.hint}>
-          {askedForRevision
-            ? `Can't be changed — ${many ? 'these' : 'this'} ${label} asked for the revision and will review it again.`
-            : `Can't be changed — already reviewed by this ${label}.`}
-        </span>
-      ) : empty ? (
+      {empty ? (
         <span className={styles.errorHint}>
           There is no active {label} account yet, so this proposal can&apos;t be submitted.
           Please contact the school.

@@ -7,23 +7,17 @@ import {
   TITLE_MAX,
   VENUE_MAX,
   approverStages,
-  approversOf,
   fetchApproverOptions,
-  formatDateTime,
   isFutureSchedule,
-  latestRevision,
-  lockedApproverStages,
   stageLabel,
   toOgReward,
   todayKey,
 } from '../lib/proposals.js'
-import { addDaysKey, formatSchedule, toTimeInput } from '../lib/events.js'
-import { toTitleCase } from '../lib/profile.js'
+import { addDaysKey, formatSchedule } from '../lib/events.js'
 import {
   ACCEPT_ATTRIBUTE,
   MAX_FILES,
   ProposalFileError,
-  attachmentsOf,
   checkProposalFile,
   formatFileSize,
 } from '../lib/proposalFiles.js'
@@ -34,16 +28,12 @@ import ApproverPicker from './ApproverPicker.jsx'
 import styles from './ProposalFormUI.module.css'
 
 /* ============================================================
-   PROPOSAL FORM — modal para sa paggawa ng BAGONG proposal,
-   at para sa pag-REVISE ng proposal na ibinalik ng Adviser o SAO
+   PROPOSAL FORM — modal para sa paggawa ng BAGONG proposal
 
-     <ProposalForm onSubmit ... />                 → bago
-     <ProposalForm proposal={p} onSubmit ... />    → i-revise
+     <ProposalForm onSubmit ... onCancel ... />
 
-   Sa pag-revise, nakalagay na ang dating Title, Description,
-   Venue, Start Date, End Date, oras at mga file, at nasa itaas
-   ang komento ng nag-pa-revise. Pwedeng panatilihin o alisin ang
-   bawat dating file, at magdagdag ng bago.
+   Wala nang pag-edit ng proposal. Kapag may mali, burahin ito
+   habang wala pang umaaksyon, at gumawa ng bago.
 
    Tinatype: Title, Description, Venue, Start Date, End Date,
    Start Time at End Time (kailangan lahat).
@@ -56,8 +46,7 @@ import styles from './ProposalFormUI.module.css'
        blangko pa ito o mas maaga sa Start Date.
      - Hindi pwedeng mas maaga ang End Date sa Start Date.
      - Kapag iisang araw, ang End Time ay dapat lampas sa Start Time.
-     Sinusuri ulit ito ng database (proposals_check_schedule,
-     resubmit_proposal).
+     Sinusuri ulit ito ng database (proposals_check_schedule).
 
    FILES (PROPOSAL_MULTIPLE_FILES.sql): KAILANGAN may kahit ISANG
    file, hanggang MAX_FILES (10). Pwedeng pumili ng marami nang
@@ -66,33 +55,27 @@ import styles from './ProposalFormUI.module.css'
    May checkbox na "This proposal has a budget" (has_budget).
    Kapag naka-check, dadaan pa ito sa School Administrator
    pagkatapos ng School Head (ADD_SCHOOL_ADMINISTRATOR.sql).
-   Pwede itong baguhin habang nire-revise.
 
    APPROVERS (PROPOSAL_APPROVER_PICKER.sql, components/ApproverPicker.jsx):
    pipili ang Officer kung SINO ang approver sa bawat stage — ISANG
-   Adviser (ng org niya), at ISA O HIGIT PANG SAO, School Head, at
-   School Administrator (kapag may budget). Kailangang may napili sa
-   lahat. Kapag iisa lang ang pagpipilian, kusa na itong napipili.
-   Sa pag-revise, naka-lock ang stage na nag-pa-revise at ang mga
-   nauna rito; ang mga susunod ay pwedeng palitan. Kapag hindi na
-   available ang dating napili, pwede na itong palitan.
+   Adviser (ng org niya), ISA O HIGIT PANG SAO at School Head, at
+   ISANG School Administrator (kapag may budget). Kailangang may
+   napili sa lahat. Kapag iisa lang ang pagpipilian, kusa na itong napipili.
 
    OG REWARD (OG_REWARD_FROM_PROPOSAL.sql): ilang OG ang makukuha
    ng bawat Member at Officer na may Time In AT Time Out. Blangko
    o 0 = walang reward. Kusang nare-release pagsara ng attendance
-   ng event — wala nang kailangang pindutin. Pwede ring baguhin
-   habang nire-revise.
+   ng event — wala nang kailangang pindutin.
    Ang Organization Name, Logo at Proposed by ay kusang
    nilalagay — galing sila sa org at sa account mo.
 
    Hindi dito nagse-save. Ibinibigay lang ang laman sa
-   onSubmit(values, { files, kept }) — ang page ang
+   onSubmit(values, { files }) — ang page ang
    mag-a-upload at tatawag sa database.
      values.eventDate → Start Date · values.endDate → End Date
      values.approvers → { adviser: [id], sao: [id, ...], school_head: [...],
                           school_admin: [...] (may budget lang) }
-     files            → mga BAGONG file na pinili (File[])
-     kept             → mga dating file na pinanatili ([{ path, name, size }])
+     files            → mga file na pinili (File[])
    ============================================================ */
 
 /* Para hindi madoble ang parehong file na napili ulit */
@@ -108,21 +91,17 @@ function dayCount(start, end) {
   return count
 }
 
-function ProposalForm({ proposal = null, onSubmit, onCancel }) {
-  const editing = Boolean(proposal)
-  const revision = editing ? latestRevision(proposal) : null
-
-  const [title, setTitle] = useState(proposal?.title ?? '')
-  const [description, setDescription] = useState(proposal?.description ?? '')
-  const [venue, setVenue] = useState(proposal?.venue ?? '')
+function ProposalForm({ onSubmit, onCancel }) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [venue, setVenue] = useState('')
   /* eventDate = START DATE (event_date sa database) */
-  const [eventDate, setEventDate] = useState(proposal?.event_date ?? '')
-  /* Ang lumang proposal na walang end_date ay iisang araw */
-  const [endDate, setEndDate] = useState(proposal?.end_date ?? proposal?.event_date ?? '')
-  const [startTime, setStartTime] = useState(toTimeInput(proposal?.start_time))
-  const [endTime, setEndTime] = useState(toTimeInput(proposal?.end_time))
-  const [hasBudget, setHasBudget] = useState(Boolean(proposal?.has_budget))
-  const [ogReward, setOgReward] = useState(proposal?.og_reward ? String(proposal.og_reward) : '')
+  const [eventDate, setEventDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
+  const [hasBudget, setHasBudget] = useState(false)
+  const [ogReward, setOgReward] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -149,18 +128,10 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
      approvers → { adviser: ['id'], sao: ['id', 'id'], school_head: [...], school_admin: [...] }
      options   → null habang kinukuha, o { adviser: [{ id, name }], ... } */
   const [approvers, setApprovers] = useState(() =>
-    Object.fromEntries(
-      APPROVER_STAGES.map((stage) => [stage, approversOf(proposal, stage).map((a) => a.id)]),
-    ),
+    Object.fromEntries(APPROVER_STAGES.map((stage) => [stage, []])),
   )
   const [options, setOptions] = useState(null)
   const [optionsError, setOptionsError] = useState('')
-
-  /* Sa pag-revise: ang stage na nag-pa-revise at ang mga nauna rito.
-     Naka-lock lang ito kapag may natira pang available sa dating
-     napili — kung wala na, pipili ulit (ganito rin sa database).
-     Itinatakda isang beses lang, pagkakuha ng listahan. */
-  const [lockedStages, setLockedStages] = useState([])
 
   useEffect(() => {
     let active = true
@@ -169,16 +140,11 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
       .then((list) => {
         if (!active) return
         setOptions(list)
-        setLockedStages(
-          lockedApproverStages(proposal).filter((stage) =>
-            approversOf(proposal, stage).some((a) => (list[stage] ?? []).some((o) => o.id === a.id)),
-          ),
-        )
         setApprovers((current) => {
           const next = {}
           for (const stage of APPROVER_STAGES) {
             const choices = list[stage] ?? []
-            /* Alisin ang hindi na available sa dating napili */
+            /* Alisin ang napiling wala sa listahan */
             next[stage] = current[stage].filter((id) => choices.some((o) => o.id === id))
             /* Iisa lang ang pagpipilian → kusa nang napipili */
             if (next[stage].length === 0 && choices.length === 1) next[stage] = [choices[0].id]
@@ -203,14 +169,11 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
   }
 
   /* ---------- FILES ----------
-     kept     → mga dating file ng proposal (sa pag-revise lang)
-                na hindi pa inaalis: [{ path, name, size }]
-     newFiles → mga bagong pinili (wala pang na-upload): [{ key, file }] */
-  const [kept, setKept] = useState(() => attachmentsOf(proposal))
+     newFiles → mga pinili (wala pang na-upload): [{ key, file }] */
   const [newFiles, setNewFiles] = useState([])
   const [fileError, setFileError] = useState('')
 
-  const fileCount = kept.length + newFiles.length
+  const fileCount = newFiles.length
   const canAddMore = fileCount < MAX_FILES
 
   const titleRef = useRef(null)
@@ -253,11 +216,6 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
 
   function removeNew(key) {
     setNewFiles((list) => list.filter((f) => f.key !== key))
-    setFileError('')
-  }
-
-  function removeKept(path) {
-    setKept((list) => list.filter((f) => f.path !== path))
     setFileError('')
   }
 
@@ -354,16 +312,16 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
 
     setSaving(true)
     try {
-      await onSubmit(clean, { files: newFiles.map((f) => f.file), kept })
+      await onSubmit(clean, { files: newFiles.map((f) => f.file) })
     } catch (err) {
       console.error('Hindi na-save ang proposal:', err)
       let message = 'Could not save. Please try again.'
       if (err instanceof ProposalFileError) {
         message = err.message
       } else if (err?.message === 'not-allowed') {
-        message = "You don't have permission to revise this proposal."
+        message = "You don't have permission to submit this proposal."
       } else if (err?.code === 'P0001' && err.message) {
-        /* Mensahe galing sa database: resubmit_proposal(), ang
+        /* Mensahe galing sa database: ang
            pagsusuri ng approvers (hal. "Please choose the SAO."),
            ng mga file (hal. "Please upload at least one file."),
            o ng petsa (hal. "End Date cannot be earlier than Start Date.") */
@@ -396,35 +354,15 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             <FileText size={22} strokeWidth={2.2} />
           </span>
           <h2 id="proposal-form-title" className={styles.heading}>
-            {editing ? 'Revise proposal' : 'New proposal'}
+            New proposal
           </h2>
         </div>
 
         <div className={styles.body}>
-          {revision && (
-            <div className={styles.revisionBox}>
-              <p className={styles.revisionHead}>
-                Revision requested by {stageLabel(revision.stage)}
-              </p>
-              <p className={styles.revisionBy}>
-                {toTitleCase(revision.requester_name ?? '')} ·{' '}
-                {formatDateTime(revision.requested_at)}
-              </p>
-              <p className={styles.revisionComment}>{revision.comment}</p>
-            </div>
-          )}
-
           <p className={styles.note}>
             <Info size={16} strokeWidth={2.4} className={styles.noteIcon} aria-hidden="true" />
             <span>
-              {editing ? (
-                <>
-                  Make the needed changes, then press &quot;Resubmit&quot;. It will go back
-                  to <strong>{stageLabel(proposal.revision_from)}</strong> for another review.
-                </>
-              ) : (
-                "The organization’s name, logo, and submitter’s name are automatically included in the letter."
-              )}
+              The organization’s name, logo, and submitter’s name are automatically included in the letter.
             </span>
           </p>
 
@@ -553,14 +491,12 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             </span>
           </label>
 
-          {/* ---------- APPROVERS (Adviser: isa · SAO, School Head, SA: isa o higit pa) ---------- */}
+          {/* ---------- APPROVERS (Adviser, SA: isa · SAO, School Head: isa o higit pa) ---------- */}
           <ApproverPicker
             stages={approverStages(hasBudget)}
             options={options}
             value={approvers}
             onChange={setApprover}
-            lockedStages={lockedStages}
-            revisionFrom={proposal?.revision_from ?? null}
             disabled={saving}
             error={optionsError}
           />
@@ -597,29 +533,6 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
 
             {fileCount > 0 && (
               <ul className={styles.fileList}>
-                {kept.map((f) => (
-                  <li key={f.path} className={styles.fileBox}>
-                    <span className={styles.fileIcon} aria-hidden="true">
-                      <Paperclip size={16} strokeWidth={2.4} />
-                    </span>
-                    <span className={styles.fileInfo}>
-                      <span className={styles.fileName}>{f.name}</span>
-                      <span className={styles.fileSize}>
-                        {f.size ? `${formatFileSize(f.size)} · ` : ''}current file
-                      </span>
-                    </span>
-                    <button
-                      type="button"
-                      className={`${styles.fileAction} ${styles.fileRemove}`}
-                      onClick={() => removeKept(f.path)}
-                      disabled={saving}
-                      aria-label={`Remove ${f.name}`}
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-
                 {newFiles.map(({ key, file }) => (
                   <li key={key} className={styles.fileBox}>
                     <span className={styles.fileIcon} aria-hidden="true">
@@ -688,7 +601,7 @@ function ProposalForm({ proposal = null, onSubmit, onCancel }) {
             Cancel
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
-            {saving ? 'Saving…' : editing ? 'Resubmit' : 'Submit'}
+            {saving ? 'Saving…' : 'Submit'}
           </button>
         </div>
       </form>

@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, Eye, RotateCcw, X } from 'lucide-react'
+import { Check, Eye, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   COMMENT_MAX,
-  authorName,
   completesStage,
   isFinalReview,
   nextStageOf,
@@ -17,7 +16,7 @@ import styles from './ReviewDialog.module.css'
 
 /* ============================================================
    REVIEW DIALOG — para sa Adviser, SAO, School Head at School
-                   Administrator (Approve, Reject, Revise at Noted)
+                   Administrator (Approve, Reject at Noted)
 
    Approve → ipapasa sa susunod (sa huling stage — School Head, o
              SA kapag may budget — Approved na, makakagawa na ng
@@ -34,14 +33,8 @@ import styles from './ReviewDialog.module.css'
 
      <ReviewDialog action="approved" ... />  → berdeng "I-approve"
      <ReviewDialog action="rejected" ... />  → pulang "I-reject"
-     <ReviewDialog action="revision" ... />  → kahel na "Ipa-revise"
-                                               (Adviser at SAO lang)
      <ReviewDialog action="noted" ... />     → asul na "Noted"
                                                (kapag rejected na)
-
-   REVISE: ibinabalik ang proposal sa Officer na nagpasa para
-   i-edit. Nakahold ito hanggang maipasa niya ulit, at saka
-   BABALIK sa nag-pa-revise — hindi na uulit sa simula.
 
    MARAMING SAO / SCHOOL HEAD: lilipat lang ang proposal sa
    susunod na stage kapag ikaw na ang HULING hinihintay. Kung may
@@ -49,7 +42,7 @@ import styles from './ReviewDialog.module.css'
 
    Itsura: ReviewDialog.module.css (sariling CSS — letterhead ng
    STI). Iba ang kulay ayon sa aksyon: Approve berde, Reject pula,
-   Revision amber, Noted asul. Walang placeholder ang reason.
+   Noted asul. Walang placeholder ang reason.
    ============================================================ */
 
 const TEXT = {
@@ -74,20 +67,12 @@ const TEXT = {
     button: 'Noted',
     buttonClass: 'primary',
   },
-  revision: {
-    heading: 'Request revision',
-    label: 'What needs to be changed',
-    required: 'Please describe what needs to be changed.',
-    button: 'Request revision',
-    buttonClass: 'warning',
-  },
 }
 
 /* Icon sa header, ayon sa aksyon */
 const ICONS = {
   approved: Check,
   rejected: X,
-  revision: RotateCcw,
   noted: Eye,
 }
 
@@ -198,15 +183,7 @@ function ReviewDialog({ proposal, action, onSubmit, onCancel }) {
           <p className={styles.next}>
             <strong>{proposal.title}</strong>
             <br />
-            {action === 'revision' ? (
-              <>
-                This will be returned to <strong>{authorName(proposal)}</strong> for editing.
-                It stays on hold while being revised. Once resubmitted, it will come back to{' '}
-                <strong>you ({stageName})</strong> for another review.
-                {proposal.stage === 'sao' &&
-                  ' SAO who already approved keep their approval; only you and those who have not acted yet will review it again.'}
-              </>
-            ) : action === 'noted' ? (
+            {action === 'noted' ? (
               <>
                 <strong>This was already rejected by {rejectedBy(proposal)}</strong> and can no
                 longer change. &quot;Noted&quot; confirms that you have seen it.{' '}

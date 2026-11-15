@@ -53,12 +53,6 @@
   --tone-soft: #f4f5f8;
 }
 
-/* Ipina-revise ng Adviser o SAO */
-.revision {
-  --tone: #c26a06;
-  --tone-soft: #fff5e8;
-}
-
 /* Naghihintay pa — dilaw na icon na may asul na orasan */
 .waiting {
   --tone: #ffd200;
@@ -100,14 +94,6 @@
 
 .waiting .decision {
   color: #8a5a00;
-}
-
-/* "✓ Na-revise at naipasa ulit" */
-.resubmitted {
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1c6b3f;
 }
 
 .by {

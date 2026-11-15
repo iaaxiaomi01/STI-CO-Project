@@ -10,9 +10,7 @@ import {
   Eye,
   Hourglass,
   MapPin,
-  Pencil,
   Plus,
-  RotateCcw,
   Trash2,
   User,
   X,
@@ -25,9 +23,7 @@ import {
   authorRoleLabel,
   awaitsNoted,
   canManageProposal,
-  canRequestRevision,
   canReviewProposal,
-  canReviseProposal,
   createProposal,
   decisionLabel,
   deleteProposal,
@@ -36,13 +32,10 @@ import {
   formatDateTime,
   hasBudget,
   hasSchedule,
-  isInRevision,
   isPastSchedule,
   pendingReviewers,
   progressLabel,
   rejectedBy,
-  requestRevision,
-  resubmitProposal,
   reviewPath,
   reviewProgress,
   reviewProposal,
@@ -75,8 +68,8 @@ import styles from './Proposals.module.css'
                  niyang proposal habang WALA PANG umaaksyon.
                  Wala nang pag-edit — kapag may mali, burahin at
                  gumawa ng bago.
-   Adviser     → Approve/Reject/Revise ng proposals ng org niya.
-   SAO         → Approve/Reject/Revise ng proposals ng lahat ng
+   Adviser     → Approve/Reject ng proposals ng org niya.
+   SAO         → Approve/Reject ng proposals ng lahat ng
                  org, pagkatapos ng Adviser. LAHAT ng SAO ay
                  dadaanan (sabay-sabay); lilipat lang sa School
                  Head kapag nakaaksyon na ang lahat.
@@ -95,11 +88,6 @@ import styles from './Proposals.module.css'
    ang button ng mga susunod. Approved lang kapag LAHAT ng tatlo
    ay nag-Approve. Laging may komento (ReviewDialog), at
    nakikita ng lahat ang buong daan (ReviewTrail).
-
-   REVISE: ibinabalik ng Adviser o SAO ang proposal sa Officer
-   na NAGPASA, may komento kung ano ang babaguhin. Ang Officer
-   ay may "I-revise" na button (ProposalForm na naka-edit mode).
-   Pagkapasa ulit, babalik ito sa nag-pa-revise.
 
    FILES (PROPOSAL_MULTIPLE_FILES.sql): KAILANGAN may kahit isang
    file, hanggang 10. Bawat file ay may sariling download link sa
@@ -137,7 +125,6 @@ import styles from './Proposals.module.css'
 
 /* Kulay at icon ng bawat proposal ayon sa kalagayan nito */
 function toneOf(p) {
-  if (isInRevision(p)) return 'revision'
   if (p.status === 'approved') return 'approved'
   if (p.status === 'rejected') return 'rejected'
   return 'pending'
@@ -145,7 +132,6 @@ function toneOf(p) {
 
 const TONE_ICON = {
   pending: Hourglass,
-  revision: RotateCcw,
   approved: Check,
   rejected: X,
 }
@@ -164,12 +150,11 @@ const STATION_TEXT = {
   rejected: 'Rejected',
   noted: 'Noted',
   current: 'In progress',
-  revision: 'Being revised',
   upcoming: 'Not yet',
 }
 
 /* Mga istasyon ng route map (display lang):
-     Officer      → "done" (naipasa), o "revision" kapag ibinalik
+     Officer      → "done" (naipasa)
      bawat stage  → "current" kapag naroon ngayon, o ang huling
                     desisyon doon (approved/rejected/noted), o
                     "upcoming" kapag hindi pa nararating */
@@ -179,12 +164,12 @@ function stationsOf(p) {
     let decision = null
     for (const step of steps) {
       const stepStage = step.stage === 'legacy' ? 'adviser' : step.stage
-      if (stepStage === stage && step.decision !== 'revision') decision = step.decision
+      if (stepStage === stage) decision = step.decision
     }
     return decision
   }
 
-  const officer = { key: 'officer', label: 'Officer', state: isInRevision(p) ? 'revision' : 'done' }
+  const officer = { key: 'officer', label: 'Officer', state: 'done' }
   const stages = reviewPath(p).map((stage) => ({
     key: stage,
     label: ROUTE_LABEL[stage] ?? stageLabel(stage),
@@ -198,7 +183,6 @@ const STATION_ICON = {
   approved: Check,
   rejected: X,
   noted: Eye,
-  revision: RotateCcw,
 }
 
 /* "Final: Approved" — kapareho ng stepLabel() sa ReviewTrail */
@@ -210,23 +194,16 @@ function stepLabel(step) {
 /* ---------- DETALYE BAWAT ISTASYON (display lang) ----------
    Ang dating laman ng ReviewTrail, hinati ayon sa istasyon:
      entries → mga aksyong nagawa na sa stage na iyon
-               (Approved / Rejected / Noted / Revision requested,
-               sino, kailan, komento)
+               (Approved / Rejected / Noted, sino, kailan, komento)
      waiting → kung naroon ngayon ang proposal: "Pending · 1 of 3"
                at kung sino ang hinihintay — PAREHONG mensahe ng
-               ReviewTrail. Nasa Officer ito kapag ibinalik para
-               i-revise.
+               ReviewTrail.
      chosen  → mga approver na pinili ng Officer (para sa mga
                stage na hindi pa nararating) */
 function stationInfo(p) {
   const path = reviewPath(p)
 
-  /* Walang "stage" ang hakbang na pa-revise — galing sa pangalan */
-  const stageOfStep = (step) => {
-    if (step.stage === 'legacy') return 'adviser'
-    if (step.stage) return step.stage
-    return path.find((stage) => stageLabel(stage) === step.role) ?? null
-  }
+  const stageOfStep = (step) => (step.stage === 'legacy' ? 'adviser' : (step.stage ?? null))
 
   const info = { officer: { entries: [], waiting: null, chosen: '' } }
   for (const stage of path) {
@@ -246,17 +223,16 @@ function stationInfo(p) {
   }
 
   /* Naghihintay pa — kapareho ng huling linya ng ReviewTrail */
-  const inRevision = p.status === 'pending' && p.stage === 'revision'
-  const waiting = inRevision ? 'Officer' : stageLabel(p.stage)
-  const target = inRevision ? 'officer' : p.stage
+  const waiting = stageLabel(p.stage)
+  const target = p.stage
   if (waiting && info[target]) {
     const noted = awaitsNoted(p)
-    const progress = inRevision ? null : reviewProgress(p)
-    const pending = inRevision ? null : (progress?.pending ?? pendingReviewers(p))
+    const progress = reviewProgress(p)
+    const pending = progress?.pending ?? pendingReviewers(p)
     const names = pending?.map((r) => r.name).filter(Boolean).join(', ')
 
     info[target].waiting = {
-      status: `${inRevision ? 'Being revised' : noted ? 'For Noted' : 'Pending'}${
+      status: `${noted ? 'For Noted' : 'Pending'}${
         progress && progress.total > 1 ? ` · ${progress.done} of ${progress.total}` : ''
       }`,
       text:
@@ -266,15 +242,11 @@ function stationInfo(p) {
             ? `Already rejected by ${rejectedBy(p)}. Waiting for "Noted" from ${names || waiting}.`
             : names
               ? `Waiting for: ${names}.`
-              : inRevision
-                ? `Waiting for ${authorName(p)} to revise. It will go back to ${stageLabel(
-                    p.revision_from,
-                  )} afterwards.`
-                : p.stage === finalStage(p)
-                  ? `Waiting for the ${waiting}'s final decision.`
-                  : p.stage === 'school_head' && hasBudget(p)
-                    ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
-                    : `Waiting for action from ${waiting}.`,
+              : p.stage === finalStage(p)
+                ? `Waiting for the ${waiting}'s final decision.`
+                : p.stage === 'school_head' && hasBudget(p)
+                  ? 'Waiting for the School Head. It has a budget, so the School Administrator gives the final decision after.'
+                  : `Waiting for action from ${waiting}.`,
     }
   }
 
@@ -311,11 +283,6 @@ function RouteMap({ proposal }) {
                   </span>
                   {step.at && <span className={styles.infoDate}>{formatDateTime(step.at)}</span>}
                   {step.comment && <span className={styles.infoComment}>{step.comment}</span>}
-                  {step.resubmittedAt && (
-                    <span className={styles.infoResubmitted}>
-                      ✓ Revised and resubmitted · {formatDateTime(step.resubmittedAt)}
-                    </span>
-                  )}
                 </div>
               ))}
 
@@ -364,13 +331,9 @@ function Proposals() {
      filter, dahil proposals ng LAHAT ng org ang nakikita nila. */
   const showOrgFilter = [4, 6, 8].includes(profile?.role_id)
 
-  /* Officer: may sariling hanay ng proposal na ibinalik sa
-     kanya para i-revise. */
-  const isProposer = Boolean(can.propose)
-
   /* 'mine' → naghihintay ng aksyon mo · 'all' → lahat
-     Reviewer: 'mine' agad. Officer: 'all' muna, dahil kadalasan
-     ay wala siyang kailangang i-revise. */
+     Reviewer: 'mine' agad. Ang Officer ay walang filter — lahat
+     ang nakikita niya. */
   const [filter, setFilter] = useState(isReviewer ? 'mine' : 'all')
 
   /* '' = lahat ng org, o ang id ng napiling org */
@@ -384,23 +347,20 @@ function Proposals() {
   /* Bukas ba ang form ng bagong proposal */
   const [formOpen, setFormOpen] = useState(false)
 
-  /* Aling proposal ang nire-revise ng Officer */
-  const [revising, setRevising] = useState(null)
-
   /* Aling proposal ang bukas bilang sulat */
   const [viewing, setViewing] = useState(null)
 
   const [deletingId, setDeletingId] = useState(null)
 
-  /* Bukas na Approve/Reject/Revise dialog:
-     null, o { proposal, action: 'approved' | 'rejected' | 'revision' } */
+  /* Bukas na Approve/Reject/Noted dialog:
+     null, o { proposal, action: 'approved' | 'rejected' | 'noted' } */
   const [reviewing, setReviewing] = useState(null)
 
   /* Aling file ang dina-download (ang path nito) */
   const [downloadingPath, setDownloadingPath] = useState(null)
 
   /* Oras ngayon sa Pilipinas — nag-a-update bawat 30 segundo para
-     kusang mawala ang Approve, Revise, Reject at Noted pagpatak ng
+     kusang mawala ang Approve, Reject at Noted pagpatak ng
      proposed na petsa at oras */
   const [now, setNow] = useState(() => nowKey())
 
@@ -427,7 +387,7 @@ function Proposals() {
 
   /* ---------- REALTIME ----------
      Kapag may notification tungkol sa proposal (bagong dating sa
-     stage mo, umusad ang proposal mo, ipina-revise), kinukuha ulit
+     stage mo, umusad ang proposal mo), kinukuha ulit
      ang listahan — kaya lumalabas agad dito nang walang refresh.
      Galing ang notification sa mga trigger sa database
      (PROPOSAL_NOTIFICATIONS.sql, PROPOSAL_REVIEW_NOTIFICATIONS.sql). */
@@ -442,7 +402,6 @@ function Proposals() {
   }, [profileId, load])
 
   const closeForm = useCallback(() => setFormOpen(false), [])
-  const closeRevise = useCallback(() => setRevising(null), [])
   const closeLetter = useCallback(() => setViewing(null), [])
   const closeReview = useCallback(() => setReviewing(null), [])
 
@@ -453,27 +412,17 @@ function Proposals() {
     setViewing((current) => (current?.id === updated.id ? updated : current))
   }
 
-  /* Binubuksan ang ReviewDialog para sa Approve, Reject o Revise */
+  /* Binubuksan ang ReviewDialog para sa Approve, Reject o Noted */
   function openReview(proposal, action) {
     setNotice('')
     setReviewing({ proposal, action })
   }
 
-  /* Galing sa ReviewDialog. Approve man o Reject, may dahilan.
+  /* Galing sa ReviewDialog. Approve, Reject o Noted man, may dahilan.
      Kapag nag-throw, doon lalabas ang error at mananatiling
      bukas ang dialog. */
   async function handleReview(comment) {
     const { proposal, action } = reviewing
-
-    if (action === 'revision') {
-      const updated = await requestRevision(proposal.id, comment)
-      replaceProposal(updated)
-      setReviewing(null)
-      setNotice(
-        `The proposal was returned to the Officer for revision. It will come back to you once resubmitted.`,
-      )
-      return
-    }
 
     const updated = await reviewProposal(proposal.id, action, comment)
     replaceProposal(updated)
@@ -539,16 +488,13 @@ function Proposals() {
     [proposals, activeOrg],
   )
 
-  /* Mga proposal na naghihintay ng aksyon mo:
-     Reviewer → nasa stage mo · Officer → ibinalik sa iyo para i-revise */
+  /* Mga proposal na naghihintay ng aksyon mo (nasa stage mo) —
+     para sa Adviser, SAO, School Head at School Administrator */
   const mine = useMemo(
-    () =>
-      orgScoped.filter((p) =>
-        isReviewer ? canReviewProposal(p, profile) : canReviseProposal(p, profile),
-      ),
+    () => (isReviewer ? orgScoped.filter((p) => canReviewProposal(p, profile)) : []),
     [orgScoped, profile, isReviewer],
   )
-  const showFilters = isReviewer || (isProposer && mine.length > 0)
+  const showFilters = isReviewer
   const shown = showFilters && filter === 'mine' ? mine : orgScoped
 
   /* Galing sa ProposalForm. Kapag nag-throw, doon lalabas ang
@@ -569,40 +515,6 @@ function Proposals() {
       throw err
     }
     setFormOpen(false)
-  }
-
-  /* Galing sa ProposalForm (naka-edit mode). Kapag nag-throw,
-     doon lalabas ang error at mananatiling bukas ang form.
-
-     kept  → mga dating file na pinanatili
-     files → mga bagong file → i-upload muna.
-     Kapag pumalya ang pag-save, binubura ang bagong upload. Kapag
-     tagumpay, binubura sa storage ang mga dating file na inalis. */
-  async function handleResubmit(values, { files, kept }) {
-    const proposal = revising
-    const uploaded = await uploadProposalFiles(profile, files)
-
-    let updated
-    try {
-      updated = await resubmitProposal(proposal.id, {
-        ...values,
-        attachments: [...kept, ...uploaded],
-      })
-    } catch (err) {
-      await deleteProposalFiles(uploaded.map((f) => f.path))
-      throw err
-    }
-
-    const stillUsed = new Set(attachmentsOf(updated).map((f) => f.path))
-    const removed = attachmentsOf(proposal)
-      .map((f) => f.path)
-      .filter((path) => !stillUsed.has(path))
-    await deleteProposalFiles(removed)
-
-    replaceProposal(updated)
-    setRevising(null)
-    setFilter('all')
-    setNotice(`Proposal resubmitted. It is back with ${stageLabel(updated.stage)}.`)
   }
 
   /* Dina-download ang isang file ({ path, name }) */
@@ -686,9 +598,7 @@ function Proposals() {
               className={`${styles.filterChip} ${filter === 'mine' ? styles.filterActive : ''}`}
               onClick={() => setFilter('mine')}
             >
-              {isReviewer
-                ? `Awaiting your action (${mine.length})`
-                : `For you to revise (${mine.length})`}
+              Awaiting your action ({mine.length})
             </button>
             <button
               type="button"
@@ -750,7 +660,7 @@ function Proposals() {
             const busy = deletingId === p.id
             const tone = toneOf(p)
             const ToneIcon = TONE_ICON[tone]
-            const yourTurn = canReviewProposal(p, profile) || canReviseProposal(p, profile)
+            const yourTurn = canReviewProposal(p, profile)
 
             return (
               <li
@@ -768,11 +678,7 @@ function Proposals() {
 
                 <div className={styles.cardMain}>
                   <div className={styles.titleRow}>
-                    <span
-                      className={`${styles.statusPill} ${
-                        styles[isInRevision(p) ? 'status_revision' : `status_${p.status}`] ?? ''
-                      }`}
-                    >
+                    <span className={`${styles.statusPill} ${styles[`status_${p.status}`] ?? ''}`}>
                       {progressLabel(p)}
                     </span>
                     {p.has_budget && (
@@ -858,7 +764,7 @@ function Proposals() {
                     </button>
                   )}
 
-                  {/* Wala nang Approve, Revise at Reject kapag lumampas na
+                  {/* Wala nang Approve at Reject kapag lumampas na
                       sa proposed na petsa at oras ng activity */}
                   {canReviewProposal(p, profile) && !awaitsNoted(p) && !isPastSchedule(p, now) && (
                     <>
@@ -870,16 +776,6 @@ function Proposals() {
                         <Check size={16} strokeWidth={2.8} aria-hidden="true" />
                         Approve
                       </button>
-                      {canRequestRevision(p, profile) && (
-                        <button
-                          type="button"
-                          className={styles.reviseButton}
-                          onClick={() => openReview(p, 'revision')}
-                        >
-                          <RotateCcw size={15} strokeWidth={2.5} aria-hidden="true" />
-                          Revise
-                        </button>
-                      )}
                       <button
                         type="button"
                         className={styles.rejectButton}
@@ -889,20 +785,6 @@ function Proposals() {
                         Reject
                       </button>
                     </>
-                  )}
-
-                  {canReviseProposal(p, profile) && (
-                    <button
-                      type="button"
-                      className={styles.reviseButton}
-                      onClick={() => {
-                        setNotice('')
-                        setRevising(p)
-                      }}
-                    >
-                      <Pencil size={15} strokeWidth={2.4} aria-hidden="true" />
-                      Revise
-                    </button>
                   )}
 
                   {p.status === 'approved' && eventOfProposal(p) && (
@@ -934,14 +816,6 @@ function Proposals() {
         <ProposalForm
           onSubmit={handleSubmit}
           onCancel={closeForm}
-        />
-      )}
-
-      {revising && (
-        <ProposalForm
-          proposal={revising}
-          onSubmit={handleResubmit}
-          onCancel={closeRevise}
         />
       )}
 

@@ -58,8 +58,9 @@ import {
 
    APPROVER PICKER (PROPOSAL_APPROVER_PICKER.sql)
      Sa pagpasa, PUMIPILI ang Officer ng approver bawat stage:
-       Adviser                           → ISA (ng org niya)
-       SAO, School Head, SA (may budget) → ISA O HIGIT PA
+       Adviser                    → ISA (ng org niya)
+       SAO, School Head           → ISA O HIGIT PA
+       School Admin (may budget)  → ISA (iisa lang ang SA)
      Ang mga napili LANG ang makakaaksyon sa stage na iyon at sila lang
      ang may notification. Kapag marami ang napili, LAHAT sila ay dapat
      umaksyon bago umusad (tulad ng dating "lahat ng SAO"). Nasa
@@ -80,19 +81,10 @@ import {
      Laging gamitin ang finalStage() / reviewPath() imbes na isulat
      ang 'school_head' bilang pinal.
 
-   REVISE (PROPOSAL_REVISE.sql)
-     Bukod sa Approve/Reject, ang Adviser at SAO ay may "Revise".
-     Ibinabalik nito ang proposal sa Officer na NAGPASA para
-     i-edit (stage = 'revision'). Nakahold ito — walang ibang
-     makakaaksyon. Kapag naipasa ulit ng Officer, BABALIK ito sa
-     nag-pa-revise (revision_from), hindi na uulit sa simula.
-     Sa pag-revise, pwedeng palitan ng Officer ang approver ng mga
-     stage na hindi pa nadadaanan (lockedApproverStages()).
-
    MARAMING FILE (PROPOSAL_MULTIPLE_FILES.sql)
      proposals.attachments = [{ path, name, size }, ...]
-     KAILANGAN may kahit isang file (1 hanggang 10), sa paggawa at
-     sa pag-resubmit. Sinusuri ito ng database. Ang mga file ay
+     KAILANGAN may kahit isang file (1 hanggang 10). Sinusuri ito
+     ng database. Ang mga file ay
      nasa folder pa rin ng org (tingnan ang lib/proposalFiles.js).
 
    START DATE AT END DATE (PROPOSAL_START_END_DATE.sql)
@@ -121,7 +113,6 @@ export const DECISION_LABELS = {
   approved: 'Approved',
   rejected: 'Rejected',
   noted: 'Noted',
-  revision: 'Revision requested',
 }
 
 export function decisionLabel(decision) {
@@ -197,8 +188,10 @@ export function approverStages(withBudget) {
   return withBudget ? APPROVER_STAGES : APPROVER_STAGES.slice(0, 3)
 }
 
-/* Mga stage na pwedeng ISA O HIGIT PA ang piliin. Ang Adviser ay isa lang. */
-export const MULTI_APPROVER_STAGES = ['sao', 'school_head', 'school_admin']
+/* Mga stage na pwedeng ISA O HIGIT PA ang piliin. Ang Adviser at ang
+   School Administrator (kapag may budget) ay ISA lang — kapareho ng
+   proposal_build_approvers() sa database. */
+export const MULTI_APPROVER_STAGES = ['sao', 'school_head']
 
 export function allowsManyApprovers(stage) {
   return MULTI_APPROVER_STAGES.includes(stage)
@@ -218,16 +211,6 @@ export function approversOf(proposal, stage) {
 /* May pinili ba ang Officer? (wala sa mga lumang proposal) */
 export function hasChosenApprovers(proposal) {
   return APPROVER_STAGES.some((stage) => approversOf(proposal, stage).length > 0)
-}
-
-/* Sa pag-revise: ang mga stage na HINDI na mapapalitan ang approver —
-   ang nag-pa-revise at ang mga nauna rito. Kapareho ng
-   resubmit_proposal() sa database (doon din, kapag hindi na pwede
-   ang dating napili, pwede na itong palitan). */
-export function lockedApproverStages(proposal) {
-  if (!proposal || !isInRevision(proposal)) return []
-  const index = APPROVER_STAGES.indexOf(proposal.revision_from)
-  return index >= 0 ? APPROVER_STAGES.slice(0, index + 1) : []
 }
 
 /* Mga pagpipilian sa picker (para sa Officer):
@@ -314,9 +297,6 @@ export function awaitsNoted(proposal) {
    naghihintay; "Rejected · Nasa SAO" kapag rejected na pero
    dumadaan pa; "Approved" / "Rejected" kapag tapos na. */
 export function progressLabel(proposal) {
-  if (isInRevision(proposal)) {
-    return `Returned by ${stageLabel(proposal.revision_from)} · Revise`
-  }
   if (awaitsNoted(proposal)) {
     return `Rejected · With ${stageLabel(proposal.stage)}`
   }
@@ -355,11 +335,9 @@ const COLUMNS = `
   stage, head_decision, admin_decision, has_budget, og_reward, approvers,
   adviser_decision, adviser_comment, adviser_name, adviser_reviewed_at,
   sao_decision, sao_comment, sao_name, sao_reviewed_at,
-  revision_from, revision_count,
   created_at, updated_at, updated_by,
   organizations ( name, program, logo_url ),
   events ( id ),
-  proposal_revisions ( id, stage, requester_name, comment, requested_at, resubmitted_at ),
   proposal_reviews ( id, stage, reviewer_id, reviewer_name, decision, comment, reviewed_at )
 `
 
@@ -425,9 +403,8 @@ export async function fetchProposals() {
 }
 
 /* attachments = [{ path, name, size }, ...] galing sa
-   uploadProposalFiles() (lib/proposalFiles.js) at sa mga
-   pinanatiling dating file. Ang database ang sumusuri ulit
-   (proposal_build_attachments). */
+   uploadProposalFiles() (lib/proposalFiles.js). Ang database ang
+   sumusuri ulit (proposal_build_attachments). */
 function attachmentsPayload(attachments) {
   return (attachments ?? [])
     .filter((f) => f?.path)
@@ -515,107 +492,6 @@ export async function reviewProposal(id, decision, comment = '') {
   return fetchOne(id)
 }
 
-/* ============================================================
-   REVISE — Adviser o SAO: ibalik sa Officer para i-edit
-
-   Kailangan ang komento: ano ang dapat baguhin. Nakahold ang
-   proposal hanggang maipasa ulit ng Officer. Hindi na pwede
-   kapag rejected na.
-   ============================================================ */
-export async function requestRevision(id, comment) {
-  const { error } = await supabase.rpc('request_proposal_revision', {
-    p_id: id,
-    p_comment: comment.trim(),
-  })
-
-  if (error) throw rpcError(error)
-  return fetchOne(id)
-}
-
-/* Officer: ipasa ulit ang na-edit na proposal.
-   attachments = [{ path, name, size }, ...] — ang mga pinanatiling
-                 dating file + ang mga bagong upload. Kailangan may
-                 kahit isa. Ang dating file na wala rito ay aalisin.
-   approvers   = kapareho ng sa createProposal(). Ang mga naka-lock na
-                 stage ay hindi binabago ng database kahit ipadala.
-   endDate     = End Date (PROPOSAL_START_END_DATE.sql). Kapag wala,
-                 kapareho ng Start Date. */
-export async function resubmitProposal(
-  id,
-  {
-    title,
-    description,
-    venue,
-    eventDate,
-    endDate,
-    startTime,
-    endTime,
-    hasBudget,
-    ogReward,
-    approvers,
-    attachments = [],
-  },
-) {
-  const { error } = await supabase.rpc('resubmit_proposal', {
-    p_id: id,
-    p_title: title,
-    p_description: description,
-    p_venue: venue,
-    p_event_date: eventDate,
-    p_end_date: endDate || eventDate,
-    p_start_time: startTime,
-    p_end_time: endTime,
-    p_attachments: attachmentsPayload(attachments),
-    /* undefined → hindi ipapadala → hindi babaguhin ng database */
-    p_has_budget: hasBudget === undefined ? undefined : Boolean(hasBudget),
-    p_og_reward: ogReward === undefined ? undefined : Number(ogReward) || 0,
-    p_approvers: approvers === undefined ? undefined : approversPayload(approvers, hasBudget),
-  })
-
-  if (error) throw rpcError(error)
-  return fetchOne(id)
-}
-
-/* Nakabalik ba sa Officer para i-revise? */
-export function isInRevision(proposal) {
-  return proposal.status === 'pending' && proposal.stage === 'revision'
-}
-
-/* Ang pinakahuling pa-revise (ang hinihintay pang maipasa ulit) */
-export function latestRevision(proposal) {
-  const list = revisionsOf(proposal)
-  return list.length ? list[list.length - 1] : null
-}
-
-/* Lahat ng pa-revise, mula pinakaluma */
-export function revisionsOf(proposal) {
-  return [...(proposal.proposal_revisions ?? [])].sort(
-    (a, b) => new Date(a.requested_at) - new Date(b.requested_at),
-  )
-}
-
-/* Pwede ka bang mag-Revise ngayon? Adviser at SAO lang, kapag
-   nasa stage mo ang proposal (hindi ang School Head), hindi pa
-   ito rejected, at hindi ka pa nakaaksyon dito. */
-export function canRequestRevision(proposal, profile) {
-  return (
-    proposal.status === 'pending' &&
-    ['adviser', 'sao'].includes(proposal.stage) &&
-    canReviewProposal(proposal, profile)
-  )
-}
-
-/* Ikaw ba ang Officer na dapat mag-revise? */
-export function canReviseProposal(proposal, profile) {
-  return Boolean(
-    profile?.is_active &&
-      profile.role_id === 2 &&
-      isInRevision(proposal) &&
-      proposal.organization_id === profile.organization_id &&
-      proposal.author_id === profile.id,
-  )
-}
-
 /* Ikaw ba ang dapat umaksyon ngayon?
      Tamang role para sa stage, AT nasa pending_reviewers ka — ang
      database ang nagsasabi kung sino: ang approver na pinili ng
@@ -676,11 +552,9 @@ export function rejectedBy(proposal) {
 }
 
 /* Ang mga aksyong nagawa na, sunod-sunod ayon sa oras:
-   [{ key, role, decision, comment, name, at, final, resubmittedAt }]
+   [{ key, stage, role, decision, comment, name, at, final }]
 
-   decision = 'approved' | 'rejected' | 'noted' | 'revision'
-   Ang 'revision' ay galing sa proposal_revisions; may
-   resubmittedAt kapag naipasa na ulit ng Officer.
+   decision = 'approved' | 'rejected' | 'noted'
 
    Ang bawat SAO at School Head ay may sariling hakbang (galing sa
    proposal_reviews), kaya kung tatlo ang SAO, tatlo rin ang linya.
@@ -695,19 +569,6 @@ export function rejectedBy(proposal) {
    nag-review sa kanila, at iyon na ang pinal. */
 export function reviewSteps(proposal) {
   const steps = []
-
-  for (const rev of revisionsOf(proposal)) {
-    steps.push({
-      key: `revision-${rev.id}`,
-      role: stageLabel(rev.stage),
-      decision: 'revision',
-      comment: rev.comment,
-      name: toTitleCase(rev.requester_name ?? ''),
-      at: rev.requested_at,
-      final: false,
-      resubmittedAt: rev.resubmitted_at,
-    })
-  }
 
   if (proposal.adviser_decision) {
     steps.push({
@@ -771,9 +632,7 @@ export function reviewSteps(proposal) {
     if (first) first.final = true
   }
 
-  /* Ayon sa oras, para tama ang pagkakasunod kapag may pa-revise
-     sa gitna (hal. Adviser approved → SAO revise → SAO approved).
-     Ang walang petsa ay nananatili sa puwesto nito. */
+  /* Ayon sa oras. Ang walang petsa ay nananatili sa puwesto nito. */
   return steps
     .map((step, index) => ({ step, index }))
     .sort((a, b) => {
@@ -855,7 +714,6 @@ export function formatDateTime(iso) {
 
 /* Para sa stat tile sa Dashboard.
      Officer                          → lahat ng naghihintay pa sa org niya
-                                        (kasama ang nakabalik para i-revise)
      Adviser, SAO, School Head, SA    → ang nasa stage niya na IKAW ang
                                         hinihintay (napiling approver, at
                                         hindi mo pa naaaksyunan)
@@ -950,7 +808,7 @@ export function isFutureSchedule(eventDate, startTime) {
 }
 
 /* Lumampas na ba sa proposed na petsa at oras (simula) ng activity?
-   Kapag oo, wala nang Approve, Revise, Reject at Noted.
+   Kapag oo, wala nang Approve, Reject at Noted.
    Hinaharang din ito ng database (PROPOSAL_REVIEW_BEFORE_SCHEDULE.sql).
    Ang lumang proposal na walang schedule ay hindi apektado. */
 export function isPastSchedule(proposal, now = nowKey()) {

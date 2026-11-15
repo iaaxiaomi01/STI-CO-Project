@@ -1,5 +1,5 @@
 /* ================================================================
-   REVIEW DIALOG — Approve / Reject / Request revision / Noted
+   REVIEW DIALOG — Approve / Reject / Noted
 
    Simple at "pang-school" na itsura — parang opisyal na form:
      - asul na header ng STI na may dilaw na guhit (letterhead)
@@ -7,8 +7,8 @@
      - reason na may mahinang linya, parang papel ng notebook
 
    Iba ang accent ayon sa aksyon (nakatakda sa .approved,
-   .rejected, .revision; ang Noted ay asul):
-     Approve → berde   Reject → pula   Revision → amber
+   .rejected; ang Noted ay asul):
+     Approve → berde   Reject → pula
 
    Sariling CSS — hindi gumagamit ng ProposalForm.module.css.
 
@@ -72,13 +72,6 @@
   --accent-deep: #a12a21;
   --accent-soft: #fdf0ee;
   --accent-line: #f3cbc5;
-}
-
-.revision {
-  --accent: #c26a06;
-  --accent-deep: #a25705;
-  --accent-soft: #fff5e8;
-  --accent-line: #f3d6ad;
 }
 
 /* ---------- MODAL ---------- */
@@ -338,7 +331,6 @@
 .secondary,
 .success,
 .danger,
-.warning,
 .primary {
   display: inline-flex;
   align-items: center;
@@ -366,7 +358,6 @@
 /* Ang action button — kulay ng accent ng aksyon */
 .success,
 .danger,
-.warning,
 .primary {
   min-width: 140px;
   border: 1px solid var(--accent-deep);
@@ -376,7 +367,6 @@
 
 .success:hover:not(:disabled),
 .danger:hover:not(:disabled),
-.warning:hover:not(:disabled),
 .primary:hover:not(:disabled) {
   background-color: var(--accent-deep);
 }
@@ -384,7 +374,6 @@
 .secondary:focus-visible,
 .success:focus-visible,
 .danger:focus-visible,
-.warning:focus-visible,
 .primary:focus-visible {
   outline: 3px solid var(--rd-yellow);
   outline-offset: 2px;
@@ -393,7 +382,6 @@
 .secondary:disabled,
 .success:disabled,
 .danger:disabled,
-.warning:disabled,
 .primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -429,7 +417,6 @@
   .secondary,
   .success,
   .danger,
-  .warning,
   .primary {
     flex: 1;
     min-width: 0;
