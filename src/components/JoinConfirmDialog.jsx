@@ -114,7 +114,7 @@ function JoinConfirmDialog({ event, onConfirm, onCancel }) {
           </span>
           <p>
             <strong>Reminder:</strong> Once you join, <strong>you can no longer leave</strong> this
-            event. Make sure you can attend before joining.
+            event, unless it gets rescheduled. Make sure you can attend before joining.
           </p>
         </div>
 

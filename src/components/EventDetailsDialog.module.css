@@ -121,6 +121,33 @@
   --pill-ink: #3b4660;
 }
 
+/* Kinansela (EVENT_CANCEL_RESCHEDULE.sql) */
+.cancelled {
+  --stub-bg: #f3f5f9;
+  --stub-ink: var(--ed-muted);
+  --stub-day: var(--ed-muted);
+  --pill-bg: #b42318;
+  --pill-ink: #fff;
+}
+
+.cancelled .heroImg {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.cancelled .title {
+  color: var(--ed-muted);
+  text-decoration: line-through;
+}
+
+.cancelNote h3 {
+  color: #b42318;
+}
+
+.cancelNote p {
+  border-left-color: #b42318;
+}
+
 .missed .heroImg {
   filter: grayscale(1);
   opacity: 0.6;

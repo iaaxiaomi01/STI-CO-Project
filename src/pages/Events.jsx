@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Award,
+  Ban,
   Building2,
+  CalendarClock,
   CalendarX,
   Check,
   Clock,
   Download,
   Info,
+  LogOut,
   MapPin,
   Pencil,
   Plus,
@@ -17,28 +20,40 @@ import {
 import { useAuth } from '../context/AuthContext.js'
 import { hasAdviserPowers } from '../config/roles.js'
 import {
+  CANCELLED_STATUS,
   EVENT_STATUSES,
   MISSED_STATUS,
   authorLabel,
+  canCancelEvent,
   canCreateEventFrom,
   canCreateEvents,
   canJoinEvents,
+  canLeaveEvent,
+  canRescheduleEvent,
   canViewAllEvents,
   canEditEvent,
+  cancelEvent,
   computeStatus,
   createEventFromProposal,
   endDateOf,
   eventStatusLabel,
   fetchEvents,
-  fetchMyJoinedEventIds,
+  fetchMyJoins,
   fetchParticipantCounts,
   findScheduleConflict,
+  formatDateTimeShort,
   formatEventDateRange,
   formatEventTimeRange,
+  formatSchedule,
+  isCancelled,
   isMultiDay,
   joinEvent,
+  lastReschedule,
+  leaveEvent,
   nowKey,
   orgNameOf,
+  previousScheduleOf,
+  rescheduleEvent,
   updateEvent,
   wasEdited,
 } from '../lib/events.js'
@@ -51,6 +66,7 @@ import {
 } from '../lib/certificates.js'
 import {
   isCertificateNotification,
+  isEventUpdateNotification,
   isOgNotification,
   subscribeToNotifications,
 } from '../lib/notifications.js'
@@ -62,6 +78,9 @@ import EventForm from '../components/EventForm.jsx'
 import JoinConfirmDialog from '../components/JoinConfirmDialog.jsx'
 import CertificatesDialog from '../components/CertificatesDialog.jsx'
 import EventDetailsDialog from '../components/EventDetailsDialog.jsx'
+import CancelEventDialog from '../components/CancelEventDialog.jsx'
+import RescheduleEventDialog from '../components/RescheduleEventDialog.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import styles from './Events.module.css'
 
 /* ============================================================
@@ -94,6 +113,20 @@ import styles from './Events.module.css'
    I-EDIT: nawawala ang button 30 minuto bago magsimula ang
    event (kusa, dahil sa "now" na nire-refresh bawat 30 segundo).
    Hinaharang din ito ng database (EVENT_EDIT_LOCK.sql).
+
+   CANCEL AT RESCHEDULE (EVENT_CANCEL_RESCHEDULE.sql):
+     Officer (sariling gawa) at Adviser (lahat sa org):
+       • "Cancel event" → bago magsimula, may dahilan. Nananatili
+         ang event na "Cancelled" (may sariling tab); sarado ang
+         Join, QR, attendance at OG reward.
+       • "Reschedule" → sa cancelled na event lang. Agad na
+         epektibo; bagong petsa, oras at lugar.
+     Member at Officer na nag-Join BAGO ang reschedule:
+       • "Leave event" → hanggang bago magsimula ang bagong
+         schedule (canLeaveEvent()).
+     May notification (event_update) sa bawat Cancel at
+     Reschedule; kapag dumating ito habang bukas ang page, kinukuha
+     ulit ang listahan.
 
    Ang Status (Upcoming/Ongoing/Completed) ay AUTOMATIC —
    kinukuwenta mula sa Start Date, End Date at oras, at
@@ -177,8 +210,8 @@ import styles from './Events.module.css'
    ============================================================ */
 
 /* Ongoing muna, tapos Upcoming (pinakamalapit una),
-   tapos Completed at Missed (pinakabago una) */
-const STATUS_ORDER = { ongoing: 0, upcoming: 1, completed: 2, missed: 2 }
+   tapos Completed at Missed (pinakabago una), tapos Cancelled */
+const STATUS_ORDER = { ongoing: 0, upcoming: 1, completed: 2, missed: 2, cancelled: 3 }
 
 function sortEvents(list) {
   return [...list].sort((a, b) => {
@@ -200,10 +233,10 @@ function sortChoices(list) {
   })
 }
 
-const FILTERS = [{ value: 'all', label: 'All' }, ...EVENT_STATUSES]
+const FILTERS = [{ value: 'all', label: 'All' }, ...EVENT_STATUSES, CANCELLED_STATUS]
 
-/* Member at Officer: may dagdag na tab na "Missed" */
-const MEMBER_FILTERS = [...FILTERS, MISSED_STATUS]
+/* Member at Officer: may dagdag na tab na "Missed" (bago ang Cancelled) */
+const MEMBER_FILTERS = [{ value: 'all', label: 'All' }, ...EVENT_STATUSES, MISSED_STATUS, CANCELLED_STATUS]
 
 /* "2026-10-07" → { day: '07', month: 'OCT 2026', weekday: 'Wednesday' }
    Para sa malaking petsa sa stub ng ticket. Display lang. */
@@ -296,6 +329,35 @@ function myOgStatus(reward, attendance, attendanceClosed) {
   return null
 }
 
+/* "Cancelled by Juan Dela Cruz · Nov 18, 2026, 3:00 PM — The venue is not available" */
+function CancelledNote({ ev, joined }) {
+  return (
+    <div className={`${styles.ticketNote} ${styles.noteCancelled}`}>
+      <p>
+        <strong>Cancelled</strong>
+        {ev.cancelled_by_name && ` by ${ev.cancelled_by_name}`}
+        {ev.cancelled_at && ` · ${formatDateTimeShort(ev.cancelled_at)}`}
+      </p>
+      <p>Reason: {ev.cancel_reason}</p>
+      {joined && <p>You'll be notified if it gets rescheduled.</p>}
+    </div>
+  )
+}
+
+/* "Rescheduled · Originally Fri, Nov 20, 2026, 8:00 AM – 5:00 PM at Gym" */
+function RescheduledNote({ change, leavable }) {
+  return (
+    <div className={`${styles.ticketNote} ${styles.noteRescheduled}`}>
+      <p>
+        <strong>Rescheduled</strong> · Originally {formatSchedule(previousScheduleOf(change))}
+        {change.old_location && ` at ${change.old_location}`}
+      </p>
+      {change.reason && <p>Note: {change.reason}</p>}
+      {leavable && <p>If you can no longer attend, you may leave this event before it starts.</p>}
+    </div>
+  )
+}
+
 function Events() {
   const { role, profile } = useAuth()
 
@@ -333,8 +395,10 @@ function Events() {
   /* ---------- JOIN ---------- */
   const joinable = canJoinEvents(profile)
 
-  /* Mga event_id na sinalihan mo */
-  const [joinedIds, setJoinedIds] = useState(() => new Set())
+  /* Mga event na sinalihan mo → { [event_id]: joined_at }.
+     Ang joined_at ay para sa "Leave event" (canLeaveEvent). */
+  const [joins, setJoins] = useState({})
+  const joinedIds = useMemo(() => new Set(Object.keys(joins)), [joins])
 
   /* Nakuha na ba ang mga sinalihan mo? Habang hindi pa (o kung
      pumalya), walang "Missed" — para hindi magmukhang lahat ay
@@ -342,9 +406,10 @@ function Events() {
   const [joinedLoaded, setJoinedLoaded] = useState(false)
 
   /* Ang mismong mga event na sinalihan mo — para malaman kung
-     KASABAY ng isa sa mga ito ang ibang event (findScheduleConflict) */
+     KASABAY ng isa sa mga ito ang ibang event (findScheduleConflict).
+     Hindi kasama ang cancelled (ganito rin sa database). */
   const joinedEvents = useMemo(
-    () => events.filter((e) => joinedIds.has(e.id)),
+    () => events.filter((e) => joinedIds.has(e.id) && !isCancelled(e)),
     [events, joinedIds],
   )
 
@@ -399,6 +464,12 @@ function Events() {
 
   /* Aling event ang nasa "Sasali ka ba?" na dialog */
   const [confirmingJoin, setConfirmingJoin] = useState(null)
+
+  /* Cancel / Reschedule (Officer na gumawa, Adviser) at Leave
+     (sumali bago ang reschedule) — ang event na nasa dialog */
+  const [cancelling, setCancelling] = useState(null)
+  const [rescheduling, setRescheduling] = useState(null)
+  const [leaving, setLeaving] = useState(null)
 
   /* ---------- OG REWARD ----------
      { [event_id]: row } mula sa event_og_rewards (sariling org, RLS).
@@ -468,7 +539,7 @@ function Events() {
        pumalya ang pagkuha ng mga sinalihan mo */
     if (!profileId) return
     try {
-      setJoinedIds(await fetchMyJoinedEventIds(profileId))
+      setJoins(await fetchMyJoins(profileId))
       setJoinedLoaded(true)
     } catch (err) {
       console.error('Hindi makuha ang mga sinalihan mo:', err)
@@ -533,16 +604,19 @@ function Events() {
   /* REALTIME: may bagong certificate para sa iyo habang bukas
      ang page → kunin ulit para lumabas agad ang "I-download".
      Na-release ang OG mo → kunin ulit ang mga reward para
-     lumabas agad ang "You received … OG". */
+     lumabas agad ang "You received … OG".
+     Kinansela o na-reschedule ang isang event → kunin ulit ang
+     buong listahan. */
   useEffect(() => {
-    if (!profileId || !joinable) return undefined
+    if (!profileId) return undefined
     return subscribeToNotifications(profileId, {
       onInsert: (row) => {
         if (isCertificateNotification(row)) loadMyCertificates()
         if (isOgNotification(row)) loadRewards()
+        if (isEventUpdateNotification(row)) load()
       },
     })
-  }, [profileId, joinable, loadMyCertificates, loadRewards])
+  }, [profileId, loadMyCertificates, loadRewards, load])
 
   /* Galing sa notification: ipakita ang event card. Hinihintay
      munang matapos ang unang pagkuha ng events. */
@@ -674,6 +748,61 @@ function Events() {
     setNotice('Changes saved.')
   }
 
+  function replaceEvent(updated) {
+    setEvents((list) => list.map((e) => (e.id === updated.id ? updated : e)))
+  }
+
+  function openCancel(ev) {
+    setNotice('')
+    setCancelling(ev)
+  }
+
+  function openReschedule(ev) {
+    setNotice('')
+    setRescheduling(ev)
+  }
+
+  /* Galing sa CancelEventDialog. Kapag nag-throw, doon lalabas ang
+     error at mananatiling bukas ang dialog. */
+  async function handleCancel(reason) {
+    const updated = await cancelEvent(cancelling, reason)
+    replaceEvent(updated)
+    setCancelling(null)
+    setHighlightId(updated.id)
+    setNotice(
+      `"${updated.title}" was cancelled. Everyone who joined has been notified. You can reschedule it anytime from the Cancelled tab.`,
+    )
+  }
+
+  /* Galing sa RescheduleEventDialog */
+  async function handleReschedule(values) {
+    const updated = await rescheduleEvent(rescheduling, values)
+    replaceEvent(updated)
+    setRescheduling(null)
+    setFilter('all')
+    setHighlightId(updated.id)
+    setNotice(
+      `"${updated.title}" was rescheduled to ${formatSchedule(updated)}. Everyone who joined has been notified.`,
+    )
+  }
+
+  /* Galing sa ConfirmDialog ng "Leave event" */
+  async function handleLeave() {
+    const ev = leaving
+    await leaveEvent(ev.id)
+    setJoins((current) => {
+      const next = { ...current }
+      delete next[ev.id]
+      return next
+    })
+    setLeaving(null)
+    setNotice(`You left "${ev.title}".`)
+  }
+
+  const closeCancel = useCallback(() => setCancelling(null), [])
+  const closeReschedule = useCallback(() => setRescheduling(null), [])
+  const closeLeave = useCallback(() => setLeaving(null), [])
+
   function toggleExpanded(id) {
     setExpanded((current) => {
       const next = new Set(current)
@@ -780,7 +909,14 @@ function Events() {
           )}
 
           <div className={styles.filters} role="tablist" aria-label="Filter by status">
-            {filters.map((f) => (
+            {filters
+              .filter(
+                (f) =>
+                  f.value !== CANCELLED_STATUS.value ||
+                  (counts.cancelled ?? 0) > 0 ||
+                  filter === CANCELLED_STATUS.value,
+              )
+              .map((f) => (
               <button
                 key={f.value}
                 type="button"
@@ -792,7 +928,7 @@ function Events() {
                 {f.label}
                 <span className={styles.filterCount}>{counts[f.value] ?? 0}</span>
               </button>
-            ))}
+              ))}
           </div>
           </div>
 
@@ -844,6 +980,15 @@ function Events() {
                 const completedMine = Boolean(myAttendance[ev.id]?.time_out)
                 const attendanceClosed = attendancePhase(ev, now) === PHASE_CLOSED
                 const certBusy = downloadingId === ev.id
+
+                /* Cancel / Reschedule (Officer na gumawa, Adviser) at
+                   Leave (sumali bago ang reschedule) */
+                const cancelled = ev.status === CANCELLED_STATUS.value
+                const cancellable = canCancelEvent(ev, profile, now)
+                const reschedulable = canRescheduleEvent(ev, profile)
+                const leavable = joinable && joined && canLeaveEvent(ev, joins[ev.id], now)
+                const moved = cancelled ? null : lastReschedule(ev)
+                const hasManage = editable || manageCerts || cancellable || reschedulable
 
                 /* OG reward ng event (null kung walang itinakda) */
                 const reward = rewards[ev.id] ?? null
@@ -935,6 +1080,10 @@ function Events() {
                           </p>
                         )}
 
+                        {/* ---------- CANCELLED / RESCHEDULED ---------- */}
+                        {cancelled && <CancelledNote ev={ev} joined={joinable && joined} />}
+                        {moved && <RescheduledNote change={moved} leavable={leavable} />}
+
                         {/* ---------- CERTIFICATE NOTE (wala pang file) ---------- */}
                         {showCertStatus && !myCert && completedMine && (
                           <p className={`${styles.ticketNote} ${styles.notePending}`}>
@@ -983,8 +1132,8 @@ function Events() {
                             </div>
                           )}
 
-                          {/* Officer at Adviser: Certificates / Edit */}
-                          {(editable || manageCerts) && (
+                          {/* Officer at Adviser: Certificates / Edit / Cancel / Reschedule */}
+                          {hasManage && (
                             <div className={`${styles.actions} ${styles.tActions}`}>
                               {manageCerts && (
                                 <button
@@ -1016,6 +1165,26 @@ function Events() {
                                     <Pencil size={14} strokeWidth={2.4} />
                                   </span>
                                   <span className={styles.editText}>Edit</span>
+                                </button>
+                              )}
+                              {reschedulable && (
+                                <button
+                                  type="button"
+                                  className={styles.tReschedBtn}
+                                  onClick={() => openReschedule(ev)}
+                                >
+                                  <CalendarClock size={15} strokeWidth={2.4} aria-hidden="true" />
+                                  Reschedule
+                                </button>
+                              )}
+                              {cancellable && (
+                                <button
+                                  type="button"
+                                  className={styles.tCancelBtn}
+                                  onClick={() => openCancel(ev)}
+                                >
+                                  <Ban size={15} strokeWidth={2.4} aria-hidden="true" />
+                                  Cancel event
                                 </button>
                               )}
                             </div>
@@ -1079,6 +1248,20 @@ function Events() {
                             </span>
                           )}
 
+                          {leavable && (
+                            <button
+                              type="button"
+                              className={styles.tLeave}
+                              onClick={() => {
+                                setNotice('')
+                                setLeaving(ev)
+                              }}
+                            >
+                              <LogOut size={15} strokeWidth={2.4} aria-hidden="true" />
+                              Leave event
+                            </button>
+                          )}
+
                           {certReady && (
                             <button
                               type="button"
@@ -1116,6 +1299,9 @@ function Events() {
                       </span>
 
                       <h2 className={styles.title}>{ev.title}</h2>
+
+                      {cancelled && <CancelledNote ev={ev} joined={joinable && joined} />}
+                      {moved && <RescheduledNote change={moved} leavable={leavable} />}
 
                       <dl className={styles.details}>
                         <div>
@@ -1181,6 +1367,18 @@ function Events() {
                           {joinable && joined && (
                             <span className={styles.joinedGroup}>
                               <span className={styles.joinedBadge}>✓ You joined</span>
+                              {leavable && (
+                                <button
+                                  type="button"
+                                  className={`${styles.linkButton} ${styles.danger}`}
+                                  onClick={() => {
+                                    setNotice('')
+                                    setLeaving(ev)
+                                  }}
+                                >
+                                  Leave event
+                                </button>
+                              )}
                             </span>
                           )}
 
@@ -1236,7 +1434,7 @@ function Events() {
                           {wasEdited(ev) && <span className={styles.edited}> · edited</span>}
                         </p>
 
-                        {(editable || manageCerts) && (
+                        {hasManage && (
                           <div className={styles.actions}>
                             {manageCerts && (
                               <button
@@ -1260,6 +1458,24 @@ function Events() {
                                 }}
                               >
                                 Edit
+                              </button>
+                            )}
+                            {reschedulable && (
+                              <button
+                                type="button"
+                                className={styles.linkButton}
+                                onClick={() => openReschedule(ev)}
+                              >
+                                Reschedule
+                              </button>
+                            )}
+                            {cancellable && (
+                              <button
+                                type="button"
+                                className={`${styles.linkButton} ${styles.danger}`}
+                                onClick={() => openCancel(ev)}
+                              >
+                                Cancel event
                               </button>
                             )}
                           </div>
@@ -1297,6 +1513,32 @@ function Events() {
 
       {confirmingJoin && (
         <JoinConfirmDialog event={confirmingJoin} onConfirm={handleJoin} onCancel={closeJoin} />
+      )}
+
+      {cancelling && (
+        <CancelEventDialog event={cancelling} onConfirm={handleCancel} onCancel={closeCancel} />
+      )}
+
+      {rescheduling && (
+        <RescheduleEventDialog
+          event={rescheduling}
+          onConfirm={handleReschedule}
+          onCancel={closeReschedule}
+        />
+      )}
+
+      {leaving && (
+        <ConfirmDialog
+          title="Leave this event?"
+          message="This event was rescheduled after you joined. If you can no longer attend, you can leave it. You can join again while it has not started."
+          item={`${leaving.title} · ${formatSchedule(leaving)}`}
+          confirmLabel="Leave event"
+          busyLabel="Leaving…"
+          tone="danger"
+          icon={LogOut}
+          onConfirm={handleLeave}
+          onCancel={closeLeave}
+        />
       )}
     </div>
   )

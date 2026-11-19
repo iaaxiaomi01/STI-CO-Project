@@ -204,6 +204,12 @@
   color: #3b4660;
 }
 
+/* Kinansela (EVENT_CANCEL_RESCHEDULE.sql) */
+.badge_cancelled {
+  background-color: #fdecec;
+  color: #b42318;
+}
+
 /* Member at Officer: tapos na ang event at hindi siya nag-Join */
 .badge_missed {
   background-color: #fdecec;
@@ -1046,6 +1052,82 @@
   color: #b42318;
 }
 
+/* Kinansela: sino, kailan at bakit */
+.noteCancelled {
+  border-left: 4px solid #b42318;
+  background-color: #fdecec;
+  color: #8a1c12;
+}
+
+/* Na-reschedule: ang dating schedule */
+.noteRescheduled {
+  border-left: 4px solid var(--dash-navy, #2c4a8f);
+  background-color: #eaf0fb;
+  color: #253b6e;
+}
+
+.noteCancelled p + p,
+.noteRescheduled p + p {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ---------- CANCEL EVENT · RESCHEDULE (Officer at Adviser) ---------- */
+.ticketPage .tCancelBtn,
+.ticketPage .tReschedBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition), box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.ticketPage .tCancelBtn {
+  border: 2px solid #f1b5ae;
+  background-color: #fff;
+  color: #b42318;
+}
+
+.ticketPage .tCancelBtn:hover {
+  background-color: #fdecec;
+  transform: translateY(-2px);
+}
+
+.ticketPage .tReschedBtn {
+  border: none;
+  background-color: var(--dash-navy, #2c4a8f);
+  color: #fff;
+}
+
+.ticketPage .tReschedBtn:hover {
+  box-shadow: 0 6px 14px rgba(44, 74, 143, 0.35);
+  transform: translateY(-2px);
+}
+
+.ticketPage .tCancelBtn:active,
+.ticketPage .tReschedBtn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.ticketPage .tCancelBtn:focus-visible,
+.ticketPage .tReschedBtn:focus-visible {
+  outline: 3px solid var(--dash-navy, #2c4a8f);
+  outline-offset: 2px;
+}
+
+.ticketPage .tCancelBtn svg,
+.ticketPage .tReschedBtn svg {
+  flex-shrink: 0;
+}
+
 .ticketFooter {
   display: flex;
   flex-wrap: wrap;
@@ -1224,6 +1306,36 @@
   transform: rotate(-6deg);
 }
 
+/* "Leave event" sa stub — para sa sumali bago ang reschedule */
+.tLeave {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 2px solid #b42318;
+  border-radius: 12px;
+  background-color: #fff;
+  color: #b42318;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.tLeave:hover {
+  background-color: #fdecec;
+}
+
+.tLeave:focus-visible {
+  outline: 3px solid #b42318;
+  outline-offset: 2px;
+}
+
 /* Kapalit ng Join kapag kasabay ng event na sinalihan mo na.
    Hindi ito button — paalala lang (nasa katawan ng ticket ang
    buong detalye). */
@@ -1307,6 +1419,29 @@
 
 .t_missed .ticketTitle {
   color: var(--dash-muted);
+}
+
+/* Kinansela: kulay-abo ang poster, may guhit ang title, pula ang pill */
+.t_cancelled .stub {
+  background-color: #f3f5f9;
+  color: var(--dash-muted);
+}
+
+.t_cancelled .statusPill {
+  background-color: #b42318;
+  color: #fff;
+}
+
+.t_cancelled .poster {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.t_cancelled .ticketTitle,
+.t_cancelled .stubDay {
+  color: var(--dash-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
 }
 
 /* ---------- KATAMTAMAN (tablet): mas makitid ang poster at stub

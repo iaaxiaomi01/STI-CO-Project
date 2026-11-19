@@ -24,6 +24,7 @@ import {
   eventStatusLabel,
   fetchEvents,
   fetchMyJoinedEvents,
+  isCancelled,
   fetchParticipantCounts,
   fetchParticipants,
   formatDateTimeShort,
@@ -598,7 +599,9 @@ function ParticipantsPerEvent({ profile }) {
         fetchParticipantCounts(),
         loadAttCounts(),
       ])
-      setEvents(evs)
+      /* Walang attendance ang KINANSELA na event. Babalik ito rito
+         kapag na-reschedule (EVENT_CANCEL_RESCHEDULE.sql). */
+      setEvents(evs.filter((e) => !isCancelled(e)))
       setCounts(c)
       setError(null)
     } catch (err) {

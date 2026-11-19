@@ -4,6 +4,7 @@ import {
   Award,
   BadgeCheck,
   Bell,
+  CalendarClock,
   CalendarDays,
   Gem,
   Mail,
@@ -32,6 +33,9 @@ import styles from './NotificationBell.module.css'
    event; dito ay ipinapakita lang at minamarkahang nabasa.
  
    MGA URI:
+     event_update    → kinansela o na-reschedule ang isang event
+                       (danger = cancelled · info = rescheduled) —
+                       EVENT_CANCEL_RESCHEDULE.sql
      event_new       → may bagong event (Member, Officer at
                        Adviser — ADVISER_EVENT_NOTIFICATIONS.sql)
      certificate_ready → available na (o napalitan) ang
@@ -76,6 +80,7 @@ const TOAST_SECONDS = 6
 /* Icon ng bawat uri (dating mga simbolo: ◆ ✉ ✎ ⤓ ★ ❖ ✦) */
 const TYPE_ICON = {
   event_new: CalendarDays,
+  event_update: CalendarClock,
   proposal_update: Mail,
   proposal_review: Pencil,
   certificate_ready: Award,

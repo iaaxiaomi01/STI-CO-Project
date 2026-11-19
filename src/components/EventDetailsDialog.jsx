@@ -223,6 +223,16 @@ function EventDetailsDialog({ event, reward = null, participants = null, onClose
           </dl>
 
           {/* ---------- DESCRIPTION ---------- */}
+          {event.cancelled_at && (
+            <section className={`${styles.about} ${styles.cancelNote}`}>
+              <h3>Cancelled</h3>
+              <p>
+                {event.cancelled_by_name ? `By ${event.cancelled_by_name}: ` : ''}
+                {event.cancel_reason}
+              </p>
+            </section>
+          )}
+
           <section className={styles.about}>
             <h3>Description</h3>
             <p>{event.description}</p>

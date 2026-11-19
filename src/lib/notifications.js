@@ -180,6 +180,12 @@ export function isCertificateNotification(row) {
   return row?.type === 'certificate_ready'
 }
 
+/* Para sa Events page: kinansela o na-reschedule ang isang event
+   (EVENT_CANCEL_RESCHEDULE.sql) — kunin ulit ang listahan */
+export function isEventUpdateNotification(row) {
+  return row?.type === 'event_update'
+}
+
 /* Para sa AuthProvider: binigyan, pinalitan, o tinanggalan ka ng
    officer position — kunin ulit ang profile (role at sidebar) */
 export function isPositionNotification(row) {

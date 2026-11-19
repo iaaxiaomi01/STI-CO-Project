@@ -31,6 +31,19 @@ import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.j
    Ang lumang event/proposal na walang end_date ay iisang araw —
    laging gamitin ang endDateOf().
 
+   CANCEL AT RESCHEDULE (EVENT_CANCEL_RESCHEDULE.sql):
+     Cancel     → ang Officer na GUMAWA ng event o ang Adviser ng org,
+                  bago magsimula, may KAILANGANG dahilan. Hindi
+                  nabubura ang event — "Cancelled" ang status nito.
+                  Sarado ang Join, QR, attendance at OG reward.
+     Reschedule → para sa na-cancel na event lang. Agad na epektibo
+                  (walang approval); may notification sa mga
+                  nag-Join, sa Adviser at sa mga nag-approve.
+     Leave      → ang nag-Join BAGO ang reschedule ay pwedeng umalis
+                  hanggang bago magsimula ang bagong schedule.
+     Dumadaan sa cancel_event(), reschedule_event() at leave_event()
+     sa database — doon ang totoong pagsusuri.
+
    Picture: event-images/<org id>/<proposal id>/<timestamp>.webp
    ============================================================ */
 
@@ -49,8 +62,14 @@ export const EVENT_STATUSES = [
    ibang page at ng ibang role). */
 export const MISSED_STATUS = { value: 'missed', label: 'Missed' }
 
+/* "Cancelled" — kinansela ang event (may cancelled_at). Hiwalay sa
+   EVENT_STATUSES dahil hindi ito galing sa oras; may sarili itong
+   tab sa Events page. Tingnan ang computeStatus(). */
+export const CANCELLED_STATUS = { value: 'cancelled', label: 'Cancelled' }
+
 export function eventStatusLabel(value) {
   if (value === MISSED_STATUS.value) return MISSED_STATUS.label
+  if (value === CANCELLED_STATUS.value) return CANCELLED_STATUS.label
   return EVENT_STATUSES.find((s) => s.value === value)?.label ?? value
 }
 
@@ -116,6 +135,9 @@ export function eventDayKeys(item, maxDays = 62) {
    ang timezone ng computer ng tumitingin.
 
    Ang lumang "status" column sa database ay hindi na ginagamit.
+
+   CANCELLED: kapag may cancelled_at ang event, "cancelled" ang
+   status kahit anong oras — hanggang ma-reschedule ito.
    ============================================================ */
 const EVENT_TIMEZONE = 'Asia/Manila'
 
@@ -140,22 +162,37 @@ export function nowKey(date = new Date()) {
 /* Pareho ang anyo ng "YYYY-MM-DD HH:MM", kaya pwedeng
    ikumpara bilang text. */
 export function computeStatus(event, now = nowKey()) {
+  if (isCancelled(event)) return CANCELLED_STATUS.value
   if (now < startKeyOf(event)) return 'upcoming'
   if (now < endKeyOf(event)) return 'ongoing'
   return 'completed'
+}
+
+/* Kinansela ba ang event? (hanggang ma-reschedule) */
+export function isCancelled(event) {
+  return Boolean(event?.cancelled_at)
 }
 
 export const TITLE_MAX = 150
 export const DESCRIPTION_MAX = 8000
 export const LOCATION_MAX = 200
 
+/* Dahilan ng Cancel at note ng Reschedule — kapareho ng nasa
+   cancel_event() at reschedule_event() sa database */
+export const SCHEDULE_REASON_MAX = 500
+
 const COLUMNS = `
   id, organization_id, proposal_id,
   title, description, event_date, end_date, start_time, end_time, location, image_url,
   author_id, author_name, author_role_id,
   created_at, updated_at, updated_by,
+  cancelled_at, cancelled_by_name, cancel_reason, rescheduled_at,
   proposals ( venue, event_date, end_date, start_time, end_time ),
-  organizations ( name )
+  organizations ( name ),
+  event_schedule_changes (
+    id, action, reason, actor_name, created_at,
+    old_event_date, old_end_date, old_start_time, old_end_time, old_location
+  )
 `
 
 /* Pangalan ng org ng event (galing sa organizations ( name ) sa
@@ -284,7 +321,7 @@ export async function countEventsByStatus() {
 
   const { data, error } = await supabase
     .from('events')
-    .select('event_date, end_date, start_time, end_time')
+    .select('event_date, end_date, start_time, end_time, cancelled_at')
     .gte('end_date', today)
 
   if (error) throw error
@@ -292,7 +329,8 @@ export async function countEventsByStatus() {
   const counts = { upcoming: 0, ongoing: 0, active: 0 }
   ;(data ?? []).forEach((e) => {
     const status = computeStatus(e, now)
-    if (status === 'completed') return
+    /* Hindi binibilang ang tapos na at ang kinansela */
+    if (status === 'completed' || status === CANCELLED_STATUS.value) return
     counts[status] += 1
     counts.active += 1
   })
@@ -461,6 +499,9 @@ export async function updateEvent(event, values, { imageFile = null, removeImage
      Burahin → WALA. Kahit Adviser, hindi na makakapagbura ng
                event — walang DELETE policy at binawi ang DELETE
                privilege sa EVENT_NO_DELETE.sql.
+     Cancel / Reschedule → kapareho ng Edit ang pwede (Officer:
+               sariling gawa · Adviser: lahat sa org). Tingnan ang
+               canCancelEvent() at canRescheduleEvent() sa ibaba.
    ============================================================ */
 
 /* Ang event na naka-kabit sa proposal (galing sa join sa
@@ -531,10 +572,95 @@ export function editLockKey(event) {
   )
 }
 
-/* Mae-edit pa ba? Kailangang may pahintulot ka (canManageEvent)
-   AT mahigit 30 minuto pa bago magsimula ang event. */
+/* Mae-edit pa ba? Kailangang may pahintulot ka (canManageEvent),
+   HINDI kinansela ang event, AT mahigit 30 minuto pa bago ito
+   magsimula. */
 export function canEditEvent(event, profile, now = nowKey()) {
-  return canManageEvent(event, profile) && now < editLockKey(event)
+  return canManageEvent(event, profile) && !isCancelled(event) && now < editLockKey(event)
+}
+
+/* ============================================================
+   CANCEL AT RESCHEDULE (EVENT_CANCEL_RESCHEDULE.sql)
+
+   KAPAREHO ng cancel_event(), reschedule_event() at leave_event()
+   sa database. Dito, para lang itago ang mga button — kapag
+   binago mo ang isa, baguhin mo rin ang isa.
+   ============================================================ */
+
+/* Pwede bang i-cancel? May pahintulot ka, hindi pa kinansela, at
+   HINDI PA NAGSISIMULA ang event. */
+export function canCancelEvent(event, profile, now = nowKey()) {
+  return canManageEvent(event, profile) && !isCancelled(event) && now < startKeyOf(event)
+}
+
+/* Pwede bang i-reschedule? May pahintulot ka at KINANSELA ang event.
+   Walang deadline — pwedeng manatiling cancelled nang tuluyan. */
+export function canRescheduleEvent(event, profile) {
+  return canManageEvent(event, profile) && isCancelled(event)
+}
+
+/* Mga galaw sa schedule ng event, mula pinakaluma:
+   [{ id, action: 'cancelled' | 'rescheduled', reason, actor_name,
+      created_at, old_event_date, old_end_date, old_start_time,
+      old_end_time, old_location }] */
+export function scheduleChangesOf(event) {
+  return [...(event?.event_schedule_changes ?? [])].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at),
+  )
+}
+
+/* Ang pinakahuling reschedule (null kung hindi pa na-reschedule).
+   Ang old_* nito ang DATING schedule — para sa "Originally …". */
+export function lastReschedule(event) {
+  const list = scheduleChangesOf(event).filter((c) => c.action === 'rescheduled')
+  return list.length ? list[list.length - 1] : null
+}
+
+/* Ang dating schedule sa hugis ng event, para sa formatSchedule() */
+export function previousScheduleOf(change) {
+  return {
+    event_date: change.old_event_date,
+    end_date: change.old_end_date,
+    start_time: change.old_start_time,
+    end_time: change.old_end_time,
+  }
+}
+
+async function fetchEvent(id) {
+  const { data, error } = await supabase.from('events').select(COLUMNS).eq('id', id).single()
+  if (error) throw error
+  return data
+}
+
+/* Ibinabalik ang na-update na event */
+export async function cancelEvent(event, reason) {
+  const { error } = await supabase.rpc('cancel_event', {
+    p_event: event.id,
+    p_reason: reason.trim(),
+  })
+  if (error) throw error
+  return fetchEvent(event.id)
+}
+
+/* values = { eventDate, endDate, startTime, endTime, location, note }
+   Ibinabalik ang na-update na event. */
+export async function rescheduleEvent(event, values) {
+  const { error } = await supabase.rpc('reschedule_event', {
+    p_event: event.id,
+    p_event_date: values.eventDate,
+    p_end_date: values.endDate || values.eventDate,
+    p_start_time: values.startTime,
+    p_end_time: values.endTime,
+    p_location: values.location?.trim() || null,
+    p_note: values.note?.trim() || null,
+  })
+  if (error) throw error
+  return fetchEvent(event.id)
+}
+
+/* Nasa hinaharap ba ang simula? Kapareho ng check sa database. */
+export function isFutureStart(eventDate, startTime, now = nowKey()) {
+  return `${eventDate} ${startTime.slice(0, 5)}` > now
 }
 
 /* ---------- PAG-FORMAT ---------- */
@@ -640,8 +766,11 @@ export function wasEdited(event) {
    Table: public.event_participants
      Join    → insert (event_id lang ang ipinapadala; ang pangalan,
                role at org ay itinatakda ng trigger sa database)
-     Umalis  → WALA NA. Kapag nakasali, hindi na makakaalis
-               (EVENT_JOIN_NO_LEAVE.sql). May paalala nito sa
+     Umalis  → WALA, maliban sa iisang pagkakataon: NA-RESCHEDULE
+               ang event PAGKATAPOS mong mag-Join. Pwede kang umalis
+               hanggang bago magsimula ang bagong schedule —
+               canLeaveEvent(), leaveEvent() (EVENT_JOIN_NO_LEAVE.sql,
+               EVENT_CANCEL_RESCHEDULE.sql). May paalala nito sa
                JoinConfirmDialog bago sumali.
 
    Hinaharang ng database ang Join kapag nagsimula na ang event
@@ -700,15 +829,38 @@ export function findScheduleConflict(event, joinedEvents) {
   return clashes.reduce((first, e) => (startKeyOf(e) < startKeyOf(first) ? e : first))
 }
 
-/* Mga event_id na sinalihan mo → Set */
-export async function fetchMyJoinedEventIds(profileId) {
+/* Mga event na sinalihan mo → { [event_id]: joined_at }
+   Ang joined_at ay para sa canLeaveEvent(). */
+export async function fetchMyJoins(profileId) {
   const { data, error } = await supabase
     .from('event_participants')
-    .select('event_id')
+    .select('event_id, joined_at')
     .eq('profile_id', profileId)
 
   if (error) throw error
-  return new Set((data ?? []).map((r) => r.event_id))
+  const map = {}
+  ;(data ?? []).forEach((r) => {
+    map[r.event_id] = r.joined_at
+  })
+  return map
+}
+
+/* Pwede ka bang umalis sa event na sinalihan mo? Kapag na-reschedule
+   ito PAGKATAPOS mong mag-Join, hindi kinansela ngayon, at hindi pa
+   nagsisimula. Kapareho ng leave_event() sa database. */
+export function canLeaveEvent(event, joinedAt, now = nowKey()) {
+  return Boolean(
+    joinedAt &&
+      event?.rescheduled_at &&
+      new Date(joinedAt) < new Date(event.rescheduled_at) &&
+      !isCancelled(event) &&
+      now < startKeyOf(event),
+  )
+}
+
+export async function leaveEvent(eventId) {
+  const { error } = await supabase.rpc('leave_event', { p_event: eventId })
+  if (error) throw error
 }
 
 /* { [event_id]: bilang ng sasali } */
@@ -765,15 +917,17 @@ export async function fetchMyJoinedEvents(profileId) {
     .from('event_participants')
     .select(
       `joined_at,
-       events ( id, title, event_date, end_date, start_time, end_time, location, image_url )`,
+       events ( id, title, event_date, end_date, start_time, end_time, location, image_url, cancelled_at )`,
     )
     .eq('profile_id', profileId)
     .order('joined_at', { ascending: false })
 
   if (error) throw error
-  /* Laktawan kung hindi na mabasa ang event (hal. nabura) */
+  /* Laktawan kung hindi na mabasa ang event (hal. nabura), at ang
+     KINANSELA — walang attendance ang cancelled na event. Babalik
+     ito rito kapag na-reschedule. */
   return (data ?? [])
-    .filter((r) => r.events)
+    .filter((r) => r.events && !isCancelled(r.events))
     .map((r) => ({ ...r.events, joined_at: r.joined_at }))
 }
 
