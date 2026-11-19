@@ -27,6 +27,7 @@ import {
   isCancelled,
   fetchParticipantCounts,
   fetchParticipants,
+  participantAvatar,
   formatDateTimeShort,
   formatEventDateRange,
   formatEventTimeRange,
@@ -59,6 +60,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import MyQrDialog from '../components/MyQrDialog.jsx'
 import AttendanceScanner from '../components/AttendanceScanner.jsx'
 import AttendanceOverview from '../components/AttendanceOverview.jsx'
+import Avatar from '../components/Avatar.jsx'
 import { exportEventAttendance } from '../lib/attendanceExport.js'
 import styles from './Attendance.module.css'
 
@@ -923,9 +925,13 @@ function ParticipantList({ event, now, myId, canManual, version, onChanged }) {
           return (
             <li key={p.profile_id} className={styles.person}>
               <span className={styles.num}>{i + 1}</span>
-              <span className={styles.avatar} aria-hidden="true">
-                {initialOf(name)}
-              </span>
+              {/* Profile picture; unang letra kapag wala */}
+              <Avatar
+                src={participantAvatar(p)}
+                name={initialOf(name)}
+                size="sm"
+                className={styles.avatar}
+              />
               <span className={styles.who}>
                 <span className={styles.name}>{name}</span>
                 <span className={styles.whoMeta}>

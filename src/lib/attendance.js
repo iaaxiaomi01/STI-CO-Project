@@ -156,7 +156,8 @@ export async function issueAttendanceToken(eventId) {
   return { token: row.token, expiresAt: row.expires_at }
 }
 
-/* Ibinabalik: { result: 'ok' | 'already', mode, name, role_id, time_in, time_out } */
+/* Ibinabalik: { result: 'ok' | 'already', mode, name, role_id, time_in, time_out,
+               profile_id, avatar_url } — ATTENDANCE_PHOTO.sql */
 export async function scanAttendance(token, eventId, mode) {
   const { data, error } = await supabase.rpc('scan_attendance', {
     p_token: token,

@@ -882,10 +882,19 @@ export async function joinEvent(eventId) {
   if (error && error.code !== '23505') throw error
 }
 
+/* Kasama ang profile picture (profiles.avatar_url) — para sa
+   listahan ng sasali sa Attendance page. Nababasa ito ng Officer at
+   Adviser dahil kapwa nila sa org ang mga sumali
+   (profiles_read_orgmates); null kapag hindi. */
+export function participantAvatar(p) {
+  const prof = Array.isArray(p?.profiles) ? p.profiles[0] : p?.profiles
+  return prof?.avatar_url ?? null
+}
+
 export async function fetchParticipants(eventId) {
   const { data, error } = await supabase
     .from('event_participants')
-    .select('profile_id, participant_name, participant_role_id, joined_at')
+    .select('profile_id, participant_name, participant_role_id, joined_at, profiles ( avatar_url )')
     .eq('event_id', eventId)
     .order('joined_at', { ascending: true })
 

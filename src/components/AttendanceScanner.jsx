@@ -15,6 +15,7 @@ import {
 } from '../lib/attendance.js'
 import { nowKey } from '../lib/events.js'
 import { toTitleCase } from '../lib/profile.js'
+import Avatar from './Avatar.jsx'
 import styles from './AttendanceScanner.module.css'
 
 /* ============================================================
@@ -277,12 +278,20 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
               : { ...c, timedOut: c.timedOut + 1 },
           )
           navigator.vibrate?.(80)
-          setResult({ kind: 'ok', title: toTitleCase(r.name), text: `${label} · ${when}` })
+          setResult({
+            kind: 'ok',
+            title: toTitleCase(r.name),
+            text: `${label} · ${when}`,
+            person: true,
+            photo: r.avatar_url ?? null,
+          })
         } else {
           setResult({
             kind: 'already',
             title: toTitleCase(r.name),
             text: `${label} was already recorded earlier (${when}).`,
+            person: true,
+            photo: r.avatar_url ?? null,
           })
         }
       } catch (err) {
@@ -455,7 +464,17 @@ function AttendanceScanner({ event, totalJoined, initialCounts, onClose }) {
         {/* ---------- IBABA: resulta + bilang ---------- */}
         <div className={styles.bottom}>
           <div className={`${styles.result} ${styles[look.cls]}`} role="status" aria-live="polite">
-            <span className={styles.resultIcon}>{look.icon}</span>
+            {/* May na-scan na tao → ang PICTURE niya (o unang letra kung
+                wala), para makita kung siya nga ang nasa harap mo.
+                Ang icon ay maliit na tsapa sa gilid ng picture. */}
+            {shown.person ? (
+              <span className={styles.resultPhoto}>
+                <Avatar src={shown.photo} name={shown.title} size="md" />
+                <span className={`${styles.resultIcon} ${styles.resultBadge}`}>{look.icon}</span>
+              </span>
+            ) : (
+              <span className={styles.resultIcon}>{look.icon}</span>
+            )}
             <span className={styles.resultText}>
               <strong>{shown.title}</strong>
               {shown.text}

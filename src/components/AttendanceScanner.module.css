@@ -360,6 +360,35 @@
   min-width: 0;
 }
 
+/* Picture ng na-scan na tao (ATTENDANCE_PHOTO.sql) */
+.result:has(.resultPhoto) {
+  align-items: center;
+}
+
+.resultPhoto {
+  position: relative;
+  flex-shrink: 0;
+  display: block;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px #fff;
+}
+
+/* Ang icon (✓, ↺) bilang maliit na tsapa sa kanang-ibaba */
+.resultBadge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.resultBadge svg {
+  width: 13px;
+  height: 13px;
+}
+
 .resultText strong {
   display: block;
   font-size: 15px;
