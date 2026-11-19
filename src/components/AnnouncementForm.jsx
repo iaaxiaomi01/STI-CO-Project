@@ -64,8 +64,12 @@ const AUDIENCE_ICONS = {
                 Kapag WALANG ownOrgId (School Administrator), lahat
                 ng org o piling org lang ang pagpipilian.
    Kapag nag-e-edit, hindi na mababago kung para kanino.
+
+   propose — true para sa Officer (ANNOUNCEMENT_APPROVAL.sql):
+     "Propose announcement" at "Submit for approval". Ipapasa ito
+     sa Adviser; kusang ipo-post kapag na-approve.
    ============================================================ */
-function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCancel }) {
+function AnnouncementForm({ initial, audience = 'own', ownOrgId, propose = false, onSubmit, onCancel }) {
   const isEdit = Boolean(initial)
 
   /* Listahan ng org para sa "Selected organizations" */
@@ -195,7 +199,9 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
   /* Subtitle sa ilalim ng heading */
   const subtitle = isEdit
     ? 'Your changes will be shown to the same audience.'
-    : 'Share news and updates with your members.'
+    : propose
+      ? 'Your Adviser will review it. Once approved, it is posted automatically.'
+      : 'Share news and updates with your members.'
 
   return (
     <div
@@ -218,7 +224,7 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
           </span>
           <div className={styles.headText}>
             <h2 id="announcement-form-title" className={styles.heading}>
-              {isEdit ? 'Edit announcement' : 'New announcement'}
+              {isEdit ? 'Edit announcement' : propose ? 'Propose announcement' : 'New announcement'}
             </h2>
             <p className={styles.subtitle}>{subtitle}</p>
           </div>
@@ -446,7 +452,13 @@ function AnnouncementForm({ initial, audience = 'own', ownOrgId, onSubmit, onCan
           </button>
           <button type="submit" className={styles.primary} disabled={saving}>
             {!saving && !isEdit && <Send size={16} strokeWidth={2.4} aria-hidden="true" />}
-            {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post'}
+            {saving
+              ? 'Saving…'
+              : isEdit
+                ? 'Save changes'
+                : propose
+                  ? 'Submit for approval'
+                  : 'Post'}
           </button>
         </div>
       </form>

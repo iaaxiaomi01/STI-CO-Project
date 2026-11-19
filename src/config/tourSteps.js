@@ -66,9 +66,9 @@ const PAGE_GUIDE = {
   '/announcements': {
     default: 'Updates from your organization and the school. The newest posts are on top.',
     [R.OFFICER]:
-      'Updates from your organization and the school. Press Post to publish an announcement for your organization. You can edit or delete your own posts.',
+      'Updates from your organization and the school. Press Propose to send an announcement to your Adviser. Once approved, it is posted automatically. You can delete your own posts.',
     [R.ADVISER]:
-      'Updates from your organization and the school. Press Post to publish an announcement for your organization. You can edit or delete your own posts.',
+      'Updates from your organization and the school. Press Post to publish an announcement. Announcements proposed by Officers wait for your Approve or Reject at the top.',
     [R.SCHOOL_HEAD]:
       'Press Post to publish an announcement to all organizations or only to the ones you select. You can see every announcement, but only edit or delete your own.',
     [R.SCHOOL_ADMIN]:

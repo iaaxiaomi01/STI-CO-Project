@@ -180,6 +180,13 @@ export function isCertificateNotification(row) {
   return row?.type === 'certificate_ready'
 }
 
+/* Para sa Announcements page: may bagong ipinapa-approve (Adviser),
+   o na-approve / na-reject ang proposal mo (Officer) —
+   ANNOUNCEMENT_APPROVAL.sql */
+export function isAnnouncementProposalNotification(row) {
+  return row?.type === 'announcement_review' || row?.type === 'announcement_update'
+}
+
 /* Para sa Events page: kinansela o na-reschedule ang isang event
    (EVENT_CANCEL_RESCHEDULE.sql) — kunin ulit ang listahan */
 export function isEventUpdateNotification(row) {

@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Bell,
   CalendarClock,
+  ClipboardCheck,
   CalendarDays,
   Gem,
   Mail,
@@ -33,6 +34,10 @@ import styles from './NotificationBell.module.css'
    event; dito ay ipinapakita lang at minamarkahang nabasa.
  
    MGA URI:
+     announcement_review → may announcement na ipinapa-approve sa
+                       iyo (Adviser) · announcement_update → na-approve
+                       o na-reject ang proposal mo (Officer) —
+                       ANNOUNCEMENT_APPROVAL.sql
      event_update    → kinansela o na-reschedule ang isang event
                        (danger = cancelled · info = rescheduled) —
                        EVENT_CANCEL_RESCHEDULE.sql
@@ -87,6 +92,8 @@ const TYPE_ICON = {
   position_update: BadgeCheck,
   og_update: Gem,
   announcement_new: Megaphone,
+  announcement_review: ClipboardCheck,
+  announcement_update: ClipboardCheck,
 }
  
 function TypeIcon({ type }) {

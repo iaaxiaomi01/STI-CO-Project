@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Siren,
   Bell,
@@ -15,42 +16,63 @@ import { useAuth } from '../context/AuthContext.js'
 import { getRoleConfig } from '../config/roles.js'
 import {
   authorLabel,
-  canManageAnnouncement,
   audienceOf,
+  canDeleteAnnouncement,
+  canEditAnnouncement,
   canPostToAllOrgs,
+  canReviewAnnouncements,
   createAnnouncement,
   deleteAnnouncement,
+  fetchAnnouncementProposals,
   fetchAnnouncements,
+  fetchTargetOrganizations,
   formatDate,
+  needsAnnouncementApproval,
   postsWithoutOrg,
+  proposeAnnouncement,
+  removeAnnouncementProposal,
+  reviewAnnouncementProposal,
   selectedOrgsLabel,
   typeLabel,
   updateAnnouncement,
   wasEdited,
 } from '../lib/announcements.js'
+import {
+  isAnnouncementProposalNotification,
+  subscribeToNotifications,
+} from '../lib/notifications.js'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import AnnouncementForm from '../components/AnnouncementForm.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import AnnouncementProposals from '../components/AnnouncementProposals.jsx'
+import AnnouncementReviewDialog from '../components/AnnouncementReviewDialog.jsx'
 import styles from './Announcements.module.css'
 
 /* ============================================================
    ANNOUNCEMENTS — TOTOONG DATA mula sa public.announcements
 
    Member  → nakikita ang announcements ng org niya
-   Officer → nakikita lahat sa org niya, nagpapaskil,
-             nag-e-edit at nagde-delete ng SARILI niyang post lang
-   Adviser → nakikita lahat sa org niya, nagpapaskil,
-             nag-e-edit at nagde-delete ng SARILI niyang post lang
+   Officer → nakikita lahat sa org niya. HINDI na direktang
+             nagpapaskil: "Propose" → ipapasa sa Adviser; kusang
+             ipo-post kapag na-approve (ANNOUNCEMENT_APPROVAL.sql).
+             Hindi na mae-edit ang na-post niya; pwede itong burahin.
+             "My proposals" sa itaas: naghihintay (Withdraw) at
+             na-reject (may dahilan; Remove).
+   Adviser → nakikita lahat sa org niya, nagpapaskil nang direkta,
+             nag-e-edit at nagde-delete ng SARILI niyang post, at
+             nagde-delete ng post ng Officer ng org niya.
+             "For your approval" sa itaas: Approve & post o Reject
+             (may dahilan, final).
    School Administrator / School Head → PAREHO ang logic:
              nakikita ang LAHAT, nagpapaskil para sa LAHAT o
              PILING org (walang sariling org), at nag-e-edit at
              nagde-delete ng SARILI nilang post lang
              (SCHOOL_HEAD_ANNOUNCEMENTS.sql)
 
-   ANG GUMAWA LANG ang makakapag-edit/delete ng post — kahit
-   ang Adviser, School Head o School Administrator ay hindi na
-   makakagalaw ng post ng iba (ANNOUNCEMENT_AUTHOR_ONLY.sql).
+   ANG GUMAWA LANG ang makakapag-edit ng post (hindi ang Officer).
+   Sa delete, dagdag ang Adviser para sa post ng Officer ng org
+   niya — canEditAnnouncement() at canDeleteAnnouncement().
 
    EDIT: Title, Type, Message at Picture lang ang nababago.
    Hindi na mababago kung para kanino (sariling org / lahat /
@@ -249,8 +271,42 @@ function Announcements() {
      { ...announcement } = ine-edit */
   const [editing, setEditing] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+
+  /* ---------- PROPOSALS (ANNOUNCEMENT_APPROVAL.sql) ----------
+     Officer → kailangang i-propose muna (proposing)
+     Adviser → nag-a-approve o nagre-reject (reviewing) */
+  const proposing = needsAnnouncementApproval(profile)
+  const reviewer = canReviewAnnouncements(profile)
+  const [proposals, setProposals] = useState([])
+  const [orgNames, setOrgNames] = useState({})
+  const [proposalBusyId, setProposalBusyId] = useState(null)
+  /* { proposal, decision: 'approved' | 'rejected' } */
+  const [reviewingProposal, setReviewingProposal] = useState(null)
+  const [removingProposal, setRemovingProposal] = useState(null)
+
+  /* Galing sa notification: /announcements?proposal=<id> */
+  const [searchParams, setSearchParams] = useSearchParams()
+  const proposalParam = searchParams.get('proposal')
+  const [highlightProposal, setHighlightProposal] = useState(null)
   /* Ang announcement na hinihintay ang "Delete" sa ConfirmDialog */
   const [confirmingDelete, setConfirmingDelete] = useState(null)
+
+  /* Hiwalay: kapag pumalya, walang proposals na lalabas pero
+     gagana pa rin ang listahan ng announcements */
+  const loadProposals = useCallback(async () => {
+    if (!proposing && !reviewer) return
+    try {
+      const list = await fetchAnnouncementProposals()
+      setProposals(list)
+      /* Mga pangalan ng piniling org (special org lang) */
+      if (list.some((p) => (p.org_ids ?? []).length > 0)) {
+        const orgs = await fetchTargetOrganizations(null)
+        setOrgNames(Object.fromEntries(orgs.map((o) => [o.id, o.name])))
+      }
+    } catch (err) {
+      console.error('Hindi makuha ang announcement proposals:', err)
+    }
+  }, [proposing, reviewer])
 
   const load = useCallback(async () => {
     try {
@@ -263,11 +319,45 @@ function Announcements() {
     } finally {
       setLoading(false)
     }
-  }, [])
+    loadProposals()
+  }, [loadProposals])
 
   useEffect(() => {
     load()
   }, [load])
+
+  /* REALTIME: may bagong ipinapa-approve (Adviser), o na-approve /
+     na-reject ang proposal mo (Officer) → kunin ulit */
+  const profileId = profile?.id
+  useEffect(() => {
+    if (!profileId || (!proposing && !reviewer)) return undefined
+    return subscribeToNotifications(profileId, {
+      onInsert: (row) => {
+        if (isAnnouncementProposalNotification(row)) load()
+      },
+    })
+  }, [profileId, proposing, reviewer, load])
+
+  /* Galing sa notification → i-highlight ang proposal */
+  useEffect(() => {
+    if (!proposalParam || loading) return
+    setHighlightProposal(proposalParam)
+    setSearchParams({}, { replace: true })
+  }, [proposalParam, loading, setSearchParams])
+
+  useEffect(() => {
+    if (!highlightProposal) return undefined
+    const timer = setTimeout(() => setHighlightProposal(null), 4000)
+    return () => clearTimeout(timer)
+  }, [highlightProposal])
+
+  /* Adviser: pending lang · Officer: pending at rejected
+     (ang approved ay nasa listahan na ng announcements) */
+  const shownProposals = useMemo(
+    () =>
+      proposals.filter((p) => (reviewer ? p.status === 'pending' : p.status !== 'approved')),
+    [proposals, reviewer],
+  )
 
   const closeForm = useCallback(() => setEditing(null), [])
 
@@ -310,7 +400,17 @@ function Announcements() {
 
   /* media = { imageFile, removeImage } galing sa form */
   async function handleSubmit(values, media = {}) {
-    if (editing === 'new') {
+    if (editing === 'new' && proposing) {
+      /* Officer: ipapasa sa Adviser */
+      const created = await proposeAnnouncement(values, {
+        orgId: ownOrgId,
+        imageFile: media.imageFile,
+      })
+      setProposals((list) => [created, ...list])
+      setNotice(
+        'Sent to your Adviser for approval. It will be posted automatically once approved.',
+      )
+    } else if (editing === 'new') {
       const created = await createAnnouncement(values, {
         orgId: ownOrgId,
         roleId: profile?.role_id,
@@ -362,10 +462,55 @@ function Announcements() {
     }
   }
 
+  /* ---------- PROPOSALS: Approve / Reject / Withdraw / Remove ---------- */
+  function openReview(proposal, decision) {
+    setNotice('')
+    setReviewingProposal({ proposal, decision })
+  }
+
+  /* Galing sa AnnouncementReviewDialog */
+  async function handleReview(comment) {
+    const { proposal, decision } = reviewingProposal
+    setProposalBusyId(proposal.id)
+    try {
+      await reviewAnnouncementProposal(proposal, decision, comment)
+    } finally {
+      setProposalBusyId(null)
+    }
+    setReviewingProposal(null)
+    setNotice(
+      decision === 'approved'
+        ? `"${proposal.title}" was approved and posted.`
+        : `"${proposal.title}" was rejected. The Officer has been notified.`,
+    )
+    await load()
+  }
+
+  /* Galing sa ConfirmDialog ng Withdraw / Remove */
+  async function handleRemoveProposal() {
+    const proposal = removingProposal
+    setProposalBusyId(proposal.id)
+    try {
+      await removeAnnouncementProposal(proposal)
+    } catch (err) {
+      console.error('Hindi naalis ang proposal:', err)
+      throw new Error(err?.message || 'Could not remove. Please try again.')
+    } finally {
+      setProposalBusyId(null)
+    }
+    setProposals((list) => list.filter((p) => p.id !== proposal.id))
+    setRemovingProposal(null)
+    setNotice(proposal.status === 'pending' ? 'Proposal withdrawn.' : 'Proposal removed.')
+  }
+
+  const closeReview = useCallback(() => setReviewingProposal(null), [])
+  const closeRemove = useCallback(() => setRemovingProposal(null), [])
+
   /* Isang announcement — pareho ang laman ng Latest at ng nasa
      "Earlier"; ibang itsura lang (featured = navy na card). */
   function renderCard(a, { featured = false } = {}) {
-    const manageable = canManageAnnouncement(a, profile)
+    const editable = canEditAnnouncement(a, profile)
+    const deletable = canDeleteAnnouncement(a, profile)
     const busy = deletingId === a.id
     const audienceKind = audienceOf(a)
 
@@ -443,29 +588,33 @@ function Announcements() {
             {authorLabel(a)}
           </p>
 
-          {manageable && (
+          {(editable || deletable) && (
             <div className={styles.cardActions}>
-              <button
-                type="button"
-                className={styles.actionButton}
-                onClick={() => {
-                  setNotice('')
-                  setEditing(a)
-                }}
-                disabled={busy}
-              >
-                <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
-                Edit
-              </button>
-              <button
-                type="button"
-                className={`${styles.actionButton} ${styles.danger}`}
-                onClick={() => openDelete(a)}
-                disabled={busy}
-              >
-                <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
-                {busy ? 'Deleting…' : 'Delete'}
-              </button>
+              {editable && (
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => {
+                    setNotice('')
+                    setEditing(a)
+                  }}
+                  disabled={busy}
+                >
+                  <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
+                  Edit
+                </button>
+              )}
+              {deletable && (
+                <button
+                  type="button"
+                  className={`${styles.actionButton} ${styles.danger}`}
+                  onClick={() => openDelete(a)}
+                  disabled={busy}
+                >
+                  <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
+                  {busy ? 'Deleting…' : 'Delete'}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -496,7 +645,7 @@ function Announcements() {
               <span className={styles.postIcon} aria-hidden="true">
                 <Plus size={18} strokeWidth={2.8} />
               </span>
-              Post
+              {proposing ? 'Propose' : 'Post'}
             </button>
           )
         }
@@ -506,6 +655,23 @@ function Announcements() {
         <p className={styles.notice} role="status">
           {notice}
         </p>
+      )}
+
+      {/* ---------- FOR YOUR APPROVAL (Adviser) · MY PROPOSALS (Officer) ---------- */}
+      {!loading && (proposing || reviewer) && (
+        <AnnouncementProposals
+          proposals={shownProposals}
+          mode={reviewer ? 'review' : 'mine'}
+          orgNames={orgNames}
+          highlightId={highlightProposal}
+          busyId={proposalBusyId}
+          onApprove={(p) => openReview(p, 'approved')}
+          onReject={(p) => openReview(p, 'rejected')}
+          onRemove={(p) => {
+            setNotice('')
+            setRemovingProposal(p)
+          }}
+        />
       )}
 
       {loading && <p className={styles.status}>Loading announcements…</p>}
@@ -549,7 +715,7 @@ function Announcements() {
       )}
 
       {/* Pop-up ng pinakabago — hindi kasabay ng form */}
-      {alertOpen && latest && !editing && !confirmingDelete && (
+      {alertOpen && latest && !editing && !confirmingDelete && !reviewingProposal && (
         <LatestAlert announcement={latest} onClose={closeAlert} onView={viewLatest} />
       )}
 
@@ -558,6 +724,7 @@ function Announcements() {
           initial={editing === 'new' ? null : editing}
           audience={audience}
           ownOrgId={ownOrgId}
+          propose={editing === 'new' && proposing}
           onSubmit={handleSubmit}
           onCancel={closeForm}
         />
@@ -574,6 +741,32 @@ function Announcements() {
           busyLabel="Deleting…"
           onConfirm={handleDelete}
           onCancel={() => setConfirmingDelete(null)}
+        />
+      )}
+
+      {reviewingProposal && (
+        <AnnouncementReviewDialog
+          proposal={reviewingProposal.proposal}
+          decision={reviewingProposal.decision}
+          onConfirm={handleReview}
+          onCancel={closeReview}
+        />
+      )}
+
+      {removingProposal && (
+        <ConfirmDialog
+          tone="danger"
+          title={removingProposal.status === 'pending' ? 'Withdraw this proposal?' : 'Remove this proposal?'}
+          item={removingProposal.title}
+          message={
+            removingProposal.status === 'pending'
+              ? 'Your Adviser will no longer see it. You can propose again anytime.'
+              : 'It will be removed from your list.'
+          }
+          confirmLabel={removingProposal.status === 'pending' ? 'Withdraw' : 'Remove'}
+          busyLabel="Removing…"
+          onConfirm={handleRemoveProposal}
+          onCancel={closeRemove}
         />
       )}
     </div>

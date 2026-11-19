@@ -23,6 +23,15 @@ import { checkImageFile, extensionFor, ImageError, resizeToFit } from './image.j
    at sinusuri ng trigger na galing doon ang image_url.
    Tingnan ang ANNOUNCEMENT_IMAGES.sql.
 
+   OFFICER → PROPOSE MUNA (ANNOUNCEMENT_APPROVAL.sql):
+     Hindi na direktang nagpo-post ang Officer. Ipinapasa niya ang
+     announcement sa Adviser ng org niya (proposeAnnouncement()).
+       Approve → kusang na-po-post; ang Officer pa rin ang may-akda.
+       Reject  → final, may dahilan; gagawa ng bago kung gusto.
+     Ang na-post ay hindi na mae-edit ng Officer; pwedeng burahin
+     ng Officer o ng Adviser. Ang Adviser, SA at School Head ay
+     direkta pa ring nagpo-post.
+
    SCHOOL ADMINISTRATOR (SA_REMOVE_ACTING_ORG.sql) at
    SCHOOL HEAD (SCHOOL_HEAD_ANNOUNCEMENTS.sql) — PAREHO ang logic:
      Walang org sila, kaya ang post nila ay walang
@@ -312,6 +321,109 @@ export async function countRecentAnnouncements(days = 7) {
 }
 
 /* ============================================================
+   PROPOSALS NG OFFICER (ANNOUNCEMENT_APPROVAL.sql)
+
+   Table: public.announcement_proposals
+     Officer → sariling proposals lang (RLS)
+     Adviser → lahat ng proposals ng org niya (RLS)
+   Lahat ng pagbabago ay sa mga function sa database:
+     submit_announcement_proposal()  → Officer
+     remove_announcement_proposal()  → Officer (pending o rejected)
+     review_announcement_proposal()  → Adviser (approve o reject)
+   ============================================================ */
+
+export const REVIEW_COMMENT_MAX = 1000
+
+const PROPOSAL_COLUMNS = `
+  id, organization_id, title, message, type, image_url, is_global, org_ids,
+  author_id, author_name, author_role_id, submitted_at,
+  status, reviewed_by_name, reviewed_at, review_comment, announcement_id
+`
+
+/* Officer: kailangang i-propose muna sa Adviser */
+export function needsAnnouncementApproval(profile) {
+  return Boolean(profile?.is_active && profile.role_id === 2 && profile.organization_id)
+}
+
+/* Adviser ng org: nag-a-approve o nagre-reject */
+export function canReviewAnnouncements(profile) {
+  return Boolean(profile?.is_active && profile.role_id === 3 && profile.organization_id)
+}
+
+/* Pinakabago muna */
+export async function fetchAnnouncementProposals() {
+  const { data, error } = await supabase
+    .from('announcement_proposals')
+    .select(PROPOSAL_COLUMNS)
+    .order('submitted_at', { ascending: false })
+
+  if (error) throw error
+  return data ?? []
+}
+
+/* Pareho ang values at options ng createAnnouncement().
+   Ibinabalik ang bagong proposal. */
+export async function proposeAnnouncement(
+  { title, message, type, audience = 'own', orgIds = [] },
+  { orgId, imageFile = null } = {},
+) {
+  let uploaded = null
+  if (imageFile) {
+    uploaded = await uploadImage(orgId, imageFile)
+  }
+
+  const { data: id, error } = await supabase.rpc('submit_announcement_proposal', {
+    p_title: title,
+    p_message: message,
+    p_type: type,
+    p_is_global: audience === 'all',
+    p_org_ids: audience === 'selected' ? orgIds : [],
+    p_image_url: uploaded?.publicUrl ?? null,
+  })
+  if (error) {
+    if (uploaded) await removeFiles([uploaded.path])
+    throw error
+  }
+
+  const { data, error: readError } = await supabase
+    .from('announcement_proposals')
+    .select(PROPOSAL_COLUMNS)
+    .eq('id', id)
+    .single()
+
+  if (readError) throw readError
+  return data
+}
+
+/* Officer: bawiin (pending) o alisin sa listahan (rejected).
+   Binubura rin ang larawan nito. */
+export async function removeAnnouncementProposal(proposal) {
+  const { data: imageUrl, error } = await supabase.rpc('remove_announcement_proposal', {
+    p_id: proposal.id,
+  })
+  if (error) throw error
+  await removeFiles([pathFromUrl(imageUrl)])
+}
+
+/* Adviser: decision = 'approved' | 'rejected'. Kailangan ang
+   comment sa reject. */
+export async function reviewAnnouncementProposal(proposal, decision, comment = '') {
+  const { error } = await supabase.rpc('review_announcement_proposal', {
+    p_id: proposal.id,
+    p_decision: decision,
+    p_comment: comment.trim() || null,
+  })
+  if (error) throw error
+}
+
+/* 'own' | 'all' | 'selected' — para sa proposal */
+export function proposalAudienceOf(proposal) {
+  if (proposal.is_global) return 'all'
+  if ((proposal.org_ids ?? []).length > 0) return 'selected'
+  return 'own'
+}
+
+/* ============================================================
    SINO ANG PWEDENG MAG-EDIT / MAG-DELETE
 
    KAPAREHO ito ng can_manage_announcement() sa database. Dito,
@@ -330,6 +442,23 @@ export async function countRecentAnnouncements(days = 7) {
    Kapag hindi na Officer/Adviser ang gumawa (hal. naging Member)
    o lumipat na siya ng org, hindi na niya ito mae-edit/delete.
    ============================================================ */
+/* EDIT: ang gumawa (canManageAnnouncement), pero HINDI ang Officer —
+   ang na-post niya ay eksaktong inaprubahan ng Adviser. */
+export function canEditAnnouncement(announcement, profile) {
+  return canManageAnnouncement(announcement, profile) && profile.role_id !== 2
+}
+
+/* DELETE: ang gumawa, o ang Adviser ng org para sa post ng Officer */
+export function canDeleteAnnouncement(announcement, profile) {
+  if (canManageAnnouncement(announcement, profile)) return true
+  return Boolean(
+    canReviewAnnouncements(profile) &&
+      announcement.organization_id &&
+      announcement.organization_id === profile.organization_id &&
+      announcement.author_role_id === 2,
+  )
+}
+
 export function canManageAnnouncement(announcement, profile) {
   if (!profile?.is_active) return false
   if (!announcement.author_id || announcement.author_id !== profile.id) return false
