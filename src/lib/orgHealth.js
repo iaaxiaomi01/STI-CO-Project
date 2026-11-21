@@ -57,6 +57,22 @@ export async function fetchAllOrgHealth() {
   return Array.isArray(data) ? data : []
 }
 
+/* LAHAT ng aktibong user (Member sa Dashboard): leaderboard ng
+   mga org ayon sa health score. Pangalan, logo, score at antas
+   lang — walang bilang ng tao.
+   Tingnan ang org_health_leaderboard() sa
+   ORG_HEALTH_LEADERBOARD.sql.
+     ranked   → may score, pinakamataas muna (tabla = parehong rank)
+     unranked → wala pang score */
+export async function fetchOrgLeaderboard() {
+  const { data, error } = await supabase.rpc('org_health_leaderboard')
+  if (error) throw error
+  return {
+    ranked: Array.isArray(data?.ranked) ? data.ranked : [],
+    unranked: Array.isArray(data?.unranked) ? data.unranked : [],
+  }
+}
+
 /* Critical muna (pinakamababang score), saka ang walang sapat
    na data sa dulo — para makita agad kung sino ang kailangang
    tulungan. */

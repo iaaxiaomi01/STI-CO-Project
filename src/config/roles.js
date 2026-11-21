@@ -220,6 +220,13 @@ export const ROLES = {
     /* May Event Calendar sa Dashboard (UI lang muna, wala pang data) */
     calendar: true,
 
+    /* May Org Health Leaderboard sa Dashboard (podium ng Top 3 +
+       listahan ng iba). components/OrgLeaderboard.jsx at
+       ORG_HEALTH_LEADERBOARD.sql. Kahit sinong aktibong user ay
+       pwedeng tumawag ng function, kaya pwede mo rin itong i-on
+       sa ibang role — idagdag lang ang leaderboard: true. */
+    leaderboard: true,
+
     can: {
       create: false,
       review: false,
@@ -263,6 +270,10 @@ export const ROLES = {
 
     /* May Event Calendar sa Dashboard (UI lang muna, wala pang data) */
     calendar: true,
+
+    /* May Org Health Leaderboard din — member din ng org ang
+       Officer (kapareho ng Member; components/OrgLeaderboard.jsx) */
+    leaderboard: true,
 
     /* Nagpapasa siya ng proposal. Dadaan ito sa Adviser, SAO,
        at School Head. Kapag na-approve ng School Head (pinal),

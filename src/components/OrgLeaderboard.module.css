@@ -1,0 +1,1007 @@
+/* ================================================================
+   ORG HEALTH LEADERBOARD (Dashboard ng Member)
+
+   Puting card (kapareho ng Event Calendar). Sa loob:
+
+     ┌──────────────────────────────────────────────┐
+     │  Who's the healthiest org?      [Your org #5] │
+     │ ┌──────────────────────────────────────────┐ │
+     │ │   ✦      ♛          ✦        (navy stage) │ │
+     │ │   (2)   (1)   (3)                         │ │
+     │ │  ┌───┐┌─────┐┌───┐                        │ │
+     │ │  │ 2 ││  1  ││ 3 │                        │ │
+     │ └──┴───┴┴─────┴┴───┴────────────────────────┘ │
+     │  4  ◯ Org name  ▓▓▓▓▓▓▓░░░        78.5%      │
+     │  5  ◯ Org name  ▓▓▓▓▓▓░░░░        71%        │
+     └──────────────────────────────────────────────┘
+
+   Kulay: navy at dilaw ng STI (--dash-*). Ginto, pilak at tanso
+   lang ang dagdag, para sa 1, 2 at 3 — kapareho ng sa laro.
+
+   Container query (@container): ang lapad ng CARD ang tinitingnan,
+   kaya tama ang ayos kahit nakabukas ang sidebar.
+   ================================================================ */
+
+.board {
+  /* Kulay ng antas — kapareho ng OrgHealthOverview */
+  --c-healthy: #2fbf71;
+  --c-attention: #f5b014;
+  --c-critical: #ef5b4c;
+  --c-none: #9aa5bd;
+
+  container-type: inline-size;
+  padding: clamp(16px, 2.6vw, 24px);
+  border-radius: var(--dash-radius);
+  background-color: #fff;
+  font-family: var(--font-ui);
+  color: var(--dash-ink);
+}
+
+/* Antas → kulay (chip at bar) */
+.healthy {
+  --tone: var(--c-healthy);
+  --tone-ink: #10773f;
+}
+
+.attention {
+  --tone: var(--c-attention);
+  --tone-ink: #8a5d00;
+}
+
+.critical {
+  --tone: var(--c-critical);
+  --tone-ink: #b8352a;
+}
+
+.none {
+  --tone: var(--c-none);
+  --tone-ink: var(--dash-muted);
+}
+
+/* ---------- HEADER ---------- */
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 20px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.headText {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dash-muted);
+}
+
+.eyebrow svg {
+  color: var(--dash-gold);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--dash-navy-deep);
+}
+
+/* "healthiest" — parang minarkahan ng highlighter */
+.title span {
+  padding: 0 4px;
+  margin: 0 -2px;
+  background: linear-gradient(transparent 58%, var(--dash-yellow) 58%, var(--dash-yellow) 92%, transparent 92%);
+}
+
+/* Puwesto ng org mo — pill sa kanan */
+.standing {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding: 10px 18px;
+  border-radius: 18px;
+  background-color: var(--dash-navy);
+  color: #fff;
+  line-height: 1.2;
+}
+
+.standingLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dash-yellow);
+}
+
+.standing b {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.standingGap {
+  flex-basis: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.standingTop {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+.standingTop .standingLabel {
+  color: var(--dash-navy);
+}
+
+/* ---------- STAGE (navy na likod ng podium) ---------- */
+.stage {
+  position: relative;
+  overflow: hidden;
+  padding: 34px 20px 0;
+  border-radius: 24px;
+  background:
+    /* ilaw sa likod ng #1 */
+    radial-gradient(circle at 50% 38%, rgba(255, 210, 0, 0.24), transparent 42%),
+    /* sinag (sunburst) mula sa ibaba */
+    repeating-conic-gradient(
+      from 0deg at 50% 115%,
+      rgba(255, 255, 255, 0.045) 0deg 7deg,
+      transparent 7deg 14deg
+    ),
+    linear-gradient(180deg, var(--dash-navy) 0%, #052a70 60%, var(--dash-navy-deep) 100%);
+}
+
+/* Sahig ng podium */
+.stage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  background-color: var(--dash-navy-deep);
+}
+
+.podium {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1.18fr 1fr;
+  align-items: end;
+  gap: 14px;
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.spot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+/* 2 · 1 · 3 — sa HTML ay 1, 2, 3 pa rin (para sa screen reader) */
+.silver {
+  order: 1;
+}
+
+.gold {
+  order: 2;
+}
+
+.bronze {
+  order: 3;
+}
+
+/* Ginto, pilak, tanso */
+.gold {
+  --front: linear-gradient(180deg, #ffd200 0%, #f7b900 100%);
+  --top: #ffe566;
+  --ring: linear-gradient(135deg, #fff6b8, #ffd200 45%, #e3a400);
+  --block-h: 156px;
+  --logo: 96px;
+}
+
+.silver {
+  --front: linear-gradient(180deg, #eef2f9 0%, #c7d1e2 100%);
+  --top: #ffffff;
+  --ring: linear-gradient(135deg, #ffffff, #cfd8e7 45%, #92a3c0);
+  --block-h: 116px;
+  --logo: 78px;
+}
+
+.bronze {
+  --front: linear-gradient(180deg, #f4b580 0%, #d8874a 100%);
+  --top: #f9d0ab;
+  --ring: linear-gradient(135deg, #ffe3c7, #e8a064 45%, #b4632b);
+  --block-h: 88px;
+  --logo: 78px;
+}
+
+/* ---------- ORG SA IBABAW NG KAHON ---------- */
+.player {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0 4px 16px;
+  color: #fff;
+  text-align: center;
+  animation: pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.bronze .player {
+  animation-delay: 0.5s;
+}
+
+.silver .player {
+  animation-delay: 0.65s;
+}
+
+.gold .player {
+  padding-top: 24px; /* puwang para sa korona */
+  animation-delay: 0.8s;
+}
+
+.crown {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  color: var(--dash-yellow);
+  filter: drop-shadow(0 4px 8px rgba(255, 210, 0, 0.45));
+  transform: translateX(-50%);
+  animation: bob 2.8s ease-in-out 1.3s infinite;
+}
+
+.crown svg {
+  fill: var(--dash-yellow);
+}
+
+.logoWrap {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--logo);
+  height: var(--logo);
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--ring);
+  box-shadow: 0 12px 26px rgba(1, 12, 36, 0.35);
+}
+
+.logoWrap .logo {
+  width: 100%;
+  height: 100%;
+  border: 3px solid var(--dash-navy-deep);
+  background-color: #fff;
+  color: var(--dash-navy);
+  font-family: var(--font-display);
+  font-size: calc(var(--logo) * 0.36);
+  font-weight: 800;
+}
+
+.logoWrap .logo img {
+  object-fit: contain;
+  padding: 8%;
+}
+
+/* Org mo: dilaw na liwanag sa paligid ng logo */
+.spotMine .logoWrap {
+  box-shadow:
+    0 0 0 5px rgba(255, 210, 0, 0.35),
+    0 12px 26px rgba(1, 12, 36, 0.35);
+}
+
+.spotName {
+  display: -webkit-box;
+  max-width: 100%;
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.spotScore {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  line-height: 1;
+}
+
+.spotScore b {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.gold .spotScore b {
+  font-size: 36px;
+  color: var(--dash-yellow);
+}
+
+.spotScore small {
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0.7;
+}
+
+/* ---------- KAHON ---------- */
+.block {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: var(--block-h);
+  margin-top: 12px; /* puwang para sa ibabaw (top face) */
+  padding-top: 10px;
+  border-radius: 3px 3px 0 0;
+  background: var(--front);
+  transform-origin: bottom;
+  animation: rise 0.75s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+.bronze .block {
+  animation-delay: 0.05s;
+}
+
+.silver .block {
+  animation-delay: 0.2s;
+}
+
+.gold .block {
+  animation-delay: 0.35s;
+}
+
+/* Ibabaw ng kahon — para magmukhang 3D, parang sa laro */
+.block::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -12px;
+  height: 12px;
+  background-color: var(--top);
+  clip-path: polygon(7% 0, 93% 0, 100% 100%, 0 100%);
+}
+
+/* Anino sa gilid ng kahon */
+.block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(3, 27, 75, 0.12),
+    transparent 22%,
+    transparent 78%,
+    rgba(3, 27, 75, 0.16)
+  );
+  pointer-events: none;
+}
+
+.blockNum {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: rgba(3, 27, 75, 0.82);
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gold .blockNum {
+  font-size: 84px;
+}
+
+/* ---------- BAKANTENG PUWESTO / LOADING ---------- */
+.vacant {
+  --front: rgba(255, 255, 255, 0.1);
+  --top: rgba(255, 255, 255, 0.18);
+}
+
+.vacant .player {
+  opacity: 0.7;
+}
+
+.logoVacant {
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.loading .player,
+.loading .block {
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skelLine {
+  width: 70%;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------- CHIP NG ANTAS at "YOUR ORG" ---------- */
+.chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--tone) 16%, #fff);
+  color: var(--tone-ink);
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Sa navy na stage: buong kulay, madilim na teksto */
+.player .chip {
+  background-color: var(--tone);
+  color: var(--dash-navy-deep);
+}
+
+.youTag,
+.youTagSm {
+  display: inline-block;
+  border-radius: 999px;
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.youTag {
+  padding: 3px 10px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  animation: glow 2.4s ease-in-out 1.4s infinite;
+}
+
+.youTagSm {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* ---------- #4 PABABA ---------- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 44px 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px 10px 10px;
+  border-radius: 20px;
+  background-color: var(--dash-soft);
+  transition: background-color var(--transition), transform var(--transition);
+}
+
+.row:hover {
+  background-color: #edf1f8;
+  transform: translateX(3px);
+}
+
+.rank {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: #fff;
+  color: var(--dash-navy);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: 0 1px 2px rgba(3, 27, 75, 0.06);
+}
+
+.row .rowLogo {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #e3e8f1;
+  background-color: #fff;
+  color: var(--dash-navy);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.row .rowLogo img {
+  object-fit: contain;
+  padding: 10%;
+}
+
+.rowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.rowName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.rowNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #e1e7f1;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--tone);
+  transform-origin: left;
+  animation: grow 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) 0.3s both;
+}
+
+/* Pare-parehong lapad, para pantay ang haba ng bar sa bawat row */
+.rowScore {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.rowScore b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* Org mo — dilaw na guhit at kulay */
+.rowMine {
+  background: linear-gradient(90deg, rgba(255, 210, 0, 0.3), rgba(255, 210, 0, 0.08));
+  box-shadow: inset 4px 0 0 var(--dash-yellow);
+}
+
+.rowMine:hover {
+  background: linear-gradient(90deg, rgba(255, 210, 0, 0.38), rgba(255, 210, 0, 0.12));
+}
+
+.rowMine .rank {
+  background-color: var(--dash-yellow);
+  color: var(--dash-navy-deep);
+}
+
+/* "Show all" — kapareho ng Today button ng calendar */
+.more {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  margin: 12px auto 0;
+  padding: 0 18px;
+  border: 1.5px solid #dde3ee;
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--dash-ink);
+  font-size: 14px;
+  font-weight: 700;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.more:hover {
+  border-color: var(--dash-navy);
+  background-color: var(--dash-soft);
+}
+
+.more svg {
+  transition: transform var(--transition);
+}
+
+.moreOpen svg {
+  transform: rotate(180deg);
+}
+
+/* ---------- WALA PANG DATA / ERROR ---------- */
+.emptyStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 24px;
+  border-radius: 24px;
+  background:
+    repeating-conic-gradient(
+      from 0deg at 50% 115%,
+      rgba(255, 255, 255, 0.045) 0deg 7deg,
+      transparent 7deg 14deg
+    ),
+    linear-gradient(180deg, var(--dash-navy), var(--dash-navy-deep));
+  color: #fff;
+  text-align: center;
+}
+
+.emptyStage svg {
+  color: var(--dash-yellow);
+}
+
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.emptyText {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message {
+  padding: 28px 8px;
+  font-size: 14px;
+  color: var(--dash-muted);
+  text-align: center;
+}
+
+/* ---------- IBABA: hindi pa ranked + paliwanag ---------- */
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dash-muted);
+}
+
+.unranked b {
+  color: var(--dash-ink);
+}
+
+.how summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--dash-navy);
+  cursor: pointer;
+  list-style: none;
+}
+
+.how summary::-webkit-details-marker {
+  display: none;
+}
+
+.how summary:hover {
+  text-decoration: underline;
+}
+
+.how p {
+  max-width: 70ch;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background-color: var(--dash-soft);
+  color: var(--dash-ink);
+}
+
+/* ---------- CONFETTI ---------- */
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bit {
+  position: absolute;
+  opacity: 0.85;
+  transform: rotate(var(--rot));
+  animation: float 3.2s ease-in-out infinite;
+}
+
+.bit_bar {
+  width: 14px;
+  height: 5px;
+  border-radius: 2px;
+}
+
+.bit_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.bit_star {
+  width: 14px;
+  height: 14px;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+
+.bit_y {
+  background-color: var(--dash-yellow);
+}
+
+.bit_w {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.bit_b {
+  background-color: #6f9bff;
+}
+
+/* ---------- GALAW ---------- */
+@keyframes rise {
+  from {
+    transform: scaleY(0.04);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-5px) rotate(6deg);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: rotate(var(--rot)) translateY(0);
+  }
+  50% {
+    transform: rotate(var(--rot)) translateY(7px);
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 210, 0, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 210, 0, 0);
+  }
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* ---------- ≤ 600px: phone ---------- */
+@container (max-width: 600px) {
+  .title {
+    font-size: 26px;
+  }
+
+  .standing {
+    padding: 8px 14px;
+    border-radius: 14px;
+  }
+
+  .standing b {
+    font-size: 18px;
+  }
+
+  .stage {
+    padding: 26px 10px 0;
+    border-radius: 20px;
+  }
+
+  .podium {
+    gap: 8px;
+  }
+
+  .gold {
+    --block-h: 112px;
+    --logo: 68px;
+  }
+
+  .silver {
+    --block-h: 82px;
+    --logo: 54px;
+  }
+
+  .bronze {
+    --block-h: 62px;
+    --logo: 54px;
+  }
+
+  .gold .player {
+    padding-top: 20px;
+  }
+
+  .crown svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .logoWrap {
+    padding: 3px;
+  }
+
+  .logoWrap .logo {
+    border-width: 2px;
+  }
+
+  .spotName {
+    font-size: 12.5px;
+  }
+
+  .spotScore b {
+    font-size: 21px;
+  }
+
+  .gold .spotScore b {
+    font-size: 25px;
+  }
+
+  .spotScore small {
+    font-size: 11px;
+  }
+
+  /* Masikip: chip ng antas ay nasa listahan na lang */
+  .player .chip {
+    display: none;
+  }
+
+  .youTag {
+    padding: 2px 7px;
+    font-size: 9px;
+  }
+
+  .blockNum {
+    font-size: 44px;
+  }
+
+  .gold .blockNum {
+    font-size: 58px;
+  }
+
+  .row {
+    grid-template-columns: 34px 36px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 12px 8px 8px;
+    border-radius: 16px;
+  }
+
+  .rank {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    font-size: 16px;
+  }
+
+  .row .rowLogo {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .rowName {
+    font-size: 14px;
+  }
+
+  .rowScore {
+    min-width: 62px;
+  }
+
+  .rowScore b {
+    font-size: 17px;
+  }
+
+  .rowScore .chip {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player,
+  .block,
+  .crown,
+  .bit,
+  .bar span,
+  .youTag,
+  .loading .player,
+  .loading .block {
+    animation: none;
+  }
+
+  .row,
+  .more svg {
+    transition: none;
+  }
+
+  .row:hover {
+    transform: none;
+  }
+}

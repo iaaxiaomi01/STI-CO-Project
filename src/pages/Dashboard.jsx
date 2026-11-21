@@ -25,6 +25,7 @@ import Avatar from '../components/Avatar.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import DashboardCalendar from '../components/DashboardCalendar.jsx'
 import OrgHealthOverview from '../components/OrgHealthOverview.jsx'
+import OrgLeaderboard from '../components/OrgLeaderboard.jsx'
 import styles from './Dashboard.module.css'
 
 /* ISANG Dashboard component, MARAMING magkaibang itsura.
@@ -412,6 +413,11 @@ function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Member: Org Health Leaderboard — podium ng Top 3, listahan
+            ng iba sa ilalim (leaderboard: true sa config/roles.js;
+            components/OrgLeaderboard.jsx) */}
+        {roleConfig.leaderboard && <OrgLeaderboard />}
 
         {roleConfig.calendar && <DashboardCalendar eyebrow="Event Calendar" />}
 
