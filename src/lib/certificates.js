@@ -30,6 +30,18 @@ import { toTitleCase } from './profile.js'
    Ang database ang totoong bantay (tingnan ang
    EVENT_CERTIFICATES.sql). Ang mga check dito ay para lang
    itago ang mga button at magbigay ng malinaw na mensahe.
+
+   TEMPLATE AT DISTRIBUTE (CERTIFICATE_TEMPLATES.sql):
+     Pumipili ang Officer/Adviser ng template (handang disenyo o
+     sariling disenyo ng org), nagta-type ng mga pirma, tapos isang
+     pindot na "Distribute" — gagawa ang app ng PDF para sa bawat
+     nakakumpleto (lib/certificateDesigns.js) at ia-upload ito sa
+     parehong drop box sa itaas (uploadCertificate). Pwede pa ring
+     mag-upload o magpalit nang isa-isa.
+
+     Sariling disenyo: bucket 'certificate-templates' (PRIVATE)
+       → <org id>/<timestamp>.png|jpg · public.certificate_templates
+     Huling ginamit (template, pamagat, pirma): public.certificate_settings
    ============================================================ */
 
 const BUCKET = 'event-certificates'
@@ -269,4 +281,167 @@ export function certificateErrorMessage(err) {
     return "You don't have permission to do this."
   }
   return 'There was a connection problem. Please try again.'
+}
+
+/* ============================================================
+   TEMPLATES NG CERTIFICATE (CERTIFICATE_TEMPLATES.sql)
+   ============================================================ */
+
+const TEMPLATE_BUCKET = 'certificate-templates'
+export const MAX_TEMPLATE_BYTES = 5 * 1024 * 1024 // 5 MB
+export const TEMPLATE_ACCEPT = '.png,.jpg,.jpeg'
+export const MAX_SIGNATORIES = 3
+
+const TEMPLATE_TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg' }
+
+const TEMPLATE_COLUMNS =
+  'id, name, file_path, name_y, name_color, show_details, show_signatories, created_by_name, created_at'
+
+/* Galing sa row → layout na ginagamit ng lib/certificateDesigns.js */
+export function templateLayout(t) {
+  return {
+    nameY: Number(t.name_y) || 0.5,
+    nameColor: t.name_color || '#1f2a44',
+    showDetails: t.show_details !== false,
+    showSignatories: t.show_signatories !== false,
+  }
+}
+
+/* Mga sariling disenyo ng org mo (RLS) — pinakabago muna */
+export async function fetchCertificateTemplates() {
+  const { data, error } = await supabase
+    .from('certificate_templates')
+    .select(TEMPLATE_COLUMNS)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data ?? []
+}
+
+/* Ina-upload ang blangkong disenyo (PNG/JPG) bilang bagong template */
+export async function uploadCertificateTemplate(orgId, file, name) {
+  const ext = extensionOf(file?.name)
+  if (!file || !TEMPLATE_TYPES[ext]) {
+    throw new CertificateError('Only PNG or JPG pictures are accepted for a design.')
+  }
+  if (file.size > MAX_TEMPLATE_BYTES) {
+    throw new CertificateError('The picture is too large (5 MB max).')
+  }
+
+  const path = `${orgId}/${Date.now()}.${ext}`
+  const { error: uploadError } = await supabase.storage
+    .from(TEMPLATE_BUCKET)
+    .upload(path, file, { contentType: TEMPLATE_TYPES[ext], upsert: false })
+  if (uploadError) {
+    console.error('Hindi na-upload ang disenyo:', uploadError)
+    throw new CertificateError('The design could not be uploaded. Please try again.')
+  }
+
+  const cleanName = (name || file.name.replace(/\.[^.]+$/, '') || 'My design').trim().slice(0, 60)
+  const { data, error } = await supabase
+    .from('certificate_templates')
+    .insert({ name: cleanName, file_path: path })
+    .select(TEMPLATE_COLUMNS)
+    .single()
+
+  if (error) {
+    await supabase.storage.from(TEMPLATE_BUCKET).remove([path])
+    throw error
+  }
+  return data
+}
+
+/* Pagsulat ng pangalan sa disenyo: taas, kulay, detalye, pirma */
+export async function updateTemplateLayout(id, layout) {
+  const { data, error } = await supabase
+    .from('certificate_templates')
+    .update({
+      name_y: Math.min(0.9, Math.max(0.1, Number(layout.nameY) || 0.5)),
+      name_color: layout.nameColor,
+      show_details: Boolean(layout.showDetails),
+      show_signatories: Boolean(layout.showSignatories),
+    })
+    .eq('id', id)
+    .select(TEMPLATE_COLUMNS)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteCertificateTemplate(template) {
+  const { error } = await supabase.from('certificate_templates').delete().eq('id', template.id)
+  if (error) throw error
+  try {
+    await supabase.storage.from(TEMPLATE_BUCKET).remove([template.file_path])
+  } catch (err) {
+    console.warn('Hindi nabura ang file ng disenyo:', err)
+  }
+}
+
+/* Ang larawan ng disenyo (Blob) — private ang bucket */
+export async function downloadTemplateImage(template) {
+  const { data, error } = await supabase.storage.from(TEMPLATE_BUCKET).download(template.file_path)
+  if (error) throw error
+  return data
+}
+
+/* ---------- HULING GINAMIT NG ORG ---------- */
+
+/* { template, title, signatories } o null kung wala pa */
+export async function fetchCertificateSettings(orgId) {
+  const { data, error } = await supabase
+    .from('certificate_settings')
+    .select('template, title, signatories')
+    .eq('organization_id', orgId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export async function saveCertificateSettings(orgId, { template, title, signatories }) {
+  const { error } = await supabase.from('certificate_settings').upsert(
+    {
+      organization_id: orgId,
+      template,
+      title: title.trim().slice(0, 60),
+      signatories: signatories
+        .filter((s) => s.name.trim())
+        .slice(0, MAX_SIGNATORIES)
+        .map((s) => ({ name: s.name.trim().slice(0, 80), position: s.position.trim().slice(0, 80) })),
+    },
+    { onConflict: 'organization_id' },
+  )
+  if (error) throw error
+}
+
+/* ---------- PARA SA DISENYO ---------- */
+
+/* Pangalan at logo ng org ng event */
+export async function fetchOrgForCertificate(orgId) {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('name, logo_url')
+    .eq('id', orgId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data ?? { name: '', logo_url: null }
+}
+
+/* Mga pangalan ng aktibong Adviser ng org — default na pirma */
+export async function fetchAdviserNames(orgId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('first_name, middle_name, last_name')
+    .eq('organization_id', orgId)
+    .eq('role_id', 3)
+    .eq('is_active', true)
+
+  if (error) throw error
+  return (data ?? []).map((p) => {
+    const middle = p.middle_name?.trim() ? ` ${p.middle_name.trim().charAt(0)}.` : ''
+    return toTitleCase(`${p.first_name}${middle} ${p.last_name}`)
+  })
 }

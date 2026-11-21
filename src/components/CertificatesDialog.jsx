@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Award, Check, Clock, Download, FileCheck, Hourglass, Search, Upload } from 'lucide-react'
+import { Award, Check, Clock, Download, FileCheck, Hourglass, Search, Send, Upload } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   CERT_ACCEPT,
@@ -15,6 +15,7 @@ import {
 import { PHASE_OUT, attendancePhase, attendanceWindows, formatClock } from '../lib/attendance.js'
 import { formatTime, nowKey } from '../lib/events.js'
 import { formatFileSize } from '../lib/proposalFiles.js'
+import DistributeCertificatesDialog from './DistributeCertificatesDialog.jsx'
 import styles from './CertificatesDialog.module.css'
 
 /* ============================================================
@@ -29,6 +30,11 @@ import styles from './CertificatesDialog.module.css'
 
    Hindi pwedeng i-upload ng Officer ang sarili niyang
    certificate — ibang Officer o ang Adviser ang gagawa.
+
+   "Distribute with a template" (CERTIFICATE_TEMPLATES.sql) →
+   DistributeCertificatesDialog: pipili ng template at pirma, tapos
+   kusang gagawa ng PDF para sa lahat. Ang manual na Upload/Replace
+   sa bawat tao ay nandito pa rin.
    ============================================================ */
 
 /* Lalabas lang ang search kapag mahaba na ang listahan */
@@ -57,6 +63,9 @@ function CertificatesDialog({ event, onClose }) {
 
   /* { profileId, action: 'upload' | 'delete' | 'download' } */
   const [busy, setBusy] = useState(null)
+
+  /* Bukas ba ang "Distribute with a template" */
+  const [distributing, setDistributing] = useState(false)
 
   /* Kaninong kahon ang tinatapatan ng file na dina-drag */
   const [dragOver, setDragOver] = useState(null)
@@ -89,11 +98,12 @@ function CertificatesDialog({ event, onClose }) {
 
   useEffect(() => {
     function onKey(e) {
-      if (e.key === 'Escape' && !busy) onClose()
+      /* Kapag bukas ang Distribute, iyon lang ang isasara ng Esc */
+      if (e.key === 'Escape' && !busy && !distributing) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, busy])
+  }, [onClose, busy, distributing])
 
   /* Bukas pa ang Time Out? Maaaring madagdagan pa ang listahan. */
   const timeOutOpen = attendancePhase(event, nowKey()) === PHASE_OUT
@@ -169,6 +179,26 @@ function CertificatesDialog({ event, onClose }) {
       setBusy(null)
     }
   }
+
+  /* Galing sa DistributeCertificatesDialog */
+  function handleDistributed(made, summary) {
+    setCerts((current) => ({ ...current, ...made }))
+    setDistributing(false)
+    setError(
+      summary.failed.length
+        ? `Not given (${summary.failed.length}): ${summary.failed
+            .map((f) => `${f.name} — ${f.message}`)
+            .join('; ')}`
+        : '',
+    )
+    setNotice(
+      `${summary.given} certificate${summary.given === 1 ? '' : 's'} distributed` +
+        `${summary.stopped ? ' (stopped early)' : ''}. Each person was notified.` +
+        `${summary.selfIncluded ? ' Your own certificate must be given by another Officer or the Adviser.' : ''}`,
+    )
+  }
+
+  const closeDistribute = useCallback(() => setDistributing(false), [])
 
   function pickFileFor(row) {
     targetRef.current = row
@@ -279,6 +309,24 @@ function CertificatesDialog({ event, onClose }) {
                       </div>
                     )}
                   </div>
+
+                  {/* ---------- ISANG PINDOT: TEMPLATE ---------- */}
+                  <button
+                    type="button"
+                    className={styles.distribute}
+                    onClick={() => {
+                      setError('')
+                      setNotice('')
+                      setDistributing(true)
+                    }}
+                    disabled={Boolean(busy)}
+                  >
+                    <Send size={16} strokeWidth={2.4} aria-hidden="true" />
+                    <span>
+                      <strong>Distribute with a template</strong>
+                      <small>Pick a design and signatures — a certificate is made for everyone.</small>
+                    </span>
+                  </button>
 
                   {completers.length >= SEARCH_FROM && (
                     <div className={styles.searchWrap}>
@@ -426,6 +474,17 @@ function CertificatesDialog({ event, onClose }) {
             onChange={onFilePicked}
           />
         </div>
+
+        {distributing && (
+          <DistributeCertificatesDialog
+            event={event}
+            completers={completers}
+            certs={certs}
+            profile={profile}
+            onDistributed={handleDistributed}
+            onClose={closeDistribute}
+          />
+        )}
 
         {/* ---------- FOOTER ---------- */}
         <div className={styles.actions}>
