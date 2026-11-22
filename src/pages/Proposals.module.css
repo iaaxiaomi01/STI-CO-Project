@@ -741,12 +741,41 @@
   min-height: 40px;
 }
 
+/* "Delete" (Officer) — pulang guhit na putol-putol; kapag
+   tinapatan, nagiging buo ang guhit at bahagyang umuuga ang
+   basurahan. Ang dialog nito: components/DeleteProposalDialog.jsx */
 .danger {
+  border: 1.5px dashed #eea29a;
   color: #b42318;
 }
 
+.danger svg {
+  transform-origin: 50% 100%;
+}
+
 .danger:hover:not(:disabled) {
-  background-color: #fde0dd;
+  border-style: solid;
+  border-color: #b42318;
+  background-color: #fdecea;
+}
+
+.danger:hover:not(:disabled) svg {
+  animation: trashTip 0.5s ease;
+}
+
+@keyframes trashTip {
+  30% {
+    transform: rotate(-14deg);
+  }
+  65% {
+    transform: rotate(8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .danger:hover:not(:disabled) svg {
+    animation: none;
+  }
 }
 
 .linkButton:disabled,

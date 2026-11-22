@@ -55,6 +55,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import ProposalForm from '../components/ProposalForm.jsx'
 import ProposalLetter from '../components/ProposalLetter.jsx'
 import ReviewDialog from '../components/ReviewDialog.jsx'
+import DeleteProposalDialog from '../components/DeleteProposalDialog.jsx'
 import { isProposalNotification, subscribeToNotifications } from '../lib/notifications.js'
 import styles from './Proposals.module.css'
 
@@ -351,6 +352,9 @@ function Proposals() {
   const [viewing, setViewing] = useState(null)
 
   const [deletingId, setDeletingId] = useState(null)
+  /* Ang tanong bago mag-delete: { proposal, resolve } — kapalit ng
+     window.confirm(). Ang resolve(true/false) ang sagot. */
+  const [confirmingDelete, setConfirmingDelete] = useState(null)
 
   /* Bukas na Approve/Reject/Noted dialog:
      null, o { proposal, action: 'approved' | 'rejected' | 'noted' } */
@@ -531,10 +535,19 @@ function Proposals() {
     }
   }
 
+  /* Kapalit ng window.confirm(): binubuksan ang DeleteProposalDialog
+     at hinihintay ang sagot (true = Delete, false = Keep it) */
+  function askDelete(proposal) {
+    return new Promise((resolve) => setConfirmingDelete({ proposal, resolve }))
+  }
+
+  function answerDelete(ok) {
+    confirmingDelete?.resolve(ok)
+    setConfirmingDelete(null)
+  }
+
   async function handleDelete(proposal) {
-    const ok = window.confirm(
-      `Delete "${proposal.title}"? This cannot be undone.`,
-    )
+    const ok = await askDelete(proposal)
     if (!ok) return
 
     setDeletingId(proposal.id)
@@ -810,6 +823,14 @@ function Proposals() {
             )
           })}
         </ul>
+      )}
+
+      {confirmingDelete && (
+        <DeleteProposalDialog
+          proposal={confirmingDelete.proposal}
+          onConfirm={() => answerDelete(true)}
+          onCancel={() => answerDelete(false)}
+        />
       )}
 
       {formOpen && (

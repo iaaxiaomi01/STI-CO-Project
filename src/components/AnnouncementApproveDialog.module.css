@@ -1,0 +1,431 @@
+/* ============================================================
+   APPROVE ANNOUNCEMENT (AnnouncementReviewDialog.jsx, kapag
+   decision="approved")
+
+   Kapatid ng Reject ("Return to sender") pero iba ang hugis:
+   ang Reject ay may pahalang na blue na ulo; ito ay may
+   PATAYONG dilaw na band sa kaliwa, at ang announcement ay
+   ipinapakita kung ano ang itsura nito sa feed pagka-post.
+
+     ┌────┬──────────────────────────────────┐
+     │    │ Approve this announcement?       │
+     │ ✓  │ 📣 Once approved, it will be…    │
+     │    │ ┌──────────────────────────────┐ │
+     │dilaw│ │ (J) Juan Dela Cruz  Meeting │ │  ← preview ng post
+     │    │ │ Title                        │ │
+     │    │ │ Unang dalawang linya…        │ │
+     │    │ └──────────────────────────────┘ │
+     │    │ Comment (optional)   ___________ │
+     │    │                Cancel [✓ Approve]│
+     └────┴──────────────────────────────────┘
+
+   Galaw: humahaba ang band mula itaas, lumilitaw ang check,
+   umaangat ang preview. Isang beses lang, pagkabukas.
+   ============================================================ */
+
+.backdrop {
+  --ap-blue: var(--sti-blue, #06358c);
+  --ap-blue-deep: var(--sti-blue-deep, #031b4b);
+  --ap-blue-bright: var(--sti-blue-bright, #1249a8);
+  --ap-yellow: var(--sti-yellow, #ffd200);
+  --ap-gold: var(--sti-gold, #f7b900);
+  --ap-ink: var(--sti-ink, #10285c);
+  --ap-muted: #5a6782;
+  --ap-line: #e4e9f2;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  font-family: var(--font-ui);
+  animation: apFade 0.2s ease both;
+}
+
+@keyframes apFade {
+  from {
+    opacity: 0;
+  }
+}
+
+.modal {
+  display: flex;
+  width: 100%;
+  max-width: 540px;
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  border-radius: 22px;
+  background-color: #fff;
+  box-shadow: 0 24px 50px rgba(3, 27, 75, 0.28);
+  color: var(--ap-ink);
+  animation: apRise 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes apRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ---------- DILAW NA BAND ---------- */
+.band {
+  position: relative;
+  flex: 0 0 76px;
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+  background-color: var(--ap-yellow);
+  /* Manipis na guhit ng ginto sa kanang gilid */
+  box-shadow: inset -4px 0 0 var(--ap-gold);
+  transform-origin: top center;
+  animation: apBand 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) 0.08s both;
+}
+
+@keyframes apBand {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.bandCheck {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--ap-blue-deep);
+  color: var(--ap-yellow);
+  box-shadow: 0 6px 14px rgba(3, 27, 75, 0.28);
+  animation: apPop 0.35s cubic-bezier(0.3, 1.5, 0.5, 1) 0.4s both;
+}
+
+@keyframes apPop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* ---------- NILALAMAN ---------- */
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 24px 24px 22px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ap-blue-deep);
+}
+
+/* Ang nag-iisang paliwanag */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ap-blue);
+}
+
+.notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---------- PREVIEW NG POST ---------- */
+.post {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--ap-line);
+  border-left: 4px solid var(--ap-blue);
+  border-radius: 14px;
+  background-color: #f7f9fc;
+  animation: apRise 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) 0.18s both;
+}
+
+.postHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--ap-blue);
+  color: var(--ap-yellow);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.author {
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.type {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background-color: #eaf0fb;
+  color: var(--ap-blue);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.postTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* Unang dalawang linya lang */
+.postText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ap-muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- COMMENT: may guhit lang sa ilalim ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 18px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.optional {
+  font-weight: 500;
+  color: var(--ap-muted);
+}
+
+.counter {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ap-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 2px;
+  border: none;
+  border-bottom: 2px solid var(--ap-line);
+  border-radius: 0;
+  background-color: transparent;
+  /* Ang dilaw na guhit na humahaba kapag naka-focus */
+  background-image: linear-gradient(var(--ap-gold), var(--ap-gold));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  color: var(--ap-ink);
+  font: inherit;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: background-size 0.3s ease;
+}
+
+.input::placeholder {
+  color: #9aa5bd;
+}
+
+.input:focus {
+  outline: none;
+  background-size: 100% 2px;
+}
+
+.error {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: #fdecec;
+  color: #a61b1b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.cancel,
+.approve {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.cancel {
+  padding: 0 18px;
+  border: none;
+  background-color: transparent;
+  color: var(--ap-muted);
+}
+
+.cancel:hover:not(:disabled) {
+  background-color: #f3f5fa;
+  color: var(--ap-ink);
+}
+
+.approve {
+  padding: 0 24px 0 20px;
+  border: none;
+  background-color: var(--ap-yellow);
+  color: var(--ap-blue-deep);
+  box-shadow: inset 0 -3px 0 var(--ap-gold);
+}
+
+.approve:hover:not(:disabled) {
+  background-color: var(--ap-blue-deep);
+  color: var(--ap-yellow);
+  box-shadow: 0 8px 16px rgba(3, 27, 75, 0.25);
+  transform: translateY(-1px);
+}
+
+.cancel:active:not(:disabled),
+.approve:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cancel:focus-visible,
+.approve:focus-visible {
+  outline: 3px solid var(--ap-blue);
+  outline-offset: 2px;
+}
+
+.cancel:disabled,
+.approve:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.approve:disabled {
+  opacity: 0.85;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(3, 27, 75, 0.25);
+  border-top-color: var(--ap-blue-deep);
+  border-radius: 50%;
+  animation: apSpin 0.7s linear infinite;
+}
+
+@keyframes apSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- PHONE: band sa itaas ---------- */
+@media (max-width: 520px) {
+  .modal {
+    flex-direction: column;
+  }
+
+  .band {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    padding: 14px 18px;
+    box-shadow: inset 0 -4px 0 var(--ap-gold);
+    transform-origin: left center;
+    animation-name: apBandX;
+  }
+
+  .content {
+    padding: 20px 18px 18px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+@keyframes apBandX {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* ---------- WALANG GALAW (reduced motion) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .band,
+  .bandCheck,
+  .post {
+    animation: none;
+  }
+
+  .input {
+    transition: none;
+  }
+
+  .approve:hover:not(:disabled) {
+    transform: none;
+  }
+}

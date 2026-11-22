@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Ban } from 'lucide-react'
+import { Ban, Clock, MapPin, QrCode, Sparkles, UserPlus } from 'lucide-react'
 import {
   SCHEDULE_REASON_MAX,
   eventErrorMessage,
   formatSchedule,
 } from '../lib/events.js'
-import base from './ProposalForm.module.css'
-import styles from './ScheduleChangeDialog.module.css'
+import styles from './CancelEventDialog.module.css'
 
 /* ============================================================
    CANCEL EVENT — EVENT_CANCEL_RESCHEDULE.sql (cancel_event())
@@ -22,7 +21,22 @@ import styles from './ScheduleChangeDialog.module.css'
 
    onConfirm(reason) — async; kapag nag-throw, dito lalabas ang
    error at mananatiling bukas ang dialog.
+
+   ITSURA (CancelEventDialog.module.css): may maliit na "ticket"
+   ng event sa itaas — navy na petsa sa kaliwa, gaya ng stub ng
+   mga ticket sa Events page.
    ============================================================ */
+
+/* "2026-11-27" → { day: '27', month: 'Nov' } — display lang */
+function dateParts(ymd) {
+  const [y, m, d] = (ymd ?? '').split('-').map(Number)
+  if (!y) return null
+  return {
+    day: String(d).padStart(2, '0'),
+    month: new Date(y, m - 1, d).toLocaleDateString('en-PH', { month: 'short' }),
+  }
+}
+
 function CancelEventDialog({ event, onConfirm, onCancel }) {
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
@@ -57,47 +71,83 @@ function CancelEventDialog({ event, onConfirm, onCancel }) {
     }
   }
 
+  const date = dateParts(event.event_date)
+
   return (
     <div
-      className={base.backdrop}
+      className={styles.backdrop}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !saving) onCancel()
       }}
     >
       <div
-        className={`${base.modal} ${styles.modal}`}
+        className={styles.modal}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="cancel-event-title"
       >
-        <h2 id="cancel-event-title" className={`${base.heading} ${styles.heading}`}>
-          <span className={`${styles.icon} ${styles.iconDanger}`} aria-hidden="true">
-            <Ban size={18} strokeWidth={2.4} />
+        <div className={styles.head}>
+          <span className={styles.icon} aria-hidden="true">
+            <Ban size={20} strokeWidth={2.4} />
           </span>
-          Cancel this event?
-        </h2>
-
-        <div className={styles.eventBox}>
-          <strong>{event.title}</strong>
-          <span>{formatSchedule(event)}</span>
-          <span>{event.location}</span>
+          <h2 id="cancel-event-title" className={styles.heading}>
+            Cancel this event?
+          </h2>
         </div>
 
-        <p className={styles.explain}>
-          The event stays on the list as <strong>Cancelled</strong>. Joining, QR attendance and the
-          OG reward are closed. Everyone who joined, the Adviser and those who approved the proposal
-          will be notified. You can reschedule it later, or leave it cancelled.
-        </p>
+        {/* Maliit na ticket ng event */}
+        <div className={styles.ticket}>
+          {date && (
+            <div className={styles.date} aria-hidden="true">
+              <span className={styles.month}>{date.month}</span>
+              <span className={styles.day}>{date.day}</span>
+            </div>
+          )}
+          <div className={styles.info}>
+            <strong className={styles.title}>{event.title}</strong>
+            <span className={styles.line}>
+              <Clock size={14} strokeWidth={2.3} aria-hidden="true" />
+              {formatSchedule(event)}
+            </span>
+            {event.location && (
+              <span className={styles.line}>
+                <MapPin size={14} strokeWidth={2.3} aria-hidden="true" />
+                {event.location}
+              </span>
+            )}
+          </div>
+        </div>
 
-        <label className={base.field}>
-          <span className={base.labelRow}>
-            <span className={base.label}>Reason</span>
-            <span className={base.counter}>
+        <div className={styles.effects}>
+          <p className={styles.effectsLead}>
+            These will close, and everyone who joined, the Adviser and those who approved the
+            proposal will be notified:
+          </p>
+          <ul className={styles.chips}>
+            <li>
+              <UserPlus size={14} strokeWidth={2.4} aria-hidden="true" />
+              Joining
+            </li>
+            <li>
+              <QrCode size={14} strokeWidth={2.4} aria-hidden="true" />
+              QR attendance
+            </li>
+            <li>
+              <Sparkles size={14} strokeWidth={2.4} aria-hidden="true" />
+              OG reward
+            </li>
+          </ul>
+        </div>
+
+        <label className={styles.field}>
+          <span className={styles.labelRow}>
+            <span className={styles.label}>Reason</span>
+            <span className={styles.counter}>
               {reason.length} / {SCHEDULE_REASON_MAX}
             </span>
           </span>
           <textarea
-            className={base.input}
+            className={styles.input}
             rows={3}
             value={reason}
             maxLength={SCHEDULE_REASON_MAX}
@@ -106,19 +156,29 @@ function CancelEventDialog({ event, onConfirm, onCancel }) {
           />
         </label>
 
-        {error && <p className={base.error}>{error}</p>}
+        {error && <p className={styles.error}>{error}</p>}
 
-        <div className={base.actions}>
+        <div className={styles.actions}>
           <button
             ref={keepRef}
             type="button"
-            className={base.secondary}
+            className={styles.keep}
             onClick={onCancel}
             disabled={saving}
           >
             Keep event
           </button>
-          <button type="button" className={base.danger} onClick={handleConfirm} disabled={saving}>
+          <button
+            type="button"
+            className={styles.confirm}
+            onClick={handleConfirm}
+            disabled={saving}
+          >
+            {saving ? (
+              <span className={styles.spinner} aria-hidden="true" />
+            ) : (
+              <Ban size={16} strokeWidth={2.4} aria-hidden="true" />
+            )}
             {saving ? 'Cancelling…' : 'Cancel event'}
           </button>
         </div>

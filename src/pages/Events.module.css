@@ -1089,15 +1089,39 @@
     transform var(--transition);
 }
 
+/* "Cancel event" — kapares ng Certificates at Edit: may pulang
+   kahon ang icon (ang svg mismo ang may background), at
+   bahagyang tumatagilid ito kapag tinapatan.
+   Ang dialog nito: components/CancelEventDialog.jsx */
 .ticketPage .tCancelBtn {
-  border: 2px solid #f1b5ae;
-  background-color: #fff;
+  gap: 9px;
+  padding: 0 16px 0 6px;
+  border: 1px solid #f3c4be;
+  background-color: #fff6f5;
   color: #b42318;
 }
 
+.ticketPage .tCancelBtn svg {
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  padding: 7px;
+  border-radius: 8px;
+  background-color: #b42318;
+  color: #fff;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
 .ticketPage .tCancelBtn:hover {
+  border-color: #e8a49b;
   background-color: #fdecec;
-  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(180, 35, 24, 0.14);
+  transform: translateY(-1px);
+}
+
+.ticketPage .tCancelBtn:hover svg {
+  background-color: #93190f;
+  transform: rotate(-12deg);
 }
 
 .ticketPage .tReschedBtn {
@@ -1667,6 +1691,16 @@
 
   .ticket.cardHighlight {
     box-shadow: 0 0 0 4px var(--dash-yellow);
+  }
+
+  .ticketPage .tCancelBtn,
+  .ticketPage .tCancelBtn svg {
+    transition: none;
+  }
+
+  .ticketPage .tCancelBtn:hover,
+  .ticketPage .tCancelBtn:hover svg {
+    transform: none;
   }
 }
 /* ================================================================

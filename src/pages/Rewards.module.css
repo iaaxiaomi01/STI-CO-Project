@@ -663,6 +663,71 @@
   cursor: not-allowed;
 }
 
+/* "Cancel" sa Hand out items — coral na pill na may bilog na X.
+   (Ang .textDanger sa itaas ay para pa rin sa Cancel ng Shop.)
+   Ang dialog nito: components/CancelRedemptionDialog.jsx */
+.handCancel {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 14px 0 5px;
+  border: none;
+  border-radius: 999px;
+  background-color: #ffe6e0;
+  color: #d8432b;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.handCancelIcon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f0583f;
+  color: #fff;
+  transition: transform 0.2s ease, background-color 0.15s ease;
+}
+
+.handCancel:hover {
+  background-color: #f0583f;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.handCancel:hover .handCancelIcon {
+  background-color: #fff;
+  color: #f0583f;
+  transform: rotate(90deg);
+}
+
+.handCancel:active {
+  transform: translateY(0);
+}
+
+.handCancel:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handCancel,
+  .handCancelIcon {
+    transition: none;
+  }
+
+  .handCancel:hover,
+  .handCancel:hover .handCancelIcon {
+    transform: none;
+  }
+}
+
 /* ================================================================
    PURCHASE HISTORY — RESIBO
    ================================================================ */

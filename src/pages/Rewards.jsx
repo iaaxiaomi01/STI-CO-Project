@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Check, Eye, EyeOff, HandCoins, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Check, Eye, EyeOff, HandCoins, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.js'
 import {
   canEarnOg,
@@ -964,9 +964,13 @@ function ClaimsTab({ profile }) {
                 {r.status === 'pending' && (
                   <button
                     type="button"
-                    className={styles.textDanger}
+                    className={styles.handCancel}
                     onClick={() => setCancelling(r)}
                   >
+                    {/* Coral na bilog na X — umiikot kapag tinapatan */}
+                    <span className={styles.handCancelIcon} aria-hidden="true">
+                      <X size={12} strokeWidth={3.2} />
+                    </span>
                     Cancel
                   </button>
                 )}

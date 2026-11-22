@@ -1,0 +1,408 @@
+/* ============================================================
+   CANCEL EVENT dialog (CancelEventDialog.jsx)
+   Sariling itsura — hindi na galing sa ProposalForm.module.css.
+
+     ┌──────────────────────────────────────┐
+     │ (⊘) Cancel this event?               │  ← mapusyaw na pula
+     ├──────────────────────────────────────┤
+     │ ┌─────┬┄─────────────────────────┐   │
+     │ │ Nov ┊ Title ng event           │   │  ← maliit na ticket
+     │ │ 27  ┊ ⏱ schedule  📍 lugar     │   │
+     │ └─────┴┄─────────────────────────┘   │
+     │ These will close… [Join][QR][OG]     │
+     │ Reason ____________________ 0 / 500  │
+     │              Keep event [⊘ Cancel]   │
+     └──────────────────────────────────────┘
+
+   Galaw: umaangat ang dialog sa pagbukas, isang beses na
+   yugyog ng icon, at hover ng mga button. Wala nang iba.
+   ============================================================ */
+
+.backdrop {
+  --cx-red: #b42318;
+  --cx-red-dark: #93190f;
+  --cx-red-soft: #fdecec;
+  --cx-red-line: #f3c4be;
+  --cx-navy: var(--dash-navy-deep, #031b4b);
+  --cx-yellow: var(--dash-yellow, #ffd200);
+  --cx-ink: var(--dash-ink, #0e1a36);
+  --cx-muted: var(--dash-muted, #5a6782);
+  --cx-border: #e4e9f2;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.5);
+  font-family: var(--font-ui);
+  animation: cxFade 0.2s ease both;
+}
+
+@keyframes cxFade {
+  from {
+    opacity: 0;
+  }
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border-radius: 22px;
+  background-color: #fff;
+  box-shadow: 0 24px 48px rgba(3, 27, 75, 0.22);
+  color: var(--cx-ink);
+  animation: cxRise 0.28s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes cxRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+/* ---------- ULO: mapusyaw na pula ---------- */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--cx-red-line);
+  background-color: #fff6f5;
+}
+
+.icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: var(--cx-red);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(180, 35, 24, 0.25);
+  /* Isang mahinang yugyog pagkabukas */
+  animation: cxNudge 0.5s ease 0.25s both;
+}
+
+@keyframes cxNudge {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-10deg);
+  }
+  60% {
+    transform: rotate(6deg);
+  }
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- MALIIT NA TICKET NG EVENT ---------- */
+.ticket {
+  display: flex;
+  margin: 20px 24px 0;
+  border: 1px solid var(--cx-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.date {
+  flex: 0 0 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  border-right: 2px dashed rgba(255, 255, 255, 0.35);
+  background-color: var(--cx-navy);
+  color: #fff;
+}
+
+.month {
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.day {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--cx-yellow);
+}
+
+.info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background-color: #f7f9fc;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--cx-muted);
+  overflow-wrap: anywhere;
+}
+
+.line svg {
+  flex-shrink: 0;
+}
+
+/* ---------- ANG MAGSASARA ---------- */
+.effects {
+  margin: 16px 24px 0;
+}
+
+.effectsLead {
+  margin: 0 0 8px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--cx-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 9px;
+  border-radius: 999px;
+  background-color: var(--cx-red-soft);
+  color: var(--cx-red-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ---------- DAHILAN ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 18px 24px 0;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.counter {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--cx-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--cx-border);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--cx-ink);
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: #9aa5bd;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--cx-red);
+  box-shadow: 0 0 0 4px rgba(180, 35, 24, 0.12);
+}
+
+.error {
+  margin: 10px 24px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: var(--cx-red-soft);
+  color: var(--cx-red);
+  font-size: 0.85rem;
+  font-weight: 700;
+  animation: cxRise 0.2s ease both;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--cx-border);
+}
+
+.keep,
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.keep {
+  border: 1.5px solid var(--cx-border);
+  background-color: #fff;
+  color: var(--cx-ink);
+}
+
+.keep:hover:not(:disabled) {
+  border-color: #c9d2e3;
+  background-color: #f5f7fb;
+}
+
+.confirm {
+  border: none;
+  background-color: var(--cx-red);
+  color: #fff;
+}
+
+.confirm:hover:not(:disabled) {
+  background-color: var(--cx-red-dark);
+  box-shadow: 0 6px 14px rgba(180, 35, 24, 0.28);
+  transform: translateY(-1px);
+}
+
+.confirm:active:not(:disabled),
+.keep:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.keep:focus-visible,
+.confirm:focus-visible {
+  outline: 3px solid var(--cx-navy);
+  outline-offset: 2px;
+}
+
+.keep:disabled,
+.confirm:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.confirm:disabled {
+  opacity: 0.85;
+}
+
+/* Habang kinakansela */
+.spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cxSpin 0.7s linear infinite;
+}
+
+@keyframes cxSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 520px) {
+  .head {
+    padding: 18px 18px 16px;
+  }
+
+  .ticket,
+  .effects,
+  .field {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .error {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    padding: 14px 18px 18px;
+  }
+
+  .keep,
+  .confirm {
+    width: 100%;
+  }
+}
+
+/* ---------- WALANG GALAW (reduced motion) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .icon,
+  .error {
+    animation: none;
+  }
+
+  .confirm:hover:not(:disabled) {
+    transform: none;
+  }
+}

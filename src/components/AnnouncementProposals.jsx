@@ -161,7 +161,7 @@ function AnnouncementProposals({
                       disabled={busy}
                     >
                       <Check size={15} strokeWidth={2.6} aria-hidden="true" />
-                      Approve &amp; post
+                      Approve
                     </button>
                   </>
                 )}

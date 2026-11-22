@@ -198,23 +198,101 @@
   color: #fff;
 }
 
+/* "Approve" — kapares ng Reject pero puno: dilaw ng STI na may
+   navy na bilog ang check. Hover: nagiging navy, at bahagyang
+   lumalaki ang check.
+   Ang dialog nito: AnnouncementReviewDialog.jsx (Approve) */
 .approve {
-  background-color: #1b6e33;
-  color: #fff;
+  padding: 0 18px 0 6px;
+  gap: 9px;
+  background-color: var(--sti-yellow, #ffd200);
+  box-shadow: inset 0 -3px 0 var(--sti-gold, #f7b900);
+  color: var(--sti-blue-deep, #031b4b);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.approve svg {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 50%;
+  background-color: var(--sti-blue-deep, #031b4b);
+  color: var(--sti-yellow, #ffd200);
+  transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1), background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .approve:hover:not(:disabled) {
-  background-color: #145227;
+  background-color: var(--sti-blue-deep, #031b4b);
+  box-shadow: 0 6px 14px rgba(3, 27, 75, 0.22);
+  color: var(--sti-yellow, #ffd200);
+  transform: translateY(-1px);
 }
 
+.approve:hover:not(:disabled) svg {
+  background-color: var(--sti-yellow, #ffd200);
+  color: var(--sti-blue-deep, #031b4b);
+  transform: scale(1.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .approve,
+  .approve svg {
+    transition: none;
+  }
+
+  .approve:hover:not(:disabled),
+  .approve:hover:not(:disabled) svg {
+    transform: none;
+  }
+}
+
+/* "Reject" — kulay ng STI: navy na guhit, dilaw na bilog ang X.
+   Hover: napupuno ng dilaw mula kaliwa, umiikot ang X.
+   Ang dialog nito: AnnouncementReviewDialog.jsx (Reject) */
 .reject {
-  background-color: #fdecec;
-  color: #b42318;
+  padding: 0 16px 0 6px;
+  gap: 9px;
+  border: 1.5px solid var(--sti-blue, #06358c);
+  background-color: #fff;
+  background-image: linear-gradient(var(--sti-yellow, #ffd200), var(--sti-yellow, #ffd200));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  color: var(--sti-blue-deep, #031b4b);
+  transition: background-size 0.3s ease, border-color var(--transition, 0.2s ease);
+}
+
+.reject svg {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 50%;
+  background-color: var(--sti-yellow, #ffd200);
+  color: var(--sti-blue-deep, #031b4b);
+  transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
 }
 
 .reject:hover:not(:disabled) {
-  background-color: #b42318;
-  color: #fff;
+  background-color: #fff;
+  background-size: 100% 100%;
+  border-color: var(--sti-blue-deep, #031b4b);
+  color: var(--sti-blue-deep, #031b4b);
+}
+
+.reject:hover:not(:disabled) svg {
+  background-color: var(--sti-blue-deep, #031b4b);
+  color: var(--sti-yellow, #ffd200);
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reject,
+  .reject svg {
+    transition: none;
+  }
+
+  .reject:hover:not(:disabled) svg {
+    transform: none;
+  }
 }
 
 .button:focus-visible {

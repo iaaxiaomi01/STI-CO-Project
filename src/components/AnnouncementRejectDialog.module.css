@@ -1,0 +1,424 @@
+/* ============================================================
+   REJECT ANNOUNCEMENT — "Return to sender"
+   (AnnouncementReviewDialog.jsx, kapag decision="rejected")
+
+   Kulay ng STI ang laro, hindi pula:
+     STI blue    → ulo ng dialog at ang Reject button
+     STI yellow  → manipis na bar, tab ng papel, X sa button,
+                   at ang "sticky note" ng dahilan
+     STI cream   → katawan
+
+     ┌──────────────────────────────────────┐
+     │ (↩) Reject this announcement?        │  STI blue
+     │     Goes back to Juan Dela Cruz      │
+     ├▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬┐                   │  dilaw na bar
+     │  ┌[Meeting]──────────────────┐       │  cream
+     │  │ Title ng announcement      │ ↖ bahagyang tagilid
+     │  │ Unang dalawang linya…      │       │
+     │  └───────────────────────────┘       │
+     │  This is final…                      │
+     │  Reason for the Officer   0 / 1000   │
+     │  ░░░ dilaw na sticky note ░░░        │
+     │                 Cancel  [✕ Reject]   │
+     └──────────────────────────────────────┘
+
+   Galaw: umaangat ang dialog; dumudulas pabalik nang kaunti
+   ang papel (parang ibinabalik); kaunting angat ng note kapag
+   naka-focus. Wala nang iba.
+   ============================================================ */
+
+.backdrop {
+  --rj-blue: var(--sti-blue, #06358c);
+  --rj-blue-deep: var(--sti-blue-deep, #031b4b);
+  --rj-yellow: var(--sti-yellow, #ffd200);
+  --rj-gold: var(--sti-gold, #f7b900);
+  --rj-cream: var(--sti-cream, #faf8f1);
+  --rj-ink: var(--sti-ink, #10285c);
+  --rj-muted: #5a6782;
+  --rj-note: #fff7cc;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(3, 27, 75, 0.55);
+  font-family: var(--font-ui);
+  animation: rjFade 0.2s ease both;
+}
+
+@keyframes rjFade {
+  from {
+    opacity: 0;
+  }
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border-radius: 22px;
+  background-color: var(--rj-cream);
+  box-shadow: 0 24px 50px rgba(3, 27, 75, 0.28);
+  color: var(--rj-ink);
+  animation: rjRise 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes rjRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ---------- ULO: STI blue + dilaw na bar ---------- */
+.head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px 24px;
+  background-color: var(--rj-blue);
+  color: #fff;
+}
+
+/* Ang dilaw na bar — hanggang kalahati lang, pahilis ang dulo */
+.head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 58%;
+  height: 6px;
+  background-color: var(--rj-yellow);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  transform-origin: left center;
+  animation: rjBar 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) 0.12s both;
+}
+
+@keyframes rjBar {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.headIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: var(--rj-yellow);
+  color: var(--rj-blue-deep);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.route {
+  margin: 3px 0 0;
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.78);
+  overflow-wrap: anywhere;
+}
+
+.route strong {
+  color: var(--rj-yellow);
+  font-weight: 800;
+}
+
+/* ---------- KATAWAN ---------- */
+.body {
+  padding: 22px 24px 4px;
+}
+
+/* Ang announcement na ibinabalik */
+.paper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 6px 0;
+  padding: 18px 16px 14px;
+  border: 1px solid #e7e2d2;
+  border-radius: 6px 14px 14px 14px;
+  background-color: #fff;
+  box-shadow: 0 8px 18px rgba(16, 40, 92, 0.08);
+  transform: rotate(-1.2deg);
+  /* Dumudulas pabalik nang kaunti — parang ibinabalik */
+  animation: rjReturn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.15s both;
+}
+
+@keyframes rjReturn {
+  from {
+    opacity: 0;
+    transform: translateX(26px) rotate(2deg);
+  }
+}
+
+/* Dilaw na tab sa ibabaw ng papel: uri ng announcement */
+.tab {
+  position: absolute;
+  top: -11px;
+  left: 12px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background-color: var(--rj-yellow);
+  color: var(--rj-blue-deep);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.paperTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--rj-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Unang dalawang linya lang ng mensahe */
+.paperText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--rj-muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.final {
+  margin: 18px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--rj-muted);
+}
+
+/* ---------- DAHILAN: dilaw na sticky note ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.counter {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rj-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-top: 4px solid var(--rj-gold);
+  border-radius: 4px 4px 14px 14px;
+  background-color: var(--rj-note);
+  box-shadow: 0 2px 0 #f1e3a0;
+  color: var(--rj-ink);
+  font: inherit;
+  font-size: 0.93rem;
+  font-weight: 600;
+  line-height: 1.55;
+  resize: vertical;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note::placeholder {
+  color: #a39a6c;
+  font-weight: 500;
+}
+
+/* Kaunting angat kapag nagsusulat */
+.note:focus {
+  outline: none;
+  box-shadow: 0 10px 20px rgba(247, 185, 0, 0.22), 0 0 0 2px var(--rj-blue);
+  transform: translateY(-2px);
+}
+
+.error {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background-color: #fdecec;
+  color: #a61b1b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  animation: rjRise 0.2s ease both;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px 24px 22px;
+}
+
+.cancel,
+.reject {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.cancel {
+  padding: 0 20px;
+  border: 1.5px solid #ddd7c4;
+  background-color: transparent;
+  color: var(--rj-ink);
+}
+
+.cancel:hover:not(:disabled) {
+  border-color: var(--rj-ink);
+  background-color: #fff;
+}
+
+.reject {
+  padding: 0 20px 0 8px;
+  border: none;
+  background-color: var(--rj-blue-deep);
+  color: #fff;
+}
+
+.rejectIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: var(--rj-yellow);
+  color: var(--rj-blue-deep);
+  transition: transform 0.2s ease;
+}
+
+.reject:hover:not(:disabled) {
+  background-color: var(--rj-blue);
+  box-shadow: 0 8px 16px rgba(3, 27, 75, 0.28);
+  transform: translateY(-1px);
+}
+
+.reject:hover:not(:disabled) .rejectIcon {
+  transform: rotate(90deg);
+}
+
+.cancel:active:not(:disabled),
+.reject:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.cancel:focus-visible,
+.reject:focus-visible {
+  outline: 3px solid var(--rj-gold);
+  outline-offset: 2px;
+}
+
+.cancel:disabled,
+.reject:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.reject:disabled {
+  opacity: 0.85;
+}
+
+.spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(3, 27, 75, 0.25);
+  border-top-color: var(--rj-blue-deep);
+  border-radius: 50%;
+  animation: rjSpin 0.7s linear infinite;
+}
+
+@keyframes rjSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 520px) {
+  .head {
+    padding: 18px 18px 20px;
+  }
+
+  .body {
+    padding: 20px 18px 4px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    padding: 18px;
+  }
+
+  .cancel,
+  .reject {
+    width: 100%;
+  }
+}
+
+/* ---------- WALANG GALAW (reduced motion) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .head::after,
+  .paper,
+  .error {
+    animation: none;
+  }
+
+  .note,
+  .rejectIcon {
+    transition: none;
+  }
+
+  .note:focus,
+  .reject:hover:not(:disabled),
+  .reject:hover:not(:disabled) .rejectIcon {
+    transform: none;
+  }
+}

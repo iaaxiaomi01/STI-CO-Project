@@ -1,0 +1,267 @@
+/* ============================================================
+   DELETE PROPOSAL (DeleteProposalDialog.jsx)
+
+   Ang nag-iisang MADILIM na dialog sa app — STI navy, at
+   nakagitna ang lahat. May maliit na "sulat" ng proposal
+   (dilaw na letterhead, mga guhit, paperclip kung may file —
+   walang text, nasa ilalim na ang title)
+   na nakausli sa itaas ng dialog.
+
+              ┌─────────┐
+              │▬▬▬▬▬▬▬▬▬│  ← letterhead (STI yellow)
+        ┌─────│ ▬▬▬▬▬   │─────┐
+        │     │ ─────── │     │
+        │     └─────────┘     │   navy
+        │ Delete this proposal?│
+        │      "Title"         │
+        │ This can't be undone.│
+        │  [Keep it] [Delete]  │
+        └──────────────────────┘
+
+   Galaw:
+     - pagbukas: bumababa ang sulat sa lugar nito
+     - hover/focus sa Delete: tumatagilid, lumalabo at
+       nagkakaroon ng pulang putol-putol na gilid ang sulat
+       (ipinapakita kung ano ang mawawala)
+   ============================================================ */
+
+.backdrop {
+  --dp-navy: var(--sti-blue-deep, #031b4b);
+  --dp-navy-2: #0a2a66;
+  --dp-yellow: var(--sti-yellow, #ffd200);
+  --dp-red: #ff6b5e;
+  --dp-red-deep: #e5483b;
+  --dp-text: #ffffff;
+  --dp-soft: rgba(255, 255, 255, 0.72);
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4.5rem 1rem 1rem;
+  background-color: rgba(3, 12, 36, 0.55);
+  backdrop-filter: blur(2px);
+  font-family: var(--font-ui);
+  animation: dpFade 0.2s ease both;
+}
+
+@keyframes dpFade {
+  from {
+    opacity: 0;
+  }
+}
+
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 92px 28px 26px;
+  border-radius: 26px;
+  background-color: var(--dp-navy);
+  background-image: radial-gradient(
+    120% 70% at 50% 0%,
+    var(--dp-navy-2) 0%,
+    var(--dp-navy) 70%
+  );
+  box-shadow: 0 30px 60px rgba(3, 12, 36, 0.45);
+  color: var(--dp-text);
+  text-align: center;
+  animation: dpRise 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes dpRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+/* ---------- ANG SULAT ---------- */
+.sheet {
+  position: absolute;
+  top: -52px;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 128px;
+  height: 128px;
+  padding: 0 12px 12px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 14px 28px rgba(3, 12, 36, 0.35);
+  outline: 2px dashed transparent;
+  outline-offset: 4px;
+  text-align: left;
+  transform: translateX(-50%) rotate(-3deg);
+  transition: transform 0.35s cubic-bezier(0.3, 1.3, 0.5, 1), opacity 0.3s ease,
+    outline-color 0.3s ease;
+  animation: dpDrop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) 0.1s both;
+}
+
+@keyframes dpDrop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-18px) rotate(3deg);
+  }
+}
+
+.letterhead {
+  flex-shrink: 0;
+  height: 14px;
+  margin: 0 -12px 2px;
+  background-color: var(--dp-yellow);
+  box-shadow: inset 0 -3px 0 var(--sti-gold, #f7b900);
+}
+
+.rule {
+  flex-shrink: 0;
+  height: 5px;
+  border-radius: 3px;
+  background-color: #e4e9f2;
+}
+
+.ruleShort {
+  width: 60%;
+}
+
+/* "Title" ng sulat — mas makapal at navy */
+.ruleTitle {
+  width: 80%;
+  height: 8px;
+  margin-bottom: 4px;
+  background-color: var(--dp-navy);
+}
+
+.clip {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  color: var(--sti-blue, #06358c);
+  transform: rotate(20deg);
+}
+
+/* Tinapatan o naka-focus ang Delete → ipakita ang mawawala */
+.modal:has(.delete:hover:not(:disabled)) .sheet,
+.modal:has(.delete:focus-visible) .sheet {
+  opacity: 0.45;
+  outline-color: var(--dp-red);
+  transform: translateX(-50%) translateY(-6px) rotate(-9deg);
+}
+
+/* ---------- TEXT ---------- */
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--dp-text);
+}
+
+.name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 8px auto 0;
+  max-width: 32ch;
+  color: var(--dp-yellow);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.desc {
+  margin: 10px auto 0;
+  max-width: 34ch;
+  color: var(--dp-soft);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* ---------- MGA BUTTON ---------- */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.keep,
+.delete {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.keep {
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  background-color: transparent;
+  color: var(--dp-text);
+}
+
+.keep:hover {
+  border-color: var(--dp-text);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.delete {
+  border: none;
+  background-color: var(--dp-red-deep);
+  color: #fff;
+}
+
+.delete:hover {
+  background-color: var(--dp-red);
+  box-shadow: 0 8px 18px rgba(229, 72, 59, 0.35);
+}
+
+.keep:focus-visible,
+.delete:focus-visible {
+  outline: 3px solid var(--dp-yellow);
+  outline-offset: 3px;
+}
+
+/* ---------- PHONE ---------- */
+@media (max-width: 420px) {
+  .modal {
+    padding: 86px 20px 20px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+}
+
+/* ---------- WALANG GALAW (reduced motion) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .sheet {
+    animation: none;
+  }
+
+  .sheet {
+    transition: opacity 0.2s ease, outline-color 0.2s ease;
+  }
+
+  .modal:has(.delete:hover:not(:disabled)) .sheet,
+  .modal:has(.delete:focus-visible) .sheet {
+    transform: translateX(-50%) rotate(-3deg);
+  }
+}
